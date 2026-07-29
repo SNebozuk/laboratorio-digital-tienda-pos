@@ -1,21 +1,35 @@
-# Datos locales y comprobantes privados
-data/*.sqlite
-data/proofs/
-
 # Configuración sensible
 .env
 .env.*
 !.env.example
 
-# Archivos de trabajo y paquetes generados
+# Bases de datos y archivos temporales de SQLite
+data/*.sqlite
+data/*.sqlite3
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Comprobantes y archivos privados cargados por clientes
+data/proofs/
+data/comprobantes/
+uploads/
+
+# Dependencias y herramientas locales
+vendor/
+node_modules/
+.phpunit.result.cache
+
+# Archivos de trabajo, registros y paquetes generados
 work/
+git-history/
 outputs/*.zip
 *.log
+*.bak
+*.tmp
 
-# Metadatos locales de Git (no forman parte del proyecto)
-.git/
-git-history/
-
-# Sistema operativo
+# Editores y sistema operativo
+.idea/
+.vscode/
 .DS_Store
 Thumbs.db
