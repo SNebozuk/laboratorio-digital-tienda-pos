@@ -30,7 +30,7 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 - Carga de comprobante JPG, PNG o PDF.
 - Reserva de stock al informar el pago, después de validar nuevamente la disponibilidad.
 - Confirmaciones por email desde `ventas@laboratorio-digital.com.ar`.
-- Confirmación final con el mensaje “Su pedido ha sido enviado” y acceso a WhatsApp.
+- Confirmación final con el mensaje “Su pedido ha sido enviado” y acceso a WhatsApp para compartir únicamente el detalle del pedido.
 - Retiro exclusivo en el local, sin envíos.
 
 ## Administración y punto de venta
