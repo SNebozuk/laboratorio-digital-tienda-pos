@@ -1,0 +1,21 @@
+# Datos locales y comprobantes privados
+data/*.sqlite
+data/proofs/
+
+# Configuración sensible
+.env
+.env.*
+!.env.example
+
+# Archivos de trabajo y paquetes generados
+work/
+outputs/*.zip
+*.log
+
+# Metadatos locales de Git (no forman parte del proyecto)
+.git/
+git-history/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
