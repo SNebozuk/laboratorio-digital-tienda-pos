@@ -4,6 +4,10 @@ Los cambios relevantes del proyecto se registran en este archivo.
 
 ## Próxima versión
 
+- Menú lateral importado de la estructura pública de Tiendanube.
+- Títulos de productos normalizados en mayúsculas.
+- El buscador se limpia después de seleccionar un producto.
+- Confirmación final “Su pedido ha sido enviado” con acceso a WhatsApp.
 - El buscador cierra sus sugerencias al seleccionar un producto.
 - La edición de órdenes permite agregar y eliminar productos.
 - El aviso por WhatsApp abre el chat de Laboratorio Digital con el pedido completo.

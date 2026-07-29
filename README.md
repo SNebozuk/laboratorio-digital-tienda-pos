@@ -17,8 +17,11 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 ## Experiencia del cliente
 
 - Tienda pública completamente separada de la administración.
+- Menú lateral basado en la estructura actual de Tiendanube.
 - Lista continua de productos orientada a precio, stock y practicidad.
 - Búsqueda predictiva con imágenes y coincidencias por producto, talle o código interno.
+- El buscador queda vacío al seleccionar un producto para facilitar la siguiente búsqueda.
+- Títulos de productos en mayúsculas.
 - Variantes con stock visible y selector directo de cantidad.
 - Descripción disponible únicamente al abrir el detalle del producto.
 - El SKU se utiliza internamente, pero no se muestra públicamente.
@@ -27,6 +30,7 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 - Carga de comprobante JPG, PNG o PDF.
 - Reserva de stock al informar el pago, después de validar nuevamente la disponibilidad.
 - Confirmaciones por email desde `ventas@laboratorio-digital.com.ar`.
+- Confirmación final con el mensaje “Su pedido ha sido enviado” y acceso a WhatsApp.
 - Retiro exclusivo en el local, sin envíos.
 
 ## Administración y punto de venta
