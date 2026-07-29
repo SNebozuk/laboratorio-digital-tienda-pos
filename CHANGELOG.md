@@ -2,6 +2,13 @@
 
 Los cambios relevantes del proyecto se registran en este archivo.
 
+## Próxima versión
+
+- El buscador cierra sus sugerencias al seleccionar un producto.
+- La edición de órdenes permite agregar y eliminar productos.
+- El aviso por WhatsApp abre el chat de Laboratorio Digital con el pedido completo.
+- La lista de ventas permite visualizar los comprobantes de pago cargados.
+
 ## 0.1.0 — 2026-07-29
 
 ### Incluido

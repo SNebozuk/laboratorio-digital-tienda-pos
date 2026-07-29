@@ -37,7 +37,10 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 - Alta, edición y duplicación de productos.
 - Múltiples variantes por producto, cada una con precio, stock y código propios.
 - Órdenes web y ventas de mostrador en un historial único.
-- Edición e impresión de órdenes de venta.
+- Edición de órdenes con alta, eliminación y cambio de cantidad de productos.
+- Impresión de órdenes de venta.
+- Acceso directo al comprobante de pago desde la lista de ventas.
+- Aviso por WhatsApp al `+54 9 341 569-9338` con el detalle completo del pedido.
 - Estados: pendiente de pago, pago informado, pagado/preparar, listo para retirar, entregado y cancelado.
 - Aprobación manual de transferencias y auditoría.
 - Caja, movimientos de stock, reportes básicos y respaldos.
