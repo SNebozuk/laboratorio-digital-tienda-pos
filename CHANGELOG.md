@@ -4,6 +4,7 @@ Los cambios relevantes del proyecto se registran en este archivo.
 
 ## Próxima versión
 
+- El catálogo público elimina por completo el menú y las pantallas de administración y POS.
 - Menú lateral importado de la estructura pública de Tiendanube.
 - Títulos de productos normalizados en mayúsculas.
 - El buscador se limpia después de seleccionar un producto.

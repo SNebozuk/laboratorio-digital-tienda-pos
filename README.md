@@ -16,7 +16,7 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 
 ## Experiencia del cliente
 
-- Tienda pública completamente separada de la administración.
+- Tienda pública completamente separada de la administración: el archivo del catálogo no incluye el menú ni las pantallas administrativas.
 - Menú lateral basado en la estructura actual de Tiendanube.
 - Lista continua de productos orientada a precio, stock y practicidad.
 - Búsqueda predictiva con imágenes y coincidencias por producto, talle o código interno.
