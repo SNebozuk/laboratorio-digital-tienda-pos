@@ -239,7 +239,9 @@ button:disabled {
     right: 0;
     left: 0;
     top: calc(100% + 7px);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: min(620px, 70vh);
     border: 1px solid var(--line);
     border-radius: 12px;
     background: #111;
@@ -285,6 +287,50 @@ button:disabled {
     display: block;
     margin-top: 3px;
     color: var(--muted);
+}
+
+.suggestion-card {
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.suggestion-card:last-child {
+    border-bottom: 0;
+}
+
+.suggestion-card .suggestion-button {
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.suggestion-variants {
+    display: grid;
+    gap: 7px;
+    padding: 8px 12px 11px 72px;
+}
+
+.suggestion-variant {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.suggestion-variant > span {
+    min-width: 0;
+}
+
+.suggestion-variant small {
+    display: block;
+    color: var(--muted);
+}
+
+.suggestion-variant .quantity-control {
+    flex: 0 0 auto;
+    grid-template-columns: 30px 42px 30px;
+}
+
+.suggestion-variant .quantity-control button,
+.suggestion-variant .quantity-control input {
+    height: 30px;
 }
 
 .catalog-results {
@@ -484,7 +530,7 @@ button:disabled {
     background: transparent;
     color: var(--muted);
     cursor: pointer;
-    font-size: 1.25rem;
+    font-size: 1rem;
     line-height: 1;
     place-items: center;
 }
@@ -1053,6 +1099,14 @@ button:disabled {
 
     .quantity-control {
         grid-template-columns: 34px 52px 34px;
+    }
+
+    .suggestion-variants {
+        padding-left: 12px;
+    }
+
+    .suggestion-variant {
+        align-items: flex-end;
     }
 
     .modal {
