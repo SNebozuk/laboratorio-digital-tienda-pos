@@ -445,12 +445,18 @@
                     <input name="name" required autocomplete="name">
                 </label>
                 <label>
-                    Email para recibir la confirmación
-                    <input name="email" type="email" required autocomplete="email">
+                    WhatsApp
+                    <input
+                        name="phone"
+                        type="tel"
+                        required
+                        autocomplete="tel"
+                        placeholder="Ej.: 341 569 9338"
+                    >
                 </label>
                 <label>
-                    WhatsApp (opcional)
-                    <input name="phone" type="tel" autocomplete="tel">
+                    Email para recibir una copia (opcional)
+                    <input name="email" type="email" autocomplete="email">
                 </label>
                 <button class="primary-button" type="submit">CREAR PEDIDO</button>
             </form>
@@ -496,7 +502,10 @@
                 })),
             });
             state.order = data.order;
-            showPayment(data.order);
+            showPayment(
+                data.order,
+                String(formData.get('email') || '').trim() !== ''
+            );
         } catch (error) {
             toast(error.message);
             button.disabled = false;
@@ -504,14 +513,18 @@
         }
     }
 
-    function showPayment(order) {
+    function showPayment(order, hasEmail) {
         const alias = order.bank?.alias || 'Pendiente de configurar';
         const cbu = order.bank?.cbu || 'Pendiente de configurar';
         const paymentUrl = safePageUrl(order.payment_url);
+        const whatsappOrderUrl = whatsappUrl(order);
         openModal(`
             <h2 id="modal-title">PEDIDO ${escapeHtml(order.public_number)}</h2>
             <div class="success-box">
-                Tu pedido fue creado. Te enviaremos una copia al email informado.
+                Tu pedido fue creado.
+                ${hasEmail
+                    ? 'También enviaremos una copia al email informado.'
+                    : 'Podés guardar el seguimiento o compartir el detalle por WhatsApp.'}
             </div>
             <div class="order-total">
                 <span>Total exacto</span>
@@ -542,13 +555,22 @@
             </form>
             ${paymentUrl ? `
                 <p class="order-note">
-                    También te enviamos por email un enlace personal para retomar
-                    esta carga más tarde.
+                    ${hasEmail
+                        ? 'También enviaremos por email un enlace personal para retomar esta carga más tarde.'
+                        : 'Guardá este enlace personal para retomar la carga más tarde.'}
                 </p>
                 <a class="secondary-button" href="${escapeHtml(paymentUrl)}">
                     ABRIR SEGUIMIENTO DEL PEDIDO
                 </a>
             ` : ''}
+            <a
+                class="whatsapp-button"
+                href="${escapeHtml(whatsappOrderUrl)}"
+                target="_blank"
+                rel="noopener"
+            >
+                ENVIAR DETALLE POR WHATSAPP
+            </a>
         `);
     }
 
