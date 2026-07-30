@@ -1,0 +1,21 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteRule ^$ laboratorio-digital-git-20260730/index.php [L]
+
+  RewriteRule ^tienda$ tienda/ [R=302,L]
+  RewriteRule ^admin$ admin/ [R=302,L]
+
+  RewriteRule ^tienda/assets/(.+)$ laboratorio-digital-git-20260730/v1/assets/$1 [L]
+  RewriteRule ^tienda/admin/assets/(.+)$ laboratorio-digital-git-20260730/v1/admin/assets/$1 [L]
+  RewriteRule ^tienda/payment\.php$ laboratorio-digital-git-20260730/v1/payment.php [L,QSA]
+  RewriteRule ^tienda/?$ laboratorio-digital-git-20260730/v1/index.php [L,QSA]
+
+  RewriteRule ^admin/receipt\.php$ laboratorio-digital-git-20260730/v1/admin/receipt.php [L,QSA]
+  RewriteRule ^admin/?$ laboratorio-digital-git-20260730/v1/admin/index.php [L,QSA]
+
+  RewriteRule ^api\.php$ laboratorio-digital-git-20260730/api.php [L,QSA]
+</IfModule>
