@@ -123,6 +123,7 @@ header('Referrer-Policy: same-origin');
             'csrf_token' => $app['csrf_token'],
             'products' => $catalog,
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
+            'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
     <script src="<?= $escape($assetPath) ?>/store.js" defer></script>
