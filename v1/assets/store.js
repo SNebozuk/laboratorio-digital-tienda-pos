@@ -293,7 +293,10 @@
 
         elements.mobileCartCount.textContent = String(units);
         elements.cartTotal.textContent = money(total);
-        elements.checkout.disabled = items.length === 0;
+        elements.checkout.disabled = items.length === 0 || !app.orders_enabled;
+        elements.checkout.textContent = app.orders_enabled
+            ? 'CONTINUAR PEDIDO'
+            : 'PEDIDOS PRÓXIMAMENTE';
         elements.cartLines.innerHTML = items.length ? items.map(item => `
             <div class="cart-line">
                 <div class="cart-line-head">
