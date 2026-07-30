@@ -161,12 +161,13 @@ final class MailService
     {
         $number = $this->escape((string) ($payload['public_number'] ?? ''));
         $name = $this->escape((string) ($payload['customer_name'] ?? ''));
+        $internal = ($payload['audience'] ?? '') === 'internal';
         $title = 'Actualización de tu pedido';
         $content = '';
 
         switch ($template) {
             case 'order_created':
-                $title = 'Recibimos tu pedido';
+                $title = $internal ? 'Nuevo pedido web' : 'Recibimos tu pedido';
                 $items = is_array($payload['items'] ?? null)
                     ? $payload['items']
                     : [];
@@ -185,7 +186,9 @@ final class MailService
                         . $this->money((int) ($item['line_total_cents'] ?? 0))
                         . '</td></tr>';
                 }
-                $content = '<p>El pedido fue creado y está pendiente de transferencia.</p>'
+                $content = ($internal
+                    ? '<p>Ingresó un nuevo pedido pendiente de transferencia.</p>'
+                    : '<p>El pedido fue creado y está pendiente de transferencia.</p>')
                     . '<table style="width:100%;border-collapse:collapse">'
                     . $rows
                     . '</table>'
@@ -198,9 +201,21 @@ final class MailService
                     )
                     . '.</p>'
                     . $this->actionButton(
-                        (string) ($payload['payment_url'] ?? ''),
-                        'VER DATOS Y SUBIR COMPROBANTE'
+                        $internal
+                            ? rtrim((string) ($this->config['base_url'] ?? ''), '/')
+                                . '/admin/'
+                            : (string) ($payload['payment_url'] ?? ''),
+                        $internal
+                            ? 'ABRIR ADMINISTRACIÓN'
+                            : 'VER DATOS Y SUBIR COMPROBANTE'
                     );
+                if ($internal) {
+                    $content .= '<p>WhatsApp del cliente: <strong>'
+                        . $this->escape(
+                            (string) ($payload['customer_phone'] ?? '')
+                        )
+                        . '</strong></p>';
+                }
                 break;
 
             case 'payment_reported':
@@ -250,7 +265,7 @@ final class MailService
             . '<h1 style="margin:0 0 18px;font-size:28px">'
             . $title
             . '</h1><p>Hola '
-            . ($name !== '' ? $name : 'cliente')
+            . ($internal ? 'equipo' : ($name !== '' ? $name : 'cliente'))
             . '.</p><p>Pedido <strong>'
             . $number
             . '</strong></p>'
