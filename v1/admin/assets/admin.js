@@ -5,9 +5,6 @@
     const state = {
         products: [],
         orders: [],
-        cash: null,
-        reports: null,
-        backups: [],
         settings: null,
         users: [],
         posCart: new Map(),
@@ -54,8 +51,6 @@
         posTotal: document.getElementById('pos-total'),
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
-        cashContent: document.getElementById('cash-content'),
-        reportContent: document.getElementById('report-content'),
         userList: document.getElementById('user-list'),
         mobileView: document.getElementById('mobile-view'),
     };
@@ -96,6 +91,23 @@
             app.csrf_token = data.csrf_token;
         }
         return data;
+    }
+
+    async function uploadProductImage(file) {
+        const payload = new FormData();
+        payload.append('action', 'product_image_upload');
+        payload.append('csrf_token', app.csrf_token);
+        payload.append('image', file);
+        const response = await fetch(app.api_url, {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': app.csrf_token },
+            body: payload,
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+            throw new Error(data.error || 'No pudimos subir la foto.');
+        }
+        return data.image_path;
     }
 
     function toast(message) {
@@ -153,12 +165,6 @@
         }
         if (view === 'orders') {
             loadOrders();
-        }
-        if (view === 'cash') {
-            loadCash();
-        }
-        if (view === 'reports') {
-            loadReports();
         }
         if (view === 'settings') {
             loadSettings();
@@ -314,7 +320,12 @@
                     <textarea name="description" rows="4" placeholder="Visible únicamente al abrir el producto">${escapeHtml(product?.description || '')}</textarea>
                 </label>
                 <label>
-                    URL DE IMAGEN
+                    FOTO DEL PRODUCTO
+                    <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp">
+                    <small>JPG, PNG o WebP · máximo 8 MB. Se sube automáticamente al alojamiento.</small>
+                </label>
+                <label>
+                    URL DE IMAGEN · OPCIONAL
                     <input name="image_path" value="${escapeHtml(product?.image_path || '')}" placeholder="https://...">
                 </label>
                 <label>
@@ -362,12 +373,19 @@
     async function saveProduct(form) {
         const productId = Number(form.dataset.productId);
         const button = form.querySelector('button[type="submit"]');
+        const product = readProductForm(form);
+        const imageFile = form.querySelector('[name="image_file"]').files[0];
         button.disabled = true;
         try {
+            if (imageFile) {
+                button.textContent = 'SUBIENDO FOTO…';
+                product.image_path = await uploadProductImage(imageFile);
+            }
+            button.textContent = 'GUARDANDO…';
             await apiPost({
                 action: productId ? 'product_update' : 'product_create',
                 product_id: productId || undefined,
-                product: readProductForm(form),
+                product,
             });
             closeModal();
             await loadProducts();
@@ -375,6 +393,7 @@
         } catch (error) {
             toast(error.message);
             button.disabled = false;
+            button.textContent = 'GUARDAR PRODUCTO';
         }
     }
 
@@ -457,6 +476,9 @@
         }
         renderPos();
         renderPosCart();
+        if (state.posQuery.trim()) {
+            showPosSuggestions();
+        }
     }
 
     function posMatches(product) {
@@ -471,7 +493,13 @@
         if (!elements.posProducts) {
             return;
         }
-        const products = state.products.filter(product => product.active && posMatches(product));
+        const products = state.products.filter(product => (
+            product.active
+            && posMatches(product)
+            && product.variants.some(variant => (
+                variant.active && Number(variant.available_stock) > 0
+            ))
+        ));
         elements.posProducts.innerHTML = products.length ? products.map(product => `
             <article class="pos-product">
                 ${safeImage(product.image_path)
@@ -482,7 +510,9 @@
                         <strong>${escapeHtml(product.name)}</strong>
                         <small>${escapeHtml(product.category?.name || '')}</small>
                     </div>
-                    ${product.variants.filter(variant => variant.active).map(variant => {
+                    ${product.variants.filter(variant => (
+                        variant.active && Number(variant.available_stock) > 0
+                    )).map(variant => {
                         const quantity = posQuantity(variant.id);
                         const remaining = Math.max(
                             0,
@@ -551,19 +581,71 @@
             return;
         }
         const matches = state.products.filter(product => (
-            product.active && productSearchText(product).includes(fold(query))
+            product.active
+            && productSearchText(product).includes(fold(query))
+            && product.variants.some(variant => (
+                variant.active && Number(variant.available_stock) > 0
+            ))
         )).slice(0, 6);
         elements.posSuggestions.innerHTML = matches.length ? matches.map(product => `
-            <button class="suggestion-button" type="button" data-pos-suggestion="${Number(product.id)}">
-                ${safeImage(product.image_path)
-                    ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="">`
-                    : '<span class="suggestion-placeholder"></span>'}
-                <span>
-                    <strong>${escapeHtml(product.name)}</strong>
-                    <small>${product.variants.length} variantes</small>
-                </span>
-                <strong>${product.variants.reduce((sum, variant) => sum + Number(variant.available_stock), 0)} disp.</strong>
-            </button>
+            <div class="suggestion-card">
+                <button class="suggestion-button" type="button" data-pos-suggestion="${Number(product.id)}">
+                    ${safeImage(product.image_path)
+                        ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="">`
+                        : '<span class="suggestion-placeholder"></span>'}
+                    <span>
+                        <strong>${escapeHtml(product.name)}</strong>
+                        <small>${escapeHtml(product.category?.name || '')}</small>
+                    </span>
+                    <strong>${product.variants.reduce((sum, variant) => (
+                        sum + (
+                            variant.active
+                                ? Number(variant.available_stock)
+                                : 0
+                        )
+                    ), 0)} disp.</strong>
+                </button>
+                <div class="suggestion-variants">
+                    ${product.variants.filter(variant => (
+                        variant.active && Number(variant.available_stock) > 0
+                    )).map(variant => {
+                        const quantity = posQuantity(variant.id);
+                        const remaining = Math.max(
+                            0,
+                            Number(variant.available_stock) - quantity
+                        );
+                        return `
+                            <div class="suggestion-variant">
+                                <span>
+                                    <strong>${escapeHtml(variant.name)}</strong>
+                                    <small>${remaining} disponibles</small>
+                                </span>
+                                <div class="quantity-control">
+                                    <button
+                                        type="button"
+                                        data-pos-quantity="${Number(variant.id)}"
+                                        data-value="${quantity - 1}"
+                                        ${quantity < 1 ? 'disabled' : ''}
+                                    >−</button>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="${Number(variant.available_stock)}"
+                                        value="${quantity}"
+                                        data-pos-input="${Number(variant.id)}"
+                                    >
+                                    <button
+                                        type="button"
+                                        data-pos-quantity="${Number(variant.id)}"
+                                        data-value="${quantity + 1}"
+                                        ${remaining < 1 ? 'disabled' : ''}
+                                    >+</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
         `).join('') : '<p class="empty-copy">No encontramos productos.</p>';
         elements.posSuggestions.classList.add('open');
     }
@@ -1408,10 +1490,6 @@
             event.preventDefault();
             saveProduct(event.target);
         }
-        if (event.target.id === 'cash-form') {
-            event.preventDefault();
-            submitCashForm(event.target);
-        }
         if (event.target.id === 'order-edit-form') {
             event.preventDefault();
             saveOrderEditor(event.target);
@@ -1536,10 +1614,6 @@
             printStoredOrder(Number(printOrder.dataset.printOrder));
             return;
         }
-        const cashAction = event.target.closest('[data-cash-action]');
-        if (cashAction) {
-            showCashForm(cashAction.dataset.cashAction);
-        }
     });
 
     document.addEventListener('change', event => {
@@ -1601,8 +1675,6 @@
         showUserForm();
     });
     document.getElementById('refresh-orders')?.addEventListener('click', loadOrders);
-    document.getElementById('refresh-reports')?.addEventListener('click', loadReports);
-    document.getElementById('create-backup')?.addEventListener('click', createBackup);
     elements.mobileView?.addEventListener('change', event => showView(event.target.value));
     document.getElementById('logout-button')?.addEventListener('click', async () => {
         try {
