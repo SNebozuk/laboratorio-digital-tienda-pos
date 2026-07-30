@@ -197,6 +197,13 @@
         ].join(' '));
     }
 
+    function variantDisplayName(product, variant) {
+        const name = String(variant?.name || '').trim();
+        return product?.variants?.length === 1 && fold(name) === 'unica'
+            ? ''
+            : name;
+    }
+
     function adminProductImage(product) {
         const image = safeImage(product.image_path);
         return image
@@ -230,7 +237,9 @@
                     ${product.variants.map(variant => `
                         <div class="variant-admin-row">
                             <div class="variant-admin-name">
-                                <strong>${escapeHtml(variant.name)}</strong><br>
+                                ${variantDisplayName(product, variant)
+                                    ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
+                                    : ''}
                                 <small>${escapeHtml(variant.sku)}${variant.barcode ? ` · ${escapeHtml(variant.barcode)}` : ''}</small>
                             </div>
                             <label>
@@ -521,7 +530,9 @@
                         return `
                             <div class="pos-variant-row">
                                 <span>
-                                    <strong>${escapeHtml(variant.name)}</strong><br>
+                                    ${variantDisplayName(product, variant)
+                                        ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
+                                        : ''}
                                     <small>${escapeHtml(variant.sku)} · ${remaining} disponibles</small>
                                 </span>
                                 <span>${money(variant.price_cents)}</span>
@@ -559,7 +570,9 @@
                 <div class="cart-line-head">
                     <div>
                         <strong>${escapeHtml(item.product.name)}</strong><br>
-                        <small>${escapeHtml(item.variant.name)}</small>
+                        ${variantDisplayName(item.product, item.variant)
+                            ? `<small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
+                            : ''}
                     </div>
                     <strong>${money(Number(item.variant.price_cents) * item.quantity)}</strong>
                 </div>
@@ -617,7 +630,9 @@
                         return `
                             <div class="suggestion-variant">
                                 <span>
-                                    <strong>${escapeHtml(variant.name)}</strong>
+                                    ${variantDisplayName(product, variant)
+                                        ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong>`
+                                        : ''}
                                     <small>${remaining} disponibles</small>
                                 </span>
                                 <div class="quantity-control">
@@ -899,7 +914,13 @@
                 max,
                 unitPrice,
                 productName: indexed?.product.name || snapshot?.product_name || 'Producto',
-                variantName: indexed?.variant.name || snapshot?.variant_name || 'Variante',
+                variantName: indexed
+                    ? variantDisplayName(indexed.product, indexed.variant)
+                    : (
+                        fold(snapshot?.variant_name || '') === 'unica'
+                            ? ''
+                            : snapshot?.variant_name || 'Variante'
+                    ),
                 active: Boolean(indexed?.product.active && indexed?.variant.active),
             };
         });
@@ -909,7 +930,7 @@
                 <div>
                     <strong>${escapeHtml(line.productName)}</strong><br>
                     <small>
-                        ${escapeHtml(line.variantName)} · ${money(line.unitPrice)}
+                        ${line.variantName ? `${escapeHtml(line.variantName)} · ` : ''}${money(line.unitPrice)}
                         ${line.active ? '' : ' · INACTIVA'}
                     </small>
                 </div>
@@ -990,7 +1011,9 @@
                     : '<span class="suggestion-placeholder"></span>'}
                 <span>
                     <strong>${escapeHtml(product.name)}</strong>
-                    <small>${escapeHtml(variant.name)} · ${Number(variant.available_stock)} disponibles</small>
+                    <small>${variantDisplayName(product, variant)
+                        ? `${escapeHtml(variantDisplayName(product, variant))} · `
+                        : ''}${Number(variant.available_stock)} disponibles</small>
                 </span>
                 <strong>${money(variant.price_cents)}</strong>
             </button>
