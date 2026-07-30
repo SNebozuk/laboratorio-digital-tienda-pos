@@ -18,6 +18,11 @@ storage/*
 data/proofs/
 data/comprobantes/
 uploads/
+!v1/uploads/
+!v1/uploads/products/
+v1/uploads/products/*
+!v1/uploads/products/.gitkeep
+!v1/uploads/products/.htaccess
 
 # Dependencias y herramientas locales
 vendor/
