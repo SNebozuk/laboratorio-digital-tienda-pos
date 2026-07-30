@@ -323,7 +323,16 @@
                             ? `<br><small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
                             : ''}
                     </div>
-                    <strong>${money(item.lineTotal)}</strong>
+                    <div class="cart-line-actions">
+                        <strong>${money(item.lineTotal)}</strong>
+                        <button
+                            class="cart-remove"
+                            type="button"
+                            data-remove-item="${Number(item.variant.id)}"
+                            aria-label="Quitar ${escapeHtml(item.product.name)} del pedido"
+                            title="Quitar del pedido"
+                        >×</button>
+                    </div>
                 </div>
                 <div class="cart-line-bottom">
                     <div class="quantity-control">
@@ -717,6 +726,13 @@
                 Number(quantityButton.dataset.quantity),
                 Number(quantityButton.dataset.value)
             );
+            return;
+        }
+
+        const removeItem = event.target.closest('[data-remove-item]');
+        if (removeItem) {
+            setQuantity(Number(removeItem.dataset.removeItem), 0);
+            toast('Producto quitado del pedido.');
             return;
         }
 
