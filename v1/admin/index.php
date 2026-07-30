@@ -85,12 +85,6 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button" type="button" data-view="orders">
                         Ventas y pedidos
                     </button>
-                    <button class="admin-nav-button" type="button" data-view="cash">
-                        Caja
-                    </button>
-                    <button class="admin-nav-button" type="button" data-view="reports">
-                        Reportes
-                    </button>
                     <?php if ($user['role'] === 'admin'): ?>
                         <button class="admin-nav-button" type="button" data-view="users">
                             Usuarios
@@ -114,8 +108,6 @@ header('Referrer-Policy: same-origin');
                         <option value="products">Productos</option>
                         <option value="pos">Punto de venta</option>
                         <option value="orders">Ventas y pedidos</option>
-                        <option value="cash">Caja</option>
-                        <option value="reports">Reportes</option>
                         <?php if ($user['role'] === 'admin'): ?>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
@@ -194,38 +186,6 @@ header('Referrer-Policy: same-origin');
                         </button>
                     </div>
                     <div id="order-list" class="order-list"></div>
-                </section>
-
-                <section class="admin-view" id="view-cash">
-                    <div class="view-heading">
-                        <div>
-                            <p class="eyebrow">CONTROL DIARIO</p>
-                            <h1>CAJA</h1>
-                            <p>Apertura, movimientos y arqueo de cierre.</p>
-                        </div>
-                    </div>
-                    <div id="cash-content"></div>
-                </section>
-
-                <section class="admin-view" id="view-reports">
-                    <div class="view-heading">
-                        <div>
-                            <p class="eyebrow">INFORMACIÓN OPERATIVA</p>
-                            <h1>REPORTES</h1>
-                            <p>Ventas, pedidos activos, stock bajo y movimientos recientes.</p>
-                        </div>
-                        <div class="button-row">
-                            <button class="secondary-button fit-button" id="refresh-reports" type="button">
-                                ACTUALIZAR
-                            </button>
-                            <?php if ($user['role'] === 'admin'): ?>
-                                <button class="primary-button fit-button" id="create-backup" type="button">
-                                    CREAR RESPALDO
-                                </button>
-                            <?php endif ?>
-                        </div>
-                    </div>
-                    <div id="report-content"></div>
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>
