@@ -3,7 +3,15 @@ DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  RewriteRule ^tienda$ tienda/ [R=302,L]
+  RewriteRule ^admin$ admin/ [R=302,L]
+
+  RewriteRule ^tienda/assets/(.+)$ v1/assets/$1 [L]
+  RewriteRule ^tienda/admin/assets/(.+)$ v1/admin/assets/$1 [L]
+  RewriteRule ^tienda/payment\.php$ v1/payment.php [L,QSA]
   RewriteRule ^tienda/?$ v1/index.php [L,QSA]
+
+  RewriteRule ^admin/receipt\.php$ v1/admin/receipt.php [L,QSA]
   RewriteRule ^admin/?$ v1/admin/index.php [L,QSA]
 </IfModule>
 
