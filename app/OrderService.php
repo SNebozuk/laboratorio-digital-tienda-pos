@@ -27,6 +27,11 @@ final class OrderService
         array $items,
         string $channel = 'web'
     ): array {
+        if (empty($this->config['orders_enabled'])) {
+            throw new ConflictException(
+                'La nueva tienda todavía no está recibiendo pedidos.'
+            );
+        }
         if (!in_array($channel, ['web', 'whatsapp'], true)) {
             throw new ValidationException('El canal del pedido no es válido.');
         }
