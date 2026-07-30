@@ -4,6 +4,13 @@ declare(strict_types=1);
 $app = require dirname(__DIR__, 2) . '/app/container.php';
 $user = $app['auth']->user();
 $setupRequired = (int) $app['pdo']->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0;
+$storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
+$storePath = $storePath === '/' ? '' : $storePath;
+$applicationPath = $storePath === '' ? '' : rtrim(dirname($storePath), '/');
+$storeAssetPath = $storePath . '/assets';
+$adminAssetPath = $storePath . '/admin/assets';
+$apiUrl = ($applicationPath === '' ? '' : $applicationPath) . '/api.php';
+$escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data: blob:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
 header('X-Content-Type-Options: nosniff');
@@ -16,8 +23,8 @@ header('Referrer-Policy: same-origin');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#050505">
     <title>Laboratorio Digital · Administración</title>
-    <link rel="stylesheet" href="../assets/app.css">
-    <link rel="stylesheet" href="assets/admin.css">
+    <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css">
+    <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css">
 </head>
 <body class="admin-body">
     <?php if (!$user): ?>
@@ -308,12 +315,12 @@ header('Referrer-Policy: same-origin');
 
     <script id="admin-app-data" type="application/json"><?=
         json_encode([
-            'api_url' => '../../api.php',
+            'api_url' => $apiUrl,
             'csrf_token' => $app['csrf_token'],
             'user' => $user,
             'setup_required' => $setupRequired,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
-    <script src="assets/admin.js" defer></script>
+    <script src="<?= $escape($adminAssetPath) ?>/admin.js" defer></script>
 </body>
 </html>
