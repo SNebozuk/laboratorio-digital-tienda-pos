@@ -56,20 +56,6 @@ try {
                     ),
                 ]);
 
-            case 'cash':
-                $app['auth']->requireUser();
-                Http::json([
-                    'ok' => true,
-                    'cash' => $app['cash']->current(),
-                ]);
-
-            case 'reports':
-                $app['auth']->requireUser();
-                Http::json([
-                    'ok' => true,
-                    'reports' => $app['reports']->dashboard(),
-                ]);
-
             case 'backups':
                 $app['auth']->requireAdmin();
                 Http::json([
@@ -162,6 +148,16 @@ try {
             );
             Http::json(['ok' => true, 'result' => $proof], 201);
 
+        case 'product_image_upload':
+            $app['auth']->requireAdmin();
+            $image = $app['product_images']->receive(
+                is_array($_FILES['image'] ?? null) ? $_FILES['image'] : []
+            );
+            Http::json([
+                'ok' => true,
+                'image_path' => $image['image_path'],
+            ], 201);
+
         case 'product_create':
             $user = $app['auth']->requireAdmin();
             $productId = $app['products']->create(
@@ -245,32 +241,6 @@ try {
             $user = $app['auth']->requireAdmin();
             $app['orders']->cancel(
                 (int) ($input['order_id'] ?? 0),
-                (int) $user['id']
-            );
-            Http::json(['ok' => true]);
-
-        case 'cash_open':
-            $user = $app['auth']->requireUser();
-            $cash = $app['cash']->open(
-                (int) ($input['opening_cents'] ?? -1),
-                (int) $user['id']
-            );
-            Http::json(['ok' => true, 'cash' => $cash], 201);
-
-        case 'cash_close':
-            $user = $app['auth']->requireUser();
-            $cash = $app['cash']->close(
-                (int) ($input['counted_cents'] ?? -1),
-                (int) $user['id']
-            );
-            Http::json(['ok' => true, 'cash' => $cash]);
-
-        case 'cash_movement':
-            $user = $app['auth']->requireUser();
-            $app['cash']->addMovement(
-                (string) ($input['type'] ?? ''),
-                (int) ($input['amount_cents'] ?? 0),
-                (string) ($input['detail'] ?? ''),
                 (int) $user['id']
             );
             Http::json(['ok' => true]);
