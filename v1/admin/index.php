@@ -9,6 +9,11 @@ $storePath = $storePath === '/' ? '' : $storePath;
 $applicationPath = $storePath === '' ? '' : rtrim(dirname($storePath), '/');
 $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
+$assetVersion = (string) max(
+    (int) @filemtime(dirname(__DIR__) . '/assets/app.css'),
+    (int) @filemtime(__DIR__ . '/assets/admin.css'),
+    (int) @filemtime(__DIR__ . '/assets/admin.js')
+);
 $apiUrl = ($applicationPath === '' ? '' : $applicationPath) . '/api.php';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
@@ -23,8 +28,8 @@ header('Referrer-Policy: same-origin');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#050505">
     <title>Laboratorio Digital · Administración</title>
-    <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css">
-    <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css">
+    <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
+    <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($assetVersion) ?>">
 </head>
 <body class="admin-body">
     <?php if (!$user): ?>
@@ -281,6 +286,6 @@ header('Referrer-Policy: same-origin');
             'setup_required' => $setupRequired,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
-    <script src="<?= $escape($adminAssetPath) ?>/admin.js" defer></script>
+    <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>
