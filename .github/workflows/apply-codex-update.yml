@@ -17,8 +17,9 @@ jobs:
         shell: bash
         run: |
           mkdir -p /tmp/codex-source
-          tar -xzf codex-source.tar.gz -C /tmp/codex-source
-          git rm -rf .
+          cp codex-source.tar.gz /tmp/codex-source.tar.gz
+          tar -xzf /tmp/codex-source.tar.gz -C /tmp/codex-source
+          git ls-files -z | grep -zv '^\.github/' | xargs -0 git rm -f --
           cp -a /tmp/codex-source/. .
           git add -A
           git config user.name "github-actions[bot]"
