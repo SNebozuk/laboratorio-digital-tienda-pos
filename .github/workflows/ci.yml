@@ -1,0 +1,34 @@
+name: Validacion
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v5
+
+      - name: Preparar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: pdo_sqlite, fileinfo
+          coverage: none
+
+      - name: Validar sintaxis PHP
+        run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Validar JavaScript
+        run: |
+          node --check v1/assets/store.js
+          node --check v1/assets/payment.js
+          node --check v1/admin/assets/admin.js
+
+      - name: Probar contrato de base de datos
+        run: python3 -m unittest tests/test_schema.py -v
