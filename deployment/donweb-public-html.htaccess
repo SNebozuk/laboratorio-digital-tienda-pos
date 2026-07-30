@@ -10,6 +10,7 @@ DirectoryIndex index.php
   RewriteRule ^admin$ admin/ [R=302,L]
 
   RewriteRule ^tienda/assets/(.+)$ laboratorio-digital-git-20260730/v1/assets/$1 [L]
+  RewriteRule ^tienda/uploads/products/(.+)$ laboratorio-digital-git-20260730/v1/uploads/products/$1 [L]
   RewriteRule ^tienda/admin/assets/(.+)$ laboratorio-digital-git-20260730/v1/admin/assets/$1 [L]
   RewriteRule ^tienda/payment\.php$ laboratorio-digital-git-20260730/v1/payment.php [L,QSA]
   RewriteRule ^tienda/?$ laboratorio-digital-git-20260730/v1/index.php [L,QSA]
