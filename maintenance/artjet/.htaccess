@@ -1,0 +1,4 @@
+AuthType None
+Require all granted
+
+Options -Indexes

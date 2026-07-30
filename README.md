@@ -4,7 +4,28 @@ Sistema centralizado para venta mayorista, pedidos online con retiro en el local
 
 ## Estado actual
 
-**Versión 0.1 — modelo navegable.** La experiencia de cliente, administración y POS está definida y puede recorrerse en el navegador. La implementación productiva con base de datos, usuarios, correo y respaldo es la siguiente etapa.
+**Versión 0.2 — base funcional en validación.** El modelo navegable aprobado se
+conserva como referencia y la nueva versión ya utiliza una base de datos
+centralizada, servicios transaccionales y pantallas separadas para clientes y
+administración.
+
+### Base productiva
+
+La implementación estable se está construyendo en paralelo, sin reemplazar el
+modelo publicado:
+
+- `v1/`: tienda pública conectada a datos reales.
+- `v1/admin/`: administración y POS separados.
+- `api.php`: acciones de catálogo, pedidos, productos, POS, pagos y caja.
+- `database/schema.sql`: fuente única de productos, variantes y stock.
+- `app/`: servicios transaccionales y seguridad.
+- `tests/`: contratos automáticos de integridad.
+- `tasks/maintenance.php`: vencimiento de pedidos y envío de correos por tarea programada.
+
+El stock físico y el reservado se almacenan por separado. Un pedido web no
+reserva al confirmar el carrito: la reserva se ejecuta de manera atómica cuando
+el cliente sube el comprobante. Consultar `docs/ARQUITECTURA_MVP.md` y
+`docs/PLAN_DE_TRABAJO.md`.
 
 ## Abrir los modelos
 
@@ -28,7 +49,10 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 - Carrito con múltiples productos y variantes.
 - Pago web por transferencia bancaria.
 - Carga de comprobante JPG, PNG o PDF.
+- Página personal de seguimiento para retomar la carga desde el email.
 - Reserva de stock al informar el pago, después de validar nuevamente la disponibilidad.
+- Si un comprobante es rechazado, el enlace anterior se invalida y se envía uno
+  nuevo para reintentar dentro del plazo configurado.
 - Confirmaciones por email desde `ventas@laboratorio-digital.com.ar`.
 - Confirmación final con el mensaje “Su pedido ha sido enviado” y acceso a WhatsApp para compartir únicamente el detalle del pedido.
 - Retiro exclusivo en el local, sin envíos.
@@ -48,6 +72,9 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 - Estados: pendiente de pago, pago informado, pagado/preparar, listo para retirar, entregado y cancelado.
 - Aprobación manual de transferencias y auditoría.
 - Caja, movimientos de stock, reportes básicos y respaldos.
+- Usuarios administradores y vendedores.
+- Configuración de transferencia, plazos, WhatsApp y retiro desde administración.
+- Respaldo consistente de base y comprobantes desde el reporte operativo.
 
 ## Regla central de stock
 
@@ -55,16 +82,25 @@ Existe una sola fuente de stock para tienda pública, pedidos web y POS. Agregar
 
 ## Arquitectura prevista
 
-Primera versión monolítica en PHP 8.1+ con SQLite, preparada para DonWeb Cloud. Los comprobantes se almacenarán fuera del acceso público y solo podrán abrirse desde administración. Los correos reales requieren SMTP autenticado, SPF y DKIM para `ventas@laboratorio-digital.com.ar`.
+Primera versión monolítica en PHP 8.1+ con SQLite, preparada para DonWeb Cloud.
+Los comprobantes y respaldos se almacenan fuera del acceso público y solo
+pueden administrarse con sesión. Los correos se encolan con cada cambio de
+estado y se procesan mediante una tarea programada; deben activarse únicamente
+después de validar la casilla y la entrega desde DonWeb.
 
 La facturación fiscal permanece fuera del alcance hasta que se confirme su integración.
 
 ## Estructura del repositorio
 
 ```text
-data/       Protección del almacenamiento privado; las bases reales no se publican.
+app/        Servicios de negocio, seguridad y acceso a datos.
+database/   Esquema versionado de SQLite.
+storage/    Datos privados ignorados por Git.
+tasks/      Mantenimiento periódico para vencimientos y correos.
+v1/         Tienda pública funcional.
+v1/admin/   Administración, POS, caja y reportes.
 outputs/    Modelos navegables y documentación funcional.
-index.php   Entrada prevista para el alojamiento PHP.
+index.php   Página temporal de mantenimiento de artjet.com.ar.
 preview.html Acceso local a los modelos.
 ```
 

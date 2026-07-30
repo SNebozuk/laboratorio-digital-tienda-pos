@@ -16,6 +16,10 @@ Este repositorio contiene código y modelos de interfaz. No debe utilizarse para
 
 Los comprobantes deben guardarse fuera del acceso público y entregarse únicamente después de validar la sesión y los permisos del usuario administrador. La aplicación debe comprobar extensión, tipo real, tamaño y nombre seguro para cada archivo.
 
+El enlace público de seguimiento contiene un token aleatorio personal. La base
+solo guarda su hash, la página no expone identidad del cliente ni archivos
+anteriores, y el token se reemplaza cuando un comprobante es rechazado.
+
 Las claves y credenciales deben configurarse como variables de entorno en DonWeb Cloud. Nunca deben escribirse directamente en el código.
 
 ## Antes de publicar

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+config.local.php
 
 # Bases de datos y archivos temporales de SQLite
 data/*.sqlite
@@ -9,6 +10,9 @@ data/*.sqlite3
 data/*.db
 data/*.db-wal
 data/*.db-shm
+storage/*
+!storage/.gitkeep
+!storage/.htaccess
 
 # Comprobantes y archivos privados cargados por clientes
 data/proofs/
@@ -18,12 +22,15 @@ uploads/
 # Dependencias y herramientas locales
 vendor/
 node_modules/
+__pycache__/
+*.py[cod]
 .phpunit.result.cache
 
 # Archivos de trabajo, registros y paquetes generados
 work/
 git-history/
 outputs/*.zip
+backups/
 *.log
 *.bak
 *.tmp
