@@ -63,6 +63,14 @@ final class Config
                 'debug',
                 filter_var(getenv('APP_DEBUG') ?: false, FILTER_VALIDATE_BOOL)
             ),
+            'orders_enabled' => self::bool(
+                $local,
+                'orders_enabled',
+                filter_var(
+                    getenv('APP_ORDERS_ENABLED') ?: false,
+                    FILTER_VALIDATE_BOOL
+                )
+            ),
             'mail_enabled' => self::bool(
                 $local,
                 'mail_enabled',
