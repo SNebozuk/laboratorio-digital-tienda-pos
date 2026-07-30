@@ -209,17 +209,6 @@ final class OrderService
                 $actorUserId,
                 $publicNumber
             ): array {
-                $cashSession = $pdo->query(
-                    "SELECT id FROM cash_sessions
-                     WHERE status = 'open'
-                     ORDER BY id DESC LIMIT 1"
-                )->fetchColumn();
-                if (!$cashSession) {
-                    throw new ConflictException(
-                        'Abrí la caja antes de registrar una venta de mostrador.'
-                    );
-                }
-
                 $resolvedItems = $this->resolveItems($pdo, $quantities);
                 $total = array_sum(array_column($resolvedItems, 'line_total_cents'));
 
@@ -288,25 +277,6 @@ final class OrderService
                         'reference' => $publicNumber,
                     ]);
                 }
-
-                $cashMovement = $pdo->prepare(
-                    'INSERT INTO cash_movements(
-                        cash_session_id, order_id, actor_user_id,
-                        type, amount_cents, payment_method, detail
-                     ) VALUES(
-                        :cash_session_id, :order_id, :actor_user_id,
-                        :type, :amount_cents, :payment_method, :detail
-                     )'
-                );
-                $cashMovement->execute([
-                    'cash_session_id' => $cashSession,
-                    'order_id' => $orderId,
-                    'actor_user_id' => $actorUserId,
-                    'type' => 'sale',
-                    'amount_cents' => $total,
-                    'payment_method' => $paymentMethod,
-                    'detail' => 'Venta ' . $publicNumber,
-                ]);
 
                 $this->recordEvent(
                     $pdo,
