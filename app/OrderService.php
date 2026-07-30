@@ -32,13 +32,23 @@ final class OrderService
         }
 
         $customerName = trim((string) ($customer['name'] ?? ''));
-        $customerEmail = trim((string) ($customer['email'] ?? ''));
-        $customerPhone = trim((string) ($customer['phone'] ?? '')) ?: null;
+        $customerEmail = trim((string) ($customer['email'] ?? '')) ?: null;
+        $customerPhone = preg_replace(
+            '/\D+/',
+            '',
+            (string) ($customer['phone'] ?? '')
+        ) ?: null;
 
         if ($customerName === '') {
             throw new ValidationException('Ingresá tu nombre o el nombre del comercio.');
         }
-        if (!filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+        if ($customerPhone === null || strlen($customerPhone) < 8) {
+            throw new ValidationException('Ingresá un WhatsApp válido.');
+        }
+        if (
+            $customerEmail !== null
+            && !filter_var($customerEmail, FILTER_VALIDATE_EMAIL)
+        ) {
             throw new ValidationException('Ingresá un email válido.');
         }
 
@@ -105,21 +115,44 @@ final class OrderService
                     'pending_payment',
                     'Pedido creado sin reserva. El stock se reservará al informar el pago.'
                 );
-                $this->queueOrderMail(
-                    $pdo,
-                    $orderId,
-                    $customerEmail,
-                    'Recibimos tu pedido ' . $publicNumber,
-                    'order_created',
-                    [
-                        'public_number' => $publicNumber,
-                        'customer_name' => $customerName,
-                        'total_cents' => $total,
-                        'payment_deadline_at' => $deadline,
-                        'payment_url' => $paymentUrl,
-                        'items' => $resolvedItems,
-                    ]
+                $mailPayload = [
+                    'public_number' => $publicNumber,
+                    'customer_name' => $customerName,
+                    'customer_phone' => $customerPhone,
+                    'total_cents' => $total,
+                    'payment_deadline_at' => $deadline,
+                    'payment_url' => $paymentUrl,
+                    'items' => $resolvedItems,
+                ];
+                if ($customerEmail !== null) {
+                    $this->queueOrderMail(
+                        $pdo,
+                        $orderId,
+                        $customerEmail,
+                        'Recibimos tu pedido ' . $publicNumber,
+                        'order_created',
+                        $mailPayload
+                    );
+                }
+
+                $salesEmail = $this->stringSetting(
+                    'sales_email',
+                    'ventas@laboratorio-digital.com.ar'
                 );
+                if (
+                    filter_var($salesEmail, FILTER_VALIDATE_EMAIL)
+                    && strcasecmp($salesEmail, (string) $customerEmail) !== 0
+                ) {
+                    $mailPayload['audience'] = 'internal';
+                    $this->queueOrderMail(
+                        $pdo,
+                        $orderId,
+                        $salesEmail,
+                        'Nuevo pedido ' . $publicNumber,
+                        'order_created',
+                        $mailPayload
+                    );
+                }
 
                 return [
                     'id' => $orderId,
