@@ -21,6 +21,8 @@ return [
 
     'session_name' => 'laboratorio_digital_session',
     'debug' => false,
+    // Mantener en false hasta cargar banco, retiro, correo y stock final.
+    'orders_enabled' => false,
 
     // Activar únicamente después de crear y validar la casilla en DonWeb.
     'mail_enabled' => false,
