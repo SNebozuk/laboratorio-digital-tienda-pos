@@ -54,6 +54,44 @@ final class Database
         }
 
         $pdo->exec($schema);
+        self::seedCatalog(
+            $pdo,
+            dirname($schemaPath) . '/catalog_seed.sql'
+        );
+    }
+
+    private static function seedCatalog(PDO $pdo, string $seedPath): void
+    {
+        $version = 2;
+        $query = $pdo->prepare(
+            'SELECT 1 FROM schema_migrations WHERE version = :version'
+        );
+        $query->execute(['version' => $version]);
+        if ($query->fetchColumn() !== false) {
+            return;
+        }
+
+        $seed = file_get_contents($seedPath);
+        if ($seed === false) {
+            throw new \RuntimeException('No se pudo leer el catálogo inicial.');
+        }
+
+        $pdo->exec('BEGIN IMMEDIATE');
+        try {
+            $pdo->exec($seed);
+            $insert = $pdo->prepare(
+                'INSERT INTO schema_migrations(version) VALUES(:version)'
+            );
+            $insert->execute(['version' => $version]);
+            $pdo->exec('COMMIT');
+        } catch (Throwable $exception) {
+            try {
+                $pdo->exec('ROLLBACK');
+            } catch (Throwable) {
+                // La transacción pudo fallar antes de iniciarse.
+            }
+            throw $exception;
+        }
     }
 
     /**
