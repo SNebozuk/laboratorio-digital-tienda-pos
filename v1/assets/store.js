@@ -199,6 +199,22 @@
             : `${money(minimum)} – ${money(maximum)}`;
     }
 
+    function variantDisplayName(product, variant) {
+        const name = String(variant?.name || '').trim();
+        const normalized = name
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        return product.variants.length === 1 && normalized === 'unica'
+            ? ''
+            : name;
+    }
+
+    function quantityLabel(product, variant) {
+        const variantName = variantDisplayName(product, variant);
+        return `Cantidad de ${product.name}${variantName ? ` ${variantName}` : ''}`;
+    }
+
     function renderCatalog() {
         const matches = filteredProducts();
         if (!matches.length) {
@@ -231,10 +247,11 @@
                         ${product.variants.map(variant => {
                             const quantity = cartQuantity(variant.id);
                             const available = visibleAvailable(variant);
+                            const variantName = variantDisplayName(product, variant);
                             return `
                                 <div class="variant-row">
                                     <div>
-                                        <strong>${escapeHtml(variant.name)}</strong>
+                                        ${variantName ? `<strong>${escapeHtml(variantName)}</strong>` : ''}
                                         <div class="variant-stock ${available ? '' : 'none'}">
                                             ${available ? `${available} disponibles` : 'Sin stock'}
                                             ${quantity ? ` · ${quantity} en tu pedido` : ''}
@@ -256,7 +273,7 @@
                                             value="${quantity}"
                                             inputmode="numeric"
                                             data-quantity-input="${Number(variant.id)}"
-                                            aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(variant.name)}"
+                                            aria-label="${escapeHtml(quantityLabel(product, variant))}"
                                         >
                                         <button
                                             type="button"
@@ -301,8 +318,10 @@
             <div class="cart-line">
                 <div class="cart-line-head">
                     <div>
-                        <strong>${escapeHtml(item.product.name)}</strong><br>
-                        <small>${escapeHtml(item.variant.name)}</small>
+                        <strong>${escapeHtml(item.product.name)}</strong>
+                        ${variantDisplayName(item.product, item.variant)
+                            ? `<br><small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
+                            : ''}
                     </div>
                     <strong>${money(item.lineTotal)}</strong>
                 </div>
@@ -319,7 +338,7 @@
                             max="${Number(item.variant.available_stock)}"
                             value="${item.quantity}"
                             data-quantity-input="${Number(item.variant.id)}"
-                            aria-label="Cantidad de ${escapeHtml(item.product.name)} ${escapeHtml(item.variant.name)}"
+                            aria-label="${escapeHtml(quantityLabel(item.product, item.variant))}"
                         >
                         <button
                             type="button"
@@ -414,9 +433,12 @@
             <p>${escapeHtml(product.description || 'Este producto todavía no tiene descripción.')}</p>
             <div class="notice">
                 <strong>${priceRange(product)}</strong><br>
-                ${product.variants.map(variant => (
-                    `${escapeHtml(variant.name)}: ${visibleAvailable(variant)} disponibles`
-                )).join('<br>')}
+                ${product.variants.map(variant => {
+                    const variantName = variantDisplayName(product, variant);
+                    return variantName
+                        ? `${escapeHtml(variantName)}: ${visibleAvailable(variant)} disponibles`
+                        : `${visibleAvailable(variant)} disponibles`;
+                }).join('<br>')}
             </div>
         `);
     }
@@ -432,7 +454,9 @@
             <div class="checkout-lines">
                 ${items.map(item => `
                     <div class="checkout-line">
-                        <span>${item.quantity} × ${escapeHtml(item.product.name)} · ${escapeHtml(item.variant.name)}</span>
+                        <span>${item.quantity} × ${escapeHtml(item.product.name)}${variantDisplayName(item.product, item.variant)
+                            ? ` · ${escapeHtml(variantDisplayName(item.product, item.variant))}`
+                            : ''}</span>
                         <strong>${money(item.lineTotal)}</strong>
                     </div>
                 `).join('')}
@@ -612,7 +636,9 @@
 
     function whatsappUrl(order) {
         const lines = cartItems().map(item => (
-            `- ${item.quantity} x ${item.product.name} · ${item.variant.name} (${money(item.lineTotal)})`
+            `- ${item.quantity} x ${item.product.name}${variantDisplayName(item.product, item.variant)
+                ? ` · ${variantDisplayName(item.product, item.variant)}`
+                : ''} (${money(item.lineTotal)})`
         )).join('\n');
         const message = [
             'Hola Laboratorio Digital.',
