@@ -8,6 +8,10 @@ $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'),
 $storePath = $storePath === '/' ? '' : $storePath;
 $applicationPath = $storePath === '' ? '' : rtrim(dirname($storePath), '/');
 $assetPath = $storePath . '/assets';
+$assetVersion = (string) max(
+    (int) @filemtime(__DIR__ . '/assets/app.css'),
+    (int) @filemtime(__DIR__ . '/assets/store.js')
+);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $apiUrl = ($applicationPath === '' ? '' : $applicationPath) . '/api.php';
 $whatsappNumber = preg_replace('/\D+/', '', (string) ($publicSettings['whatsapp_number'] ?? '5493415699338')) ?: '5493415699338';
@@ -24,7 +28,7 @@ header('Referrer-Policy: same-origin');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#050505">
     <title>Laboratorio Digital · Catálogo mayorista</title>
-    <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css">
+    <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
 </head>
 <body>
     <header class="store-header">
@@ -126,6 +130,6 @@ header('Referrer-Policy: same-origin');
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
-    <script src="<?= $escape($assetPath) ?>/store.js" defer></script>
+    <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>
