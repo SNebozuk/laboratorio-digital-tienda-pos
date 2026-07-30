@@ -128,10 +128,19 @@
     function filteredProducts() {
         const query = fold(state.query);
         return products.filter(product => {
-            const matchesCategory = !state.category
+            const matchesCategory = query !== ''
+                || !state.category
                 || product.category?.slug === state.category;
-            return matchesCategory && productSearchText(product).includes(query);
+            return matchesCategory
+                && productHasStock(product)
+                && productSearchText(product).includes(query);
         });
+    }
+
+    function productHasStock(product) {
+        return product.variants.some(variant => (
+            Number(variant.available_stock) > 0
+        ));
     }
 
     function cartQuantity(variantId) {
@@ -159,6 +168,9 @@
         }
         renderCatalog();
         renderCart();
+        if (state.query.trim()) {
+            showSuggestions();
+        }
     }
 
     function renderCategories() {
@@ -331,7 +343,7 @@
                             data-remove-item="${Number(item.variant.id)}"
                             aria-label="Quitar ${escapeHtml(item.product.name)} del pedido"
                             title="Quitar del pedido"
-                        >×</button>
+                        ><span aria-hidden="true">🗑</span></button>
                     </div>
                 </div>
                 <div class="cart-line-bottom">
@@ -368,26 +380,72 @@
             closeSuggestions();
             return;
         }
-        const matches = filteredProducts().slice(0, 6);
+        const matches = products.filter(product => (
+            product.active !== false
+            && productHasStock(product)
+            && productSearchText(product).includes(fold(query))
+        )).slice(0, 6);
         elements.suggestions.innerHTML = matches.length ? matches.map(product => {
             const stock = product.variants.reduce(
                 (sum, variant) => sum + visibleAvailable(variant),
                 0
             );
             return `
-                <button
-                    class="suggestion-button"
-                    type="button"
-                    role="option"
-                    data-suggestion="${Number(product.id)}"
-                >
-                    ${productImage(product, 'suggestion')}
-                    <span>
-                        <strong>${escapeHtml(product.name)}</strong>
-                        <small>${escapeHtml(product.category?.name || '')} · ${stock} disponibles</small>
-                    </span>
-                    <strong>${priceRange(product)}</strong>
-                </button>
+                <div class="suggestion-card" role="option">
+                    <button
+                        class="suggestion-button"
+                        type="button"
+                        data-suggestion="${Number(product.id)}"
+                    >
+                        ${productImage(product, 'suggestion')}
+                        <span>
+                            <strong>${escapeHtml(product.name)}</strong>
+                            <small>${escapeHtml(product.category?.name || '')} · ${stock} disponibles</small>
+                        </span>
+                        <strong>${priceRange(product)}</strong>
+                    </button>
+                    <div class="suggestion-variants">
+                        ${product.variants.filter(variant => (
+                            Number(variant.available_stock) > 0
+                        )).map(variant => {
+                            const quantity = cartQuantity(variant.id);
+                            const available = visibleAvailable(variant);
+                            const variantName = variantDisplayName(product, variant);
+                            return `
+                                <div class="suggestion-variant">
+                                    <span>
+                                        ${variantName ? `<strong>${escapeHtml(variantName)}</strong>` : ''}
+                                        <small>${available} disponibles</small>
+                                    </span>
+                                    <div class="quantity-control">
+                                        <button
+                                            type="button"
+                                            data-quantity="${Number(variant.id)}"
+                                            data-value="${quantity - 1}"
+                                            ${quantity < 1 ? 'disabled' : ''}
+                                            aria-label="Quitar una unidad"
+                                        >−</button>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="${Number(variant.available_stock)}"
+                                            value="${quantity}"
+                                            data-quantity-input="${Number(variant.id)}"
+                                            aria-label="${escapeHtml(quantityLabel(product, variant))}"
+                                        >
+                                        <button
+                                            type="button"
+                                            data-quantity="${Number(variant.id)}"
+                                            data-value="${quantity + 1}"
+                                            ${available < 1 ? 'disabled' : ''}
+                                            aria-label="Agregar una unidad"
+                                        >+</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
             `;
         }).join('') : '<p class="empty-copy">No encontramos coincidencias.</p>';
         elements.suggestions.classList.add('open');
