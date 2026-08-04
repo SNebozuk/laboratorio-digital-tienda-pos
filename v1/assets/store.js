@@ -7,6 +7,7 @@
         category: '',
         query: '',
         searchActive: false,
+        openedProductId: null,
         remoteSearchIds: new Set(),
         cart: new Map(),
         order: null,
@@ -359,7 +360,7 @@
         const maximum = Math.max(...prices);
         return minimum === maximum
             ? money(minimum)
-            : `${money(minimum)} – ${money(maximum)}`;
+            : `${money(minimum)} a ${money(maximum)}`;
     }
 
     function variantDisplayName(product, variant) {
@@ -376,6 +377,143 @@
     function quantityLabel(product, variant) {
         const variantName = variantDisplayName(product, variant);
         return `Cantidad de ${product.name}${variantName ? ` ${variantName}` : ''}`;
+    }
+
+    function quantityControl(product, variant, extraClass = '') {
+        const quantity = cartQuantity(variant.id);
+        const available = visibleAvailable(variant);
+        return `
+            <div class="quantity-control ${extraClass}">
+                <button
+                    type="button"
+                    data-quantity="${Number(variant.id)}"
+                    data-value="${quantity - 1}"
+                    ${quantity < 1 ? 'disabled' : ''}
+                    aria-label="Quitar una unidad"
+                >−</button>
+                <input
+                    type="number"
+                    min="0"
+                    max="${Number(variant.available_stock)}"
+                    value="${quantity}"
+                    inputmode="numeric"
+                    data-quantity-input="${Number(variant.id)}"
+                    aria-label="${escapeHtml(quantityLabel(product, variant))}"
+                >
+                <button
+                    type="button"
+                    data-quantity="${Number(variant.id)}"
+                    data-value="${quantity + 1}"
+                    ${available < 1 ? 'disabled' : ''}
+                    aria-label="Agregar una unidad"
+                >+</button>
+            </div>
+        `;
+    }
+
+    function productSummary(product) {
+        const hasVariants = product.variants.length > 1;
+        const variant = product.variants[0];
+        if (hasVariants) {
+            return `
+                <article class="catalog-product-summary expandable-product" role="listitem">
+                    <div>${productImage(product, 'summary-product-image')}</div>
+                    <button
+                        class="summary-product-title"
+                        type="button"
+                        data-open-product="${Number(product.id)}"
+                    >
+                        <strong>${escapeHtml(product.name)}</strong>
+                        <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
+                    </button>
+                    <span class="summary-variant-count">
+                        ${product.variants.length} variantes
+                    </span>
+                    <strong class="summary-product-price">${priceRange(product)}</strong>
+                    <button
+                        class="summary-product-chevron"
+                        type="button"
+                        data-open-product="${Number(product.id)}"
+                        aria-label="Ver variantes de ${escapeHtml(product.name)}"
+                    >›</button>
+                </article>
+            `;
+        }
+
+        const quantity = cartQuantity(variant.id);
+        const available = visibleAvailable(variant);
+        return `
+            <article class="catalog-product-summary single-product ${available ? '' : 'out-of-stock'}" role="listitem">
+                <div>${productImage(product, 'summary-product-image')}</div>
+                <div class="summary-product-title static-title">
+                    <button type="button" data-description="${Number(product.id)}">
+                        <strong>${escapeHtml(product.name)}</strong>
+                    </button>
+                    <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
+                </div>
+                <span class="summary-product-stock ${available ? '' : 'none'}">
+                    ${available ? `${available} disponibles` : 'Sin stock'}
+                    ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
+                </span>
+                <strong class="summary-product-price">${money(Number(variant.price_cents))}</strong>
+                ${quantityControl(product, variant, 'summary-quantity-control')}
+            </article>
+        `;
+    }
+
+    function productSummaryList(matches, showCount = false) {
+        return `
+            ${showCount ? `
+                <div class="search-result-count" role="status">
+                    ${matches.length} ${matches.length === 1 ? 'producto encontrado' : 'productos encontrados'}
+                </div>
+            ` : ''}
+            <div class="catalog-summary-list" role="list">
+                ${matches.map(productSummary).join('')}
+            </div>
+        `;
+    }
+
+    function renderOpenedProduct(product) {
+        elements.results.innerHTML = `
+            <section class="opened-product" aria-labelledby="opened-product-title">
+                <header class="opened-product-head">
+                    <button
+                        class="opened-product-back"
+                        type="button"
+                        data-close-product
+                        aria-label="Volver al listado"
+                    >‹</button>
+                    <div>
+                        <h2 id="opened-product-title">${escapeHtml(product.name)}</h2>
+                        <button
+                            class="description-button"
+                            type="button"
+                            data-description="${Number(product.id)}"
+                        >Ver descripción</button>
+                    </div>
+                </header>
+                <div class="opened-variant-list" role="list">
+                    ${product.variants.map(variant => {
+                        const quantity = cartQuantity(variant.id);
+                        const available = visibleAvailable(variant);
+                        const name = variantDisplayName(product, variant) || 'Única';
+                        return `
+                            <div class="opened-variant-row ${available ? '' : 'out-of-stock'}" role="listitem">
+                                <div>${productImage(product, 'opened-variant-image')}</div>
+                                <strong class="opened-variant-name">${escapeHtml(name)}</strong>
+                                <span class="opened-variant-stock ${available ? '' : 'none'}">
+                                    ${available ? `${available} disponibles` : 'Sin stock'}
+                                    ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
+                                </span>
+                                <strong class="opened-variant-price">${money(Number(variant.price_cents))}</strong>
+                                ${quantityControl(product, variant, 'opened-quantity-control')}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </section>
+        `;
     }
 
     function renderSearchCatalog() {
@@ -401,77 +539,20 @@
             return;
         }
 
-        elements.results.innerHTML = `
-            <div class="search-result-count" role="status">
-                ${matches.length} ${matches.length === 1 ? 'producto encontrado' : 'productos encontrados'}
-            </div>
-            <div class="search-result-list" role="list">
-                ${matches.map(product => `
-                    <article class="search-product-result" role="listitem">
-                        <div>${productImage(product, 'search-product-image')}</div>
-                        <div class="search-result-variants">
-                            ${product.variants.map((variant, index) => {
-                                const quantity = cartQuantity(variant.id);
-                                const available = visibleAvailable(variant);
-                                const variantName = variantDisplayName(product, variant);
-                                return `
-                                    <div class="search-result-variant ${available ? '' : 'out-of-stock'}">
-                                        <div class="search-result-name">
-                                            ${index === 0 ? `
-                                                <button
-                                                    class="search-product-title"
-                                                    type="button"
-                                                    data-description="${Number(product.id)}"
-                                                >${escapeHtml(product.name)}</button>
-                                                <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
-                                            ` : ''}
-                                            ${variantName ? `<strong>${escapeHtml(variantName)}</strong>` : ''}
-                                        </div>
-                                        <span class="search-result-stock ${available ? '' : 'none'}">
-                                            ${available ? `${available} disponibles` : 'Sin stock'}
-                                            ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
-                                        </span>
-                                        <strong class="search-result-price">
-                                            ${money(Number(variant.price_cents))}
-                                        </strong>
-                                        <div class="quantity-control search-quantity-control">
-                                            <button
-                                                type="button"
-                                                data-quantity="${Number(variant.id)}"
-                                                data-value="${quantity - 1}"
-                                                ${quantity < 1 ? 'disabled' : ''}
-                                                aria-label="Quitar una unidad"
-                                            >−</button>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="${Number(variant.available_stock)}"
-                                                value="${quantity}"
-                                                inputmode="numeric"
-                                                data-quantity-input="${Number(variant.id)}"
-                                                aria-label="${escapeHtml(quantityLabel(product, variant))}"
-                                            >
-                                            <button
-                                                type="button"
-                                                data-quantity="${Number(variant.id)}"
-                                                data-value="${quantity + 1}"
-                                                ${available < 1 ? 'disabled' : ''}
-                                                aria-label="Agregar una unidad"
-                                            >+</button>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </article>
-                `).join('')}
-            </div>
-        `;
+        elements.results.innerHTML = productSummaryList(matches, true);
     }
 
     function renderCatalog() {
         document.body.classList.toggle('search-mode', state.searchActive);
         elements.results.classList.toggle('search-results-mode', state.searchActive);
+        const openedProduct = products.find(product => (
+            Number(product.id) === Number(state.openedProductId)
+        ));
+        document.body.classList.toggle('product-detail-mode', Boolean(openedProduct));
+        if (openedProduct) {
+            renderOpenedProduct(openedProduct);
+            return;
+        }
         if (state.searchActive) {
             renderSearchCatalog();
             return;
@@ -488,69 +569,7 @@
             return;
         }
 
-        elements.results.innerHTML = matches.map(product => `
-            <article class="product-row" id="product-${Number(product.id)}">
-                <div>${productImage(product, 'product-image')}</div>
-                <div>
-                    <div class="product-head">
-                        <div>
-                            <span class="product-category">${escapeHtml(product.category?.name || 'Sin categoría')}</span>
-                            <h2>${escapeHtml(product.name)}</h2>
-                            <button
-                                class="description-button"
-                                type="button"
-                                data-description="${Number(product.id)}"
-                            >Ver descripción</button>
-                        </div>
-                        <strong class="product-price">${priceRange(product)}</strong>
-                    </div>
-                    <div class="variant-list">
-                        ${product.variants.map(variant => {
-                            const quantity = cartQuantity(variant.id);
-                            const available = visibleAvailable(variant);
-                            const variantName = variantDisplayName(product, variant);
-                            return `
-                                <div class="variant-row">
-                                    <div>
-                                        ${variantName ? `<strong>${escapeHtml(variantName)}</strong>` : ''}
-                                        <div class="variant-stock ${available ? '' : 'none'}">
-                                            ${available ? `${available} disponibles` : 'Sin stock'}
-                                            ${quantity ? ` · ${quantity} en tu pedido` : ''}
-                                        </div>
-                                    </div>
-                                    <span class="variant-price">${money(Number(variant.price_cents))}</span>
-                                    <div class="quantity-control">
-                                        <button
-                                            type="button"
-                                            data-quantity="${Number(variant.id)}"
-                                            data-value="${quantity - 1}"
-                                            ${quantity < 1 ? 'disabled' : ''}
-                                            aria-label="Quitar una unidad"
-                                        >−</button>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="${Number(variant.available_stock)}"
-                                            value="${quantity}"
-                                            inputmode="numeric"
-                                            data-quantity-input="${Number(variant.id)}"
-                                            aria-label="${escapeHtml(quantityLabel(product, variant))}"
-                                        >
-                                        <button
-                                            type="button"
-                                            data-quantity="${Number(variant.id)}"
-                                            data-value="${quantity + 1}"
-                                            ${available < 1 ? 'disabled' : ''}
-                                            aria-label="Agregar una unidad"
-                                        >+</button>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            </article>
-        `).join('');
+        elements.results.innerHTML = productSummaryList(matches);
     }
 
     function cartItems() {
@@ -918,6 +937,7 @@
         codeSearchController?.abort();
         codeSearchRequest += 1;
         state.searchActive = false;
+        state.openedProductId = null;
         state.query = '';
         state.remoteSearchIds = new Set();
         elements.search.value = '';
@@ -931,11 +951,33 @@
             state.category = category.dataset.category;
             state.query = '';
             state.searchActive = false;
+            state.openedProductId = null;
             state.remoteSearchIds = new Set();
             elements.search.value = '';
             renderCategories();
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        const openProduct = event.target.closest('[data-open-product]');
+        if (openProduct) {
+            state.openedProductId = Number(openProduct.dataset.openProduct);
+            renderCatalog();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if (event.target.closest('[data-close-product]')) {
+            const previousProductId = state.openedProductId;
+            state.openedProductId = null;
+            renderCatalog();
+            window.requestAnimationFrame(() => {
+                const trigger = document.querySelector(
+                    `[data-open-product="${Number(previousProductId)}"]`
+                );
+                trigger?.focus({ preventScroll: true });
+            });
             return;
         }
 
@@ -994,6 +1036,7 @@
     elements.search.addEventListener('input', event => {
         state.query = event.target.value;
         state.searchActive = Boolean(state.query.trim());
+        state.openedProductId = null;
         scheduleCodeSearch(state.query);
         renderCatalog();
     });
