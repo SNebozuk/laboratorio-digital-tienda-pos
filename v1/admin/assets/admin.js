@@ -14,6 +14,7 @@
         posQuery: '',
         posProductId: null,
         pendingBarcode: '',
+        posCartRestored: false,
         editOrder: null,
         view: 'products',
     };
@@ -62,6 +63,7 @@
         userList: document.getElementById('user-list'),
         mobileView: document.getElementById('mobile-view'),
     };
+    const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
 
     async function apiGet(action, parameters = {}) {
         const url = new URL(app.api_url, window.location.href);
@@ -186,8 +188,13 @@
         try {
             const data = await apiGet('admin_products');
             state.products = data.products;
+            const adjusted = restoreOrReconcilePosCart();
             renderProducts();
             renderPos();
+            renderPosCart();
+            if (adjusted && state.posCartRestored) {
+                toast('Recuperamos la venta pendiente y ajustamos las cantidades al stock actual.');
+            }
         } catch (error) {
             toast(error.message);
         }
@@ -584,6 +591,70 @@
         return Number(state.posCart.get(Number(variantId)) || 0);
     }
 
+    function persistPosCart() {
+        try {
+            if (state.posCart.size === 0) {
+                localStorage.removeItem(POS_CART_STORAGE_KEY);
+                return;
+            }
+            localStorage.setItem(POS_CART_STORAGE_KEY, JSON.stringify({
+                version: 1,
+                updated_at: new Date().toISOString(),
+                items: Array.from(state.posCart, ([variantId, quantity]) => ({
+                    variant_id: Number(variantId),
+                    quantity: Number(quantity),
+                })),
+            }));
+        } catch {
+            // El POS sigue operativo aunque el navegador bloquee localStorage.
+        }
+    }
+
+    function restoreOrReconcilePosCart(shouldPersist = true) {
+        let adjusted = false;
+        if (!state.posCartRestored) {
+            state.posCart.clear();
+            try {
+                const stored = JSON.parse(
+                    localStorage.getItem(POS_CART_STORAGE_KEY) || 'null'
+                );
+                if (stored?.version === 1 && Array.isArray(stored.items)) {
+                    stored.items.forEach(item => {
+                        const variantId = Number(item?.variant_id);
+                        const quantity = Number(item?.quantity);
+                        if (Number.isFinite(variantId) && Number.isFinite(quantity)) {
+                            state.posCart.set(variantId, quantity);
+                        }
+                    });
+                }
+            } catch {
+                adjusted = true;
+            }
+            state.posCartRestored = true;
+        }
+
+        const index = variantIndex();
+        Array.from(state.posCart).forEach(([variantId, requested]) => {
+            const indexed = index.get(Number(variantId));
+            const maximum = Number(indexed?.variant.available_stock || 0);
+            const quantity = Math.max(
+                0,
+                Math.min(maximum, Number(requested) || 0)
+            );
+            if (quantity < 1) {
+                state.posCart.delete(Number(variantId));
+                adjusted = true;
+            } else if (quantity !== Number(requested)) {
+                state.posCart.set(Number(variantId), quantity);
+                adjusted = true;
+            }
+        });
+        if (shouldPersist) {
+            persistPosCart();
+        }
+        return adjusted;
+    }
+
     function setPosQuantity(variantId, requested) {
         const indexed = variantIndex().get(Number(variantId));
         if (!indexed) {
@@ -596,6 +667,7 @@
         } else {
             state.posCart.delete(Number(variantId));
         }
+        persistPosCart();
         renderPos();
         renderPosCart();
         if (state.posQuery.trim()) {
@@ -725,8 +797,11 @@
         if (!indexed) {
             return false;
         }
-        if (Number(indexed.variant.available_stock) <= posQuantity(indexed.variant.id)) {
-            toast('El producto está sin stock disponible.');
+        const available = Number(indexed.variant.available_stock);
+        if (available <= posQuantity(indexed.variant.id)) {
+            toast(available > 0
+                ? 'Ya agregaste todo el stock disponible de este producto.'
+                : 'El producto está sin stock disponible.');
             return true;
         }
         setPosQuantity(
@@ -844,6 +919,7 @@
             });
             const sale = data.order;
             state.posCart.clear();
+            persistPosCart();
             await loadProducts();
             renderPosCart();
             printReceipt(sale);
@@ -1988,6 +2064,15 @@
         } catch (error) {
             toast(error.message);
         }
+    });
+    window.addEventListener('storage', event => {
+        if (event.key !== POS_CART_STORAGE_KEY || !app.user) {
+            return;
+        }
+        state.posCartRestored = false;
+        restoreOrReconcilePosCart(false);
+        renderPos();
+        renderPosCart();
     });
 
     if (app.user) {

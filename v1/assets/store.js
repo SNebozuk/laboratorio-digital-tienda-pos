@@ -15,6 +15,7 @@
 
     let codeSearchController = null;
     let codeSearchRequest = 0;
+    const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
 
     const elements = {
         categories: document.getElementById('category-list'),
@@ -70,6 +71,57 @@
     };
 
     const variantIndex = new Map();
+    function persistCart() {
+        try {
+            if (state.cart.size === 0) {
+                localStorage.removeItem(CART_STORAGE_KEY);
+                return;
+            }
+            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({
+                version: 1,
+                updated_at: new Date().toISOString(),
+                items: Array.from(state.cart, ([variantId, quantity]) => ({
+                    variant_id: Number(variantId),
+                    quantity: Number(quantity),
+                })),
+            }));
+        } catch {
+            // Algunos navegadores bloquean el almacenamiento local en modo privado.
+        }
+    }
+
+    function restoreCart(shouldPersist = true) {
+        state.cart.clear();
+        try {
+            const stored = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || 'null');
+            if (!stored || stored.version !== 1 || !Array.isArray(stored.items)) {
+                return;
+            }
+            stored.items.forEach(item => {
+                const variantId = Number(item?.variant_id);
+                const requested = Number(item?.quantity);
+                const indexed = variantIndex.get(variantId);
+                const maximum = Number(indexed?.variant.available_stock || 0);
+                const quantity = Math.max(
+                    0,
+                    Math.min(maximum, Number.isFinite(requested) ? requested : 0)
+                );
+                if (quantity > 0) {
+                    state.cart.set(variantId, quantity);
+                }
+            });
+            if (shouldPersist) {
+                persistCart();
+            }
+        } catch {
+            try {
+                localStorage.removeItem(CART_STORAGE_KEY);
+            } catch {
+                // El carrito sigue funcionando durante la sesión actual.
+            }
+        }
+    }
+
     function rebuildVariantIndex() {
         variantIndex.clear();
         products.forEach(product => {
@@ -79,10 +131,11 @@
         });
     }
     rebuildVariantIndex();
+    restoreCart();
 
     async function refreshCatalog() {
         if (state.order) {
-            return;
+            return false;
         }
         try {
             const url = new URL(app.api_url, window.location.href);
@@ -115,10 +168,13 @@
             renderCatalog();
             renderCart();
             if (adjusted) {
+                persistCart();
                 toast('Actualizamos el pedido porque cambió el stock disponible.');
             }
+            return adjusted;
         } catch {
             // La próxima actualización vuelve a intentarlo sin interrumpir la compra.
+            return false;
         }
     }
 
@@ -327,6 +383,7 @@
         } else {
             state.cart.delete(Number(variantId));
         }
+        persistCart();
         renderCatalog();
         renderCart();
     }
@@ -684,9 +741,17 @@
         `);
     }
 
-    function showCheckout() {
+    async function showCheckout() {
+        const previousUnits = Array.from(state.cart.values()).reduce(
+            (sum, quantity) => sum + Number(quantity),
+            0
+        );
+        await refreshCatalog();
         const items = cartItems();
         if (!items.length) {
+            if (previousUnits > 0) {
+                toast('Ese stock cambió. Actualizamos el carrito antes de confirmar.');
+            }
             return;
         }
         const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
@@ -776,6 +841,7 @@
             );
         } catch (error) {
             toast(error.message);
+            await refreshCatalog();
             button.disabled = false;
             button.textContent = 'CREAR PEDIDO';
         }
@@ -926,6 +992,7 @@
 
     function finishOrder() {
         state.cart.clear();
+        persistCart();
         state.order = null;
         renderCatalog();
         renderCart();
@@ -1081,5 +1148,13 @@
         if (document.visibilityState === 'visible') {
             refreshCatalog();
         }
+    });
+    window.addEventListener('storage', event => {
+        if (event.key !== CART_STORAGE_KEY || state.order) {
+            return;
+        }
+        restoreCart(false);
+        renderCatalog();
+        renderCart();
     });
 })();
