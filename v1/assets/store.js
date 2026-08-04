@@ -309,6 +309,12 @@
         );
     }
 
+    function availableLabel(available) {
+        return Number(available) === 1
+            ? '1 disponible'
+            : `${Number(available)} disponibles`;
+    }
+
     function setQuantity(variantId, requestedQuantity) {
         const indexed = variantIndex.get(Number(variantId));
         if (!indexed) {
@@ -452,7 +458,7 @@
                     <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
                 </div>
                 <span class="summary-product-stock ${available ? '' : 'none'}">
-                    ${available ? `${available} disponibles` : 'Sin stock'}
+                    ${available ? availableLabel(available) : 'Sin stock'}
                     ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
                 </span>
                 <strong class="summary-product-price">${money(Number(variant.price_cents))}</strong>
@@ -503,7 +509,7 @@
                                 <div>${productImage(product, 'opened-variant-image')}</div>
                                 <strong class="opened-variant-name">${escapeHtml(name)}</strong>
                                 <span class="opened-variant-stock ${available ? '' : 'none'}">
-                                    ${available ? `${available} disponibles` : 'Sin stock'}
+                                    ${available ? availableLabel(available) : 'Sin stock'}
                                     ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
                                 </span>
                                 <strong class="opened-variant-price">${money(Number(variant.price_cents))}</strong>
@@ -671,8 +677,8 @@
                 ${product.variants.map(variant => {
                     const variantName = variantDisplayName(product, variant);
                     return variantName
-                        ? `${escapeHtml(variantName)}: ${visibleAvailable(variant)} disponibles`
-                        : `${visibleAvailable(variant)} disponibles`;
+                        ? `${escapeHtml(variantName)}: ${availableLabel(visibleAvailable(variant))}`
+                        : availableLabel(visibleAvailable(variant));
                 }).join('<br>')}
             </div>
         `);
