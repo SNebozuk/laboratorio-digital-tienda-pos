@@ -914,13 +914,6 @@
         window.setTimeout(() => elements.toast.classList.remove('open'), 3600);
     }
 
-    function activateSearch() {
-        if (!state.searchActive) {
-            state.searchActive = true;
-            renderCatalog();
-        }
-    }
-
     function closeSearchMode() {
         codeSearchController?.abort();
         codeSearchRequest += 1;
@@ -1000,11 +993,10 @@
 
     elements.search.addEventListener('input', event => {
         state.query = event.target.value;
-        state.searchActive = true;
+        state.searchActive = Boolean(state.query.trim());
         scheduleCodeSearch(state.query);
         renderCatalog();
     });
-    elements.search.addEventListener('focus', activateSearch);
     elements.search.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             closeSearchMode();
@@ -1012,16 +1004,6 @@
         if (event.key === 'Enter') {
             event.preventDefault();
             requestCodeMatches(state.query);
-        }
-    });
-    document.addEventListener('click', event => {
-        if (
-            state.searchActive
-            && !state.query.trim()
-            && !event.target.closest('.search-wrap')
-            && !event.target.closest('#search-mode-head')
-        ) {
-            closeSearchMode();
         }
     });
     elements.closeSearch.addEventListener('click', closeSearchMode);
