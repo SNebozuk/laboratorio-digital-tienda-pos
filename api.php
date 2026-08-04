@@ -99,6 +99,15 @@ try {
                 readfile($file['path']);
                 exit;
 
+            case 'payment_proof_analysis':
+                $app['auth']->requireUser();
+                Http::json([
+                    'ok' => true,
+                    'analysis' => $app['proofs']->analysis(
+                        (int) ($_GET['id'] ?? 0)
+                    ),
+                ]);
+
             default:
                 throw new ValidationException('La consulta no es válida.');
         }
@@ -188,6 +197,15 @@ try {
             $app['products']->quickUpdateVariant(
                 (int) ($input['variant_id'] ?? 0),
                 is_array($input['changes'] ?? null) ? $input['changes'] : [],
+                (int) $user['id']
+            );
+            Http::json(['ok' => true]);
+
+        case 'variant_barcode_assign':
+            $user = $app['auth']->requireUser();
+            $app['products']->assignBarcode(
+                (int) ($input['variant_id'] ?? 0),
+                (string) ($input['barcode'] ?? ''),
                 (int) $user['id']
             );
             Http::json(['ok' => true]);

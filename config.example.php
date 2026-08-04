@@ -29,4 +29,10 @@ return [
     'mail_from' => 'ventas@laboratorio-digital.com.ar',
     'mail_from_name' => 'Laboratorio Digital',
     'mail_reply_to' => 'ventas@laboratorio-digital.com.ar',
+
+    // Ayuda a revisar comprobantes; nunca aprueba pagos automáticamente.
+    // Guardar la clave solo en config.local.php o en OPENAI_API_KEY del servidor.
+    'receipt_ai_enabled' => false,
+    'openai_api_key' => '',
+    'receipt_ai_model' => 'gpt-5.6-sol',
 ];

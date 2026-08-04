@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace LaboratorioDigital;
 
 use PDO;
+use PDOException;
 
 final class ProductService
 {
@@ -386,6 +387,77 @@ final class ProductService
                 }
             }
         );
+    }
+
+    /**
+     * Asigna un código leído en el mostrador a una variante concreta.
+     * La restricción UNIQUE de la base impide que el mismo código apunte a
+     * dos productos distintos.
+     */
+    public function assignBarcode(
+        int $variantId,
+        string $barcode,
+        int $actorUserId
+    ): void {
+        $barcode = trim($barcode);
+        if ($variantId < 1) {
+            throw new ValidationException('Elegí una variante válida.');
+        }
+        if (!preg_match('/^[A-Za-z0-9._\-]{3,80}$/', $barcode)) {
+            throw new ValidationException(
+                'El código debe tener entre 3 y 80 letras, números, puntos o guiones.'
+            );
+        }
+
+        try {
+            Database::immediate(
+                $this->pdo,
+                function (PDO $pdo) use (
+                    $variantId,
+                    $barcode,
+                    $actorUserId
+                ): void {
+                    $query = $pdo->prepare(
+                        'SELECT pv.barcode, pv.name AS variant_name,
+                                p.name AS product_name
+                         FROM product_variants pv
+                         JOIN products p ON p.id = pv.product_id
+                         WHERE pv.id = :id'
+                    );
+                    $query->execute(['id' => $variantId]);
+                    $variant = $query->fetch();
+                    if (!$variant) {
+                        throw new ValidationException('La variante no existe.');
+                    }
+
+                    $update = $pdo->prepare(
+                        'UPDATE product_variants
+                         SET barcode = :barcode,
+                             updated_at = CURRENT_TIMESTAMP
+                         WHERE id = :id'
+                    );
+                    $update->execute([
+                        'barcode' => $barcode,
+                        'id' => $variantId,
+                    ]);
+
+                    $this->recordOrderlessAudit(
+                        $pdo,
+                        $actorUserId,
+                        'barcode_assigned',
+                        $barcode . ' · ' . $variant['product_name']
+                            . ' · ' . $variant['variant_name']
+                    );
+                }
+            );
+        } catch (PDOException $exception) {
+            if (str_contains(strtolower($exception->getMessage()), 'unique')) {
+                throw new ConflictException(
+                    'Ese código ya está asignado a otro producto.'
+                );
+            }
+            throw $exception;
+        }
     }
 
     public function duplicate(int $productId, int $actorUserId): int

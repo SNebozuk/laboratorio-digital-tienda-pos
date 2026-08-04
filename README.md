@@ -90,6 +90,17 @@ después de validar la casilla y la entrega desde DonWeb.
 
 La facturación fiscal permanece fuera del alcance hasta que se confirme su integración.
 
+## Prevalidación opcional de comprobantes
+
+El sistema puede leer JPG, PNG o PDF con OpenAI y comparar importe,
+destinatario, fecha y referencia con el pedido. El resultado es solamente una
+ayuda para la administración: nunca aprueba el pago ni reemplaza la verificación
+de la acreditación bancaria.
+
+La integración queda desactivada si no hay credenciales. En el servidor se
+configura con `APP_RECEIPT_AI_ENABLED=true`, `OPENAI_API_KEY` y, de forma
+opcional, `APP_RECEIPT_AI_MODEL`. Estas credenciales no deben subirse a Git.
+
 ## Estructura del repositorio
 
 ```text

@@ -267,6 +267,10 @@ header('Referrer-Policy: same-origin');
                                     <input name="pickup_address">
                                 </label>
                                 <label>
+                                    HORARIOS DE ATENCIÓN
+                                    <input name="business_hours" placeholder="Lunes a viernes de 9 a 17 h" required>
+                                </label>
+                                <label>
                                     TITULAR DE LA CUENTA
                                     <input name="bank_holder" required>
                                 </label>

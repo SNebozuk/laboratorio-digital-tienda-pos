@@ -56,6 +56,15 @@ $statusMessages = [
 $statusMessage = $order
     ? ($statusMessages[$order['status']] ?? 'El pedido continúa en proceso.')
     : '';
+$inPersonUrl = '';
+if ($order && !empty($order['whatsapp_number'])) {
+    $message = 'Hola Laboratorio Digital. Prefiero pagar presencialmente el pedido '
+        . $order['public_number']
+        . '. Quiero coordinar el retiro en el local.';
+    $inPersonUrl = 'https://wa.me/'
+        . preg_replace('/\D+/', '', (string) $order['whatsapp_number'])
+        . '?text=' . rawurlencode($message);
+}
 ?>
 <!doctype html>
 <html lang="es">
@@ -182,6 +191,24 @@ $statusMessage = $order
                         </button>
                     </form>
                     <div class="form-feedback" id="payment-feedback" role="status" aria-live="polite"></div>
+
+                    <section class="in-person-option" aria-label="Compra presencial">
+                        <p class="eyebrow">OTRA FORMA DE COMPRA</p>
+                        <h2>¿PREFERÍS PAGAR EN EL LOCAL?</h2>
+                        <p>
+                            Podés no subir el comprobante y hacer la compra presencialmente.
+                            Este pedido online vencerá al terminar el plazo y no reservará stock.
+                        </p>
+                        <?php if ($order['pickup_address']): ?>
+                            <p><strong><?= $escape($order['pickup_address']) ?></strong></p>
+                        <?php endif; ?>
+                        <p>Horarios: <strong><?= $escape($order['business_hours']) ?></strong></p>
+                        <?php if ($inPersonUrl): ?>
+                            <a class="secondary-button button-link" href="<?= $escape($inPersonUrl) ?>" target="_blank" rel="noopener noreferrer">
+                                COORDINAR POR WHATSAPP
+                            </a>
+                        <?php endif; ?>
+                    </section>
                 <?php elseif ($order['status'] === 'pending_payment' || $order['status'] === 'rejected'): ?>
                     <div class="deadline-box deadline-expired">
                         El plazo para cargar el comprobante venció. La cancelación

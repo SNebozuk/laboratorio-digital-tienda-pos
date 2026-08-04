@@ -18,6 +18,7 @@ final class SettingsService
         'bank_alias',
         'bank_cbu',
         'pickup_address',
+        'business_hours',
     ];
 
     public function __construct(private readonly PDO $pdo)
@@ -40,7 +41,8 @@ final class SettingsService
                 'bank_holder',
                 'bank_alias',
                 'bank_cbu',
-                'pickup_address'
+                'pickup_address',
+                'business_hours'
              )"
         );
         $values = [];
@@ -106,6 +108,10 @@ final class SettingsService
         if (strlen($pickupAddress) > 250) {
             throw new ValidationException('La dirección de retiro es demasiado larga.');
         }
+        $businessHours = trim((string) ($data['business_hours'] ?? ''));
+        if (strlen($businessHours) < 3 || strlen($businessHours) > 300) {
+            throw new ValidationException('Revisá los horarios de atención.');
+        }
 
         $values = [
             'store_name' => $storeName,
@@ -118,6 +124,7 @@ final class SettingsService
             'bank_alias' => $bankAlias,
             'bank_cbu' => (string) $bankCbu,
             'pickup_address' => $pickupAddress,
+            'business_hours' => $businessHours,
         ];
 
         Database::immediate(

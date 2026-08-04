@@ -8,6 +8,7 @@ use LaboratorioDigital\OrderService;
 use LaboratorioDigital\PaymentProofService;
 use LaboratorioDigital\ProductService;
 use LaboratorioDigital\ProductImageService;
+use LaboratorioDigital\ReceiptAiService;
 use LaboratorioDigital\SettingsService;
 use LaboratorioDigital\StockService;
 
@@ -21,6 +22,7 @@ require_once __DIR__ . '/ProductImageService.php';
 require_once __DIR__ . '/StockService.php';
 require_once __DIR__ . '/OrderService.php';
 require_once __DIR__ . '/PaymentProofService.php';
+require_once __DIR__ . '/ReceiptAiService.php';
 require_once __DIR__ . '/MailService.php';
 require_once __DIR__ . '/SettingsService.php';
 
@@ -36,10 +38,12 @@ $app['orders'] = new OrderService(
     $app['stock'],
     $app['config']
 );
+$app['receipt_ai'] = new ReceiptAiService($app['config']);
 $app['proofs'] = new PaymentProofService(
     $app['pdo'],
     $app['stock'],
-    $app['config']
+    $app['config'],
+    $app['receipt_ai']
 );
 $app['backups'] = new BackupService($app['pdo'], $app['config']);
 $app['mail'] = new MailService($app['pdo'], $app['config']);

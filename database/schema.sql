@@ -138,6 +138,18 @@ CREATE TABLE IF NOT EXISTS payment_proofs (
     reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     reviewed_at TEXT,
     review_note TEXT,
+    ai_status TEXT NOT NULL DEFAULT 'not_run' CHECK (ai_status IN (
+        'not_run',
+        'disabled',
+        'prevalidated',
+        'review',
+        'failed'
+    )),
+    ai_risk_level TEXT CHECK (ai_risk_level IN ('low', 'medium', 'high')),
+    ai_summary TEXT,
+    ai_result_json TEXT,
+    ai_model TEXT,
+    ai_checked_at TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -242,6 +254,7 @@ INSERT OR IGNORE INTO settings(key, value) VALUES
     ('bank_holder', 'Laboratorio Digital'),
     ('bank_alias', ''),
     ('bank_cbu', ''),
-    ('pickup_address', '');
+    ('pickup_address', ''),
+    ('business_hours', 'Lunes a viernes de 9 a 17 h');
 
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (1);

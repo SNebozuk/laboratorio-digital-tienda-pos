@@ -670,7 +670,28 @@ final class OrderService
                     WHERE pp.order_id = o.id
                     ORDER BY pp.id DESC
                     LIMIT 1
-                ) AS payment_proof_id
+                ) AS payment_proof_id,
+                (
+                    SELECT pp.ai_status
+                    FROM payment_proofs pp
+                    WHERE pp.order_id = o.id
+                    ORDER BY pp.id DESC
+                    LIMIT 1
+                ) AS payment_ai_status,
+                (
+                    SELECT pp.ai_risk_level
+                    FROM payment_proofs pp
+                    WHERE pp.order_id = o.id
+                    ORDER BY pp.id DESC
+                    LIMIT 1
+                ) AS payment_ai_risk_level,
+                (
+                    SELECT pp.ai_summary
+                    FROM payment_proofs pp
+                    WHERE pp.order_id = o.id
+                    ORDER BY pp.id DESC
+                    LIMIT 1
+                ) AS payment_ai_summary
              FROM orders o
              LEFT JOIN order_items oi ON oi.order_id = o.id
              GROUP BY o.id

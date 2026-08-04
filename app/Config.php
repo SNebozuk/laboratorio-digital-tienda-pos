@@ -91,6 +91,29 @@ final class Config
                 'mail_reply_to',
                 getenv('APP_MAIL_REPLY_TO') ?: 'ventas@laboratorio-digital.com.ar'
             ),
+            'receipt_ai_enabled' => self::bool(
+                $local,
+                'receipt_ai_enabled',
+                filter_var(
+                    getenv('APP_RECEIPT_AI_ENABLED') ?: false,
+                    FILTER_VALIDATE_BOOL
+                )
+            ),
+            'openai_api_key' => self::string(
+                $local,
+                'openai_api_key',
+                getenv('OPENAI_API_KEY') ?: ''
+            ),
+            'receipt_ai_model' => self::string(
+                $local,
+                'receipt_ai_model',
+                getenv('APP_RECEIPT_AI_MODEL') ?: 'gpt-5.6-sol'
+            ),
+            'openai_base_url' => rtrim(self::string(
+                $local,
+                'openai_base_url',
+                getenv('OPENAI_BASE_URL') ?: 'https://api.openai.com/v1'
+            ), '/'),
         ];
     }
 

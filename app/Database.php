@@ -54,9 +54,46 @@ final class Database
         }
 
         $pdo->exec($schema);
+        self::migrateReceiptPrevalidation($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
+        );
+    }
+
+    /** Agrega campos a bases ya creadas antes de la prevalidación de pagos. */
+    private static function migrateReceiptPrevalidation(PDO $pdo): void
+    {
+        $columns = [];
+        foreach ($pdo->query('PRAGMA table_info(payment_proofs)')->fetchAll() as $row) {
+            $columns[(string) $row['name']] = true;
+        }
+        $definitions = [
+            'ai_status' => "TEXT NOT NULL DEFAULT 'not_run'",
+            'ai_risk_level' => 'TEXT',
+            'ai_summary' => 'TEXT',
+            'ai_result_json' => 'TEXT',
+            'ai_model' => 'TEXT',
+            'ai_checked_at' => 'TEXT',
+        ];
+        foreach ($definitions as $name => $definition) {
+            if (!isset($columns[$name])) {
+                $pdo->exec(
+                    'ALTER TABLE payment_proofs ADD COLUMN '
+                    . $name . ' ' . $definition
+                );
+            }
+        }
+
+        $insertSetting = $pdo->prepare(
+            'INSERT OR IGNORE INTO settings(key, value) VALUES(:key, :value)'
+        );
+        $insertSetting->execute([
+            'key' => 'business_hours',
+            'value' => 'Lunes a viernes de 9 a 17 h',
+        ]);
+        $pdo->exec(
+            'INSERT OR IGNORE INTO schema_migrations(version) VALUES(3)'
         );
     }
 

@@ -13,7 +13,8 @@ final class PaymentProofService
     public function __construct(
         private readonly PDO $pdo,
         private readonly StockService $stock,
-        private readonly array $config
+        private readonly array $config,
+        private readonly ReceiptAiService $receiptAi
     ) {
     }
 
@@ -62,6 +63,14 @@ final class PaymentProofService
                 'cbu' => $this->stringSetting('bank_cbu', ''),
             ],
             'pickup_address' => $this->stringSetting('pickup_address', ''),
+            'business_hours' => $this->stringSetting(
+                'business_hours',
+                'Lunes a viernes de 9 a 17 h'
+            ),
+            'whatsapp_number' => $this->stringSetting(
+                'whatsapp_number',
+                '5493415699338'
+            ),
             'proof_max_bytes' => max(
                 1024,
                 $this->integerSetting('proof_max_bytes', 8 * 1024 * 1024)
@@ -81,6 +90,7 @@ final class PaymentProofService
         $order = $this->publicOrder($orderId, $uploadToken);
         $file = $this->validateUpload($upload);
         $stored = $this->storeFile($file);
+        $proofId = 0;
 
         try {
             $this->stock->reserveForReportedPayment(
@@ -88,7 +98,8 @@ final class PaymentProofService
                 null,
                 function (PDO $pdo, array $lockedOrder) use (
                     $uploadToken,
-                    $stored
+                    $stored,
+                    &$proofId
                 ): void {
                     $expectedHash = (string) ($lockedOrder['upload_token_hash'] ?? '');
                     $providedHash = hash('sha256', $uploadToken);
@@ -118,6 +129,7 @@ final class PaymentProofService
                         'size_bytes' => $stored['size_bytes'],
                         'sha256' => $stored['sha256'],
                     ]);
+                    $proofId = (int) $pdo->lastInsertId();
 
                     if (!empty($lockedOrder['customer_email'])) {
                         $mail = $pdo->prepare(
@@ -146,12 +158,39 @@ final class PaymentProofService
             throw $exception;
         }
 
+        $aiResult = [
+            'status' => 'failed',
+            'risk_level' => null,
+            'summary' => 'No se pudo ejecutar la prevalidación automática.',
+            'model' => null,
+            'result' => null,
+        ];
+        try {
+            $aiResult = $this->receiptAi->prevalidate(
+                $stored['absolute_path'],
+                $stored['mime_type'],
+                $order,
+                [
+                    'holder' => $this->stringSetting(
+                        'bank_holder',
+                        'Laboratorio Digital'
+                    ),
+                    'alias' => $this->stringSetting('bank_alias', ''),
+                    'cbu' => $this->stringSetting('bank_cbu', ''),
+                ]
+            );
+        } catch (Throwable $exception) {
+            error_log('Prevalidación de comprobante: ' . $exception->getMessage());
+        }
+        $this->saveAiResult($proofId, $aiResult);
+
         return [
             'order_id' => $orderId,
             'public_number' => $order['public_number'],
             'status' => 'payment_reported',
             'proof_name' => $stored['original_name'],
             'stock_reserved' => true,
+            'prevalidation_status' => $aiResult['status'],
         ];
     }
 
@@ -187,12 +226,44 @@ final class PaymentProofService
     }
 
     /** @return array<string, mixed> */
+    public function analysis(int $proofId): array
+    {
+        $query = $this->pdo->prepare(
+            'SELECT id, order_id, ai_status, ai_risk_level, ai_summary,
+                    ai_result_json, ai_model, ai_checked_at
+             FROM payment_proofs
+             WHERE id = :id'
+        );
+        $query->execute(['id' => $proofId]);
+        $proof = $query->fetch();
+        if (!$proof) {
+            throw new ValidationException('El comprobante no existe.');
+        }
+        $decoded = null;
+        if (!empty($proof['ai_result_json'])) {
+            $candidate = json_decode((string) $proof['ai_result_json'], true);
+            $decoded = is_array($candidate) ? $candidate : null;
+        }
+
+        return [
+            'proof_id' => (int) $proof['id'],
+            'order_id' => (int) $proof['order_id'],
+            'status' => (string) $proof['ai_status'],
+            'risk_level' => $proof['ai_risk_level'],
+            'summary' => (string) ($proof['ai_summary'] ?? ''),
+            'model' => $proof['ai_model'],
+            'checked_at' => $proof['ai_checked_at'],
+            'result' => $decoded,
+        ];
+    }
+
+    /** @return array<string, mixed> */
     private function publicOrder(int $orderId, string $uploadToken): array
     {
         $query = $this->pdo->prepare(
             'SELECT id, public_number, upload_token_hash, status,
                     total_cents, payment_deadline_at, rejection_deadline_at,
-                    stock_reserved_at
+                    stock_reserved_at, created_at
              FROM orders
              WHERE id = :id'
         );
@@ -313,6 +384,37 @@ final class PaymentProofService
         $value = $query->fetchColumn();
 
         return $value === false ? $default : (string) $value;
+    }
+
+    /** @param array<string, mixed> $result */
+    private function saveAiResult(int $proofId, array $result): void
+    {
+        if ($proofId < 1) {
+            return;
+        }
+        $update = $this->pdo->prepare(
+            'UPDATE payment_proofs
+             SET ai_status = :status,
+                 ai_risk_level = :risk_level,
+                 ai_summary = :summary,
+                 ai_result_json = :result_json,
+                 ai_model = :model,
+                 ai_checked_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+        $update->execute([
+            'status' => (string) ($result['status'] ?? 'failed'),
+            'risk_level' => $result['risk_level'] ?? null,
+            'summary' => (string) ($result['summary'] ?? ''),
+            'result_json' => isset($result['result'])
+                ? json_encode(
+                    $result['result'],
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                )
+                : null,
+            'model' => $result['model'] ?? null,
+            'id' => $proofId,
+        ]);
     }
 
     private function statusLabel(string $status): string

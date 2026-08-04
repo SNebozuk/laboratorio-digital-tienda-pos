@@ -13,6 +13,7 @@
         posCart: new Map(),
         posQuery: '',
         posProductId: null,
+        pendingBarcode: '',
         editOrder: null,
         view: 'products',
     };
@@ -202,6 +203,111 @@
                 variant.barcode,
             ]),
         ].join(' '));
+    }
+
+    const searchWords = value => fold(value)
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    function limitedEditDistance(left, right, maximum) {
+        if (Math.abs(left.length - right.length) > maximum) {
+            return maximum + 1;
+        }
+        let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+        for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+            const current = [leftIndex];
+            let rowMinimum = current[0];
+            for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+                const substitution = previous[rightIndex - 1]
+                    + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1);
+                current[rightIndex] = Math.min(
+                    previous[rightIndex] + 1,
+                    current[rightIndex - 1] + 1,
+                    substitution
+                );
+                rowMinimum = Math.min(rowMinimum, current[rightIndex]);
+            }
+            if (rowMinimum > maximum) {
+                return maximum + 1;
+            }
+            previous = current;
+        }
+        return previous[right.length];
+    }
+
+    function tokenFieldScore(token, value, weight) {
+        const normalized = fold(value);
+        if (!normalized) {
+            return -1;
+        }
+        const words = searchWords(normalized);
+        if (normalized === token) {
+            return weight + 90;
+        }
+        if (normalized.startsWith(token)) {
+            return weight + 65;
+        }
+        if (words.some(word => word.startsWith(token))) {
+            return weight + 50;
+        }
+        if (normalized.includes(token)) {
+            return weight + 35;
+        }
+        const tolerance = token.length >= 7 ? 2 : token.length >= 4 ? 1 : 0;
+        if (tolerance && words.some(word => (
+            limitedEditDistance(token, word, tolerance) <= tolerance
+        ))) {
+            return weight + 15;
+        }
+        return -1;
+    }
+
+    function productSearchScore(product, query) {
+        const tokens = searchWords(query);
+        if (!tokens.length) {
+            return 0;
+        }
+        const fields = [
+            [product.name, 150],
+            [product.description, 45],
+            [product.category?.name, 35],
+            ...product.variants.flatMap(variant => [
+                [variant.name, 80],
+                [variant.sku, 210],
+                [variant.barcode, 260],
+            ]),
+        ];
+        let score = fold(product.name) === fold(query) ? 500 : 0;
+        for (const token of tokens) {
+            const best = fields.reduce(
+                (maximum, [value, weight]) => Math.max(
+                    maximum,
+                    tokenFieldScore(token, value, weight)
+                ),
+                -1
+            );
+            if (best < 0) {
+                return null;
+            }
+            score += best;
+        }
+        return score;
+    }
+
+    function rankedProducts(query, products = state.products) {
+        if (!query.trim()) {
+            return products;
+        }
+        return products
+            .map(product => ({ product, score: productSearchScore(product, query) }))
+            .filter(result => result.score !== null)
+            .sort((left, right) => (
+                right.score - left.score
+                || left.product.name.localeCompare(right.product.name, 'es')
+            ))
+            .map(result => result.product);
     }
 
     function variantDisplayName(product, variant) {
@@ -497,26 +603,22 @@
         }
     }
 
-    function posMatches(product) {
-        if (state.posProductId && Number(product.id) !== state.posProductId) {
-            return false;
-        }
-        const query = fold(state.posQuery);
-        return !query || productSearchText(product).includes(query);
-    }
-
     function renderPos() {
         if (!elements.posProducts) {
             return;
         }
-        const products = state.products.filter(product => (
-            product.active
-            && posMatches(product)
-            && product.variants.some(variant => (
+        const query = state.posQuery.trim();
+        const products = rankedProducts(
+            query,
+            state.products.filter(product => product.active)
+        ).filter(product => (
+            query || product.variants.some(variant => (
                 variant.active && Number(variant.available_stock) > 0
             ))
         ));
-        elements.posProducts.innerHTML = products.length ? products.map(product => `
+        elements.posProducts.innerHTML = products.length ? `
+            ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
+            ${products.map(product => `
             <article class="pos-product">
                 ${safeImage(product.image_path)
                     ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="">`
@@ -527,7 +629,8 @@
                         <small>${escapeHtml(product.category?.name || '')}</small>
                     </div>
                     ${product.variants.filter(variant => (
-                        variant.active && Number(variant.available_stock) > 0
+                        variant.active
+                        && (query || Number(variant.available_stock) > 0)
                     )).map(variant => {
                         const quantity = posQuantity(variant.id);
                         const remaining = Math.max(
@@ -540,7 +643,7 @@
                                     ${variantDisplayName(product, variant)
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
                                         : ''}
-                                    <small>${escapeHtml(variant.sku)} · ${remaining} disponibles</small>
+                                    <small>${escapeHtml(variant.sku)} · ${remaining > 0 ? `${remaining} disponibles` : '<span class="stock-zero">SIN STOCK</span>'}</small>
                                 </span>
                                 <span>${money(variant.price_cents)}</span>
                                 <div class="quantity-control">
@@ -553,7 +656,7 @@
                     }).join('')}
                 </div>
             </article>
-        `).join('') : '<p class="empty-copy">No encontramos productos.</p>';
+        `).join('')}` : '<p class="empty-copy">No encontramos productos.</p>';
     }
 
     function renderPosCart() {
@@ -595,81 +698,7 @@
     }
 
     function showPosSuggestions() {
-        const query = state.posQuery.trim();
-        if (!query) {
-            closePosSuggestions();
-            return;
-        }
-        const matches = state.products.filter(product => (
-            product.active
-            && productSearchText(product).includes(fold(query))
-            && product.variants.some(variant => (
-                variant.active && Number(variant.available_stock) > 0
-            ))
-        )).slice(0, 6);
-        elements.posSuggestions.innerHTML = matches.length ? matches.map(product => `
-            <div class="suggestion-card">
-                <button class="suggestion-button" type="button" data-pos-suggestion="${Number(product.id)}">
-                    ${safeImage(product.image_path)
-                        ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="">`
-                        : '<span class="suggestion-placeholder"></span>'}
-                    <span>
-                        <strong>${escapeHtml(product.name)}</strong>
-                        <small>${escapeHtml(product.category?.name || '')}</small>
-                    </span>
-                    <strong>${product.variants.reduce((sum, variant) => (
-                        sum + (
-                            variant.active
-                                ? Number(variant.available_stock)
-                                : 0
-                        )
-                    ), 0)} disp.</strong>
-                </button>
-                <div class="suggestion-variants">
-                    ${product.variants.filter(variant => (
-                        variant.active && Number(variant.available_stock) > 0
-                    )).map(variant => {
-                        const quantity = posQuantity(variant.id);
-                        const remaining = Math.max(
-                            0,
-                            Number(variant.available_stock) - quantity
-                        );
-                        return `
-                            <div class="suggestion-variant">
-                                <span>
-                                    ${variantDisplayName(product, variant)
-                                        ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong>`
-                                        : ''}
-                                    <small>${remaining} disponibles</small>
-                                </span>
-                                <div class="quantity-control">
-                                    <button
-                                        type="button"
-                                        data-pos-quantity="${Number(variant.id)}"
-                                        data-value="${quantity - 1}"
-                                        ${quantity < 1 ? 'disabled' : ''}
-                                    >−</button>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        max="${Number(variant.available_stock)}"
-                                        value="${quantity}"
-                                        data-pos-input="${Number(variant.id)}"
-                                    >
-                                    <button
-                                        type="button"
-                                        data-pos-quantity="${Number(variant.id)}"
-                                        data-value="${quantity + 1}"
-                                        ${remaining < 1 ? 'disabled' : ''}
-                                    >+</button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-        `).join('') : '<p class="empty-copy">No encontramos productos.</p>';
-        elements.posSuggestions.classList.add('open');
+        closePosSuggestions();
     }
 
     function closePosSuggestions() {
@@ -696,6 +725,10 @@
         if (!indexed) {
             return false;
         }
+        if (Number(indexed.variant.available_stock) <= posQuantity(indexed.variant.id)) {
+            toast('El producto está sin stock disponible.');
+            return true;
+        }
         setPosQuantity(
             Number(indexed.variant.id),
             posQuantity(indexed.variant.id) + 1
@@ -706,6 +739,90 @@
         closePosSuggestions();
         renderPos();
         return true;
+    }
+
+    function barcodeAssignmentResults(query) {
+        const results = document.getElementById('barcode-assignment-results');
+        if (!results) {
+            return;
+        }
+        const products = rankedProducts(
+            query,
+            state.products.filter(product => product.active)
+        ).slice(0, query.trim() ? 30 : 12);
+        results.innerHTML = products.length ? products.map(product => `
+            <article class="barcode-product">
+                <header>
+                    ${safeImage(product.image_path)
+                        ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="">`
+                        : '<span class="barcode-product-placeholder">SIN FOTO</span>'}
+                    <span>
+                        <strong>${escapeHtml(product.name)}</strong>
+                        <small>${escapeHtml(product.category?.name || '')}</small>
+                    </span>
+                </header>
+                <div class="barcode-variant-list">
+                    ${product.variants.filter(variant => variant.active).map(variant => `
+                        <button type="button" data-assign-barcode-variant="${Number(variant.id)}">
+                            <span>
+                                <strong>${escapeHtml(variantDisplayName(product, variant) || 'VARIANTE ÚNICA')}</strong>
+                                <small>${Number(variant.available_stock)} disponibles · ${money(variant.price_cents)}</small>
+                            </span>
+                            <span>ASIGNAR</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </article>
+        `).join('') : '<p class="empty-copy">No encontramos productos.</p>';
+    }
+
+    function offerBarcodeAssignment(barcode) {
+        state.pendingBarcode = String(barcode || '').trim();
+        if (state.pendingBarcode.length < 3) {
+            toast('Ingresá o escaneá un código completo.');
+            return;
+        }
+        openModal(`
+            <div class="barcode-assignment">
+                <p class="eyebrow">CÓDIGO NO ASIGNADO</p>
+                <h2 id="modal-title">${escapeHtml(state.pendingBarcode)}</h2>
+                <p>Buscá el producto y elegí la variante. El código quedará guardado y se agregará a la venta.</p>
+                <label for="barcode-assignment-search">PRODUCTO O VARIANTE</label>
+                <input id="barcode-assignment-search" type="search" autocomplete="off" placeholder="Nombre, talle, SKU o descripción">
+                <div id="barcode-assignment-results" class="barcode-assignment-results"></div>
+            </div>
+        `);
+        barcodeAssignmentResults('');
+        document.getElementById('barcode-assignment-search')?.focus();
+    }
+
+    async function assignScannedBarcode(variantId) {
+        const barcode = state.pendingBarcode;
+        if (!barcode) {
+            return;
+        }
+        try {
+            await apiPost({
+                action: 'variant_barcode_assign',
+                variant_id: variantId,
+                barcode,
+            });
+            await loadProducts();
+            const indexed = variantIndex().get(Number(variantId));
+            closeModal();
+            state.pendingBarcode = '';
+            elements.posSearch.value = '';
+            state.posQuery = '';
+            if (indexed && Number(indexed.variant.available_stock) > 0) {
+                setPosQuantity(variantId, posQuantity(variantId) + 1);
+                toast('Código asignado y producto agregado.');
+            } else {
+                renderPos();
+                toast('Código asignado. La variante está sin stock.');
+            }
+        } catch (error) {
+            toast(error.message);
+        }
     }
 
     async function completeSale() {
@@ -778,6 +895,26 @@
         pos: 'Mostrador',
     };
 
+    function paymentAiBadge(order) {
+        if (!order.payment_proof_id) {
+            return '';
+        }
+        const labels = {
+            prevalidated: 'IA: COINCIDENCIA PRELIMINAR',
+            review: 'IA: REVISAR DATOS',
+            failed: 'IA: NO DISPONIBLE',
+            disabled: 'IA: SIN CONFIGURAR',
+            not_run: 'IA: PENDIENTE',
+        };
+        const status = String(order.payment_ai_status || 'not_run');
+        return `
+            <div class="payment-ai payment-ai-${escapeHtml(status)}">
+                <strong>${escapeHtml(labels[status] || labels.not_run)}</strong>
+                <small>${escapeHtml(order.payment_ai_summary || 'Siempre verificar la acreditación en el banco.')}</small>
+            </div>
+        `;
+    }
+
     function orderActions(order) {
         const actions = [
             `<button class="small-button" type="button" data-print-order="${Number(order.id)}">Imprimir</button>`,
@@ -795,7 +932,9 @@
                 <a class="small-button" href="${escapeHtml(app.api_url)}?action=payment_proof&id=${Number(order.payment_proof_id)}" target="_blank" rel="noopener">
                     Comprobante de pago
                 </a>
-            `);
+            `,
+                `<button class="small-button" type="button" data-proof-analysis="${Number(order.payment_proof_id)}">Análisis IA</button>`
+            );
         }
         if (order.status === 'payment_reported') {
             actions.push(
@@ -813,6 +952,50 @@
             actions.push(`<button class="small-button danger-button" type="button" data-order-action="cancel" data-order-id="${Number(order.id)}">Cancelar</button>`);
         }
         return actions.join('');
+    }
+
+    function checkLabel(value) {
+        if (value === true) {
+            return '<span class="check-match">COINCIDE</span>';
+        }
+        if (value === false) {
+            return '<span class="check-mismatch">REVISAR</span>';
+        }
+        return '<span class="check-unknown">NO LEÍDO</span>';
+    }
+
+    async function showProofAnalysis(proofId) {
+        try {
+            const data = await apiGet('payment_proof_analysis', { id: proofId });
+            const analysis = data.analysis;
+            const result = analysis.result || {};
+            const extracted = result.extracted || {};
+            const checks = result.checks || {};
+            const anomalyList = Array.isArray(extracted.visual_anomalies)
+                ? extracted.visual_anomalies
+                : [];
+            openModal(`
+                <div class="proof-analysis">
+                    <p class="eyebrow">AYUDA PARA LA REVISIÓN</p>
+                    <h2 id="modal-title">PREVALIDACIÓN DEL COMPROBANTE</h2>
+                    <div class="payment-ai payment-ai-${escapeHtml(analysis.status)}">
+                        <strong>${escapeHtml(analysis.summary || 'Sin resultado automático.')}</strong>
+                        <small>Esto no confirma que el dinero esté acreditado. Verificá siempre en el banco.</small>
+                    </div>
+                    ${analysis.result ? `
+                        <div class="proof-analysis-grid">
+                            <div><span>IMPORTE LEÍDO</span><strong>${extracted.amount_cents === null || extracted.amount_cents === undefined ? 'No leído' : money(extracted.amount_cents)}</strong>${checkLabel(checks.amount)}</div>
+                            <div><span>FECHA</span><strong>${escapeHtml(extracted.transfer_date || 'No leída')}</strong>${checkLabel(checks.date_plausible)}</div>
+                            <div><span>DESTINATARIO</span><strong>${escapeHtml(extracted.recipient_name || extracted.recipient_account || 'No leído')}</strong>${checkLabel(checks.recipient)}</div>
+                            <div><span>OPERACIÓN</span><strong>${escapeHtml(extracted.operation_reference || 'No leída')}</strong>${checkLabel(checks.operation_reference_present)}</div>
+                        </div>
+                        ${anomalyList.length ? `<div class="proof-anomalies"><strong>SEÑALES PARA REVISAR</strong><ul>${anomalyList.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>` : ''}
+                    ` : '<p class="empty-copy">La prevalidación no está configurada o no pudo ejecutarse.</p>'}
+                </div>
+            `);
+        } catch (error) {
+            toast(error.message);
+        }
     }
 
     function renderOrders() {
@@ -874,6 +1057,7 @@
                     ${escapeHtml(order.created_at)}
                 </p>
                 <h3>${money(order.total_cents)}</h3>
+                ${paymentAiBadge(order)}
                 <div class="order-actions">${orderActions(order)}</div>
             </article>
         `).join('') : `
@@ -1644,6 +1828,11 @@
             );
             return;
         }
+        const assignBarcode = event.target.closest('[data-assign-barcode-variant]');
+        if (assignBarcode) {
+            assignScannedBarcode(Number(assignBarcode.dataset.assignBarcodeVariant));
+            return;
+        }
         const suggestion = event.target.closest('[data-pos-suggestion]');
         if (suggestion) {
             choosePosProduct(Number(suggestion.dataset.posSuggestion));
@@ -1655,6 +1844,11 @@
                 Number(orderAction.dataset.orderId),
                 orderAction.dataset.orderAction
             );
+            return;
+        }
+        const proofAnalysis = event.target.closest('[data-proof-analysis]');
+        if (proofAnalysis) {
+            showProofAnalysis(Number(proofAnalysis.dataset.proofAnalysis));
             return;
         }
         const editOrder = event.target.closest('[data-edit-order]');
@@ -1728,6 +1922,9 @@
             state.editOrder.query = event.target.value;
             showOrderEditSuggestions();
         }
+        if (event.target.id === 'barcode-assignment-search') {
+            barcodeAssignmentResults(event.target.value);
+        }
     });
 
     elements.productSearch?.addEventListener('input', renderProducts);
@@ -1747,13 +1944,23 @@
         state.posQuery = event.target.value;
         state.posProductId = null;
         renderPos();
-        showPosSuggestions();
+        closePosSuggestions();
     });
     elements.posSearch?.addEventListener('keydown', event => {
         if (event.key === 'Enter') {
             event.preventDefault();
             if (!scanBarcode(event.target.value)) {
-                toast('No encontramos ese SKU o código de barras.');
+                const value = event.target.value.trim();
+                const looksLikeCode = /^[A-Za-z0-9._\-]{3,80}$/.test(value)
+                    && (
+                        /\d/.test(value)
+                        || value === value.toUpperCase()
+                    );
+                if (looksLikeCode) {
+                    offerBarcodeAssignment(value);
+                } else {
+                    toast('Elegí el producto en la lista de resultados.');
+                }
             }
         }
         if (event.key === 'Escape') {
