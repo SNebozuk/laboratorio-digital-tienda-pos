@@ -1,0 +1,13 @@
+{
+  "name": "Laboratorio Digital - Ecommerce",
+  "image": "mcr.microsoft.com/devcontainers/php:4-8.4-bookworm",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Vista previa del ecommerce",
+      "onAutoForward": "notify",
+      "protocol": "http"
+    }
+  },
+  "postStartCommand": "nohup php -S 0.0.0.0:8000 -t . > /tmp/laboratorio-digital-preview.log 2>&1 &"
+}
