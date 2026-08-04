@@ -14,6 +14,11 @@
         posQuery: '',
         posProductId: null,
         pendingBarcode: '',
+        barcodeBuffer: '',
+        barcodeStartedAt: 0,
+        barcodeLastAt: 0,
+        barcodeTarget: null,
+        barcodeOriginalValue: '',
         posCartRestored: false,
         editOrder: null,
         view: 'products',
@@ -814,6 +819,85 @@
         closePosSuggestions();
         renderPos();
         return true;
+    }
+
+    function resetBarcodeCapture() {
+        state.barcodeBuffer = '';
+        state.barcodeStartedAt = 0;
+        state.barcodeLastAt = 0;
+        state.barcodeTarget = null;
+        state.barcodeOriginalValue = '';
+    }
+
+    function restoreInputAfterBarcodeScan() {
+        const target = state.barcodeTarget;
+        if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) {
+            return;
+        }
+        target.value = state.barcodeOriginalValue;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function captureGlobalBarcode(event) {
+        if (
+            state.view !== 'pos'
+            || elements.modal?.classList.contains('open')
+            || event.isComposing
+            || event.ctrlKey
+            || event.altKey
+            || event.metaKey
+        ) {
+            resetBarcodeCapture();
+            return;
+        }
+
+        if (event.defaultPrevented) {
+            resetBarcodeCapture();
+            return;
+        }
+
+        const now = performance.now();
+        if (event.key.length === 1) {
+            const startsNewScan = !state.barcodeBuffer
+                || now - state.barcodeLastAt > 120;
+            if (startsNewScan) {
+                resetBarcodeCapture();
+                state.barcodeStartedAt = now;
+                state.barcodeTarget = event.target;
+                state.barcodeOriginalValue = (
+                    event.target instanceof HTMLInputElement
+                    || event.target instanceof HTMLTextAreaElement
+                ) ? event.target.value : '';
+            }
+            state.barcodeBuffer += event.key;
+            state.barcodeLastAt = now;
+            return;
+        }
+
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        const barcode = state.barcodeBuffer.trim();
+        const duration = state.barcodeLastAt - state.barcodeStartedAt;
+        const averageGap = barcode.length > 1
+            ? duration / (barcode.length - 1)
+            : Number.POSITIVE_INFINITY;
+        const scannerSpeed = barcode.length >= 3
+            && now - state.barcodeLastAt <= 150
+            && averageGap <= 100;
+
+        if (!scannerSpeed) {
+            resetBarcodeCapture();
+            return;
+        }
+
+        event.preventDefault();
+        restoreInputAfterBarcodeScan();
+        resetBarcodeCapture();
+        if (!scanBarcode(barcode)) {
+            offerBarcodeAssignment(barcode);
+        }
     }
 
     function barcodeAssignmentResults(query) {
@@ -2043,6 +2127,7 @@
             closePosSuggestions();
         }
     });
+    document.addEventListener('keydown', captureGlobalBarcode);
     document.addEventListener('click', event => {
         if (!event.target.closest('.pos-search-wrap')) {
             closePosSuggestions();

@@ -47,10 +47,13 @@ final class StockService
                                AND active = 1
                                AND stock_on_hand - stock_reserved >= :quantity'
                         );
-                        $reserve->execute([
-                            'quantity' => $quantity,
-                            'variant_id' => $item['variant_id'],
-                        ]);
+                        $reserve->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                        $reserve->bindValue(
+                            ':variant_id',
+                            (int) $item['variant_id'],
+                            PDO::PARAM_INT
+                        );
+                        $reserve->execute();
                         if ($reserve->rowCount() !== 1) {
                             throw new ConflictException(
                                 'Ya no hay stock suficiente de '
@@ -129,10 +132,13 @@ final class StockService
                          WHERE id = :variant_id
                            AND stock_reserved >= :quantity'
                     );
-                    $release->execute([
-                        'quantity' => $quantity,
-                        'variant_id' => $item['variant_id'],
-                    ]);
+                    $release->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                    $release->bindValue(
+                        ':variant_id',
+                        (int) $item['variant_id'],
+                        PDO::PARAM_INT
+                    );
+                    $release->execute();
                     if ($release->rowCount() !== 1) {
                         throw new ConflictException(
                             'No se pudo liberar una reserva de stock inconsistente.'
@@ -230,10 +236,13 @@ final class StockService
                            AND stock_on_hand >= :quantity
                            AND stock_reserved >= :quantity'
                     );
-                    $consume->execute([
-                        'quantity' => $quantity,
-                        'variant_id' => $item['variant_id'],
-                    ]);
+                    $consume->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                    $consume->bindValue(
+                        ':variant_id',
+                        (int) $item['variant_id'],
+                        PDO::PARAM_INT
+                    );
+                    $consume->execute();
                     if ($consume->rowCount() !== 1) {
                         throw new ConflictException(
                             'No se pudo entregar un pedido con stock inconsistente.'
@@ -422,10 +431,13 @@ final class StockService
                  WHERE id = :variant_id
                    AND stock_reserved >= :quantity'
             );
-            $release->execute([
-                'quantity' => $quantity,
-                'variant_id' => $item['variant_id'],
-            ]);
+            $release->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+            $release->bindValue(
+                ':variant_id',
+                (int) $item['variant_id'],
+                PDO::PARAM_INT
+            );
+            $release->execute();
             if ($release->rowCount() !== 1) {
                 throw new ConflictException(
                     'No se pudo liberar una reserva de stock inconsistente.'

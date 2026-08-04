@@ -245,10 +245,13 @@ final class OrderService
                          WHERE id = :variant_id
                            AND stock_on_hand - stock_reserved >= :quantity'
                     );
-                    $decrement->execute([
-                        'quantity' => $quantity,
-                        'variant_id' => $item['variant_id'],
-                    ]);
+                    $decrement->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                    $decrement->bindValue(
+                        ':variant_id',
+                        (int) $item['variant_id'],
+                        PDO::PARAM_INT
+                    );
+                    $decrement->execute();
                     if ($decrement->rowCount() !== 1) {
                         throw new ConflictException(
                             'Stock insuficiente de '
@@ -396,10 +399,13 @@ final class OrderService
                                    AND active = 1
                                    AND stock_on_hand - stock_reserved >= :delta'
                             );
-                            $adjust->execute([
-                                'delta' => $delta,
-                                'variant_id' => $variantId,
-                            ]);
+                            $adjust->bindValue(':delta', $delta, PDO::PARAM_INT);
+                            $adjust->bindValue(
+                                ':variant_id',
+                                $variantId,
+                                PDO::PARAM_INT
+                            );
+                            $adjust->execute();
                         } else {
                             $release = abs($delta);
                             $adjust = $pdo->prepare(
@@ -409,10 +415,17 @@ final class OrderService
                                  WHERE id = :variant_id
                                    AND stock_reserved >= :release'
                             );
-                            $adjust->execute([
-                                'release' => $release,
-                                'variant_id' => $variantId,
-                            ]);
+                            $adjust->bindValue(
+                                ':release',
+                                $release,
+                                PDO::PARAM_INT
+                            );
+                            $adjust->bindValue(
+                                ':variant_id',
+                                $variantId,
+                                PDO::PARAM_INT
+                            );
+                            $adjust->execute();
                         }
 
                         if ($adjust->rowCount() !== 1) {

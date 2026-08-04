@@ -146,6 +146,10 @@ header('Referrer-Policy: same-origin');
                             <p class="eyebrow">MOSTRADOR</p>
                             <h1>PUNTO DE VENTA</h1>
                             <p>Buscá o escaneá un código y cargá varios productos.</p>
+                            <p class="pos-scanner-status">
+                                <span aria-hidden="true"></span>
+                                LECTOR ACTIVO EN TODA ESTA PANTALLA
+                            </p>
                         </div>
                     </div>
                     <div class="pos-shell">
