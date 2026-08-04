@@ -26,22 +26,25 @@ Estado: completada en código; pendiente de prueba integral con datos de ensayo.
 
 ## Etapa 3 — Operación diaria
 
-Estado: parcialmente completada.
+Estado: parcialmente completada. La lógica interna no debe confundirse con una
+pantalla administrativa terminada.
 
 - [x] Edición de órdenes con alta, baja y cambio de cantidades antes de aprobar.
-- [x] Reportes de ventas, stock bajo y movimientos.
+- [ ] Completar y activar las pantallas de reportes, stock bajo y movimientos.
 - [x] Vencimiento automático de pedidos y reintentos.
 - [x] Cola de correo desde `ventas@laboratorio-digital.com.ar`.
 - [x] Seguimiento público seguro y reintento de comprobantes rechazados.
-- [x] Respaldo manual consistente de base y comprobantes.
+- [ ] Exponer y probar la creación de respaldos desde administración.
 - [ ] Programar respaldo automático externo y probar restauración.
-- Importación controlada de productos e imágenes.
+- [ ] Completar caja, arqueos y la asociación obligatoria entre POS y caja abierta.
+- [ ] Importación controlada de productos e imágenes.
 - [x] Usuarios administradores y vendedores.
 - [x] Configuración operativa desde administración.
 
 ## Etapa 4 — Puesta en marcha
 
-Estado: en preparación mientras se propagan los DNS de `artjet.com.ar`.
+Estado: en preparación. La versión local más reciente no está desplegada en
+DonWeb y no debe publicarse sin una prueba integral y autorización explícita.
 
 - Validar PHP y SQLite en DonWeb.
 - Configurar almacenamiento privado.

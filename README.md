@@ -4,19 +4,18 @@ Sistema centralizado para venta mayorista, pedidos online con retiro en el local
 
 ## Estado actual
 
-**Versión 0.2 — base funcional en validación.** El modelo navegable aprobado se
-conserva como referencia y la nueva versión ya utiliza una base de datos
-centralizada, servicios transaccionales y pantallas separadas para clientes y
-administración.
+**Versión 0.3 — MVP funcional en validación local.** La versión activa utiliza
+una base centralizada, servicios transaccionales y pantallas separadas para
+clientes y administración. Los cambios más recientes todavía no fueron
+desplegados a DonWeb.
 
-### Base productiva
+### Aplicación activa
 
-La implementación estable se está construyendo en paralelo, sin reemplazar el
-modelo publicado:
+La implementación que se debe continuar es:
 
 - `v1/`: tienda pública conectada a datos reales.
 - `v1/admin/`: administración y POS separados.
-- `api.php`: acciones de catálogo, pedidos, productos, POS, pagos y caja.
+- `api.php`: acciones de catálogo, pedidos, productos, POS y pagos.
 - `database/schema.sql`: fuente única de productos, variantes y stock.
 - `app/`: servicios transaccionales y seguridad.
 - `tests/`: contratos automáticos de integridad.
@@ -47,6 +46,7 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 - Descripción disponible únicamente al abrir el detalle del producto.
 - El SKU se utiliza internamente, pero no se muestra públicamente.
 - Carrito con múltiples productos y variantes.
+- Carrito persistente al cerrar o recargar el mismo navegador.
 - Pago web por transferencia bancaria.
 - Carga de comprobante JPG, PNG o PDF.
 - Página personal de seguimiento para retomar la carga desde el email.
@@ -61,6 +61,9 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 
 - Menú lateral separado de la tienda pública.
 - POS con búsqueda predictiva y lector de código de barras.
+- Lector activo en toda la vista del POS: agrega códigos conocidos y abre el
+  buscador de asignación para códigos nuevos.
+- Carrito POS persistente por usuario en el mismo navegador.
 - Ventas con múltiples productos y comprobante interno imprimible.
 - Alta, edición y duplicación de productos.
 - Múltiples variantes por producto, cada una con precio, stock y código propios.
@@ -71,10 +74,12 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 - Aviso por WhatsApp al `+54 9 341 569-9338` con el detalle completo del pedido.
 - Estados: pendiente de pago, pago informado, pagado/preparar, listo para retirar, entregado y cancelado.
 - Aprobación manual de transferencias y auditoría.
-- Caja, movimientos de stock, reportes básicos y respaldos.
 - Usuarios administradores y vendedores.
 - Configuración de transferencia, plazos, WhatsApp y retiro desde administración.
-- Respaldo consistente de base y comprobantes desde el reporte operativo.
+
+La infraestructura inicial de caja, reportes y respaldos existe parcialmente,
+pero sus pantallas y su integración operativa todavía deben completarse. Ver
+`AGENTS.md` para el estado exacto y el orden recomendado.
 
 ## Regla central de stock
 
@@ -109,7 +114,7 @@ database/   Esquema versionado de SQLite.
 storage/    Datos privados ignorados por Git.
 tasks/      Mantenimiento periódico para vencimientos y correos.
 v1/         Tienda pública funcional.
-v1/admin/   Administración, POS, caja y reportes.
+v1/admin/   Productos, POS, pedidos, usuarios y configuración.
 outputs/    Modelos navegables y documentación funcional.
 index.php   Página temporal de mantenimiento de artjet.com.ar.
 preview.html Acceso local a los modelos.
@@ -117,11 +122,14 @@ preview.html Acceso local a los modelos.
 
 ## Continuar desde otra computadora
 
-1. Iniciar sesión en GitHub con la cuenta propietaria.
-2. Abrir este repositorio privado.
-3. Usar **Code → Open with GitHub Desktop** o clonar el repositorio.
-4. Trabajar sobre una rama nueva cuando comience una función grande.
-5. Integrar en `main` únicamente versiones revisadas y estables.
+1. Iniciar sesión en GitHub y clonar este repositorio.
+2. Leer `AGENTS.md`, que contiene el estado técnico para otra cuenta de Codex.
+3. Copiar `config.example.php` como `config.local.php` y completar solo datos de
+   ensayo; nunca subir ese archivo.
+4. Ejecutar `php -S 0.0.0.0:8000 -t .` desde la raíz.
+5. Abrir `http://127.0.0.1:8000/v1/` y
+   `http://127.0.0.1:8000/v1/admin/`.
+6. Ejecutar las comprobaciones indicadas en `AGENTS.md` antes de cada commit.
 
 ## Seguridad del repositorio
 

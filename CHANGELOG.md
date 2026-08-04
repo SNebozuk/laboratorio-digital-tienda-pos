@@ -2,6 +2,29 @@
 
 Los cambios relevantes del proyecto se registran en este archivo.
 
+## 0.3.0 — 2026-08-04
+
+### Incluido
+
+- Catálogo público modernizado con búsqueda dentro de la misma pantalla.
+- Productos con variantes agrupadas y detalle desplegable.
+- Ampliación de imágenes al pasar el mouse.
+- Carrito público persistente con reconciliación contra el stock vigente.
+- Carrito POS persistente por usuario.
+- Administración de pedidos activada con filtros, edición e impresión.
+- Prevalidación opcional de comprobantes con IA sin aprobación automática.
+- Lector activo en toda la vista del POS.
+- Asignación de códigos desconocidos mediante el buscador de productos y variantes.
+- Corrección del enlace de cantidades enteras en SQLite que generaba falsos
+  avisos de stock insuficiente al reservar comprobantes o cobrar en el POS.
+- Guía `AGENTS.md` para continuar el proyecto desde otra cuenta de Codex.
+
+### Estado de publicación
+
+- Código validado localmente.
+- Cambios todavía no desplegados a DonWeb.
+- Caja, reportes y respaldos continúan como flujos parciales que deben completarse.
+
 ## 0.2.0 — 2026-07-30
 
 ### Incluido

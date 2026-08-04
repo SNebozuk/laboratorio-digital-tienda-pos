@@ -1,5 +1,8 @@
 # Arquitectura del MVP
 
+> Este documento describe la arquitectura objetivo. Para distinguir lo que ya
+> funciona de los flujos todavía parciales, consultar primero `AGENTS.md`.
+
 ## Objetivo
 
 La primera versión productiva debe resolver catálogo, pedidos web, POS y stock
