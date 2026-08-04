@@ -5,6 +5,9 @@
     const state = {
         products: [],
         orders: [],
+        orderQuery: '',
+        orderStatus: '',
+        orderChannel: '',
         settings: null,
         users: [],
         posCart: new Map(),
@@ -51,6 +54,10 @@
         posTotal: document.getElementById('pos-total'),
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
+        orderOverview: document.getElementById('order-overview'),
+        orderSearch: document.getElementById('order-search'),
+        orderStatusFilter: document.getElementById('order-status-filter'),
+        orderChannelFilter: document.getElementById('order-channel-filter'),
         userList: document.getElementById('user-list'),
         mobileView: document.getElementById('mobile-view'),
     };
@@ -765,6 +772,12 @@
         cancelled: 'Cancelado',
     };
 
+    const channelLabels = {
+        web: 'Tienda web',
+        whatsapp: 'WhatsApp',
+        pos: 'Mostrador',
+    };
+
     function orderActions(order) {
         const actions = [
             `<button class="small-button" type="button" data-print-order="${Number(order.id)}">Imprimir</button>`,
@@ -803,7 +816,50 @@
     }
 
     function renderOrders() {
-        elements.orderList.innerHTML = state.orders.length ? state.orders.map(order => `
+        const query = fold(state.orderQuery.trim());
+        const matchingOrders = state.orders.filter(order => {
+            const matchesQuery = !query || fold([
+                order.public_number,
+                order.customer_name,
+                order.customer_email,
+                order.customer_phone,
+            ].join(' ')).includes(query);
+            const matchesStatus = !state.orderStatus
+                || order.status === state.orderStatus;
+            const matchesChannel = !state.orderChannel
+                || order.channel === state.orderChannel;
+            return matchesQuery && matchesStatus && matchesChannel;
+        });
+
+        if (elements.orderOverview) {
+            const countStatus = status => state.orders.filter(order => (
+                order.status === status
+            )).length;
+            elements.orderOverview.innerHTML = `
+                <article>
+                    <span>TOTAL</span>
+                    <strong>${state.orders.length}</strong>
+                    <small>pedidos y ventas</small>
+                </article>
+                <article class="attention">
+                    <span>REVISAR PAGO</span>
+                    <strong>${countStatus('payment_reported')}</strong>
+                    <small>comprobantes informados</small>
+                </article>
+                <article>
+                    <span>PREPARAR</span>
+                    <strong>${countStatus('paid_prepare')}</strong>
+                    <small>pedidos pagados</small>
+                </article>
+                <article class="ready">
+                    <span>LISTOS</span>
+                    <strong>${countStatus('ready_pickup')}</strong>
+                    <small>esperando retiro</small>
+                </article>
+            `;
+        }
+
+        elements.orderList.innerHTML = matchingOrders.length ? matchingOrders.map(order => `
             <article class="order-card">
                 <div class="order-card-head">
                     <h2>${escapeHtml(order.public_number)}</h2>
@@ -813,14 +869,21 @@
                 </div>
                 <p>
                     <strong>${escapeHtml(order.customer_name)}</strong><br>
-                    ${escapeHtml(order.channel === 'pos' ? 'Mostrador' : 'Tienda web')} ·
+                    ${escapeHtml(channelLabels[order.channel] || order.channel)} ·
                     ${Number(order.unit_count)} unidades<br>
                     ${escapeHtml(order.created_at)}
                 </p>
                 <h3>${money(order.total_cents)}</h3>
                 <div class="order-actions">${orderActions(order)}</div>
             </article>
-        `).join('') : '<p class="empty-copy">Todavía no hay ventas ni pedidos.</p>';
+        `).join('') : `
+            <div class="empty-admin-state">
+                <strong>${state.orders.length ? 'NO HAY COINCIDENCIAS' : 'TODAVÍA NO HAY PEDIDOS'}</strong>
+                <p>${state.orders.length
+                    ? 'Probá cambiando los filtros o la búsqueda.'
+                    : 'Los pedidos web y las ventas de mostrador aparecerán aquí.'}</p>
+            </div>
+        `;
     }
 
     async function showOrderEditor(orderId) {
@@ -1668,6 +1731,18 @@
     });
 
     elements.productSearch?.addEventListener('input', renderProducts);
+    elements.orderSearch?.addEventListener('input', event => {
+        state.orderQuery = event.target.value;
+        renderOrders();
+    });
+    elements.orderStatusFilter?.addEventListener('change', event => {
+        state.orderStatus = event.target.value;
+        renderOrders();
+    });
+    elements.orderChannelFilter?.addEventListener('change', event => {
+        state.orderChannel = event.target.value;
+        renderOrders();
+    });
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;
         state.posProductId = null;

@@ -6,7 +6,10 @@ $user = $app['auth']->user();
 $setupRequired = (int) $app['pdo']->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0;
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
-$applicationPath = $storePath === '' ? '' : rtrim(dirname($storePath), '/');
+$lastPathSlash = strrpos($storePath, '/');
+$applicationPath = $storePath === '' || $lastPathSlash === false
+    ? ''
+    : substr($storePath, 0, $lastPathSlash);
 $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
 $assetVersion = (string) max(
@@ -182,13 +185,42 @@ header('Referrer-Policy: same-origin');
                 <section class="admin-view" id="view-orders">
                     <div class="view-heading">
                         <div>
-                            <p class="eyebrow">HISTORIAL ÚNICO</p>
-                            <h1>VENTAS Y PEDIDOS</h1>
-                            <p>Pedidos web y ventas de mostrador en una sola lista.</p>
+                            <p class="eyebrow">OPERACIÓN DIARIA</p>
+                            <h1>PEDIDOS Y VENTAS</h1>
+                            <p>Controlá pagos, preparación, retiros y ventas de mostrador.</p>
                         </div>
                         <button class="secondary-button fit-button" id="refresh-orders" type="button">
                             ACTUALIZAR
                         </button>
+                    </div>
+                    <div class="order-overview" id="order-overview" aria-label="Resumen de pedidos"></div>
+                    <div class="order-toolbar">
+                        <label class="order-filter-search">
+                            <span>BUSCAR</span>
+                            <input id="order-search" type="search" placeholder="Número de pedido o cliente">
+                        </label>
+                        <label>
+                            <span>ESTADO</span>
+                            <select id="order-status-filter">
+                                <option value="">Todos los estados</option>
+                                <option value="pending_payment">Pendiente de pago</option>
+                                <option value="payment_reported">Pago informado</option>
+                                <option value="paid_prepare">Pagado / preparar</option>
+                                <option value="ready_pickup">Listo para retirar</option>
+                                <option value="delivered">Entregado</option>
+                                <option value="rejected">Comprobante rechazado</option>
+                                <option value="cancelled">Cancelado</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>ORIGEN</span>
+                            <select id="order-channel-filter">
+                                <option value="">Todos los orígenes</option>
+                                <option value="web">Tienda web</option>
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="pos">Mostrador</option>
+                            </select>
+                        </label>
                     </div>
                     <div id="order-list" class="order-list"></div>
                 </section>
