@@ -6,14 +6,19 @@
     const state = {
         category: '',
         query: '',
+        searchActive: false,
+        remoteSearchIds: new Set(),
         cart: new Map(),
         order: null,
     };
 
+    let codeSearchController = null;
+    let codeSearchRequest = 0;
+
     const elements = {
         categories: document.getElementById('category-list'),
         search: document.getElementById('product-search'),
-        suggestions: document.getElementById('search-suggestions'),
+        closeSearch: document.getElementById('search-close'),
         results: document.getElementById('catalog-results'),
         cartLines: document.getElementById('cart-lines'),
         cartTotal: document.getElementById('cart-total'),
@@ -116,25 +121,174 @@
         }
     }
 
-    function productSearchText(product) {
-        return fold([
-            product.name,
-            product.description,
-            product.category?.name,
-            ...product.variants.map(variant => variant.name),
-        ].join(' '));
+    const searchWords = value => fold(value)
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    function limitedEditDistance(left, right, maximum) {
+        if (Math.abs(left.length - right.length) > maximum) {
+            return maximum + 1;
+        }
+        let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+        for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+            const current = [leftIndex];
+            let rowMinimum = current[0];
+            for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+                const substitution = previous[rightIndex - 1]
+                    + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1);
+                current[rightIndex] = Math.min(
+                    previous[rightIndex] + 1,
+                    current[rightIndex - 1] + 1,
+                    substitution
+                );
+                rowMinimum = Math.min(rowMinimum, current[rightIndex]);
+            }
+            if (rowMinimum > maximum) {
+                return maximum + 1;
+            }
+            previous = current;
+        }
+        return previous[right.length];
+    }
+
+    function tokenFieldScore(token, value, weight) {
+        const normalized = fold(value);
+        if (!normalized) {
+            return -1;
+        }
+        const words = searchWords(normalized);
+        if (normalized === token) {
+            return weight + 90;
+        }
+        if (normalized.startsWith(token)) {
+            return weight + 65;
+        }
+        if (words.some(word => word.startsWith(token))) {
+            return weight + 50;
+        }
+        if (normalized.includes(token)) {
+            return weight + 35;
+        }
+
+        const tolerance = token.length >= 7 ? 2 : token.length >= 4 ? 1 : 0;
+        if (tolerance && words.some(word => (
+            limitedEditDistance(token, word, tolerance) <= tolerance
+        ))) {
+            return weight + 15;
+        }
+        return -1;
+    }
+
+    function localSearchScore(product, query) {
+        const tokens = searchWords(query);
+        if (!tokens.length) {
+            return null;
+        }
+        const fields = [
+            [product.name, 150],
+            [product.description, 45],
+            [product.category?.name, 35],
+            ...product.variants.map(variant => [variant.name, 80]),
+        ];
+        let score = fold(product.name) === fold(query) ? 500 : 0;
+        for (const token of tokens) {
+            const best = fields.reduce(
+                (maximum, [value, weight]) => Math.max(
+                    maximum,
+                    tokenFieldScore(token, value, weight)
+                ),
+                -1
+            );
+            if (best < 0) {
+                return null;
+            }
+            score += best;
+        }
+        return score;
     }
 
     function filteredProducts() {
-        const query = fold(state.query);
-        return products.filter(product => {
-            const matchesCategory = query !== ''
-                || !state.category
-                || product.category?.slug === state.category;
-            return matchesCategory
-                && productHasStock(product)
-                && productSearchText(product).includes(query);
-        });
+        return products.filter(product => (
+            (!state.category || product.category?.slug === state.category)
+            && productHasStock(product)
+        ));
+    }
+
+    function searchProducts() {
+        const query = state.query.trim();
+        if (!query) {
+            return [];
+        }
+        return products
+            .map(product => {
+                const localScore = localSearchScore(product, query);
+                const codeMatch = state.remoteSearchIds.has(Number(product.id));
+                if (localScore === null && !codeMatch) {
+                    return null;
+                }
+                return {
+                    product,
+                    score: (localScore || 0) + (codeMatch ? 10000 : 0),
+                };
+            })
+            .filter(Boolean)
+            .sort((left, right) => (
+                right.score - left.score
+                || left.product.name.localeCompare(right.product.name, 'es')
+            ))
+            .map(result => result.product);
+    }
+
+    async function requestCodeMatches(query) {
+        codeSearchController?.abort();
+        const controller = new AbortController();
+        codeSearchController = controller;
+        const request = ++codeSearchRequest;
+        if (query.trim().length < 2) {
+            state.remoteSearchIds = new Set();
+            renderCatalog();
+            return;
+        }
+        try {
+            const url = new URL(app.api_url, window.location.href);
+            url.searchParams.set('action', 'catalog_search');
+            url.searchParams.set('q', query.trim());
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json' },
+                cache: 'no-store',
+                signal: controller.signal,
+            });
+            const data = await response.json();
+            if (request !== codeSearchRequest || query !== state.query) {
+                return;
+            }
+            state.remoteSearchIds = new Set(
+                response.ok && data.ok && Array.isArray(data.product_ids)
+                    ? data.product_ids.map(Number)
+                    : []
+            );
+            renderCatalog();
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                return;
+            }
+            if (request === codeSearchRequest) {
+                state.remoteSearchIds = new Set();
+                renderCatalog();
+            }
+        }
+    }
+
+    function scheduleCodeSearch(query) {
+        codeSearchController?.abort();
+        codeSearchRequest += 1;
+        state.remoteSearchIds = new Set();
+        if (query.trim().length < 2) {
+            return;
+        }
+        requestCodeMatches(query);
     }
 
     function productHasStock(product) {
@@ -168,9 +322,6 @@
         }
         renderCatalog();
         renderCart();
-        if (state.query.trim()) {
-            showSuggestions();
-        }
     }
 
     function renderCategories() {
@@ -227,7 +378,105 @@
         return `Cantidad de ${product.name}${variantName ? ` ${variantName}` : ''}`;
     }
 
+    function renderSearchCatalog() {
+        const query = state.query.trim();
+        if (!query) {
+            elements.results.innerHTML = `
+                <div class="search-empty-state">
+                    <strong>BUSCÁ EN TODO EL CATÁLOGO</strong>
+                    <p>Escribí parte del nombre, descripción, variante o código de barras.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const matches = searchProducts();
+        if (!matches.length) {
+            elements.results.innerHTML = `
+                <div class="search-empty-state">
+                    <strong>NO ENCONTRAMOS COINCIDENCIAS</strong>
+                    <p>Probá con menos palabras o revisá el código ingresado.</p>
+                </div>
+            `;
+            return;
+        }
+
+        elements.results.innerHTML = `
+            <div class="search-result-count" role="status">
+                ${matches.length} ${matches.length === 1 ? 'producto encontrado' : 'productos encontrados'}
+            </div>
+            <div class="search-result-list" role="list">
+                ${matches.map(product => `
+                    <article class="search-product-result" role="listitem">
+                        <div>${productImage(product, 'search-product-image')}</div>
+                        <div class="search-result-variants">
+                            ${product.variants.map((variant, index) => {
+                                const quantity = cartQuantity(variant.id);
+                                const available = visibleAvailable(variant);
+                                const variantName = variantDisplayName(product, variant);
+                                return `
+                                    <div class="search-result-variant ${available ? '' : 'out-of-stock'}">
+                                        <div class="search-result-name">
+                                            ${index === 0 ? `
+                                                <button
+                                                    class="search-product-title"
+                                                    type="button"
+                                                    data-description="${Number(product.id)}"
+                                                >${escapeHtml(product.name)}</button>
+                                                <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
+                                            ` : ''}
+                                            ${variantName ? `<strong>${escapeHtml(variantName)}</strong>` : ''}
+                                        </div>
+                                        <span class="search-result-stock ${available ? '' : 'none'}">
+                                            ${available ? `${available} disponibles` : 'Sin stock'}
+                                            ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
+                                        </span>
+                                        <strong class="search-result-price">
+                                            ${money(Number(variant.price_cents))}
+                                        </strong>
+                                        <div class="quantity-control search-quantity-control">
+                                            <button
+                                                type="button"
+                                                data-quantity="${Number(variant.id)}"
+                                                data-value="${quantity - 1}"
+                                                ${quantity < 1 ? 'disabled' : ''}
+                                                aria-label="Quitar una unidad"
+                                            >−</button>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="${Number(variant.available_stock)}"
+                                                value="${quantity}"
+                                                inputmode="numeric"
+                                                data-quantity-input="${Number(variant.id)}"
+                                                aria-label="${escapeHtml(quantityLabel(product, variant))}"
+                                            >
+                                            <button
+                                                type="button"
+                                                data-quantity="${Number(variant.id)}"
+                                                data-value="${quantity + 1}"
+                                                ${available < 1 ? 'disabled' : ''}
+                                                aria-label="Agregar una unidad"
+                                            >+</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </article>
+                `).join('')}
+            </div>
+        `;
+    }
+
     function renderCatalog() {
+        document.body.classList.toggle('search-mode', state.searchActive);
+        elements.results.classList.toggle('search-results-mode', state.searchActive);
+        if (state.searchActive) {
+            renderSearchCatalog();
+            return;
+        }
+
         const matches = filteredProducts();
         if (!matches.length) {
             elements.results.innerHTML = `
@@ -372,106 +621,6 @@
                 </div>
             </div>
         `).join('') : '<p class="empty-copy">Todavía no agregaste productos.</p>';
-    }
-
-    function showSuggestions() {
-        const query = state.query.trim();
-        if (!query) {
-            closeSuggestions();
-            return;
-        }
-        const matches = products.filter(product => (
-            product.active !== false
-            && productHasStock(product)
-            && productSearchText(product).includes(fold(query))
-        )).slice(0, 6);
-        elements.suggestions.innerHTML = matches.length ? matches.map(product => {
-            const stock = product.variants.reduce(
-                (sum, variant) => sum + visibleAvailable(variant),
-                0
-            );
-            return `
-                <div class="suggestion-card" role="option">
-                    <button
-                        class="suggestion-button"
-                        type="button"
-                        data-suggestion="${Number(product.id)}"
-                    >
-                        ${productImage(product, 'suggestion')}
-                        <span>
-                            <strong>${escapeHtml(product.name)}</strong>
-                            <small>${escapeHtml(product.category?.name || '')} · ${stock} disponibles</small>
-                        </span>
-                        <strong>${priceRange(product)}</strong>
-                    </button>
-                    <div class="suggestion-variants">
-                        ${product.variants.filter(variant => (
-                            Number(variant.available_stock) > 0
-                        )).map(variant => {
-                            const quantity = cartQuantity(variant.id);
-                            const available = visibleAvailable(variant);
-                            const variantName = variantDisplayName(product, variant);
-                            return `
-                                <div class="suggestion-variant">
-                                    <span>
-                                        ${variantName ? `<strong>${escapeHtml(variantName)}</strong>` : ''}
-                                        <small>${available} disponibles</small>
-                                    </span>
-                                    <div class="quantity-control">
-                                        <button
-                                            type="button"
-                                            data-quantity="${Number(variant.id)}"
-                                            data-value="${quantity - 1}"
-                                            ${quantity < 1 ? 'disabled' : ''}
-                                            aria-label="Quitar una unidad"
-                                        >−</button>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="${Number(variant.available_stock)}"
-                                            value="${quantity}"
-                                            data-quantity-input="${Number(variant.id)}"
-                                            aria-label="${escapeHtml(quantityLabel(product, variant))}"
-                                        >
-                                        <button
-                                            type="button"
-                                            data-quantity="${Number(variant.id)}"
-                                            data-value="${quantity + 1}"
-                                            ${available < 1 ? 'disabled' : ''}
-                                            aria-label="Agregar una unidad"
-                                        >+</button>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-        }).join('') : '<p class="empty-copy">No encontramos coincidencias.</p>';
-        elements.suggestions.classList.add('open');
-    }
-
-    function closeSuggestions() {
-        elements.suggestions.classList.remove('open');
-        elements.suggestions.innerHTML = '';
-    }
-
-    function selectSuggestion(productId) {
-        const product = products.find(item => Number(item.id) === Number(productId));
-        if (!product) {
-            return;
-        }
-        state.category = '';
-        state.query = product.name;
-        elements.search.value = '';
-        closeSuggestions();
-        renderCategories();
-        renderCatalog();
-        document.getElementById(`product-${Number(product.id)}`)?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-        });
-        state.query = '';
     }
 
     function openModal(html) {
@@ -765,13 +914,32 @@
         window.setTimeout(() => elements.toast.classList.remove('open'), 3600);
     }
 
+    function activateSearch() {
+        if (!state.searchActive) {
+            state.searchActive = true;
+            renderCatalog();
+        }
+    }
+
+    function closeSearchMode() {
+        codeSearchController?.abort();
+        codeSearchRequest += 1;
+        state.searchActive = false;
+        state.query = '';
+        state.remoteSearchIds = new Set();
+        elements.search.value = '';
+        elements.search.blur();
+        renderCatalog();
+    }
+
     document.addEventListener('click', event => {
         const category = event.target.closest('[data-category]');
         if (category) {
             state.category = category.dataset.category;
             state.query = '';
+            state.searchActive = false;
+            state.remoteSearchIds = new Set();
             elements.search.value = '';
-            closeSuggestions();
             renderCategories();
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -791,12 +959,6 @@
         if (removeItem) {
             setQuantity(Number(removeItem.dataset.removeItem), 0);
             toast('Producto quitado del pedido.');
-            return;
-        }
-
-        const suggestion = event.target.closest('[data-suggestion]');
-        if (suggestion) {
-            selectSuggestion(Number(suggestion.dataset.suggestion));
             return;
         }
 
@@ -838,21 +1000,31 @@
 
     elements.search.addEventListener('input', event => {
         state.query = event.target.value;
+        state.searchActive = true;
+        scheduleCodeSearch(state.query);
         renderCatalog();
-        showSuggestions();
     });
-    elements.search.addEventListener('focus', showSuggestions);
+    elements.search.addEventListener('focus', activateSearch);
     elements.search.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
-            closeSuggestions();
-            elements.search.blur();
+            closeSearchMode();
+        }
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            requestCodeMatches(state.query);
         }
     });
     document.addEventListener('click', event => {
-        if (!event.target.closest('.search-wrap')) {
-            closeSuggestions();
+        if (
+            state.searchActive
+            && !state.query.trim()
+            && !event.target.closest('.search-wrap')
+            && !event.target.closest('#search-mode-head')
+        ) {
+            closeSearchMode();
         }
     });
+    elements.closeSearch.addEventListener('click', closeSearchMode);
     elements.checkout.addEventListener('click', showCheckout);
     elements.mobileCart.addEventListener('click', () => {
         elements.orderPanel.classList.add('mobile-open');

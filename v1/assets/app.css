@@ -233,6 +233,244 @@ button:disabled {
     box-shadow: 0 0 0 3px rgba(255, 255, 255, .1);
 }
 
+.search-mode-head {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 34px;
+}
+
+.search-mode-head h2 {
+    margin: 0;
+    font-size: clamp(28px, 4vw, 40px);
+    letter-spacing: -.035em;
+}
+
+.search-mode-head button {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 34px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.search-field {
+    position: relative;
+}
+
+.search-field svg {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 18px;
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: #e7e7e7;
+    stroke-linecap: round;
+    stroke-width: 2;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.search-wrap .search-field input {
+    padding: 19px 52px;
+    border-radius: 8px;
+    background: #050708;
+    font-size: clamp(16px, 2vw, 20px);
+    font-weight: 650;
+}
+
+.search-wrap .search-field input::placeholder {
+    color: #858585;
+}
+
+.search-wrap .search-field input::-webkit-search-cancel-button {
+    filter: invert(1);
+}
+
+body.search-mode .store-shell {
+    grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+body.search-mode .category-panel,
+body.search-mode .catalog-intro {
+    display: none;
+}
+
+body.search-mode .catalog-column {
+    padding-top: 30px;
+}
+
+body.search-mode .search-mode-head {
+    display: flex;
+}
+
+body.search-mode .search-wrap {
+    margin: 0 0 18px;
+}
+
+.catalog-results.search-results-mode {
+    display: block;
+}
+
+.search-empty-state {
+    min-height: 280px;
+    padding: 56px 20px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    text-align: center;
+}
+
+.search-empty-state strong {
+    color: #fff;
+    font-size: 18px;
+}
+
+.search-empty-state p {
+    margin: 9px 0 0;
+}
+
+.search-result-count {
+    padding: 0 0 14px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+    text-align: right;
+}
+
+.search-result-list {
+    border-top: 1px solid var(--line);
+}
+
+.search-product-result {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 20px;
+    padding: 20px 12px 20px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.search-product-image,
+.search-product-image-placeholder {
+    width: 86px;
+    height: 86px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.search-product-image-placeholder {
+    display: grid;
+    place-items: center;
+    background: #202020;
+    color: #777;
+    font-size: 10px;
+    font-weight: 850;
+}
+
+.search-result-variants {
+    min-width: 0;
+}
+
+.search-result-variant {
+    display: grid;
+    grid-template-columns: minmax(230px, 1fr) minmax(125px, 155px) 130px 142px;
+    min-height: 64px;
+    align-items: center;
+    gap: 18px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.search-result-variant:first-child {
+    padding-top: 0;
+}
+
+.search-result-variant:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.search-result-name {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+}
+
+.search-product-title {
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 850;
+    line-height: 1.2;
+    text-align: left;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+}
+
+.search-product-title:hover,
+.search-product-title:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.search-result-name small {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.search-result-name > strong {
+    color: #d8d8d8;
+    font-size: 13px;
+}
+
+.search-result-stock {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.search-result-stock.none {
+    color: var(--danger);
+}
+
+.search-result-stock small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.search-result-price {
+    white-space: nowrap;
+    font-size: 16px;
+}
+
+.search-quantity-control {
+    border-color: #075ecf;
+}
+
+.search-quantity-control button:last-child {
+    color: #45efff;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.search-result-variant.out-of-stock .search-quantity-control {
+    border-color: #353535;
+}
+
 .suggestions {
     display: none;
     position: absolute;
@@ -954,6 +1192,10 @@ button:disabled {
         grid-template-columns: 190px minmax(0, 1fr);
     }
 
+    body.search-mode .store-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .order-panel {
         position: fixed;
         z-index: 80;
@@ -1060,6 +1302,68 @@ button:disabled {
 
     .catalog-column {
         padding: 28px 14px 70px;
+    }
+
+    body.search-mode .catalog-column {
+        padding: 20px 12px 70px;
+    }
+
+    .search-mode-head {
+        margin-bottom: 20px;
+    }
+
+    .search-mode-head h2 {
+        font-size: 26px;
+    }
+
+    .search-wrap .search-field input {
+        padding: 16px 44px;
+        font-size: 15px;
+    }
+
+    .search-field svg {
+        left: 14px;
+        width: 19px;
+        height: 19px;
+    }
+
+    .search-product-result {
+        grid-template-columns: 62px minmax(0, 1fr);
+        gap: 12px;
+        padding: 14px 4px;
+    }
+
+    .search-product-image,
+    .search-product-image-placeholder {
+        width: 62px;
+        height: 62px;
+        border-radius: 8px;
+    }
+
+    .search-result-variant {
+        grid-template-columns: minmax(0, 1fr) 126px;
+        gap: 6px 10px;
+        padding: 12px 0;
+    }
+
+    .search-result-stock,
+    .search-result-price {
+        grid-column: 1;
+        font-size: 12px;
+    }
+
+    .search-result-price {
+        grid-row: 3;
+    }
+
+    .search-quantity-control {
+        grid-column: 2;
+        grid-row: 1 / span 3;
+        align-self: center;
+    }
+
+    .search-product-title {
+        font-size: 14px;
     }
 
     .catalog-intro h1 {

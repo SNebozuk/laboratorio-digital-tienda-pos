@@ -24,6 +24,14 @@ try {
                     'products' => $app['products']->publicCatalog(),
                 ]);
 
+            case 'catalog_search':
+                Http::json([
+                    'ok' => true,
+                    'product_ids' => $app['products']->publicCodeMatches(
+                        (string) ($_GET['q'] ?? '')
+                    ),
+                ]);
+
             case 'session':
                 Http::json([
                     'ok' => true,

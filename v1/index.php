@@ -6,7 +6,10 @@ $catalog = $app['products']->publicCatalog();
 $publicSettings = $app['settings']->values();
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
-$applicationPath = $storePath === '' ? '' : rtrim(dirname($storePath), '/');
+$lastPathSlash = strrpos($storePath, '/');
+$applicationPath = $storePath === '' || $lastPathSlash === false
+    ? ''
+    : substr($storePath, 0, $lastPathSlash);
 $assetPath = $storePath . '/assets';
 $assetVersion = (string) max(
     (int) @filemtime(__DIR__ . '/assets/app.css'),
@@ -68,20 +71,26 @@ header('Referrer-Policy: same-origin');
                 </p>
             </div>
 
+            <div class="search-mode-head" id="search-mode-head">
+                <h2>PRODUCTOS</h2>
+                <button id="search-close" type="button" aria-label="Cerrar buscador">×</button>
+            </div>
+
             <div class="search-wrap">
                 <label for="product-search">Buscar productos</label>
-                <input
-                    id="product-search"
-                    type="search"
-                    autocomplete="off"
-                    placeholder="Escribí producto, categoría o talle"
-                >
-                <div
-                    id="search-suggestions"
-                    class="suggestions"
-                    role="listbox"
-                    aria-label="Productos encontrados"
-                ></div>
+                <div class="search-field">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                        <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path>
+                    </svg>
+                    <input
+                        id="product-search"
+                        type="search"
+                        autocomplete="off"
+                        inputmode="search"
+                        enterkeyhint="search"
+                        placeholder="Buscar por nombre, descripción, variante o código"
+                    >
+                </div>
             </div>
 
             <div id="catalog-results" class="catalog-results"></div>

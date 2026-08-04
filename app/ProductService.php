@@ -46,6 +46,54 @@ final class ProductService
         return $this->groupProducts($rows, false);
     }
 
+    /** @return list<int> */
+    public function publicCodeMatches(string $query, int $limit = 100): array
+    {
+        $query = trim($query);
+        if ($query === '' || strlen($query) > 80) {
+            return [];
+        }
+
+        $limit = max(1, min(100, $limit));
+        $escaped = strtr($query, [
+            '\\' => '\\\\',
+            '%' => '\\%',
+            '_' => '\\_',
+        ]);
+        $statement = $this->pdo->prepare(
+            'SELECT
+                p.id,
+                MIN(
+                    CASE
+                        WHEN v.barcode = :exact COLLATE NOCASE THEN 0
+                        WHEN v.sku = :exact COLLATE NOCASE THEN 1
+                        WHEN COALESCE(v.barcode, "") LIKE :contains ESCAPE "\\" THEN 2
+                        ELSE 3
+                    END
+                ) AS relevance
+             FROM products p
+             JOIN product_variants v ON v.product_id = p.id
+             WHERE p.active = 1
+               AND v.active = 1
+               AND (
+                    v.sku LIKE :contains ESCAPE "\\"
+                    OR COALESCE(v.barcode, "") LIKE :contains ESCAPE "\\"
+               )
+             GROUP BY p.id
+             ORDER BY relevance, p.name
+             LIMIT :limit'
+        );
+        $statement->bindValue(':exact', $query);
+        $statement->bindValue(':contains', '%' . $escaped . '%');
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        return array_map(
+            static fn (array $row): int => (int) $row['id'],
+            $statement->fetchAll()
+        );
+    }
+
     /** @return list<array<string, mixed>> */
     public function adminCatalog(): array
     {
