@@ -20,6 +20,7 @@
 
     let codeSearchController = null;
     let codeSearchRequest = 0;
+    const collapsedCategories = new Set();
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
 
     const elements = {
@@ -463,15 +464,22 @@
         const renderNode = (node, depth = 0) => {
             if (node.active === false) return '';
             const children = Array.isArray(node.children) ? node.children : [];
+            const hasChildren = children.some(child => child.active !== false);
+            const isExpanded = hasChildren && !collapsedCategories.has(node.slug);
             const nested = children.map(child => renderNode(child, depth + 1)).join('');
             return `
-                <button
-                    class="category-button category-depth-${Math.min(depth, 4)} ${state.category === node.slug ? 'active' : ''}"
-                    type="button"
-                    data-category="${escapeHtml(node.slug)}"
-                    aria-label="${depth > 0 ? 'Subcategoría' : 'Categoría'} ${escapeHtml(node.name)}"
-                ><span class="category-branch" aria-hidden="true">${depth > 0 ? '↳' : ''}</span>${escapeHtml(node.name)}</button>
-                ${nested ? `<div class="category-children">${nested}</div>` : ''}
+                <div class="category-node ${hasChildren ? 'has-children' : ''}">
+                    <div class="category-row">
+                        <button
+                            class="category-button category-depth-${Math.min(depth, 4)} ${state.category === node.slug ? 'active' : ''}"
+                            type="button"
+                            data-category="${escapeHtml(node.slug)}"
+                            aria-label="${depth > 0 ? 'Subcategoría' : 'Categoría'} ${escapeHtml(node.name)}"
+                        ><span class="category-branch" aria-hidden="true">${depth > 0 ? '↳' : ''}</span>${escapeHtml(node.name)}</button>
+                        ${hasChildren ? `<button class="category-expand" type="button" data-category-toggle="${escapeHtml(node.slug)}" aria-expanded="${isExpanded}" aria-label="${isExpanded ? 'Ocultar' : 'Mostrar'} subcategorías de ${escapeHtml(node.name)}">${isExpanded ? '−' : '+'}</button>` : ''}
+                    </div>
+                    ${nested ? `<div class="category-children" ${isExpanded ? '' : 'hidden'}>${nested}</div>` : ''}
+                </div>
             `;
         };
         elements.categories.innerHTML = `
@@ -893,12 +901,12 @@
                     </label>
                     <label class="payment-option">
                         <input name="payment_method" type="radio" value="cash">
-                        <span><strong>Efectivo al retirar</strong><small>Reserva automática por solamente 2 horas.</small></span>
+                        <span><strong>Efectivo al retirar</strong><small>Guardamos tu pedido durante 2 horas.</small></span>
                     </label>
                 </fieldset>
                 <div class="cash-reservation-warning" id="cash-reservation-warning" hidden>
-                    <strong>IMPORTANTE: RESERVA POR 2 HORAS</strong>
-                    <span>Si no retirás y pagás dentro de ese plazo, el pedido se cancela automáticamente y los productos vuelven al stock para otros clientes.</span>
+                    <strong>Guardamos tu pedido por 2 horas</strong>
+                    <span>Así tenés tiempo para acercarte al local. Si el retiro no se realiza dentro de ese plazo, liberaremos los productos para que otras personas puedan pedirlos.</span>
                 </div>
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
@@ -1007,12 +1015,12 @@
             <h2 id="modal-title">PAGO EN EFECTIVO</h2>
             <div class="cash-confirmation">
                 <span>Tu pedido ${escapeHtml(order.public_number)} quedó reservado</span>
-                <strong>SOLO POR 2 HORAS</strong>
+                <strong>Disponible para retirar durante 2 horas</strong>
                 <span>Hasta el ${escapeHtml(formatLocalDeadline(order.payment_deadline_at))}</span>
             </div>
             <div class="cash-expiry-explanation">
-                <strong>Tenés que retirar y pagar en efectivo antes de ese horario.</strong>
-                <p>Al vencer el plazo, la venta se cancela automáticamente y todos los productos vuelven al stock para que puedan comprarlos otros clientes.</p>
+                <strong>Te esperamos para retirar y pagar en efectivo antes de ese horario.</strong>
+                <p>Al finalizar el plazo, liberaremos los productos nuevamente para que otras personas puedan pedirlos.</p>
             </div>
             ${order.pickup_address ? `<p>Retiro en: <strong>${escapeHtml(order.pickup_address)}</strong></p>` : ''}
             <p class="checkout-footnote">No necesitás subir ningún comprobante.</p>
@@ -1217,6 +1225,18 @@
             return;
         }
 
+        const categoryToggle = event.target.closest('[data-category-toggle]');
+        if (categoryToggle) {
+            const slug = categoryToggle.dataset.categoryToggle;
+            if (collapsedCategories.has(slug)) {
+                collapsedCategories.delete(slug);
+            } else {
+                collapsedCategories.add(slug);
+            }
+            renderCategories();
+            return;
+        }
+
         const category = event.target.closest('[data-category]');
         if (category) {
             state.category = category.dataset.category;
@@ -1310,7 +1330,7 @@
             const footnote = document.querySelector('[data-payment-footnote]');
             if (footnote) {
                 footnote.textContent = event.target.value === 'cash'
-                    ? 'Al confirmar, el stock queda reservado por solamente 2 horas.'
+                    ? 'Al confirmar, guardamos el stock para vos durante 2 horas.'
                     : 'El stock se reserva al enviar el comprobante.';
             }
         }
