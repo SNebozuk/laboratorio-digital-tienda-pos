@@ -553,9 +553,10 @@
 
     function productSummary(product) {
         const hasVariants = product.variants.length > 1;
+        const singleVariant = product.variants[0];
         const availability = hasVariants
             ? `${product.variants.length} ${product.variants.length === 1 ? 'variante' : 'variantes'}`
-            : 'Disponible';
+            : exactAvailableLabel(visibleAvailable(singleVariant));
         return `
             <article class="catalog-product-summary unified-product-row" role="listitem">
                 <div class="unified-product-media">${productImage(product, 'summary-product-image')}</div>
@@ -575,12 +576,14 @@
                     ${availability}
                 </button>
                 <strong class="summary-product-price">${priceRange(product)}</strong>
-                <button
-                    class="summary-product-chevron"
-                    type="button"
-                    data-open-product="${Number(product.id)}"
-                    aria-label="Abrir ${escapeHtml(product.name)}"
-                >›</button>
+                ${hasVariants
+                    ? `<button
+                        class="summary-product-chevron"
+                        type="button"
+                        data-open-product="${Number(product.id)}"
+                        aria-label="Abrir ${escapeHtml(product.name)}"
+                    >›</button>`
+                    : quantityControl(product, singleVariant, 'summary-quantity-control')}
             </article>
         `;
     }
