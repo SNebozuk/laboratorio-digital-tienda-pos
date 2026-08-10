@@ -9,6 +9,8 @@
         orderQuery: '',
         orderStatus: '',
         orderChannel: '',
+        orderPayment: '',
+        orderDateRange: '',
         selectedOrderIds: new Set(),
         showArchivedOrders: false,
         settings: null,
@@ -70,6 +72,8 @@
         orderSearch: document.getElementById('order-search'),
         orderStatusFilter: document.getElementById('order-status-filter'),
         orderChannelFilter: document.getElementById('order-channel-filter'),
+        orderPaymentFilter: document.getElementById('order-payment-filter'),
+        orderDateFilter: document.getElementById('order-date-filter'),
         showArchivedOrders: document.getElementById('show-archived-orders'),
         orderBulkToolbar: document.getElementById('order-bulk-toolbar'),
         selectedOrdersCount: document.getElementById('selected-orders-count'),
@@ -1502,21 +1506,45 @@
         }
     }
 
-    function renderOrders() {
+    function orderIsInDateRange(order) {
+        if (!state.orderDateRange) return true;
+        const dateText = String(order.created_at || '').slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return false;
+        const orderDate = new Date(`${dateText}T00:00:00`);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (state.orderDateRange === 'today') {
+            return orderDate.getTime() === today.getTime();
+        }
+        if (state.orderDateRange === 'week') {
+            const firstDay = new Date(today);
+            firstDay.setDate(today.getDate() - 6);
+            return orderDate >= firstDay && orderDate <= today;
+        }
+        if (state.orderDateRange === 'month') {
+            return orderDate.getFullYear() === today.getFullYear()
+                && orderDate.getMonth() === today.getMonth();
+        }
+        return true;
+    }
+
+    function orderMatchesFilters(order) {
         const query = fold(state.orderQuery.trim());
-        const matchingOrders = state.orders.filter(order => {
-            const matchesQuery = !query || fold([
-                order.public_number,
-                order.customer_name,
-                order.customer_email,
-                order.customer_phone,
-            ].join(' ')).includes(query);
-            const matchesStatus = !state.orderStatus
-                || order.status === state.orderStatus;
-            const matchesChannel = !state.orderChannel
-                || order.channel === state.orderChannel;
-            return matchesQuery && matchesStatus && matchesChannel;
-        });
+        const matchesQuery = !query || fold([
+            order.public_number,
+            order.customer_name,
+            order.customer_email,
+            order.customer_phone,
+        ].join(' ')).includes(query);
+        return matchesQuery
+            && (!state.orderStatus || order.status === state.orderStatus)
+            && (!state.orderChannel || order.channel === state.orderChannel)
+            && (!state.orderPayment || order.payment_method === state.orderPayment)
+            && orderIsInDateRange(order);
+    }
+
+    function renderOrders() {
+        const matchingOrders = state.orders.filter(orderMatchesFilters);
 
         renderOrderBulkToolbar();
 
@@ -2649,18 +2677,7 @@
             return;
         }
         if (event.target.id === 'select-all-orders') {
-            const query = fold(state.orderQuery.trim());
-            const matching = state.orders.filter(order => {
-                const matchesQuery = !query || fold([
-                    order.public_number,
-                    order.customer_name,
-                    order.customer_email,
-                    order.customer_phone,
-                ].join(' ')).includes(query);
-                return matchesQuery
-                    && (!state.orderStatus || order.status === state.orderStatus)
-                    && (!state.orderChannel || order.channel === state.orderChannel);
-            });
+            const matching = state.orders.filter(orderMatchesFilters);
             setAllMatchingOrderSelection(matching, Boolean(event.target.checked));
             return;
         }
@@ -2705,6 +2722,14 @@
     });
     elements.orderChannelFilter?.addEventListener('change', event => {
         state.orderChannel = event.target.value;
+        renderOrders();
+    });
+    elements.orderPaymentFilter?.addEventListener('change', event => {
+        state.orderPayment = event.target.value;
+        renderOrders();
+    });
+    elements.orderDateFilter?.addEventListener('change', event => {
+        state.orderDateRange = event.target.value;
         renderOrders();
     });
     elements.showArchivedOrders?.addEventListener('change', async event => {

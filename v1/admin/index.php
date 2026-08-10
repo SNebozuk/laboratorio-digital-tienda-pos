@@ -275,7 +275,7 @@ header('Referrer-Policy: same-origin');
                     <div class="order-toolbar">
                         <label class="order-filter-search">
                             <span>BUSCAR</span>
-                            <input id="order-search" type="search" placeholder="Número de pedido o cliente">
+                            <input id="order-search" type="search" placeholder="N.º de venta, nombre o apellido">
                         </label>
                         <label>
                             <span>ESTADO</span>
@@ -297,6 +297,23 @@ header('Referrer-Policy: same-origin');
                                 <option value="web">Tienda web</option>
                                 <option value="whatsapp">WhatsApp</option>
                                 <option value="pos">Mostrador</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>PAGO</span>
+                            <select id="order-payment-filter">
+                                <option value="">Todas las formas</option>
+                                <option value="bank_transfer">Transferencia</option>
+                                <option value="cash">Efectivo</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>PERÍODO</span>
+                            <select id="order-date-filter">
+                                <option value="">Cualquier fecha</option>
+                                <option value="today">Hoy</option>
+                                <option value="week">Últimos 7 días</option>
+                                <option value="month">Este mes</option>
                             </select>
                         </label>
                         <label class="archive-orders-toggle">
