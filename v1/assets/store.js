@@ -26,6 +26,7 @@
         categories: document.getElementById('category-list'),
         categoryPanel: document.querySelector('.category-panel'),
         categoryMenu: document.getElementById('catalog-menu-button'),
+        categoryBackdrop: document.getElementById('category-backdrop'),
         categoryToggle: document.getElementById('category-toggle'),
         categoryBreadcrumb: document.getElementById('category-breadcrumb'),
         search: document.getElementById('product-search'),
@@ -1134,6 +1135,7 @@
             elements.search.value = '';
             elements.categoryPanel.classList.remove('mobile-open');
             elements.categoryPanel.classList.remove('menu-open');
+            elements.categoryBackdrop.classList.remove('menu-open');
             elements.categoryToggle.setAttribute('aria-expanded', 'false');
             elements.categoryMenu.setAttribute('aria-expanded', 'false');
             renderCategories();
@@ -1254,7 +1256,13 @@
     });
     elements.categoryMenu.addEventListener('click', () => {
         const isOpen = elements.categoryPanel.classList.toggle('menu-open');
+        elements.categoryBackdrop.classList.toggle('menu-open', isOpen);
         elements.categoryMenu.setAttribute('aria-expanded', String(isOpen));
+    });
+    elements.categoryBackdrop.addEventListener('click', () => {
+        elements.categoryPanel.classList.remove('menu-open');
+        elements.categoryBackdrop.classList.remove('menu-open');
+        elements.categoryMenu.setAttribute('aria-expanded', 'false');
     });
     elements.modal.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
@@ -1282,6 +1290,13 @@
             event.preventDefault();
             elements.categoryPanel.classList.remove('mobile-open');
             elements.categoryToggle.setAttribute('aria-expanded', 'false');
+            return;
+        }
+        if (elements.categoryPanel.classList.contains('menu-open')) {
+            event.preventDefault();
+            elements.categoryPanel.classList.remove('menu-open');
+            elements.categoryBackdrop.classList.remove('menu-open');
+            elements.categoryMenu.setAttribute('aria-expanded', 'false');
             return;
         }
         if (state.openedProductId !== null) {

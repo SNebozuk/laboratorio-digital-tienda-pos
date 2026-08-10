@@ -2612,3 +2612,122 @@ body.product-detail-mode .catalog-column {
         grid-row: 1 / span 3;
     }
 }
+
+/* Menú principal y árbol de categorías en panel lateral izquierdo. */
+.header-leading {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 16px;
+}
+
+.catalog-menu-button {
+    flex: 0 0 auto;
+}
+
+.category-backdrop {
+    position: fixed;
+    z-index: 18;
+    inset: 74px 0 0;
+    display: block;
+    border: 0;
+    background: rgba(1, 3, 7, .58);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease;
+}
+
+.category-backdrop.menu-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.category-panel {
+    display: block;
+    position: fixed;
+    z-index: 20;
+    top: 74px;
+    right: auto;
+    bottom: 0;
+    left: 0;
+    width: min(360px, 88vw);
+    max-height: none;
+    padding: 24px 20px 32px;
+    border: 0;
+    border-right: 1px solid rgba(101, 121, 148, .28);
+    border-radius: 0 16px 16px 0;
+    background: rgba(7, 11, 17, .98);
+    box-shadow: 22px 0 60px rgba(0, 0, 0, .48);
+    overflow-y: auto;
+    visibility: hidden;
+    transform: translateX(-104%);
+    pointer-events: none;
+    transition: transform .22s ease, visibility .22s ease;
+}
+
+.category-panel.menu-open {
+    display: block;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+@media (max-width: 1120px) {
+    .store-shell,
+    body.product-detail-mode .store-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .catalog-column {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 760px) {
+    .header-leading {
+        gap: 10px;
+    }
+
+    .catalog-menu-button {
+        padding: 9px 10px;
+    }
+
+    .brand strong {
+        font-size: 12px;
+    }
+
+    .category-backdrop {
+        inset: 66px 0 0;
+    }
+
+    .category-panel {
+        position: fixed;
+        top: 66px;
+        right: auto;
+        bottom: 0;
+        left: 0;
+        width: min(340px, 90vw);
+        max-height: none;
+        padding: 20px 16px 28px;
+        border-right: 1px solid rgba(101, 121, 148, .28);
+        border-bottom: 0;
+        border-radius: 0 14px 14px 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .category-title {
+        display: block;
+    }
+
+    #category-list {
+        display: grid;
+        width: 100%;
+    }
+
+    .category-button {
+        width: 100%;
+        white-space: normal;
+        border: 1px solid transparent;
+    }
+}

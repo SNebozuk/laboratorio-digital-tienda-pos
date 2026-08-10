@@ -37,17 +37,19 @@ header('Referrer-Policy: same-origin');
 </head>
 <body>
     <header class="store-header">
-        <a class="brand" href="<?= $escape($storeUrl) ?>" aria-label="Laboratorio Digital, inicio">
-            <span class="brand-mark">LD</span>
-            <span>
-                <strong>LABORATORIO DIGITAL</strong>
-                <small>CATÁLOGO MAYORISTA · RETIRO EN EL LOCAL</small>
-            </span>
-        </a>
-        <div class="header-actions">
+        <div class="header-leading">
             <button class="catalog-menu-button" id="catalog-menu-button" type="button" aria-expanded="false" aria-controls="category-panel">
-                <span aria-hidden="true">☰</span><span>Categorías</span>
+                <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
+            <a class="brand" href="<?= $escape($storeUrl) ?>" aria-label="Laboratorio Digital, inicio">
+                <span class="brand-mark">LD</span>
+                <span>
+                    <strong>LABORATORIO DIGITAL</strong>
+                    <small>CATÁLOGO MAYORISTA · RETIRO EN EL LOCAL</small>
+                </span>
+            </a>
+        </div>
+        <div class="header-actions">
             <a class="header-link" href="<?= $escape($sizeGuideUrl) ?>">TABLA DE TALLES</a>
             <a class="header-link" href="https://www.laboratoriodigital.com.ar/">TIENDANUBE</a>
             <a class="header-link" href="https://wa.me/<?= $escape($whatsappNumber) ?>" target="_blank" rel="noopener">WHATSAPP +<?= $escape($whatsappNumber) ?></a>
@@ -58,6 +60,7 @@ header('Referrer-Policy: same-origin');
     </header>
 
     <main class="store-shell">
+        <button class="category-backdrop" id="category-backdrop" type="button" aria-label="Cerrar menú de categorías" tabindex="-1"></button>
         <aside class="category-panel" id="category-panel" aria-label="Secciones del catálogo">
             <div class="category-title">CATEGORÍAS</div>
             <button class="category-mobile-toggle" id="category-toggle" type="button" aria-expanded="false">
