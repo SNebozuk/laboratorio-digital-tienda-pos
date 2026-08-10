@@ -2390,10 +2390,12 @@ body.product-detail-mode .catalog-column {
 
 .opened-quantity-control {
     grid-column: 4;
+    grid-row: 1;
 }
 
 .opened-variant-price {
     grid-column: 5;
+    grid-row: 1;
     justify-self: end;
     text-align: right;
 }
