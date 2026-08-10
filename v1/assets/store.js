@@ -1152,6 +1152,10 @@
     elements.search.addEventListener('input', event => {
         state.query = event.target.value;
         state.searchActive = Boolean(state.query.trim());
+        if (state.searchActive) {
+            state.category = '';
+            renderCategories();
+        }
         state.openedProductId = null;
         scheduleCodeSearch(state.query);
         renderCatalog();
