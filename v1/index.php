@@ -142,6 +142,40 @@ header('Referrer-Policy: same-origin');
         </aside>
     </main>
 
+    <footer class="store-contact" id="contacto">
+        <div>
+            <p class="eyebrow">CONTACTO</p>
+            <strong><?= $escape((string) ($publicSettings['store_name'] ?? 'Laboratorio Digital')) ?></strong>
+        </div>
+        <a href="https://wa.me/<?= $escape($whatsappNumber) ?>" target="_blank" rel="noopener">
+            WhatsApp +<?= $escape($whatsappNumber) ?>
+        </a>
+        <?php if (!empty($publicSettings['sales_email'])): ?>
+            <a href="mailto:<?= $escape((string) $publicSettings['sales_email']) ?>">
+                <?= $escape((string) $publicSettings['sales_email']) ?>
+            </a>
+        <?php endif ?>
+        <?php if (!empty($publicSettings['pickup_address'])): ?>
+            <span><?= $escape((string) $publicSettings['pickup_address']) ?></span>
+        <?php endif ?>
+        <?php if (!empty($publicSettings['business_hours'])): ?>
+            <span><?= $escape((string) $publicSettings['business_hours']) ?></span>
+        <?php endif ?>
+    </footer>
+
+    <a
+        class="floating-whatsapp"
+        href="https://wa.me/<?= $escape($whatsappNumber) ?>"
+        target="_blank"
+        rel="noopener"
+        aria-label="Consultar por WhatsApp"
+        title="Consultar por WhatsApp"
+    >
+        <svg aria-hidden="true" viewBox="0 0 32 32" focusable="false">
+            <path d="M16 3a12.7 12.7 0 0 0-11 19.1L3.2 29l7.1-1.9A12.7 12.7 0 1 0 16 3Zm0 22.9c-2 0-3.9-.6-5.5-1.6l-.4-.2-4.2 1.1 1.1-4.1-.3-.4A10.1 10.1 0 1 1 16 25.9Zm5.6-7.6c-.3-.2-1.8-.9-2.1-1-.3-.1-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1-1.8-.9-3-1.7-4.2-3.8-.3-.5.3-.5.9-1.7.1-.2 0-.5 0-.7l-1-2.4c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.4-1.2 1.2-1.2 2.9 0 1.7 1.2 3.4 1.4 3.6.2.2 2.5 3.8 6 5.3 2.2.9 3.1 1 4.2.8 1.3-.2 1.8-.9 2.1-1.7.3-.8.3-1.5.2-1.7-.1-.2-.4-.3-.7-.4Z"></path>
+        </svg>
+    </a>
+
     <div class="modal" id="modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
         <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">

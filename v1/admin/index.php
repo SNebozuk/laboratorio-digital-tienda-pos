@@ -102,6 +102,9 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
                         </button>
+                        <button class="admin-nav-button" type="button" data-view="contact">
+                            Contacto
+                        </button>
                         <button class="admin-nav-button" type="button" data-view="users">
                             Usuarios
                         </button>
@@ -127,6 +130,7 @@ header('Referrer-Policy: same-origin');
                         <?php if ($user['role'] === 'admin'): ?>
                             <option value="size-guide">Tabla de Talles</option>
                             <option value="categories">Categorías</option>
+                            <option value="contact">Contacto</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
                         <?php endif ?>
@@ -186,6 +190,26 @@ header('Referrer-Policy: same-origin');
                             </div>
                             <div id="size-guide-rows" class="size-guide-editor-rows"></div>
                             <button class="primary-button fit-button" type="submit">GUARDAR TABLA DE TALLES</button>
+                        </form>
+                    </section>
+
+                    <section class="admin-view" id="view-contact">
+                        <div class="view-heading">
+                            <div>
+                                <p class="eyebrow">INFORMACIÓN PARA CLIENTES</p>
+                                <h1>CONTACTO</h1>
+                                <p>Estos datos se muestran en la tienda y alimentan el botón de WhatsApp.</p>
+                            </div>
+                        </div>
+                        <form id="contact-form" class="settings-card">
+                            <div class="settings-grid">
+                                <label>NOMBRE DEL COMERCIO<input name="store_name" required></label>
+                                <label>EMAIL DE VENTAS<input name="sales_email" type="email" required></label>
+                                <label>WHATSAPP CON CÓDIGO DE PAÍS<input name="whatsapp_number" inputmode="numeric" required></label>
+                                <label>DIRECCIÓN DE RETIRO<input name="pickup_address"></label>
+                                <label>HORARIOS DE ATENCIÓN<input name="business_hours" required></label>
+                            </div>
+                            <button class="primary-button fit-button" type="submit">GUARDAR CONTACTO</button>
                         </form>
                     </section>
                 <?php endif ?>

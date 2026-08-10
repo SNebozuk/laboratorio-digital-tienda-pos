@@ -469,7 +469,8 @@
                     class="category-button category-depth-${Math.min(depth, 4)} ${state.category === node.slug ? 'active' : ''}"
                     type="button"
                     data-category="${escapeHtml(node.slug)}"
-                >${escapeHtml(node.name)}</button>
+                    aria-label="${depth > 0 ? 'Subcategoría' : 'Categoría'} ${escapeHtml(node.name)}"
+                ><span class="category-branch" aria-hidden="true">${depth > 0 ? '↳' : ''}</span>${escapeHtml(node.name)}</button>
                 ${nested ? `<div class="category-children">${nested}</div>` : ''}
             `;
         };
@@ -834,6 +835,8 @@
     }
 
     async function showCheckout() {
+        elements.checkout.disabled = true;
+        elements.checkout.textContent = 'REVISANDO STOCK…';
         const previousUnits = Array.from(state.cart.values()).reduce(
             (sum, quantity) => sum + Number(quantity),
             0
@@ -844,6 +847,7 @@
             if (previousUnits > 0) {
                 toast('Ese stock cambió. Actualizamos el carrito antes de confirmar.');
             }
+            renderCart();
             return;
         }
         const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
@@ -864,7 +868,7 @@
                 Confirmar el pedido todavía no reserva unidades. La reserva se realiza
                 al subir el comprobante, después de validar nuevamente el stock.
             </div>
-            <form id="checkout-form">
+            <form id="checkout-form" novalidate>
                 <label>
                     Nombre y Apellido
                     <input name="name" required autocomplete="name">
@@ -883,6 +887,7 @@
                     Email para recibir una copia (opcional)
                     <input name="email" type="email" autocomplete="email">
                 </label>
+                <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CREAR PEDIDO</button>
             </form>
         `);
@@ -900,7 +905,13 @@
                 csrf_token: app.csrf_token,
             }),
         });
-        const data = await response.json();
+        const responseText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch {
+            throw new Error('No pudimos comunicarnos con el servidor. Intentá nuevamente.');
+        }
         if (!response.ok || !data.ok) {
             throw new Error(data.error || 'No pudimos completar la operación.');
         }
@@ -909,10 +920,25 @@
 
     async function createOrder(form) {
         const button = form.querySelector('button[type="submit"]');
+        const errorBox = form.querySelector('#checkout-error');
+        const formData = new FormData(form);
+        const customerName = String(formData.get('name') || '').trim();
+        const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
+        const emailField = form.querySelector('[name="email"]');
+        if (customerName.length < 2 || customerPhone.length < 8 || !emailField.checkValidity()) {
+            errorBox.hidden = false;
+            errorBox.textContent = !emailField.checkValidity()
+                ? 'Revisá el email o dejalo vacío.'
+                : 'Completá Nombre y Apellido y un WhatsApp válido para crear el pedido.';
+            form.querySelector(customerName.length < 2
+                ? '[name="name"]'
+                : (customerPhone.length < 8 ? '[name="phone"]' : '[name="email"]'))?.focus();
+            return;
+        }
+        errorBox.hidden = true;
         button.disabled = true;
         button.textContent = 'CREANDO PEDIDO…';
         try {
-            const formData = new FormData(form);
             const data = await apiJson({
                 action: 'create_order',
                 channel: 'web',
@@ -932,6 +958,8 @@
                 String(formData.get('email') || '').trim() !== ''
             );
         } catch (error) {
+            errorBox.hidden = false;
+            errorBox.textContent = error.message;
             toast(error.message);
             await refreshCatalog();
             button.disabled = false;

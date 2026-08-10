@@ -198,6 +198,9 @@
         if (view === 'settings') {
             loadSettings();
         }
+        if (view === 'contact') {
+            loadContact();
+        }
         if (view === 'users') {
             loadUsers();
         }
@@ -248,9 +251,10 @@
     function renderCategories() {
         if (!elements.categoryTree) return;
         const rows = flatCategories();
+        const namesById = new Map(rows.map(item => [Number(item.id), item.name]));
         elements.categoryTree.innerHTML = rows.length ? rows.map(category => `
             <article class="category-admin-row" style="--category-depth:${Number(category.depth)}">
-                <div><strong>${escapeHtml(category.name)}</strong><small>${Number(category.product_count)} productos · orden ${Number(category.sort_order)}${category.active ? '' : ' · inactiva'}</small></div>
+                <div><strong>${Number(category.depth) > 0 ? '↳ ' : ''}${escapeHtml(category.name)}</strong><small>${category.parent_id ? `Subcategoría de ${escapeHtml(namesById.get(Number(category.parent_id)) || 'otra categoría')} · ` : ''}${Number(category.product_count)} productos · orden ${Number(category.sort_order)}${category.active ? '' : ' · inactiva'}</small></div>
                 <div class="category-admin-actions"><button class="small-button" type="button" data-edit-category="${Number(category.id)}">Editar</button><button class="small-button danger-button" type="button" data-delete-category="${Number(category.id)}">Borrar</button></div>
             </article>`).join('') : '<p class="empty-copy">Todavía no hay categorías.</p>';
     }
@@ -2149,6 +2153,45 @@
         }
     }
 
+    async function loadContact() {
+        const form = document.getElementById('contact-form');
+        if (!form || app.user?.role !== 'admin') return;
+        try {
+            const data = await apiGet('settings');
+            state.settings = data.settings;
+            Object.entries(data.settings).forEach(([key, value]) => {
+                const field = form.elements.namedItem(key);
+                if (field) field.value = value;
+            });
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    async function saveContact(form) {
+        const data = new FormData(form);
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'GUARDANDO…';
+        try {
+            if (!state.settings) {
+                const current = await apiGet('settings');
+                state.settings = current.settings;
+            }
+            const response = await apiPost({
+                action: 'settings_update',
+                settings: { ...state.settings, ...Object.fromEntries(data.entries()) },
+            });
+            state.settings = response.settings;
+            toast('Contacto guardado.');
+        } catch (error) {
+            toast(error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'GUARDAR CONTACTO';
+        }
+    }
+
     async function saveSettings(form) {
         const data = new FormData(form);
         const button = form.querySelector('button[type="submit"]');
@@ -2365,6 +2408,10 @@
         if (event.target.id === 'settings-form') {
             event.preventDefault();
             saveSettings(event.target);
+        }
+        if (event.target.id === 'contact-form') {
+            event.preventDefault();
+            saveContact(event.target);
         }
         if (event.target.id === 'size-guide-form') {
             event.preventDefault();
