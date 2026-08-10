@@ -412,17 +412,18 @@
         return url.href;
     }
 
-    function shareProduct(productId) {
+    async function shareProduct(productId) {
         const product = state.products.find(item => Number(item.id) === Number(productId));
         if (!product) {
             return;
         }
-        const message = `Hola, te comparto este producto: ${product.name}\n${productShareUrl(product.id)}`;
-        window.open(
-            `https://wa.me/?text=${encodeURIComponent(message)}`,
-            '_blank',
-            'noopener'
-        );
+        const url = productShareUrl(product.id);
+        try {
+            await navigator.clipboard.writeText(url);
+            toast('Enlace del producto copiado. Ya podés pegarlo en WhatsApp.');
+        } catch {
+            window.prompt('Copiá este enlace del producto:', url);
+        }
     }
 
     function renderProducts() {
@@ -452,7 +453,7 @@
                     </button>
                     <strong class="product-admin-price">${adminProductPrice(product)}</strong>
                     <div class="product-admin-actions">
-                        <button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Compartir por WhatsApp" aria-label="Compartir ${escapeHtml(product.name)} por WhatsApp">&#10150;</button>
+                        <button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace del producto" aria-label="Copiar enlace de ${escapeHtml(product.name)}">&#128279;</button>
                         <button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button>
                     </div>
                 </header>
