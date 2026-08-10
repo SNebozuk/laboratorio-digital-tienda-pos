@@ -62,7 +62,6 @@ final class OrderService
         $deadline = (new DateTimeImmutable())
             ->add(new DateInterval('PT' . $minutes . 'M'))
             ->format('Y-m-d H:i:s');
-        $publicNumber = $this->newPublicNumber($channel === 'web' ? 'WEB' : 'WSP');
         $uploadToken = bin2hex(random_bytes(24));
         $tokenHash = hash('sha256', $uploadToken);
 
@@ -75,10 +74,10 @@ final class OrderService
                 $customerEmail,
                 $customerPhone,
                 $deadline,
-                $publicNumber,
                 $tokenHash,
                 $uploadToken
             ): array {
+                $publicNumber = $this->newPublicNumber($pdo);
                 $resolvedItems = $this->resolveItems($pdo, $quantities);
                 $total = array_sum(array_column($resolvedItems, 'line_total_cents'));
 
@@ -196,17 +195,15 @@ final class OrderService
         if ($paymentMethod === '') {
             throw new ValidationException('Elegí un medio de pago.');
         }
-        $publicNumber = $this->newPublicNumber('POS');
-
         return Database::immediate(
             $this->pdo,
             function (PDO $pdo) use (
                 $quantities,
                 $customerName,
                 $paymentMethod,
-                $actorUserId,
-                $publicNumber
+                $actorUserId
             ): array {
+                $publicNumber = $this->newPublicNumber($pdo);
                 $resolvedItems = $this->resolveItems($pdo, $quantities);
                 $total = array_sum(array_column($resolvedItems, 'line_total_cents'));
 
@@ -929,14 +926,16 @@ final class OrderService
         }
     }
 
-    private function newPublicNumber(string $prefix): string
+    private function newPublicNumber(PDO $pdo): string
     {
-        return sprintf(
-            'LD-%s-%s-%s',
-            $prefix,
-            date('ymd'),
-            strtoupper(substr(bin2hex(random_bytes(3)), 0, 6))
-        );
+        $lastNumber = (int) $pdo->query(
+            "SELECT COALESCE(MAX(CAST(SUBSTR(public_number, 2) AS INTEGER)), 9999)
+             FROM orders
+             WHERE public_number GLOB '#[0-9]*'
+               AND SUBSTR(public_number, 2) NOT GLOB '*[^0-9]*'"
+        )->fetchColumn();
+
+        return '#' . (string) max(10000, $lastNumber + 1);
     }
 
     private function integerSetting(string $key, int $default): int
