@@ -4,6 +4,7 @@
     const app = JSON.parse(document.getElementById('admin-app-data').textContent);
     const state = {
         products: [],
+        categories: [],
         orders: [],
         orderQuery: '',
         orderStatus: '',
@@ -54,6 +55,7 @@
         toast: document.getElementById('toast'),
         productList: document.getElementById('admin-product-list'),
         productSearch: document.getElementById('admin-product-search'),
+        categoryTree: document.getElementById('category-admin-tree'),
         posSearch: document.getElementById('pos-search'),
         posSuggestions: document.getElementById('pos-suggestions'),
         posProducts: document.getElementById('pos-products'),
@@ -187,12 +189,18 @@
         if (view === 'users') {
             loadUsers();
         }
+        if (view === 'categories') {
+            loadCategories();
+        }
     }
 
     async function loadProducts() {
         try {
             const data = await apiGet('admin_products');
             state.products = data.products;
+            const categoryData = await apiGet('admin_categories');
+            state.categories = categoryData.categories;
+            renderCategories();
             const adjusted = restoreOrReconcilePosCart();
             renderProducts();
             renderPos();
@@ -203,6 +211,44 @@
         } catch (error) {
             toast(error.message);
         }
+    }
+
+    async function loadCategories() {
+        if (!elements.categoryTree) return;
+        try {
+            const data = await apiGet('admin_categories');
+            state.categories = data.categories;
+            renderCategories();
+        } catch (error) { toast(error.message); }
+    }
+
+    function flatCategories(nodes = state.categories, depth = 0, rows = []) {
+        nodes.forEach(category => {
+            rows.push({ ...category, depth });
+            flatCategories(category.children || [], depth + 1, rows);
+        });
+        return rows;
+    }
+
+    function renderCategories() {
+        if (!elements.categoryTree) return;
+        const rows = flatCategories();
+        elements.categoryTree.innerHTML = rows.length ? rows.map(category => `
+            <article class="category-admin-row" style="--category-depth:${Number(category.depth)}">
+                <div><strong>${escapeHtml(category.name)}</strong><small>${Number(category.product_count)} productos · orden ${Number(category.sort_order)}${category.active ? '' : ' · inactiva'}</small></div>
+                <div class="category-admin-actions"><button class="small-button" type="button" data-edit-category="${Number(category.id)}">Editar</button><button class="small-button danger-button" type="button" data-delete-category="${Number(category.id)}">Borrar</button></div>
+            </article>`).join('') : '<p class="empty-copy">Todavía no hay categorías.</p>';
+    }
+
+    function showCategoryForm(category = null) {
+        const options = flatCategories().filter(item => Number(item.id) !== Number(category?.id || 0)).map(item => `<option value="${Number(item.id)}" ${Number(category?.parent_id) === Number(item.id) ? 'selected' : ''}>${'— '.repeat(item.depth)}${escapeHtml(item.name)}</option>`).join('');
+        openModal(`<h2 id="modal-title">${category ? 'EDITAR CATEGORÍA' : 'NUEVA CATEGORÍA'}</h2><form id="category-form" data-category-id="${Number(category?.id || 0)}"><label>NOMBRE<input name="name" value="${escapeHtml(category?.name || '')}" required></label><label>CATEGORÍA SUPERIOR<select name="parent_id"><option value="">Categoría principal</option>${options}</select></label><label>ORDEN<input name="sort_order" type="number" value="${Number(category?.sort_order || 0)}"></label><label>ACTIVA<select name="active"><option value="1" ${category?.active !== false ? 'selected' : ''}>Sí</option><option value="0" ${category?.active === false ? 'selected' : ''}>No</option></select></label><div class="button-row"><button class="primary-button fit-button" type="submit">GUARDAR CATEGORÍA</button></div></form>`);
+    }
+
+    async function saveCategory(form) {
+        const id = Number(form.dataset.categoryId), data = new FormData(form);
+        await apiPost({ action: id ? 'category_update' : 'category_create', category_id: id || undefined, category: { name: data.get('name'), parent_id: data.get('parent_id') || null, sort_order: Number(data.get('sort_order') || 0), active: data.get('active') === '1' } });
+        closeModal(); await loadCategories(); await loadProducts(); toast('Categoría guardada.');
     }
 
     function productSearchText(product) {
@@ -349,12 +395,11 @@
             <article class="product-admin-card">
                 <header class="product-admin-head">
                     ${adminProductImage(product)}
-                    <div class="product-admin-title">
+                    <button class="product-admin-title" type="button" data-edit-product="${Number(product.id)}" title="Editar producto">
                         <strong>${escapeHtml(product.name)}</strong>
                         <small>${escapeHtml(product.category?.name || 'Sin categoría')} · ${product.active ? 'Activo' : 'Inactivo'}</small>
-                    </div>
+                    </button>
                     <div class="product-admin-actions">
-                        <button class="small-button" type="button" data-edit-product="${Number(product.id)}">Editar producto</button>
                         <button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button>
                     </div>
                 </header>
@@ -447,7 +492,7 @@
                 </label>
                 <label>
                     CATEGORÍA
-                    <input name="category" value="${escapeHtml(product?.category?.name || 'General')}" required>
+                    <select name="category_id"><option value="">Sin categoría</option>${flatCategories().map(item => `<option value="${Number(item.id)}" ${Number(product?.category?.id) === Number(item.id) ? 'selected' : ''}>${'— '.repeat(item.depth)}${escapeHtml(item.name)}</option>`).join('')}</select>
                 </label>
                 <label>
                     DESCRIPCIÓN
@@ -496,12 +541,17 @@
         }));
         return {
             name: formData.get('name'),
-            category: formData.get('category'),
+            category: productCategoryName(formData.get('category_id')),
+            category_id: formData.get('category_id') || null,
             description: formData.get('description'),
             image_path: formData.get('image_path'),
             active: formData.get('active') === '1',
             variants,
         };
+    }
+
+    function productCategoryName(id) {
+        return flatCategories().find(item => Number(item.id) === Number(id))?.name || 'General';
     }
 
     async function saveProduct(form) {
@@ -1920,6 +1970,10 @@
             event.preventDefault();
             saveProduct(event.target);
         }
+        if (event.target.id === 'category-form') {
+            event.preventDefault();
+            saveCategory(event.target).catch(error => toast(error.message));
+        }
         if (event.target.id === 'order-edit-form') {
             event.preventDefault();
             saveOrderEditor(event.target);
@@ -1942,6 +1996,24 @@
         }
         if (event.target.closest('[data-close-modal]')) {
             closeModal();
+            return;
+        }
+        if (event.target.id === 'new-category-button') {
+            showCategoryForm();
+            return;
+        }
+        const editCategory = event.target.closest('[data-edit-category]');
+        if (editCategory) {
+            const category = flatCategories().find(item => Number(item.id) === Number(editCategory.dataset.editCategory));
+            showCategoryForm(category);
+            return;
+        }
+        const deleteCategory = event.target.closest('[data-delete-category]');
+        if (deleteCategory) {
+            const category = flatCategories().find(item => Number(item.id) === Number(deleteCategory.dataset.deleteCategory));
+            if (category && window.confirm(`¿Borrar la categoría “${category.name}”? Los productos quedarán sin categoría y las subcategorías pasarán a ser principales.`)) {
+                apiPost({ action: 'category_delete', category_id: category.id }).then(async () => { await loadCategories(); await loadProducts(); toast('Categoría eliminada.'); }).catch(error => toast(error.message));
+            }
             return;
         }
         if (event.target.closest('[data-add-variant]')) {

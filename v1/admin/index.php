@@ -94,6 +94,9 @@ header('Referrer-Policy: same-origin');
                         Ventas y pedidos
                     </button>
                     <?php if ($user['role'] === 'admin'): ?>
+                        <button class="admin-nav-button" type="button" data-view="categories">
+                            Categorías
+                        </button>
                         <button class="admin-nav-button" type="button" data-view="users">
                             Usuarios
                         </button>
@@ -117,6 +120,7 @@ header('Referrer-Policy: same-origin');
                         <option value="pos">Punto de venta</option>
                         <option value="orders">Ventas y pedidos</option>
                         <?php if ($user['role'] === 'admin'): ?>
+                            <option value="categories">Categorías</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
                         <?php endif ?>
@@ -139,6 +143,20 @@ header('Referrer-Policy: same-origin');
                     </div>
                     <div id="admin-product-list"></div>
                 </section>
+
+                <?php if ($user['role'] === 'admin'): ?>
+                    <section class="admin-view" id="view-categories">
+                        <div class="view-heading">
+                            <div>
+                                <p class="eyebrow">ORGANIZACIÓN DEL CATÁLOGO</p>
+                                <h1>CATEGORÍAS</h1>
+                                <p>Creá, ordená y mantené categorías y subcategorías.</p>
+                            </div>
+                            <button class="primary-button fit-button" id="new-category-button" type="button">NUEVA CATEGORÍA</button>
+                        </div>
+                        <div id="category-admin-tree" class="category-admin-tree"></div>
+                    </section>
+                <?php endif ?>
 
                 <section class="admin-view" id="view-pos">
                     <div class="view-heading">

@@ -137,7 +137,7 @@ final class ProductService
         return Database::immediate(
             $this->pdo,
             function (PDO $pdo) use ($payload, $actorUserId): int {
-                $categoryId = $this->categoryId($pdo, $payload['category']);
+                $categoryId = $this->categoryId($pdo, $payload['category'], $payload['category_id']);
                 $insertProduct = $pdo->prepare(
                     'INSERT INTO products(category_id, name, description, image_path)
                      VALUES(:category_id, :name, :description, :image_path)'
@@ -180,7 +180,7 @@ final class ProductService
         Database::immediate(
             $this->pdo,
             function (PDO $pdo) use ($productId, $payload, $actorUserId): void {
-                $categoryId = $this->categoryId($pdo, $payload['category']);
+                $categoryId = $this->categoryId($pdo, $payload['category'], $payload['category_id']);
                 $updateProduct = $pdo->prepare(
                     'UPDATE products
                      SET category_id = :category_id,
@@ -582,6 +582,7 @@ final class ProductService
     {
         $name = trim((string) ($data['name'] ?? ''));
         $category = trim((string) ($data['category'] ?? 'General'));
+        $categoryId = filter_var($data['category_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $variants = $data['variants'] ?? [];
 
         if ($name === '') {
@@ -657,6 +658,7 @@ final class ProductService
                 ? mb_strtoupper($name, 'UTF-8')
                 : strtoupper($name),
             'category' => $category !== '' ? $category : 'General',
+            'category_id' => $categoryId === false ? null : (int) $categoryId,
             'description' => trim((string) ($data['description'] ?? '')),
             'image_path' => $imagePath ?: null,
             'active' => !isset($data['active']) || (bool) $data['active'],
@@ -664,8 +666,16 @@ final class ProductService
         ];
     }
 
-    private function categoryId(PDO $pdo, string $categoryName): int
+    private function categoryId(PDO $pdo, string $categoryName, ?int $categoryId = null): int
     {
+        if ($categoryId !== null) {
+            $existing = $pdo->prepare('SELECT id FROM categories WHERE id = :id');
+            $existing->execute(['id' => $categoryId]);
+            if ($existing->fetchColumn() === false) {
+                throw new ValidationException('La categoría seleccionada no existe.');
+            }
+            return $categoryId;
+        }
         $slug = $this->slug($categoryName);
         $insert = $pdo->prepare(
             'INSERT OR IGNORE INTO categories(name, slug) VALUES(:name, :slug)'

@@ -55,10 +55,20 @@ final class Database
 
         $pdo->exec($schema);
         self::migrateReceiptPrevalidation($pdo);
+        self::migrateCategoryTree($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
         );
+    }
+
+    private static function migrateCategoryTree(PDO $pdo): void
+    {
+        $columns = [];
+        foreach ($pdo->query('PRAGMA table_info(categories)')->fetchAll() as $row) $columns[(string) $row['name']] = true;
+        if (!isset($columns['parent_id'])) $pdo->exec('ALTER TABLE categories ADD COLUMN parent_id INTEGER REFERENCES categories(id) ON DELETE SET NULL');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_categories_tree ON categories(parent_id, sort_order, name)');
+        $pdo->exec('INSERT OR IGNORE INTO schema_migrations(version) VALUES(4)');
     }
 
     /** Agrega campos a bases ya creadas antes de la prevalidación de pagos. */

@@ -46,6 +46,10 @@ try {
                     'products' => $app['products']->adminCatalog(),
                 ]);
 
+            case 'admin_categories':
+                $app['auth']->requireUser();
+                Http::json(['ok' => true, 'categories' => $app['categories']->tree()]);
+
             case 'orders':
                 $app['auth']->requireUser();
                 Http::json([
@@ -182,6 +186,20 @@ try {
                 (int) $user['id']
             );
             Http::json(['ok' => true, 'product_id' => $productId], 201);
+
+        case 'category_create':
+            $app['auth']->requireAdmin();
+            Http::json(['ok' => true, 'category_id' => $app['categories']->create(is_array($input['category'] ?? null) ? $input['category'] : [])], 201);
+
+        case 'category_update':
+            $app['auth']->requireAdmin();
+            $app['categories']->update((int) ($input['category_id'] ?? 0), is_array($input['category'] ?? null) ? $input['category'] : []);
+            Http::json(['ok' => true]);
+
+        case 'category_delete':
+            $app['auth']->requireAdmin();
+            $app['categories']->delete((int) ($input['category_id'] ?? 0));
+            Http::json(['ok' => true]);
 
         case 'product_update':
             $user = $app['auth']->requireAdmin();
