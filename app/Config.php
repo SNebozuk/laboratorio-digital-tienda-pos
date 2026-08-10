@@ -62,7 +62,7 @@ final class Config
                 $local,
                 'maintenance_token_hash',
                 getenv('APP_MAINTENANCE_TOKEN_HASH')
-                    ?: '709696c8371bc2917f1f700c8c3d3cce1033213e1eead6c999aa875137c6d064'
+                    ?: 'b870032ddd39f8ac727d4751c990baf6b88e54ac3d087629dc5989565f57814b'
             ),
             'debug' => self::bool(
                 $local,
