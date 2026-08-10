@@ -246,8 +246,19 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 }
 
 .product-admin-variant-count {
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--muted);
     font-weight: 700;
+    text-align: left;
+}
+
+.product-admin-variant-count:hover,
+.product-admin-variant-count:focus-visible {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 4px;
 }
 
 .product-admin-actions {

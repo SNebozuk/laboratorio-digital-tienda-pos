@@ -377,6 +377,13 @@
         return units <= 3 ? 'Últimas unidades' : 'Disponible';
     }
 
+    function exactAvailableLabel(available) {
+        const units = Number(available);
+        return units > 0
+            ? `${units} ${units === 1 ? 'disponible' : 'disponibles'}`
+            : 'ⓘ Agotado';
+    }
+
     function setQuantity(variantId, requestedQuantity) {
         const indexed = variantIndex.get(Number(variantId));
         if (!indexed) {
@@ -433,9 +440,7 @@
     }
 
     function priceRange(product) {
-        const prices = product.variants
-            .filter(variant => Number(variant.available_stock) > 0)
-            .map(variant => Number(variant.price_cents));
+        const prices = product.variants.map(variant => Number(variant.price_cents));
         const minimum = Math.min(...prices);
         const maximum = Math.max(...prices);
         return minimum === maximum
@@ -492,12 +497,9 @@
     }
 
     function productSummary(product) {
-        const availableVariants = product.variants.filter(
-            variant => Number(variant.available_stock) > 0
-        );
         const hasVariants = product.variants.length > 1;
         const availability = hasVariants
-            ? `${availableVariants.length} ${availableVariants.length === 1 ? 'variante' : 'variantes'}`
+            ? `${product.variants.length} ${product.variants.length === 1 ? 'variante' : 'variantes'}`
             : 'Disponible';
         return `
             <article class="catalog-product-summary unified-product-row" role="listitem">
@@ -510,9 +512,13 @@
                     <strong>${escapeHtml(product.name)}</strong>
                     <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
                 </button>
-                <span class="summary-variant-count">
+                <button
+                    class="summary-variant-count"
+                    type="button"
+                    data-open-product="${Number(product.id)}"
+                >
                     ${availability}
-                </span>
+                </button>
                 <strong class="summary-product-price">${priceRange(product)}</strong>
                 <button
                     class="summary-product-chevron"
@@ -557,9 +563,7 @@
                     </div>
                 </header>
                 <div class="opened-variant-list" role="list">
-                    ${product.variants.filter(
-                        variant => Number(variant.available_stock) > 0
-                    ).map(variant => {
+                    ${product.variants.map(variant => {
                         const quantity = cartQuantity(variant.id);
                         const available = visibleAvailable(variant);
                         const name = variantDisplayName(product, variant);
@@ -570,7 +574,7 @@
                                     ? `<strong class="opened-variant-name">${escapeHtml(name)}</strong>`
                                     : '<span></span>'}
                                 <span class="opened-variant-stock ${available ? '' : 'none'}">
-                                    ${available ? availableLabel(available) : 'Sin stock'}
+                                    ${exactAvailableLabel(available)}
                                     ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
                                 </span>
                                 <strong class="opened-variant-price">${money(Number(variant.price_cents))}</strong>

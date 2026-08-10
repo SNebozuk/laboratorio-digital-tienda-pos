@@ -53,7 +53,7 @@ header('Referrer-Policy: same-origin');
 
     <main class="store-shell">
         <aside class="category-panel" aria-label="Secciones del catálogo">
-            <div class="category-title">PRODUCTOS</div>
+            <div class="category-title">CATEGORÍAS</div>
             <button class="category-mobile-toggle" id="category-toggle" type="button" aria-expanded="false">
                 <span>Categorías</span><span aria-hidden="true">⌄</span>
             </button>

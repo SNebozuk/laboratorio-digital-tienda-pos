@@ -408,9 +408,14 @@
                         <strong>${escapeHtml(product.name)}</strong>
                         <small>${escapeHtml(product.category?.name || 'Sin categoría')} · ${product.active ? 'Activo' : 'Inactivo'}</small>
                     </button>
-                    <span class="product-admin-variant-count">
+                    <button
+                        class="product-admin-variant-count"
+                        type="button"
+                        data-edit-product="${Number(product.id)}"
+                        title="Editar variantes"
+                    >
                         ${product.variants.length} ${product.variants.length === 1 ? 'variante' : 'variantes'}
-                    </span>
+                    </button>
                     <strong class="product-admin-price">${adminProductPrice(product)}</strong>
                     <div class="product-admin-actions">
                         <button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button>
