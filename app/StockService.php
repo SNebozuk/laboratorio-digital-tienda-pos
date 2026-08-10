@@ -171,11 +171,12 @@ final class StockService
     public function cancelOrder(
         int $orderId,
         string $reason,
-        ?int $actorUserId = null
+        ?int $actorUserId = null,
+        bool $notifyCustomer = true
     ): void {
         Database::immediate(
             $this->pdo,
-            function (PDO $pdo) use ($orderId, $reason, $actorUserId): void {
+            function (PDO $pdo) use ($orderId, $reason, $actorUserId, $notifyCustomer): void {
                 $order = $this->lockedOrder($pdo, $orderId);
                 if ($order['status'] === 'cancelled') {
                     return;
@@ -201,7 +202,8 @@ final class StockService
                     $orderId,
                     $actorUserId,
                     $reason,
-                    'Pedido cancelado y stock liberado.'
+                    'Pedido cancelado y stock liberado.',
+                    $notifyCustomer
                 );
             }
         );
@@ -470,7 +472,8 @@ final class StockService
         int $orderId,
         ?int $actorUserId,
         string $event,
-        string $detail
+        string $detail,
+        bool $notifyCustomer = true
     ): void {
         $old = $pdo->prepare(
             'SELECT status, public_number, customer_name, customer_email
@@ -500,7 +503,7 @@ final class StockService
             $detail
         );
 
-        if (!empty($order['customer_email'])) {
+        if ($notifyCustomer && !empty($order['customer_email'])) {
             $mail = $pdo->prepare(
                 'INSERT INTO mail_queue(
                     order_id, recipient, subject, template, payload_json

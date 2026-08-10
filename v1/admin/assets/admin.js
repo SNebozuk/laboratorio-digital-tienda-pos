@@ -9,6 +9,8 @@
         orderQuery: '',
         orderStatus: '',
         orderChannel: '',
+        selectedOrderIds: new Set(),
+        showArchivedOrders: false,
         settings: null,
         sizeGuide: { intro: '', rows: [] },
         users: [],
@@ -68,6 +70,13 @@
         orderSearch: document.getElementById('order-search'),
         orderStatusFilter: document.getElementById('order-status-filter'),
         orderChannelFilter: document.getElementById('order-channel-filter'),
+        showArchivedOrders: document.getElementById('show-archived-orders'),
+        orderBulkToolbar: document.getElementById('order-bulk-toolbar'),
+        selectedOrdersCount: document.getElementById('selected-orders-count'),
+        bulkOrderStatus: document.getElementById('bulk-order-status'),
+        applyBulkOrderStatus: document.getElementById('apply-bulk-order-status'),
+        bulkOrderAction: document.getElementById('bulk-order-action'),
+        applyBulkOrderAction: document.getElementById('apply-bulk-order-action'),
         userList: document.getElementById('user-list'),
         sizeGuideIntro: document.getElementById('size-guide-intro'),
         sizeGuideRows: document.getElementById('size-guide-rows'),
@@ -397,6 +406,25 @@
             : `${money(minimum)} a ${money(maximum)}`;
     }
 
+    function productShareUrl(productId) {
+        const url = new URL(app.store_url || '/', window.location.href);
+        url.searchParams.set('producto', String(Number(productId)));
+        return url.href;
+    }
+
+    function shareProduct(productId) {
+        const product = state.products.find(item => Number(item.id) === Number(productId));
+        if (!product) {
+            return;
+        }
+        const message = `Hola, te comparto este producto: ${product.name}\n${productShareUrl(product.id)}`;
+        window.open(
+            `https://wa.me/?text=${encodeURIComponent(message)}`,
+            '_blank',
+            'noopener'
+        );
+    }
+
     function renderProducts() {
         if (!elements.productList) {
             return;
@@ -424,6 +452,7 @@
                     </button>
                     <strong class="product-admin-price">${adminProductPrice(product)}</strong>
                     <div class="product-admin-actions">
+                        <button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Compartir por WhatsApp" aria-label="Compartir ${escapeHtml(product.name)} por WhatsApp">&#10150;</button>
                         <button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button>
                     </div>
                 </header>
@@ -1105,8 +1134,15 @@
         }
         elements.orderList.innerHTML = '<p class="empty-copy">Cargando pedidos…</p>';
         try {
-            const data = await apiGet('orders', { limit: 150 });
+            const data = await apiGet('orders', {
+                limit: 150,
+                include_archived: state.showArchivedOrders ? 1 : 0,
+            });
             state.orders = data.orders;
+            const currentIds = new Set(state.orders.map(order => Number(order.id)));
+            state.selectedOrderIds = new Set(
+                Array.from(state.selectedOrderIds).filter(id => currentIds.has(Number(id)))
+            );
             renderOrders();
         } catch (error) {
             toast(error.message);
@@ -1190,9 +1226,139 @@
             actions.push(`<button class="small-button" type="button" data-order-action="deliver" data-order-id="${Number(order.id)}">Entregar</button>`);
         }
         if (!['delivered', 'cancelled'].includes(order.status)) {
-            actions.push(`<button class="small-button danger-button" type="button" data-order-action="cancel" data-order-id="${Number(order.id)}">Cancelar</button>`);
+            actions.push(`<button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar</button>`);
+        }
+        if (order.status === 'delivered' && !order.archived_at && app.user?.role === 'admin') {
+            actions.push(`<button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>`);
         }
         return actions.join('');
+    }
+
+    function selectedOrders() {
+        return state.orders.filter(order => state.selectedOrderIds.has(Number(order.id)));
+    }
+
+    function renderOrderBulkToolbar() {
+        if (!elements.orderBulkToolbar || !elements.selectedOrdersCount) {
+            return;
+        }
+        const count = selectedOrders().length;
+        elements.orderBulkToolbar.hidden = count === 0;
+        elements.selectedOrdersCount.textContent = `${count} ${count === 1 ? 'seleccionada' : 'seleccionadas'}`;
+    }
+
+    function setOrderSelection(orderId, selected) {
+        if (selected) {
+            state.selectedOrderIds.add(Number(orderId));
+        } else {
+            state.selectedOrderIds.delete(Number(orderId));
+        }
+        renderOrders();
+    }
+
+    function setAllMatchingOrderSelection(orders, selected) {
+        orders.forEach(order => {
+            if (selected) {
+                state.selectedOrderIds.add(Number(order.id));
+            } else {
+                state.selectedOrderIds.delete(Number(order.id));
+            }
+        });
+        renderOrders();
+    }
+
+    function showCancellationDialog(orderIds) {
+        const orders = orderIds
+            .map(id => state.orders.find(order => Number(order.id) === Number(id)))
+            .filter(Boolean);
+        const cancellable = orders.filter(order => !['delivered', 'cancelled'].includes(order.status));
+        if (!cancellable.length) {
+            toast('Solo se pueden cancelar ventas que todavía no fueron entregadas.');
+            return;
+        }
+        const skipped = orders.length - cancellable.length;
+        openModal(`
+            <h2 id="modal-title">CANCELAR ${cancellable.length === 1 ? 'VENTA' : 'VENTAS'}</h2>
+            <p class="empty-copy">Vas a cancelar ${cancellable.length} ${cancellable.length === 1 ? 'venta' : 'ventas'} seleccionada${cancellable.length === 1 ? '' : 's'}.</p>
+            ${skipped ? `<p class="notice">${skipped} venta${skipped === 1 ? '' : 's'} entregada${skipped === 1 ? '' : 's'} no se puede${skipped === 1 ? '' : 'n'} cancelar y quedará${skipped === 1 ? '' : 'n'} sin cambios.</p>` : ''}
+            <label class="order-confirm-option">
+                <input id="cancel-notify-customer" type="checkbox" checked>
+                <span><strong>Informar al cliente por email</strong><small>Solo se envía si esa venta tiene un email cargado.</small></span>
+            </label>
+            <label class="order-confirm-option">
+                <input type="checkbox" checked disabled>
+                <span><strong>Actualizar stock</strong><small>Las unidades reservadas se liberan automáticamente para que vuelvan a estar disponibles.</small></span>
+            </label>
+            <div class="modal-actions">
+                <button class="danger-button" type="button" data-confirm-cancel-orders="${cancellable.map(order => Number(order.id)).join(',')}">CONFIRMAR CANCELACI&Oacute;N</button>
+                <button class="secondary-button" type="button" data-close-modal>VOLVER</button>
+            </div>
+        `);
+    }
+
+    async function cancelOrders(orderIds, notifyCustomer) {
+        try {
+            for (const orderId of orderIds) {
+                await apiPost({
+                    action: 'order_cancel',
+                    order_id: Number(orderId),
+                    notify_customer: Boolean(notifyCustomer),
+                });
+            }
+            closeModal();
+            state.selectedOrderIds.clear();
+            await Promise.all([loadOrders(), loadProducts()]);
+            toast('Ventas canceladas y stock actualizado.');
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    async function archiveSelectedOrders(orderIds) {
+        const selected = orderIds
+            .map(id => state.orders.find(order => Number(order.id) === Number(id)))
+            .filter(Boolean);
+        if (!selected.length || selected.some(order => order.status !== 'delivered')) {
+            toast('Para archivar, seleccioná únicamente ventas entregadas.');
+            return;
+        }
+        if (!window.confirm(`¿Archivar ${selected.length} ${selected.length === 1 ? 'venta entregada' : 'ventas entregadas'}? Podrás verlas activando “Ver archivadas”.`)) {
+            return;
+        }
+        try {
+            for (const order of selected) {
+                await apiPost({ action: 'order_archive', order_id: Number(order.id) });
+            }
+            state.selectedOrderIds.clear();
+            await loadOrders();
+            toast('Ventas archivadas.');
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    async function applySelectedOrderStatus() {
+        const action = elements.bulkOrderStatus?.value || '';
+        const orders = selectedOrders();
+        if (!action || !orders.length) {
+            toast('Elegí un estado y al menos una venta.');
+            return;
+        }
+        const expectedStatus = { approve: 'payment_reported', ready: 'paid_prepare', deliver: 'ready_pickup' }[action];
+        if (orders.some(order => order.status !== expectedStatus)) {
+            toast('Seleccioná ventas que estén todas en el estado correspondiente antes de actualizarlas.');
+            return;
+        }
+        try {
+            for (const order of orders) {
+                await handleOrderAction(Number(order.id), action, false);
+            }
+            state.selectedOrderIds.clear();
+            await Promise.all([loadOrders(), loadProducts()]);
+            toast('Estado de ventas actualizado.');
+        } catch (error) {
+            toast(error.message);
+        }
     }
 
     function checkLabel(value) {
@@ -1335,6 +1501,8 @@
             return matchesQuery && matchesStatus && matchesChannel;
         });
 
+        renderOrderBulkToolbar();
+
         if (elements.orderOverview) {
             const countStatus = status => state.orders.filter(order => (
                 order.status === status
@@ -1364,20 +1532,24 @@
         }
 
         if (matchingOrders.length) {
+            const allMatchingSelected = matchingOrders.every(order => (
+                state.selectedOrderIds.has(Number(order.id))
+            ));
             elements.orderList.innerHTML = `
                 <div class="order-list-head" aria-hidden="true">
-                    <span>VENTA</span><span>CLIENTE</span><span>ORIGEN</span><span>PAGO</span><span>ESTADO</span><span>TOTAL</span><span></span>
+                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''}><span>TODO</span></label><span>VENTA</span><span>CLIENTE</span><span>ORIGEN</span><span>PAGO</span><span>ESTADO</span><span>TOTAL</span><span></span>
                 </div>
                 ${matchingOrders.map(order => `
-                    <button class="order-list-row" type="button" data-view-order="${Number(order.id)}">
-                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.created_at)}</small></span>
+                    <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
+                        <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
+                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.created_at)}</small>${order.archived_at ? '<small>Archivada</small>' : ''}</span>
                         <span><strong>${escapeHtml(order.customer_name)}</strong><small>${Number(order.unit_count)} unidades</small></span>
                         <span>${escapeHtml(channelLabels[order.channel] || order.channel)}</span>
                         <span>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}${order.payment_proof_id ? '<small>Comprobante recibido</small>' : ''}</span>
                         <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status] || order.status)}</span></span>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <span class="order-list-chevron" aria-hidden="true">&rsaquo;</span>
-                    </button>
+                    </div>
                 `).join('')}
             `;
             return;
@@ -1640,7 +1812,7 @@
         }
     }
 
-    async function handleOrderAction(orderId, action) {
+    async function handleOrderAction(orderId, action, shouldRefresh = true) {
         const payloads = {
             approve: { action: 'payment_review', order_id: orderId, decision: 'approve' },
             reject: { action: 'payment_review', order_id: orderId, decision: 'reject' },
@@ -1650,11 +1822,17 @@
         };
         try {
             await apiPost(payloads[action]);
-            closeModal();
-            await Promise.all([loadOrders(), loadProducts()]);
-            toast('Pedido actualizado.');
+            if (shouldRefresh) {
+                closeModal();
+                await Promise.all([loadOrders(), loadProducts()]);
+                toast('Pedido actualizado.');
+            }
         } catch (error) {
-            toast(error.message);
+            if (shouldRefresh) {
+                toast(error.message);
+                return;
+            }
+            throw error;
         }
     }
 
@@ -2286,6 +2464,11 @@
             duplicateProduct(Number(duplicate.dataset.duplicateProduct));
             return;
         }
+        const share = event.target.closest('[data-share-product]');
+        if (share) {
+            shareProduct(Number(share.dataset.shareProduct));
+            return;
+        }
         const editUser = event.target.closest('[data-edit-user]');
         if (editUser) {
             const user = state.users.find(item => (
@@ -2310,6 +2493,28 @@
         const suggestion = event.target.closest('[data-pos-suggestion]');
         if (suggestion) {
             choosePosProduct(Number(suggestion.dataset.posSuggestion));
+            return;
+        }
+        const confirmCancelOrders = event.target.closest('[data-confirm-cancel-orders]');
+        if (confirmCancelOrders) {
+            const ids = String(confirmCancelOrders.dataset.confirmCancelOrders || '')
+                .split(',')
+                .map(Number)
+                .filter(Number.isFinite);
+            cancelOrders(ids, Boolean(document.getElementById('cancel-notify-customer')?.checked));
+            return;
+        }
+        const cancelOrder = event.target.closest('[data-cancel-order]');
+        if (cancelOrder) {
+            showCancellationDialog([Number(cancelOrder.dataset.cancelOrder)]);
+            return;
+        }
+        const archiveOrder = event.target.closest('[data-archive-order]');
+        if (archiveOrder) {
+            archiveSelectedOrders([Number(archiveOrder.dataset.archiveOrder)]);
+            return;
+        }
+        if (event.target.closest('[data-select-order], #select-all-orders')) {
             return;
         }
         const viewOrder = event.target.closest('[data-view-order]');
@@ -2376,6 +2581,29 @@
     });
 
     document.addEventListener('change', event => {
+        if (event.target.matches('[data-select-order]')) {
+            setOrderSelection(
+                Number(event.target.dataset.selectOrder),
+                Boolean(event.target.checked)
+            );
+            return;
+        }
+        if (event.target.id === 'select-all-orders') {
+            const query = fold(state.orderQuery.trim());
+            const matching = state.orders.filter(order => {
+                const matchesQuery = !query || fold([
+                    order.public_number,
+                    order.customer_name,
+                    order.customer_email,
+                    order.customer_phone,
+                ].join(' ')).includes(query);
+                return matchesQuery
+                    && (!state.orderStatus || order.status === state.orderStatus)
+                    && (!state.orderChannel || order.channel === state.orderChannel);
+            });
+            setAllMatchingOrderSelection(matching, Boolean(event.target.checked));
+            return;
+        }
         if (event.target.matches('[data-quick-price], [data-quick-stock]')) {
             const variantId = Number(
                 event.target.dataset.quickPrice || event.target.dataset.quickStock
@@ -2418,6 +2646,25 @@
     elements.orderChannelFilter?.addEventListener('change', event => {
         state.orderChannel = event.target.value;
         renderOrders();
+    });
+    elements.showArchivedOrders?.addEventListener('change', async event => {
+        state.showArchivedOrders = Boolean(event.target.checked);
+        state.selectedOrderIds.clear();
+        await loadOrders();
+    });
+    elements.applyBulkOrderStatus?.addEventListener('click', applySelectedOrderStatus);
+    elements.applyBulkOrderAction?.addEventListener('click', () => {
+        const action = elements.bulkOrderAction?.value || '';
+        const ids = selectedOrders().map(order => Number(order.id));
+        if (!action || !ids.length) {
+            toast('Elegí una acción y al menos una venta.');
+            return;
+        }
+        if (action === 'cancel') {
+            showCancellationDialog(ids);
+        } else if (action === 'archive') {
+            archiveSelectedOrders(ids);
+        }
     });
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;

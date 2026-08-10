@@ -19,6 +19,7 @@ $assetVersion = (string) max(
 );
 $apiUrl = ($applicationPath === '' ? '' : $applicationPath) . '/api.php';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
+$storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data: blob:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
@@ -274,6 +275,34 @@ header('Referrer-Policy: same-origin');
                                 <option value="pos">Mostrador</option>
                             </select>
                         </label>
+                        <label class="archive-orders-toggle">
+                            <input id="show-archived-orders" type="checkbox">
+                            <span>VER ARCHIVADAS</span>
+                        </label>
+                    </div>
+                    <div class="order-bulk-toolbar" id="order-bulk-toolbar" hidden>
+                        <strong id="selected-orders-count">0 seleccionadas</strong>
+                        <label>
+                            <span>ACTUALIZAR ESTADO</span>
+                            <select id="bulk-order-status">
+                                <option value="">Elegir estado</option>
+                                <option value="approve">Pagado / preparar</option>
+                                <option value="ready">Listo para retirar</option>
+                                <option value="deliver">Entregada</option>
+                            </select>
+                        </label>
+                        <button class="secondary-button fit-button" id="apply-bulk-order-status" type="button">APLICAR</button>
+                        <?php if ($user['role'] === 'admin'): ?>
+                            <label>
+                                <span>M&Aacute;S ACCIONES</span>
+                                <select id="bulk-order-action">
+                                    <option value="">Elegir acci&oacute;n</option>
+                                    <option value="cancel">Cancelar ventas</option>
+                                    <option value="archive">Archivar entregadas</option>
+                                </select>
+                            </label>
+                            <button class="secondary-button fit-button" id="apply-bulk-order-action" type="button">APLICAR</button>
+                        <?php endif ?>
                     </div>
                     <div id="order-list" class="order-list"></div>
                 </section>
@@ -374,6 +403,7 @@ header('Referrer-Policy: same-origin');
             'user' => $user,
             'setup_required' => $setupRequired,
             'size_guide_url' => $sizeGuideUrl,
+            'store_url' => $storeUrl,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($assetVersion) ?>" defer></script>

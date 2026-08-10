@@ -92,6 +92,8 @@ CREATE TABLE IF NOT EXISTS orders (
     stock_reserved_at TEXT,
     delivered_at TEXT,
     cancelled_at TEXT,
+    archived_at TEXT,
+    archived_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -102,6 +104,9 @@ CREATE INDEX IF NOT EXISTS idx_orders_status_created
 
 CREATE INDEX IF NOT EXISTS idx_orders_deadlines
     ON orders(status, payment_deadline_at, rejection_deadline_at);
+
+CREATE INDEX IF NOT EXISTS idx_orders_archived_created
+    ON orders(archived_at, created_at);
 
 CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -262,3 +267,4 @@ INSERT OR IGNORE INTO settings(key, value) VALUES
 
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (1);
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (5);
+INSERT OR IGNORE INTO schema_migrations(version) VALUES (6);

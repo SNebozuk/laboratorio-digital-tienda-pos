@@ -61,7 +61,8 @@ try {
                 Http::json([
                     'ok' => true,
                     'orders' => $app['orders']->recentOrders(
-                        (int) ($_GET['limit'] ?? 100)
+                        (int) ($_GET['limit'] ?? 100),
+                        (bool) ($_GET['include_archived'] ?? false)
                     ),
                 ]);
 
@@ -274,6 +275,16 @@ try {
         case 'order_ready':
             $user = $app['auth']->requireUser();
             $app['orders']->markReady(
+                (int) ($input['order_id'] ?? 0),
+                (int) $user['id'],
+                'manual_cancellation',
+                ($input['notify_customer'] ?? true) !== false
+            );
+            Http::json(['ok' => true]);
+
+        case 'order_archive':
+            $user = $app['auth']->requireAdmin();
+            $app['orders']->archive(
                 (int) ($input['order_id'] ?? 0),
                 (int) $user['id']
             );

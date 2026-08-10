@@ -79,6 +79,18 @@ class SchemaContractTest(unittest.TestCase):
         self.assertEqual(settings["size_guide_json"], "[]")
         self.assertIsNotNone(migration)
 
+    def test_delivered_sales_support_archiving(self) -> None:
+        columns = {
+            row["name"] for row in self.db.execute("PRAGMA table_info(orders)")
+        }
+        migration = self.db.execute(
+            "SELECT 1 FROM schema_migrations WHERE version = 6"
+        ).fetchone()
+
+        self.assertIn("archived_at", columns)
+        self.assertIn("archived_by", columns)
+        self.assertIsNotNone(migration)
+
     def test_sku_is_unique_without_case_sensitivity(self) -> None:
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute(

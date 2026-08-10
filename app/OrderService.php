@@ -663,13 +663,53 @@ final class OrderService
     public function cancel(
         int $orderId,
         int $actorUserId,
-        string $reason = 'manual_cancellation'
+        string $reason = 'manual_cancellation',
+        bool $notifyCustomer = true
     ): void {
-        $this->stock->cancelOrder($orderId, $reason, $actorUserId);
+        $this->stock->cancelOrder($orderId, $reason, $actorUserId, $notifyCustomer);
+    }
+
+    public function archive(int $orderId, int $actorUserId): void
+    {
+        Database::immediate(
+            $this->pdo,
+            function (PDO $pdo) use ($orderId, $actorUserId): void {
+                $query = $pdo->prepare('SELECT status, archived_at FROM orders WHERE id = :id');
+                $query->execute(['id' => $orderId]);
+                $order = $query->fetch();
+                if (!$order) {
+                    throw new ValidationException('La venta no existe.');
+                }
+                if ((string) $order['status'] !== 'delivered') {
+                    throw new ConflictException('Solo se pueden archivar ventas entregadas.');
+                }
+                if ($order['archived_at'] !== null) {
+                    return;
+                }
+
+                $update = $pdo->prepare(
+                    'UPDATE orders
+                     SET archived_at = CURRENT_TIMESTAMP,
+                         archived_by = :actor_user_id,
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE id = :id'
+                );
+                $update->execute(['actor_user_id' => $actorUserId, 'id' => $orderId]);
+                $this->recordEvent(
+                    $pdo,
+                    $orderId,
+                    $actorUserId,
+                    'order_archived',
+                    'delivered',
+                    'delivered',
+                    'Venta entregada archivada.'
+                );
+            }
+        );
     }
 
     /** @return list<array<string, mixed>> */
-    public function recentOrders(int $limit = 100): array
+    public function recentOrders(int $limit = 100, bool $includeArchived = false): array
     {
         $limit = max(1, min(500, $limit));
         $query = $this->pdo->query(
@@ -706,7 +746,8 @@ final class OrderService
                     LIMIT 1
                 ) AS payment_ai_summary
              FROM orders o
-             LEFT JOIN order_items oi ON oi.order_id = o.id
+              LEFT JOIN order_items oi ON oi.order_id = o.id
+             ' . ($includeArchived ? '' : 'WHERE o.archived_at IS NULL') . '
              GROUP BY o.id
              ORDER BY o.id DESC
              LIMIT ' . $limit

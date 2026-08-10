@@ -3,11 +3,15 @@
 
     const app = JSON.parse(document.getElementById('app-data').textContent);
     let products = Array.isArray(app.products) ? app.products : [];
+    const linkedProductId = (() => {
+        const value = Number(new URL(window.location.href).searchParams.get('producto'));
+        return products.some(product => Number(product.id) === value) ? value : null;
+    })();
     const state = {
         category: '',
         query: '',
         searchActive: false,
-        openedProductId: null,
+        openedProductId: linkedProductId,
         remoteSearchIds: new Set(),
         cart: new Map(),
         order: null,
@@ -72,6 +76,16 @@
             return '';
         }
     };
+
+    function syncProductUrl(productId) {
+        const url = new URL(window.location.href);
+        if (productId === null) {
+            url.searchParams.delete('producto');
+        } else {
+            url.searchParams.set('producto', String(Number(productId)));
+        }
+        window.history.replaceState({}, '', url);
+    }
 
     const variantIndex = new Map();
     function persistCart() {
@@ -1044,6 +1058,7 @@
         codeSearchRequest += 1;
         state.searchActive = false;
         state.openedProductId = null;
+        syncProductUrl(null);
         state.query = '';
         state.remoteSearchIds = new Set();
         elements.search.value = '';
@@ -1070,6 +1085,7 @@
             state.query = '';
             state.searchActive = false;
             state.openedProductId = null;
+            syncProductUrl(null);
             state.remoteSearchIds = new Set();
             elements.search.value = '';
             elements.categoryPanel.classList.remove('mobile-open');
@@ -1083,6 +1099,7 @@
         const openProduct = event.target.closest('[data-open-product]');
         if (openProduct) {
             state.openedProductId = Number(openProduct.dataset.openProduct);
+            syncProductUrl(state.openedProductId);
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
@@ -1091,6 +1108,7 @@
         if (event.target.closest('[data-close-product]')) {
             const previousProductId = state.openedProductId;
             state.openedProductId = null;
+            syncProductUrl(null);
             renderCatalog();
             window.requestAnimationFrame(() => {
                 const trigger = document.querySelector(
@@ -1161,6 +1179,7 @@
             renderCategories();
         }
         state.openedProductId = null;
+        syncProductUrl(null);
         scheduleCodeSearch(state.query);
         renderCatalog();
     });
@@ -1218,6 +1237,7 @@
         if (state.openedProductId !== null) {
             event.preventDefault();
             state.openedProductId = null;
+            syncProductUrl(null);
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;

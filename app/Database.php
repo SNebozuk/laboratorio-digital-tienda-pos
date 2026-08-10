@@ -56,6 +56,7 @@ final class Database
         $pdo->exec($schema);
         self::migrateReceiptPrevalidation($pdo);
         self::migrateCategoryTree($pdo);
+        self::migrateOrderArchive($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
@@ -69,6 +70,27 @@ final class Database
         if (!isset($columns['parent_id'])) $pdo->exec('ALTER TABLE categories ADD COLUMN parent_id INTEGER REFERENCES categories(id) ON DELETE SET NULL');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_categories_tree ON categories(parent_id, sort_order, name)');
         $pdo->exec('INSERT OR IGNORE INTO schema_migrations(version) VALUES(4)');
+    }
+
+    /** Agrega el archivado de ventas a bases creadas antes de esta funcionalidad. */
+    private static function migrateOrderArchive(PDO $pdo): void
+    {
+        $columns = [];
+        foreach ($pdo->query('PRAGMA table_info(orders)')->fetchAll() as $row) {
+            $columns[(string) $row['name']] = true;
+        }
+        if (!isset($columns['archived_at'])) {
+            $pdo->exec('ALTER TABLE orders ADD COLUMN archived_at TEXT');
+        }
+        if (!isset($columns['archived_by'])) {
+            $pdo->exec(
+                'ALTER TABLE orders ADD COLUMN archived_by INTEGER REFERENCES users(id) ON DELETE SET NULL'
+            );
+        }
+        $pdo->exec(
+            'CREATE INDEX IF NOT EXISTS idx_orders_archived_created ON orders(archived_at, created_at)'
+        );
+        $pdo->exec('INSERT OR IGNORE INTO schema_migrations(version) VALUES(6)');
     }
 
     /** Agrega campos a bases ya creadas antes de la prevalidación de pagos. */
