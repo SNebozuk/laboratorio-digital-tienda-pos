@@ -32,14 +32,6 @@ el cliente sube el comprobante. Consultar `docs/ARQUITECTURA_MVP.md` y
 - `outputs/modelo-administracion.html`: administración y punto de venta.
 - `preview.html`: acceso rápido a los modelos.
 
-### Vista previa pública en GitHub
-
-- Tienda: `https://snebozuk.github.io/laboratorio-digital-tienda-pos/tienda/`
-- Administración: `https://snebozuk.github.io/laboratorio-digital-tienda-pos/admin/`
-
-Estas direcciones publican los modelos HTML para revisión visual. La aplicación
-PHP completa y su base de datos requieren Codespaces, un entorno local o DonWeb.
-
 Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se necesita PHP 8.1 o superior.
 
 ## Experiencia del cliente
