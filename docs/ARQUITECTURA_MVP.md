@@ -110,7 +110,7 @@ reservadas para pedidos web.
 
 ## Procesos programados
 
-`tasks/maintenance.php` se ejecuta por línea de comandos cada cinco minutos:
+`tasks/maintenance.php` se ejecuta por línea de comandos cada minuto:
 
 1. Cancela pedidos cuyo plazo de pago venció.
 2. Libera reservas rechazadas cuando vence el reintento.

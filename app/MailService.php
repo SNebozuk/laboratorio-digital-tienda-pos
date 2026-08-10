@@ -251,6 +251,7 @@ final class MailService
 
         switch ($template) {
             case 'order_created':
+                $cashOrder = (string) ($payload['payment_method'] ?? '') === 'cash';
                 $title = $internal ? 'Nuevo pedido web' : 'Recibimos tu pedido';
                 $items = is_array($payload['items'] ?? null)
                     ? $payload['items']
@@ -272,21 +273,29 @@ final class MailService
                         . $this->money((int) ($item['line_total_cents'] ?? 0))
                         . '</td></tr>';
                 }
-                $content = ($internal
-                    ? '<p>Ingresó un nuevo pedido pendiente de transferencia.</p>'
-                    : '<p>El pedido fue creado y está pendiente de transferencia.</p>')
+                $content = ($cashOrder
+                    ? ($internal
+                        ? '<p>Ingresó un pedido para pagar en efectivo. El stock está reservado durante 2 horas.</p>'
+                        : '<p>Elegiste pagar en efectivo al retirar. El stock está reservado solamente durante 2 horas.</p>')
+                    : ($internal
+                        ? '<p>Ingresó un nuevo pedido pendiente de transferencia.</p>'
+                        : '<p>El pedido fue creado y está pendiente de transferencia.</p>'))
                     . '<table style="width:100%;border-collapse:collapse">'
                     . $rows
                     . '</table>'
                     . '<p style="font-size:20px"><strong>Total: '
                     . $this->money((int) ($payload['total_cents'] ?? 0))
                     . '</strong></p>'
-                    . '<p>Podés informar el pago hasta '
+                    . '<p>' . ($cashOrder
+                        ? 'Tenés que retirar y pagar antes del '
+                        : 'Podés informar el pago hasta ')
                     . $this->escape(
                         (string) ($payload['payment_deadline_at'] ?? '')
                     )
                     . '.</p>'
-                    . $this->actionButton(
+                    . ($cashOrder
+                        ? '<p><strong>Al vencer el plazo, el pedido se cancela y los productos vuelven al stock.</strong></p>'
+                        : $this->actionButton(
                         $internal
                             ? rtrim((string) ($this->config['base_url'] ?? ''), '/')
                                 . '/admin/'
@@ -294,7 +303,7 @@ final class MailService
                         $internal
                             ? 'ABRIR ADMINISTRACIÓN'
                             : 'VER DATOS Y SUBIR COMPROBANTE'
-                    );
+                    ));
                 if ($internal) {
                     $content .= '<p>WhatsApp del cliente: <strong>'
                         . $this->escape(

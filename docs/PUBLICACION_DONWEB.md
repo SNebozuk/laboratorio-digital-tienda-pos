@@ -41,14 +41,14 @@ subirse a GitHub.
 9. Rechazar un comprobante de ensayo y verificar que el nuevo enlace recibido
    por email permita cargar otro archivo sin duplicar la reserva.
 10. Crear un respaldo desde Reportes.
-11. Programar por cron:
+11. Programar por cron cada minuto para cancelar con precisión las reservas en efectivo:
 
 ```text
 php /ruta/privada/al/proyecto/tasks/maintenance.php
 ```
 
 12. Crear y validar la casilla de ventas, SPF y DKIM. Configurar en `config.local.php` el servidor SMTP, puerto, cifrado, usuario y contraseña de la casilla.
-13. Activar `mail_enabled` y comprobar recepción real. La tarea de cron procesa la cola cada cinco minutos; para una prueba inmediata se puede ejecutar manualmente `php tasks/maintenance.php`.
+13. Activar `mail_enabled` y comprobar recepción real. La misma tarea procesa la cola de correo; para una prueba inmediata se puede ejecutar manualmente `php tasks/maintenance.php`.
 14. Activar HTTPS y revisar el sitio desde celular.
 15. Recién después mover la tienda desde `/v1/` a la raíz.
 

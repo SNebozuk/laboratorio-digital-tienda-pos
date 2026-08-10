@@ -91,6 +91,22 @@ class SchemaContractTest(unittest.TestCase):
         self.assertIn("archived_by", columns)
         self.assertIsNotNone(migration)
 
+    def test_customer_cancellation_notifications_are_queued_for_future_channel(self) -> None:
+        columns = {
+            row["name"]
+            for row in self.db.execute(
+                "PRAGMA table_info(customer_notification_queue)"
+            )
+        }
+        migration = self.db.execute(
+            "SELECT 1 FROM schema_migrations WHERE version = 7"
+        ).fetchone()
+
+        self.assertIn("customer_phone", columns)
+        self.assertIn("customer_email", columns)
+        self.assertIn("payload_json", columns)
+        self.assertIsNotNone(migration)
+
     def test_sku_is_unique_without_case_sensitivity(self) -> None:
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute(

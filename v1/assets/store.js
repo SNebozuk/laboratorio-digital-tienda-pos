@@ -885,6 +885,21 @@
                     Email para recibir una copia (opcional)
                     <input name="email" type="email" autocomplete="email">
                 </label>
+                <fieldset class="payment-choice">
+                    <legend>¿Cómo vas a pagar?</legend>
+                    <label class="payment-option">
+                        <input name="payment_method" type="radio" value="bank_transfer" checked>
+                        <span><strong>Transferencia</strong><small>Después vas a subir el comprobante.</small></span>
+                    </label>
+                    <label class="payment-option">
+                        <input name="payment_method" type="radio" value="cash">
+                        <span><strong>Efectivo al retirar</strong><small>Reserva automática por solamente 2 horas.</small></span>
+                    </label>
+                </fieldset>
+                <div class="cash-reservation-warning" id="cash-reservation-warning" hidden>
+                    <strong>IMPORTANTE: RESERVA POR 2 HORAS</strong>
+                    <span>Si no retirás y pagás dentro de ese plazo, el pedido se cancela automáticamente y los productos vuelven al stock para otros clientes.</span>
+                </div>
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
@@ -935,6 +950,7 @@
         const formData = new FormData(form);
         const customerName = String(formData.get('name') || '').trim();
         const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
+        const paymentMethod = String(formData.get('payment_method') || 'bank_transfer');
         const emailField = form.querySelector('[name="email"]');
         if (customerName.length < 2 || customerPhone.length < 8 || !emailField.checkValidity()) {
             errorBox.hidden = false;
@@ -953,6 +969,7 @@
             const data = await apiJson({
                 action: 'create_order',
                 channel: 'web',
+                payment_method: paymentMethod,
                 customer: {
                     name: formData.get('name'),
                     email: formData.get('email'),
@@ -964,7 +981,11 @@
                 })),
             });
             state.order = data.order;
-            showPayment(data.order);
+            if (paymentMethod === 'cash') {
+                showCashConfirmation(data.order);
+            } else {
+                showPayment(data.order);
+            }
         } catch (error) {
             errorBox.hidden = false;
             errorBox.textContent = error.message;
@@ -973,6 +994,30 @@
             button.disabled = false;
             button.textContent = 'CONTINUAR AL PAGO';
         }
+    }
+
+    function formatLocalDeadline(value) {
+        const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+        return match ? `${match[3]}/${match[2]} a las ${match[4]}:${match[5]}` : String(value || '');
+    }
+
+    function showCashConfirmation(order) {
+        openModal(`
+            ${checkoutSteps(3)}
+            <h2 id="modal-title">PAGO EN EFECTIVO</h2>
+            <div class="cash-confirmation">
+                <span>Tu pedido ${escapeHtml(order.public_number)} quedó reservado</span>
+                <strong>SOLO POR 2 HORAS</strong>
+                <span>Hasta el ${escapeHtml(formatLocalDeadline(order.payment_deadline_at))}</span>
+            </div>
+            <div class="cash-expiry-explanation">
+                <strong>Tenés que retirar y pagar en efectivo antes de ese horario.</strong>
+                <p>Al vencer el plazo, la venta se cancela automáticamente y todos los productos vuelven al stock para que puedan comprarlos otros clientes.</p>
+            </div>
+            ${order.pickup_address ? `<p>Retiro en: <strong>${escapeHtml(order.pickup_address)}</strong></p>` : ''}
+            <p class="checkout-footnote">No necesitás subir ningún comprobante.</p>
+            <button class="primary-button" type="button" data-finish-order>ENTENDIDO</button>
+        `);
     }
 
     function showPayment(order) {
@@ -1256,6 +1301,12 @@
         }
         if (event.target.matches('#proof-file')) {
             proofFileSelected(event.target);
+        }
+        if (event.target.matches('input[name="payment_method"]')) {
+            const warning = document.getElementById('cash-reservation-warning');
+            if (warning) {
+                warning.hidden = event.target.value !== 'cash';
+            }
         }
     });
 

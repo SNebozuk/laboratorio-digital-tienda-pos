@@ -250,6 +250,22 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS customer_notification_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    customer_phone TEXT,
+    customer_email TEXT,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sent_at TEXT,
+    last_error TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_customer_notifications_pending
+    ON customer_notification_queue(status, created_at);
+
 INSERT OR IGNORE INTO settings(key, value) VALUES
     ('store_name', 'Laboratorio Digital'),
     ('sales_email', 'ventas@laboratorio-digital.com.ar'),
@@ -268,3 +284,4 @@ INSERT OR IGNORE INTO settings(key, value) VALUES
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (1);
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (5);
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (6);
+INSERT OR IGNORE INTO schema_migrations(version) VALUES (7);

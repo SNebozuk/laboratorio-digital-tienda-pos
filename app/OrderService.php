@@ -25,7 +25,8 @@ final class OrderService
     public function createWebOrder(
         array $customer,
         array $items,
-        string $channel = 'web'
+        string $channel = 'web',
+        string $paymentMethod = 'bank_transfer'
     ): array {
         if (empty($this->config['orders_enabled'])) {
             throw new ConflictException(
@@ -34,6 +35,10 @@ final class OrderService
         }
         if (!in_array($channel, ['web', 'whatsapp'], true)) {
             throw new ValidationException('El canal del pedido no es válido.');
+        }
+        $paymentMethod = strtolower(trim($paymentMethod));
+        if (!in_array($paymentMethod, ['bank_transfer', 'cash'], true)) {
+            throw new ValidationException('Elegí transferencia o efectivo como forma de pago.');
         }
 
         $customerName = trim((string) ($customer['name'] ?? ''));
@@ -58,7 +63,9 @@ final class OrderService
         }
 
         $quantities = $this->normalizeItems($items);
-        $minutes = max(15, $this->integerSetting('payment_window_minutes', 120));
+        $minutes = $paymentMethod === 'cash'
+            ? 120
+            : max(15, $this->integerSetting('payment_window_minutes', 120));
         $deadline = (new DateTimeImmutable())
             ->add(new DateInterval('PT' . $minutes . 'M'))
             ->format('Y-m-d H:i:s');
@@ -75,7 +82,8 @@ final class OrderService
                 $customerPhone,
                 $deadline,
                 $tokenHash,
-                $uploadToken
+                $uploadToken,
+                $paymentMethod
             ): array {
                 $publicNumber = $this->newPublicNumber($pdo);
                 $resolvedItems = $this->resolveItems($pdo, $quantities);
@@ -103,13 +111,21 @@ final class OrderService
                     'customer_phone' => $customerPhone,
                     'subtotal_cents' => $total,
                     'total_cents' => $total,
-                    'payment_method' => 'bank_transfer',
+                    'payment_method' => $paymentMethod,
                     'payment_deadline_at' => $deadline,
                     'upload_token_hash' => $tokenHash,
                 ]);
                 $orderId = (int) $pdo->lastInsertId();
                 $paymentUrl = $this->publicPaymentUrl($orderId, $uploadToken);
                 $this->insertOrderItems($pdo, $orderId, $resolvedItems);
+                if ($paymentMethod === 'cash') {
+                    $this->reserveCashItems(
+                        $pdo,
+                        $orderId,
+                        $publicNumber,
+                        $resolvedItems
+                    );
+                }
                 $this->recordEvent(
                     $pdo,
                     $orderId,
@@ -117,7 +133,9 @@ final class OrderService
                     'order_created',
                     null,
                     'pending_payment',
-                    'Pedido creado sin reserva. El stock se reservará al informar el pago.'
+                    $paymentMethod === 'cash'
+                        ? 'Pedido en efectivo; stock reservado durante 2 horas.'
+                        : 'Pedido creado sin reserva. El stock se reservará al informar el pago.'
                 );
                 $mailPayload = [
                     'public_number' => $publicNumber,
@@ -125,6 +143,7 @@ final class OrderService
                     'customer_email' => $customerEmail,
                     'customer_phone' => $customerPhone,
                     'total_cents' => $total,
+                    'payment_method' => $paymentMethod,
                     'payment_deadline_at' => $deadline,
                     'payment_url' => $paymentUrl,
                     'items' => $resolvedItems,
@@ -161,8 +180,10 @@ final class OrderService
                     'public_number' => $publicNumber,
                     'status' => 'pending_payment',
                     'total_cents' => $total,
+                    'payment_method' => $paymentMethod,
                     'payment_deadline_at' => $deadline,
                     'payment_url' => $paymentUrl,
+                    'stock_reserved' => $paymentMethod === 'cash',
                     'items' => $resolvedItems,
                 ];
             }
@@ -611,11 +632,17 @@ final class OrderService
                 $query = $pdo->prepare('SELECT * FROM orders WHERE id = :id');
                 $query->execute(['id' => $orderId]);
                 $order = $query->fetch();
-                if (!$order || $order['status'] !== 'paid_prepare') {
+                $cashReserved = $order
+                    && $order['payment_method'] === 'cash'
+                    && $order['status'] === 'pending_payment'
+                    && $order['stock_reserved_at'] !== null
+                    && new DateTimeImmutable((string) $order['payment_deadline_at']) >= new DateTimeImmutable();
+                if (!$order || ($order['status'] !== 'paid_prepare' && !$cashReserved)) {
                     throw new ConflictException(
-                        'Solo un pedido pagado puede marcarse como listo.'
+                        'Solo un pedido pagado o reservado para efectivo puede marcarse como listo.'
                     );
                 }
+                $oldStatus = (string) $order['status'];
 
                 $update = $pdo->prepare(
                     'UPDATE orders
@@ -628,9 +655,11 @@ final class OrderService
                     $orderId,
                     $actorUserId,
                     'order_ready',
-                    'paid_prepare',
+                    $oldStatus,
                     'ready_pickup',
-                    'Pedido listo para retirar.'
+                    $cashReserved
+                        ? 'Pedido en efectivo listo para retirar dentro de su reserva de 2 horas.'
+                        : 'Pedido listo para retirar.'
                 );
 
                 if (!empty($order['customer_email'])) {
@@ -897,6 +926,63 @@ final class OrderService
         }
 
         return $resolved;
+    }
+
+    /** @param list<array<string, mixed>> $items */
+    private function reserveCashItems(
+        PDO $pdo,
+        int $orderId,
+        string $publicNumber,
+        array $items
+    ): void {
+        foreach ($items as $item) {
+            $quantity = (int) $item['quantity'];
+            $reserve = $pdo->prepare(
+                'UPDATE product_variants
+                 SET stock_reserved = stock_reserved + :quantity,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = :variant_id
+                   AND active = 1
+                   AND stock_on_hand - stock_reserved >= :quantity'
+            );
+            $reserve->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+            $reserve->bindValue(':variant_id', (int) $item['variant_id'], PDO::PARAM_INT);
+            $reserve->execute();
+            if ($reserve->rowCount() !== 1) {
+                throw new ConflictException(
+                    'Ya no hay stock suficiente de '
+                    . $item['product_name']
+                    . ' · '
+                    . $item['variant_name']
+                    . '.'
+                );
+            }
+
+            $movement = $pdo->prepare(
+                'INSERT INTO stock_movements(
+                    variant_id, order_id, actor_user_id,
+                    on_hand_delta, reserved_delta, reason, reference
+                 ) VALUES(
+                    :variant_id, :order_id, NULL,
+                    0, :reserved_delta, :reason, :reference
+                 )'
+            );
+            $movement->execute([
+                'variant_id' => (int) $item['variant_id'],
+                'order_id' => $orderId,
+                'reserved_delta' => $quantity,
+                'reason' => 'cash_order_reservation',
+                'reference' => $publicNumber,
+            ]);
+        }
+
+        $update = $pdo->prepare(
+            'UPDATE orders
+             SET stock_reserved_at = CURRENT_TIMESTAMP,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+        $update->execute(['id' => $orderId]);
     }
 
     /** @param list<array<string, mixed>> $items */

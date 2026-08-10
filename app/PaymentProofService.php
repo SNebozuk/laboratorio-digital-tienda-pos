@@ -32,6 +32,7 @@ final class PaymentProofService
             ? $order['rejection_deadline_at']
             : $order['payment_deadline_at'];
         $canUpload = in_array($status, ['pending_payment', 'rejected'], true)
+            && (string) $order['payment_method'] === 'bank_transfer'
             && $deadline !== null
             && new DateTimeImmutable((string) $deadline) >= new DateTimeImmutable();
 
@@ -50,6 +51,7 @@ final class PaymentProofService
             'status' => $status,
             'status_label' => $this->statusLabel($status),
             'total_cents' => (int) $order['total_cents'],
+            'payment_method' => (string) $order['payment_method'],
             'deadline_at' => $deadline,
             'can_upload' => $canUpload,
             'stock_reserved' => $order['stock_reserved_at'] !== null,
@@ -88,6 +90,9 @@ final class PaymentProofService
         array $upload
     ): array {
         $order = $this->publicOrder($orderId, $uploadToken);
+        if ((string) $order['payment_method'] !== 'bank_transfer') {
+            throw new ConflictException('Este pedido en efectivo no necesita comprobante.');
+        }
         $file = $this->validateUpload($upload);
         $stored = $this->storeFile($file);
         $proofId = 0;
@@ -269,7 +274,7 @@ final class PaymentProofService
     private function publicOrder(int $orderId, string $uploadToken): array
     {
         $query = $this->pdo->prepare(
-            'SELECT id, public_number, upload_token_hash, status,
+            'SELECT id, public_number, upload_token_hash, status, payment_method,
                     total_cents, payment_deadline_at, rejection_deadline_at,
                     stock_reserved_at, created_at
              FROM orders

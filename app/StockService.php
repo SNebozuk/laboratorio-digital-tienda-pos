@@ -226,6 +226,15 @@ final class StockService
                 if ($order['stock_reserved_at'] === null) {
                     throw new ConflictException('El pedido no tiene stock reservado.');
                 }
+                if (
+                    $order['payment_method'] === 'cash'
+                    && $order['payment_deadline_at'] !== null
+                    && new DateTimeImmutable((string) $order['payment_deadline_at']) < new DateTimeImmutable()
+                ) {
+                    throw new ConflictException(
+                        'La reserva de 2 horas para pago en efectivo ya venció.'
+                    );
+                }
 
                 foreach ($this->orderItems($pdo, $orderId) as $item) {
                     $quantity = (int) $item['quantity'];
@@ -292,7 +301,7 @@ final class StockService
     /**
      * Cancela pedidos vencidos y libera solamente las reservas que correspondan.
      *
-     * @return array{cancelled_without_reservation: int, released_reservations: int}
+     * @return array{cancelled_without_reservation: int, released_reservations: int, released_cash_reservations: int}
      */
     public function expireOrders(?DateTimeImmutable $now = null): array
     {
@@ -322,6 +331,34 @@ final class StockService
                         null,
                         'payment_window_expired',
                         'El plazo para informar el pago venció.'
+                    );
+                }
+
+                $cash = $pdo->prepare(
+                    "SELECT id, public_number
+                     FROM orders
+                     WHERE payment_method = 'cash'
+                       AND status IN ('pending_payment', 'ready_pickup')
+                       AND stock_reserved_at IS NOT NULL
+                       AND payment_deadline_at < :now"
+                );
+                $cash->execute(['now' => $timestamp]);
+                $cashOrders = $cash->fetchAll();
+
+                foreach ($cashOrders as $order) {
+                    $this->releaseWithinTransaction(
+                        $pdo,
+                        (int) $order['id'],
+                        (string) $order['public_number'],
+                        null,
+                        'cash_reservation_expired'
+                    );
+                    $this->cancelWithinTransaction(
+                        $pdo,
+                        (int) $order['id'],
+                        null,
+                        'cash_reservation_expired',
+                        'Venció la reserva de 2 horas para pago en efectivo. Los productos volvieron al stock.'
                     );
                 }
 
@@ -358,6 +395,7 @@ final class StockService
                 return [
                     'cancelled_without_reservation' => count($pendingOrders),
                     'released_reservations' => count($rejectedOrders),
+                    'released_cash_reservations' => count($cashOrders),
                 ];
             }
         );
@@ -476,7 +514,7 @@ final class StockService
         bool $notifyCustomer = true
     ): void {
         $old = $pdo->prepare(
-            'SELECT status, public_number, customer_name, customer_email
+            'SELECT status, public_number, customer_name, customer_email, customer_phone
              FROM orders
              WHERE id = :id'
         );
@@ -516,6 +554,29 @@ final class StockService
                 'recipient' => $order['customer_email'],
                 'subject' => 'Pedido cancelado · ' . $order['public_number'],
                 'template' => 'order_cancelled',
+                'payload_json' => json_encode([
+                    'public_number' => $order['public_number'],
+                    'customer_name' => $order['customer_name'],
+                    'detail' => $detail,
+                ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            ]);
+        }
+        if (
+            $notifyCustomer
+            && (!empty($order['customer_phone']) || !empty($order['customer_email']))
+        ) {
+            $notification = $pdo->prepare(
+                'INSERT INTO customer_notification_queue(
+                    order_id, event_type, customer_phone, customer_email, payload_json
+                 ) VALUES(
+                    :order_id, :event_type, :customer_phone, :customer_email, :payload_json
+                 )'
+            );
+            $notification->execute([
+                'order_id' => $orderId,
+                'event_type' => 'order_cancelled',
+                'customer_phone' => $order['customer_phone'] ?: null,
+                'customer_email' => $order['customer_email'] ?: null,
                 'payload_json' => json_encode([
                     'public_number' => $order['public_number'],
                     'customer_name' => $order['customer_name'],

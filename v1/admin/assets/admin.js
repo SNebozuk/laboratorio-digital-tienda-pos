@@ -1227,6 +1227,9 @@
         if (order.status === 'paid_prepare') {
             actions.push(`<button class="small-button" type="button" data-order-action="ready" data-order-id="${Number(order.id)}">Marcar listo</button>`);
         }
+        if (order.status === 'pending_payment' && order.payment_method === 'cash' && order.stock_reserved_at) {
+            actions.push(`<button class="small-button" type="button" data-order-action="ready" data-order-id="${Number(order.id)}">Marcar listo para retirar</button>`);
+        }
         if (order.status === 'ready_pickup') {
             actions.push(`<button class="small-button" type="button" data-order-action="deliver" data-order-id="${Number(order.id)}">Entregar</button>`);
         }
@@ -1350,7 +1353,14 @@
             return;
         }
         const expectedStatus = { approve: 'payment_reported', ready: 'paid_prepare', deliver: 'ready_pickup' }[action];
-        if (orders.some(order => order.status !== expectedStatus)) {
+        const hasInvalidStatus = orders.some(order => {
+            if (action === 'ready') {
+                return order.status !== 'paid_prepare'
+                    && !(order.status === 'pending_payment' && order.payment_method === 'cash' && order.stock_reserved_at);
+            }
+            return order.status !== expectedStatus;
+        });
+        if (hasInvalidStatus) {
             toast('Seleccioná ventas que estén todas en el estado correspondiente antes de actualizarlas.');
             return;
         }
@@ -1456,7 +1466,7 @@
                     <div class="order-detail-meta">
                         <div><span>CLIENTE</span><strong>${escapeHtml(order.customer_name)}</strong><small>${escapeHtml(order.customer_phone || order.customer_email || 'Sin contacto informado')}</small></div>
                         <div><span>FECHA</span><strong>${escapeHtml(order.created_at)}</strong><small>${escapeHtml(channelLabels[order.channel] || order.channel)}</small></div>
-                        <div><span>FORMA DE PAGO</span><strong>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</strong><small>${proof ? 'Comprobante recibido' : 'Sin comprobante cargado'}</small></div>
+                        <div><span>FORMA DE PAGO</span><strong>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</strong><small>${order.payment_method === 'cash' ? `Reserva hasta ${escapeHtml(order.payment_deadline_at || '')}` : (proof ? 'Comprobante recibido' : 'Sin comprobante cargado')}</small></div>
                     </div>
                     <div class="order-detail-lines">
                         ${order.items.map(item => `
@@ -1473,13 +1483,15 @@
                     <div class="order-detail-total"><span>TOTAL</span><strong>${money(order.total_cents)}</strong></div>
                     <section class="order-payment-detail">
                         <div class="order-payment-head">
-                            <div><p class="eyebrow">PAGO</p><h3>${proof ? 'COMPROBANTE RECIBIDO' : 'SIN COMPROBANTE'}</h3></div>
+                            <div><p class="eyebrow">PAGO</p><h3>${order.payment_method === 'cash' ? 'EFECTIVO AL RETIRAR' : (proof ? 'COMPROBANTE RECIBIDO' : 'SIN COMPROBANTE')}</h3></div>
                             ${proof ? `<a class="small-button" href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener">Abrir original</a>` : ''}
                         </div>
                         ${proof ? `
                             <p class="order-proof-meta">${escapeHtml(proof.original_name)} &middot; ${formatFileSize(proof.size_bytes)} &middot; ${escapeHtml(proof.created_at)}</p>
                             ${proofPreview}
-                        ` : `<p class="empty-copy">Esta venta no tiene un archivo de pago asociado. En mostrador puede corresponder a ${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}.</p>`}
+                        ` : (order.payment_method === 'cash'
+                            ? `<div class="notice"><strong>Reserva automática por 2 horas.</strong><br>Vence: ${escapeHtml(order.payment_deadline_at || '')}. Si no se entrega, la tarea programada cancela la venta y devuelve las unidades al stock.</div>`
+                            : `<p class="empty-copy">Esta venta no tiene un archivo de pago asociado.</p>`)}
                     </section>
                     <div class="order-actions order-detail-actions">${orderActions(actionOrder)}</div>
                     <p class="order-print-note">La impresi\u00f3n incluye la compra y el total, pero nunca el archivo del comprobante de pago.</p>

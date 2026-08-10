@@ -165,7 +165,8 @@ try {
             $order = $app['orders']->createWebOrder(
                 is_array($input['customer'] ?? null) ? $input['customer'] : [],
                 is_array($input['items'] ?? null) ? $input['items'] : [],
-                (string) ($input['channel'] ?? 'web')
+                (string) ($input['channel'] ?? 'web'),
+                (string) ($input['payment_method'] ?? 'bank_transfer')
             );
             Http::json(['ok' => true, 'order' => $order], 201);
 
