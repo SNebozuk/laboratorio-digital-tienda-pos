@@ -852,7 +852,9 @@
         }
         const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
         openModal(`
-            <h2 id="modal-title">CONFIRMAR PEDIDO</h2>
+            ${checkoutSteps(1)}
+            <h2 id="modal-title">TUS DATOS</h2>
+            <p class="checkout-lead">Solo necesitamos estos datos para identificar tu pedido.</p>
             <div class="checkout-lines">
                 ${items.map(item => `
                     <div class="checkout-line">
@@ -864,10 +866,6 @@
                 `).join('')}
             </div>
             <div class="order-total"><span>Total</span><strong>${money(total)}</strong></div>
-            <div class="notice">
-                Confirmar el pedido todavía no reserva unidades. La reserva se realiza
-                al subir el comprobante, después de validar nuevamente el stock.
-            </div>
             <form id="checkout-form" novalidate>
                 <label>
                     Nombre y Apellido
@@ -888,9 +886,22 @@
                     <input name="email" type="email" autocomplete="email">
                 </label>
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
-                <button class="primary-button" type="submit">CREAR PEDIDO</button>
+                <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
+            <p class="checkout-footnote">El stock se reserva al enviar el comprobante.</p>
         `);
+    }
+
+    function checkoutSteps(activeStep) {
+        return `
+            <ol class="checkout-steps" aria-label="Progreso del pedido">
+                ${['Tus datos', 'Transferencia', 'Comprobante'].map((label, index) => {
+                    const step = index + 1;
+                    const stateClass = step < activeStep ? 'done' : (step === activeStep ? 'active' : '');
+                    return `<li class="${stateClass}"><span>${step}</span>${label}</li>`;
+                }).join('')}
+            </ol>
+        `;
     }
 
     async function apiJson(payload) {
@@ -937,7 +948,7 @@
         }
         errorBox.hidden = true;
         button.disabled = true;
-        button.textContent = 'CREANDO PEDIDO…';
+        button.textContent = 'PREPARANDO TRANSFERENCIA…';
         try {
             const data = await apiJson({
                 action: 'create_order',
@@ -953,83 +964,97 @@
                 })),
             });
             state.order = data.order;
-            showPayment(
-                data.order,
-                String(formData.get('email') || '').trim() !== ''
-            );
+            showPayment(data.order);
         } catch (error) {
             errorBox.hidden = false;
             errorBox.textContent = error.message;
             toast(error.message);
             await refreshCatalog();
             button.disabled = false;
-            button.textContent = 'CREAR PEDIDO';
+            button.textContent = 'CONTINUAR AL PAGO';
         }
     }
 
-    function showPayment(order, hasEmail) {
+    function showPayment(order) {
         const alias = order.bank?.alias || 'Pendiente de configurar';
         const cbu = order.bank?.cbu || 'Pendiente de configurar';
         const paymentUrl = safePageUrl(order.payment_url);
-        const whatsappOrderUrl = whatsappUrl(order);
+        const maxMegabytes = Math.max(1, Math.round(Number(app.proof_max_bytes || 8388608) / 1048576));
+        const aiCopy = app.receipt_ai_enabled
+            ? 'La revisión automática comprobará que parezca una transferencia realizada y comparará importe y destinatario. La acreditación se confirma manualmente.'
+            : 'Comprobaremos el formato del archivo y revisaremos el pago manualmente antes de aprobarlo.';
         openModal(`
-            <h2 id="modal-title">PEDIDO ${escapeHtml(order.public_number)}</h2>
-            <div class="success-box">
-                Tu pedido fue creado.
-                ${hasEmail
-                    ? 'También enviaremos una copia al email informado.'
-                    : 'Podés guardar el seguimiento o compartir el detalle por WhatsApp.'}
+            ${checkoutSteps(2)}
+            <h2 id="modal-title">HACÉ LA TRANSFERENCIA</h2>
+            <div class="payment-focus">
+                <span>Transferí exactamente</span>
+                <strong class="payment-amount">${money(Number(order.total_cents))}</strong>
+                <span>a nombre de ${escapeHtml(order.bank?.holder || 'Laboratorio Digital')}</span>
             </div>
-            <div class="order-total">
-                <span>Total exacto</span>
-                <strong>${money(Number(order.total_cents))}</strong>
-            </div>
-            <p>
-                Transferí a <strong>${escapeHtml(order.bank?.holder || 'Laboratorio Digital')}</strong><br>
-                Alias: <strong>${escapeHtml(alias)}</strong><br>
-                CBU: <strong>${escapeHtml(cbu)}</strong>
-            </p>
-            ${order.pickup_address ? `
-                <p>
-                    Retiro en: <strong>${escapeHtml(order.pickup_address)}</strong>
-                </p>
-            ` : ''}
-            <div class="notice">
-                El stock se reservará cuando subas el comprobante, siempre que
-                siga disponible. Plazo: ${escapeHtml(order.payment_deadline_at)}.
+            <dl class="bank-details">
+                <div><dt>Alias</dt><dd>${escapeHtml(alias)}</dd></div>
+                <div><dt>CBU</dt><dd>${escapeHtml(cbu)}</dd></div>
+            </dl>
+            <div class="payment-instructions">
+                <strong>Después de transferir:</strong>
+                <span>Descargá o capturá el comprobante del banco.</span>
+                <span>Adjuntalo abajo para reservar el stock.</span>
             </div>
             <form id="proof-form">
-                <label>
-                    Comprobante JPG, PNG o PDF
-                    <input name="proof" type="file" accept="image/jpeg,image/png,application/pdf" required>
+                <div class="proof-section-head"><span>3</span><strong>Comprobante</strong></div>
+                <label class="proof-drop" for="proof-file">
+                    <strong>Adjuntá el comprobante</strong>
+                    <span>JPG, PNG o PDF · máximo ${maxMegabytes} MB</span>
+                    <input id="proof-file" name="proof" type="file" accept="image/jpeg,image/png,application/pdf" required>
                 </label>
-                <button class="primary-button" type="submit">
-                    SUBIR COMPROBANTE Y RESERVAR
+                <div class="proof-file-meta" id="proof-file-meta" aria-live="polite">Todavía no elegiste un archivo.</div>
+                <p class="proof-ai-note">${escapeHtml(aiCopy)}</p>
+                <p class="form-error" id="proof-error" role="alert" hidden></p>
+                <p class="proof-processing" id="proof-processing" role="status" hidden></p>
+                <button class="primary-button" type="submit" disabled>
+                    ENVIAR COMPROBANTE
                 </button>
             </form>
             ${paymentUrl ? `
-                <p class="order-note">
-                    ${hasEmail
-                        ? 'También enviaremos por email un enlace personal para retomar esta carga más tarde.'
-                        : 'Guardá este enlace personal para retomar la carga más tarde.'}
-                </p>
-                <a class="secondary-button" href="${escapeHtml(paymentUrl)}">
-                    ABRIR SEGUIMIENTO DEL PEDIDO
-                </a>
+                <a class="checkout-later" href="${escapeHtml(paymentUrl)}">Guardar para continuar más tarde</a>
             ` : ''}
-            <a
-                class="whatsapp-button"
-                href="${escapeHtml(whatsappOrderUrl)}"
-                target="_blank"
-                rel="noopener"
-            >
-                ENVIAR DETALLE POR WHATSAPP
-            </a>
         `);
+    }
+
+    function proofFileSelected(input) {
+        const form = input.form;
+        const file = input.files[0];
+        const button = form?.querySelector('button[type="submit"]');
+        const meta = form?.querySelector('#proof-file-meta');
+        const errorBox = form?.querySelector('#proof-error');
+        const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+        const maxBytes = Number(app.proof_max_bytes || 8388608);
+        if (!button || !meta || !errorBox) {
+            return;
+        }
+        errorBox.hidden = true;
+        button.disabled = true;
+        if (!file) {
+            meta.textContent = 'Todavía no elegiste un archivo.';
+            return;
+        }
+        if (!allowed.includes(file.type) || file.size > maxBytes) {
+            input.value = '';
+            meta.textContent = 'Archivo no seleccionado.';
+            errorBox.hidden = false;
+            errorBox.textContent = !allowed.includes(file.type)
+                ? 'Elegí una imagen JPG, PNG o un archivo PDF.'
+                : `El archivo supera el máximo de ${Math.max(1, Math.round(maxBytes / 1048576))} MB.`;
+            return;
+        }
+        meta.innerHTML = `<strong>${escapeHtml(file.name)}</strong><span>${(file.size / 1048576).toFixed(1)} MB · listo para enviar</span>`;
+        button.disabled = false;
     }
 
     async function uploadProof(form) {
         const button = form.querySelector('button[type="submit"]');
+        const errorBox = form.querySelector('#proof-error');
+        const processing = form.querySelector('#proof-processing');
         const file = form.querySelector('input[type="file"]').files[0];
         if (!file || !state.order) {
             return;
@@ -1041,7 +1066,12 @@
         payload.append('upload_token', state.order.upload_token);
         payload.append('proof', file);
         button.disabled = true;
-        button.textContent = 'SUBIENDO…';
+        button.textContent = app.receipt_ai_enabled ? 'REVISANDO COMPROBANTE…' : 'ENVIANDO COMPROBANTE…';
+        errorBox.hidden = true;
+        processing.hidden = false;
+        processing.textContent = app.receipt_ai_enabled
+            ? 'Estamos comprobando el tipo de documento, el importe y el destinatario. Puede tardar unos segundos.'
+            : 'Estamos guardando el archivo de forma segura.';
 
         try {
             const response = await fetch(app.api_url, {
@@ -1055,9 +1085,11 @@
             }
             showSuccess(data.result);
         } catch (error) {
-            toast(error.message);
+            errorBox.hidden = false;
+            errorBox.textContent = error.message;
+            processing.hidden = true;
             button.disabled = false;
-            button.textContent = 'SUBIR COMPROBANTE Y RESERVAR';
+            button.textContent = 'ENVIAR COMPROBANTE';
         }
     }
 
@@ -1081,32 +1113,20 @@
     }
 
     function showSuccess(result) {
-        const order = state.order;
-        const url = whatsappUrl(order);
-        const paymentUrl = safePageUrl(order.payment_url);
+        const aiStatus = result.prevalidation_status === 'prevalidated'
+            ? 'El comprobante coincide de forma preliminar con el importe y el destinatario.'
+            : 'Recibimos el comprobante y revisaremos la acreditación.';
         openModal(`
-            <h2 id="modal-title">SU PEDIDO HA SIDO ENVIADO</h2>
+            ${checkoutSteps(3)}
+            <h2 id="modal-title">¡LISTO!</h2>
             <div class="success-box">
-                Recibimos el comprobante y el stock quedó reservado.
-                El pago está pendiente de verificación.
+                ${escapeHtml(aiStatus)} El stock quedó reservado.
             </div>
             <p>
                 Pedido <strong>${escapeHtml(result.public_number)}</strong><br>
                 Te avisaremos por WhatsApp o email cuando esté aprobado y listo para retirar.
             </p>
-            <div class="button-row">
-                <button class="secondary-button" type="button" data-finish-order>
-                    FINALIZAR
-                </button>
-                ${paymentUrl ? `
-                    <a class="secondary-button" href="${escapeHtml(paymentUrl)}">
-                        VER SEGUIMIENTO
-                    </a>
-                ` : ''}
-                <a class="whatsapp-button" href="${escapeHtml(url)}" target="_blank" rel="noopener">
-                    ENVIAR DETALLE POR WHATSAPP
-                </a>
-            </div>
+            <button class="primary-button" type="button" data-finish-order>LISTO</button>
         `);
     }
 
@@ -1233,6 +1253,9 @@
                 Number(event.target.dataset.quantityInput),
                 Number(event.target.value)
             );
+        }
+        if (event.target.matches('#proof-file')) {
+            proofFileSelected(event.target);
         }
     });
 

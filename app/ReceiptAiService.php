@@ -73,11 +73,16 @@ final class ReceiptAiService
             'alias' => $bank['alias'],
             'cbu_cvu' => $bank['cbu'],
         ];
-        $prompt = "Analizá este archivo como comprobante de transferencia bancaria "
-            . "para una revisión preliminar, no como aprobación de pago. "
-            . "Extraé solamente datos que sean visibles; usá null si no se leen. "
-            . "No inventes ni completes datos faltantes. Marcá anomalías visuales "
-            . "como recortes, superposiciones o inconsistencias, sin afirmar fraude.\n\n"
+        $prompt = "Clasificá y analizá este archivo para una revisión preliminar de pago; "
+            . "nunca lo trates como confirmación de acreditación bancaria. Primero decidí "
+            . "si es un comprobante emitido por un banco o billetera después de una "
+            . "transferencia completada. Una foto de producto, selfie, conversación, factura, "
+            . "datos de una cuenta, solicitud de pago, pantalla pendiente/fallida o documento "
+            . "sin operación realizada no es un comprobante válido. Buscá señales visibles de "
+            . "operación exitosa, importe, fecha, destinatario y número de operación. Extraé "
+            . "solamente datos visibles; usá null si no se leen. No inventes datos ni afirmes "
+            . "fraude. Marcá recortes, superposiciones, tipografías incoherentes u otras "
+            . "anomalías visuales. El aspecto profesional por sí solo no demuestra autenticidad.\n\n"
             . "Datos esperados del pedido:\n"
             . json_encode($expected, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
@@ -107,15 +112,22 @@ final class ReceiptAiService
         $checks = $this->compare($extracted, $order, $bank);
 
         $requiredMatches = $checks['document'] === true
+            && $checks['completed'] === true
             && $checks['amount'] === true
             && $checks['recipient'] !== false;
         $confidence = (float) ($extracted['extraction_confidence'] ?? 0);
         $hasReference = trim((string) ($extracted['operation_reference'] ?? '')) !== '';
-        $prevalidated = $requiredMatches && $confidence >= 0.65 && $hasReference;
+        $prevalidated = $requiredMatches && $confidence >= 0.70 && $hasReference;
 
         $highRisk = $checks['document'] === false
+            || $checks['completed'] === false
             || $checks['amount'] === false
-            || $checks['recipient'] === false;
+            || $checks['recipient'] === false
+            || in_array(
+                (string) ($extracted['document_type'] ?? ''),
+                ['payment_request', 'account_details', 'invoice', 'unrelated'],
+                true
+            );
         $status = $prevalidated ? 'prevalidated' : 'review';
         $risk = $prevalidated ? 'low' : ($highRisk ? 'high' : 'medium');
         $summary = $prevalidated
@@ -143,6 +155,24 @@ final class ReceiptAiService
             'additionalProperties' => false,
             'properties' => [
                 'document_looks_like_transfer_receipt' => ['type' => 'boolean'],
+                'document_type' => [
+                    'type' => 'string',
+                    'enum' => [
+                        'transfer_receipt',
+                        'payment_receipt',
+                        'payment_request',
+                        'account_details',
+                        'invoice',
+                        'unrelated',
+                        'unknown',
+                    ],
+                ],
+                'transfer_status' => [
+                    'type' => 'string',
+                    'enum' => ['completed', 'pending', 'failed', 'unknown'],
+                ],
+                'has_success_signal' => ['type' => 'boolean'],
+                'financial_institution' => ['type' => ['string', 'null']],
                 'amount_cents' => ['type' => ['integer', 'null']],
                 'currency' => ['type' => ['string', 'null']],
                 'transfer_date' => ['type' => ['string', 'null']],
@@ -165,6 +195,10 @@ final class ReceiptAiService
             ],
             'required' => [
                 'document_looks_like_transfer_receipt',
+                'document_type',
+                'transfer_status',
+                'has_success_signal',
+                'financial_institution',
                 'amount_cents',
                 'currency',
                 'transfer_date',
@@ -226,6 +260,8 @@ final class ReceiptAiService
 
         return [
             'document' => (bool) ($extracted['document_looks_like_transfer_receipt'] ?? false),
+            'completed' => ($extracted['transfer_status'] ?? 'unknown') === 'completed'
+                && (bool) ($extracted['has_success_signal'] ?? false),
             'amount' => $amountMatch,
             'currency' => isset($extracted['currency'])
                 ? in_array(strtoupper((string) $extracted['currency']), ['ARS', 'ARG', '$'], true)

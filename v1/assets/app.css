@@ -1542,6 +1542,236 @@ body.product-detail-mode .catalog-column {
     margin-top: 18px;
 }
 
+.checkout-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 0 42px 24px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.checkout-steps li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #797979;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.checkout-steps li span {
+    display: grid;
+    width: 25px;
+    height: 25px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid #3b3b3b;
+    border-radius: 50%;
+}
+
+.checkout-steps li.active,
+.checkout-steps li.done {
+    color: #fff;
+}
+
+.checkout-steps li.active span {
+    border-color: #fff;
+    background: #fff;
+    color: #000;
+}
+
+.checkout-steps li.done span {
+    border-color: var(--success);
+    color: #b8f3cf;
+}
+
+.checkout-lead,
+.checkout-footnote {
+    margin: -8px 0 16px;
+}
+
+.checkout-footnote {
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+.payment-focus {
+    display: grid;
+    gap: 7px;
+    margin: 18px 0;
+    padding: 22px;
+    border: 1px solid #3e674d;
+    border-radius: 14px;
+    background: rgba(63, 165, 106, .09);
+    text-align: center;
+}
+
+.payment-focus span {
+    color: #c9d7ce;
+    font-size: 13px;
+}
+
+.payment-amount {
+    color: #fff;
+    font-size: clamp(32px, 8vw, 48px);
+    line-height: 1;
+}
+
+.bank-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0;
+}
+
+.bank-details div {
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #090909;
+}
+
+.bank-details dt {
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.bank-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 850;
+    user-select: all;
+}
+
+.payment-instructions {
+    display: grid;
+    gap: 7px;
+    margin: 18px 0 24px;
+    padding-left: 19px;
+    border-left: 2px solid #fff;
+    color: #d2d2d2;
+    font-size: 13px;
+}
+
+.proof-section-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 28px 0 8px;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.proof-section-head span {
+    display: grid;
+    width: 27px;
+    height: 27px;
+    place-items: center;
+    border-radius: 50%;
+    background: #fff;
+    color: #000;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.modal-card label.proof-drop {
+    display: grid;
+    min-height: 122px;
+    place-items: center;
+    align-content: center;
+    gap: 6px;
+    padding: 20px;
+    border: 1px dashed #686868;
+    border-radius: 13px;
+    background: #080808;
+    text-align: center;
+    cursor: pointer;
+}
+
+.proof-drop:hover,
+.proof-drop:focus-within {
+    border-color: #fff;
+}
+
+.proof-drop span,
+.proof-ai-note,
+.proof-processing {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.modal-card .proof-drop input {
+    width: auto;
+    max-width: 100%;
+    padding: 8px;
+    border: 0;
+    background: transparent;
+    font-size: 12px;
+}
+
+.proof-file-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: -4px 0 14px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.proof-file-meta strong {
+    overflow: hidden;
+    color: #fff;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.proof-file-meta span {
+    flex: 0 0 auto;
+}
+
+.proof-ai-note {
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: #181818;
+}
+
+.proof-processing {
+    color: #b8f3cf;
+}
+
+.checkout-later {
+    display: block;
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+@media (max-width: 560px) {
+    .checkout-steps {
+        margin-right: 32px;
+    }
+
+    .checkout-steps li {
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+        text-align: center;
+    }
+
+    .bank-details {
+        grid-template-columns: 1fr;
+    }
+}
+
 .toast {
     position: fixed;
     z-index: 150;

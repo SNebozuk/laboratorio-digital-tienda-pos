@@ -92,6 +92,38 @@ final class PaymentProofService
         $stored = $this->storeFile($file);
         $proofId = 0;
 
+        $aiResult = [
+            'status' => 'failed',
+            'risk_level' => null,
+            'summary' => 'No se pudo ejecutar la prevalidación automática.',
+            'model' => null,
+            'result' => null,
+        ];
+        try {
+            $aiResult = $this->receiptAi->prevalidate(
+                $stored['absolute_path'],
+                $stored['mime_type'],
+                $order,
+                [
+                    'holder' => $this->stringSetting(
+                        'bank_holder',
+                        'Laboratorio Digital'
+                    ),
+                    'alias' => $this->stringSetting('bank_alias', ''),
+                    'cbu' => $this->stringSetting('bank_cbu', ''),
+                ]
+            );
+        } catch (Throwable $exception) {
+            error_log('Prevalidación de comprobante: ' . $exception->getMessage());
+        }
+        if ($this->isClearlyUnrelatedUpload($aiResult)) {
+            @unlink($stored['absolute_path']);
+            throw new ValidationException(
+                'El archivo no parece ser un comprobante de una transferencia realizada. '
+                . 'Subí el comprobante emitido por tu banco o billetera.'
+            );
+        }
+
         try {
             $this->stock->reserveForReportedPayment(
                 $orderId,
@@ -158,30 +190,6 @@ final class PaymentProofService
             throw $exception;
         }
 
-        $aiResult = [
-            'status' => 'failed',
-            'risk_level' => null,
-            'summary' => 'No se pudo ejecutar la prevalidación automática.',
-            'model' => null,
-            'result' => null,
-        ];
-        try {
-            $aiResult = $this->receiptAi->prevalidate(
-                $stored['absolute_path'],
-                $stored['mime_type'],
-                $order,
-                [
-                    'holder' => $this->stringSetting(
-                        'bank_holder',
-                        'Laboratorio Digital'
-                    ),
-                    'alias' => $this->stringSetting('bank_alias', ''),
-                    'cbu' => $this->stringSetting('bank_cbu', ''),
-                ]
-            );
-        } catch (Throwable $exception) {
-            error_log('Prevalidación de comprobante: ' . $exception->getMessage());
-        }
         $this->saveAiResult($proofId, $aiResult);
 
         return [
@@ -366,6 +374,30 @@ final class PaymentProofService
     private function storageRoot(): string
     {
         return rtrim((string) $this->config['storage_path'], '/\\');
+    }
+
+    /** @param array<string, mixed> $result */
+    private function isClearlyUnrelatedUpload(array $result): bool
+    {
+        if (($result['status'] ?? '') !== 'review' || ($result['risk_level'] ?? '') !== 'high') {
+            return false;
+        }
+        $extracted = $result['result']['extracted'] ?? null;
+        if (!is_array($extracted) || (float) ($extracted['extraction_confidence'] ?? 0) < 0.85) {
+            return false;
+        }
+
+        return ($extracted['document_looks_like_transfer_receipt'] ?? true) === false
+            || in_array(
+                (string) ($extracted['document_type'] ?? ''),
+                ['payment_request', 'account_details', 'invoice', 'unrelated'],
+                true
+            )
+            || in_array(
+                (string) ($extracted['transfer_status'] ?? ''),
+                ['pending', 'failed'],
+                true
+            );
     }
 
     private function integerSetting(string $key, int $default): int
