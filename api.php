@@ -22,6 +22,7 @@ try {
                 Http::json([
                     'ok' => true,
                     'products' => $app['products']->publicCatalog(),
+                    'categories' => $app['categories']->tree(),
                 ]);
 
             case 'catalog_search':

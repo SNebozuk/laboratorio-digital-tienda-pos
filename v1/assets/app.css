@@ -407,6 +407,17 @@ button:disabled {
     gap: 5px;
 }
 
+.category-children {
+    display: grid;
+    gap: 3px;
+    margin: 1px 0 3px;
+}
+
+.category-depth-1 { padding-left: 25px; font-size: 13px; }
+.category-depth-2 { padding-left: 38px; font-size: 13px; }
+.category-depth-3 { padding-left: 51px; font-size: 12px; }
+.category-depth-4 { padding-left: 64px; font-size: 12px; }
+
 .category-button {
     width: 100%;
     padding: 11px 12px;

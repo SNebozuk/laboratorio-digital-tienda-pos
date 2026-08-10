@@ -3,6 +3,7 @@
 
     const app = JSON.parse(document.getElementById('app-data').textContent);
     let products = Array.isArray(app.products) ? app.products : [];
+    let categoryTree = Array.isArray(app.categories) ? app.categories : [];
     const linkedProductId = (() => {
         const value = Number(new URL(window.location.href).searchParams.get('producto'));
         return products.some(product => Number(product.id) === value) ? value : null;
@@ -166,6 +167,9 @@
                 return;
             }
             products = data.products;
+            if (Array.isArray(data.categories)) {
+                categoryTree = data.categories;
+            }
             rebuildVariantIndex();
 
             let adjusted = false;
@@ -283,9 +287,29 @@
         return score;
     }
 
+    function categoryAndDescendantSlugs(slug) {
+        const selected = new Set([slug]);
+        const collect = node => {
+            if (node.slug === slug) {
+                const addChildren = child => {
+                    selected.add(child.slug);
+                    (child.children || []).forEach(addChildren);
+                };
+                (node.children || []).forEach(addChildren);
+                return true;
+            }
+            return (node.children || []).some(collect);
+        };
+        categoryTree.some(collect);
+        return selected;
+    }
+
     function filteredProducts() {
+        const visibleCategories = state.category
+            ? categoryAndDescendantSlugs(state.category)
+            : null;
         return products.filter(product => (
-            (!state.category || product.category?.slug === state.category)
+            (!visibleCategories || visibleCategories.has(product.category?.slug))
             && productHasStock(product)
         ));
     }
@@ -385,6 +409,9 @@
 
     function availableLabel(available) {
         const units = Number(available);
+        if (units < 1) {
+            return 'Sin stock';
+        }
         if (units === 1) {
             return 'Última unidad';
         }
@@ -395,7 +422,7 @@
         const units = Number(available);
         return units > 0
             ? `${units} ${units === 1 ? 'disponible' : 'disponibles'}`
-            : 'ⓘ Agotado';
+            : 'Sin stock';
     }
 
     function setQuantity(variantId, requestedQuantity) {
@@ -416,28 +443,41 @@
     }
 
     function renderCategories() {
-        const seen = new Map();
-        products.filter(productHasStock).forEach(product => {
-            const category = product.category || {
-                name: 'Sin categoría',
-                slug: 'sin-categoria',
-            };
-            seen.set(category.slug, category.name);
+        const fallback = new Map();
+        products.forEach(product => {
+            const category = product.category || { name: 'Sin categoría', slug: 'sin-categoria' };
+            fallback.set(category.slug, { ...category, children: [] });
         });
-        const categories = [
-            { slug: '', name: 'Todos los productos' },
-            ...Array.from(seen, ([slug, name]) => ({ slug, name })),
-        ];
-        elements.categories.innerHTML = categories.map(category => `
-            <button
-                class="category-button ${state.category === category.slug ? 'active' : ''}"
-                type="button"
-                data-category="${escapeHtml(category.slug)}"
-            >${escapeHtml(category.name)}</button>
-        `).join('');
-        const current = categories.find(category => category.slug === state.category);
-        elements.categoryBreadcrumb.textContent = current?.slug
-            ? `Todos los productos › ${current.name}`
+        const roots = categoryTree.length ? categoryTree : Array.from(fallback.values());
+        const findPath = (nodes, slug, parents = []) => {
+            for (const node of nodes) {
+                const path = [...parents, node];
+                if (node.slug === slug) return path;
+                const found = findPath(Array.isArray(node.children) ? node.children : [], slug, path);
+                if (found) return found;
+            }
+            return null;
+        };
+        const renderNode = (node, depth = 0) => {
+            if (node.active === false) return '';
+            const children = Array.isArray(node.children) ? node.children : [];
+            const nested = children.map(child => renderNode(child, depth + 1)).join('');
+            return `
+                <button
+                    class="category-button category-depth-${Math.min(depth, 4)} ${state.category === node.slug ? 'active' : ''}"
+                    type="button"
+                    data-category="${escapeHtml(node.slug)}"
+                >${escapeHtml(node.name)}</button>
+                ${nested ? `<div class="category-children">${nested}</div>` : ''}
+            `;
+        };
+        elements.categories.innerHTML = `
+            <button class="category-button ${state.category === '' ? 'active' : ''}" type="button" data-category="">Todos los productos</button>
+            ${roots.map(node => renderNode(node)).join('')}
+        `;
+        const path = state.category ? findPath(roots, state.category) : null;
+        elements.categoryBreadcrumb.textContent = path
+            ? `Todos los productos › ${path.map(node => node.name).join(' › ')}`
             : 'Todos los productos';
     }
 

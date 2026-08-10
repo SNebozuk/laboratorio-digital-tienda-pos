@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 $app = require dirname(__DIR__) . '/app/container.php';
 $catalog = $app['products']->publicCatalog();
+$categoryTree = $app['categories']->tree();
 $publicSettings = $app['settings']->values();
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
@@ -150,6 +151,7 @@ header('Referrer-Policy: same-origin');
             'api_url' => $apiUrl,
             'csrf_token' => $app['csrf_token'],
             'products' => $catalog,
+            'categories' => $categoryTree,
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
