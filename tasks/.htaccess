@@ -1,1 +1,6 @@
 Require all denied
+
+<Files "maintenance.php">
+    AuthType None
+    Require all granted
+</Files>
