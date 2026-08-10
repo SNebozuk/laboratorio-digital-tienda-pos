@@ -153,7 +153,91 @@ final class MailService
             'X-Mailer: Laboratorio Digital',
         ]);
 
-        return mail($recipient, $encodedSubject, $html, $headers);
+        $transport = strtolower((string) ($this->config['mail_transport'] ?? 'smtp'));
+        if ($transport === 'mail') {
+            return mail($recipient, $encodedSubject, $html, $headers);
+        }
+        if ($transport !== 'smtp') {
+            throw new \RuntimeException('El transporte de correo no es válido.');
+        }
+
+        return $this->sendSmtp($recipient, $encodedSubject, $html, $from, $headers);
+    }
+
+    private function sendSmtp(string $recipient, string $subject, string $html, string $from, string $headers): bool
+    {
+        $host = trim((string) ($this->config['mail_smtp_host'] ?? ''));
+        $port = (int) ($this->config['mail_smtp_port'] ?? 587);
+        $encryption = strtolower((string) ($this->config['mail_smtp_encryption'] ?? 'tls'));
+        $username = trim((string) ($this->config['mail_smtp_username'] ?? ''));
+        $password = (string) ($this->config['mail_smtp_password'] ?? '');
+        if ($host === '' || $port < 1 || $port > 65535 || $username === '' || $password === '') {
+            throw new \RuntimeException('Falta configurar el SMTP autenticado.');
+        }
+        if (!in_array($encryption, ['tls', 'ssl', 'none'], true)) {
+            throw new \RuntimeException('El cifrado SMTP no es válido.');
+        }
+
+        $target = ($encryption === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
+        $socket = @stream_socket_client($target, $errno, $error, 20, STREAM_CLIENT_CONNECT);
+        if (!is_resource($socket)) {
+            throw new \RuntimeException('No se pudo conectar al SMTP: ' . $error);
+        }
+        stream_set_timeout($socket, 20);
+        try {
+            $this->smtpExpect($socket, [220]);
+            $this->smtpCommand($socket, 'EHLO laboratorio-digital', [250]);
+            if ($encryption === 'tls') {
+                $this->smtpCommand($socket, 'STARTTLS', [220]);
+                if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                    throw new \RuntimeException('No se pudo activar TLS en SMTP.');
+                }
+                $this->smtpCommand($socket, 'EHLO laboratorio-digital', [250]);
+            }
+            $this->smtpCommand($socket, 'AUTH LOGIN', [334]);
+            $this->smtpCommand($socket, base64_encode($username), [334]);
+            $this->smtpCommand($socket, base64_encode($password), [235]);
+            $this->smtpCommand($socket, 'MAIL FROM:<' . $from . '>', [250]);
+            $this->smtpCommand($socket, 'RCPT TO:<' . $recipient . '>', [250, 251]);
+            $this->smtpCommand($socket, 'DATA', [354]);
+            $body = str_replace("\r\n", "\n", $html);
+            $body = str_replace("\n.", "\n..", $body);
+            $message = 'To: <' . $recipient . ">\r\n"
+                . 'Subject: ' . $subject . "\r\n"
+                . $headers . "\r\n\r\n"
+                . str_replace("\n", "\r\n", $body);
+            $this->smtpCommand($socket, $message . "\r\n.", [250]);
+            $this->smtpCommand($socket, 'QUIT', [221]);
+        } finally {
+            fclose($socket);
+        }
+
+        return true;
+    }
+
+    /** @param resource $socket @param list<int> $codes */
+    private function smtpCommand($socket, string $command, array $codes): void
+    {
+        if (fwrite($socket, $command . "\r\n") === false) {
+            throw new \RuntimeException('No se pudo escribir en el SMTP.');
+        }
+        $this->smtpExpect($socket, $codes);
+    }
+
+    /** @param resource $socket @param list<int> $codes */
+    private function smtpExpect($socket, array $codes): void
+    {
+        $response = '';
+        while (($line = fgets($socket, 1024)) !== false) {
+            $response .= $line;
+            if (strlen($line) < 4 || $line[3] !== '-') {
+                break;
+            }
+        }
+        $code = (int) substr($response, 0, 3);
+        if (!in_array($code, $codes, true)) {
+            throw new \RuntimeException('SMTP respondió: ' . trim($response));
+        }
     }
 
     /** @param array<string, mixed> $payload */
@@ -182,7 +266,9 @@ final class MailService
                         . $this->escape((string) ($item['variant_name'] ?? ''))
                         . ' · '
                         . (int) ($item['quantity'] ?? 0)
-                        . ' unidades</small></td><td style="text-align:right">'
+                        . ' unidades × '
+                        . $this->money((int) ($item['unit_price_cents'] ?? 0))
+                        . '</small></td><td style="text-align:right">'
                         . $this->money((int) ($item['line_total_cents'] ?? 0))
                         . '</td></tr>';
                 }
@@ -214,6 +300,8 @@ final class MailService
                         . $this->escape(
                             (string) ($payload['customer_phone'] ?? '')
                         )
+                        . '</strong><br>Email del cliente: <strong>'
+                        . $this->escape((string) ($payload['customer_email'] ?? 'Sin email'))
                         . '</strong></p>';
                 }
                 break;

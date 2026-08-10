@@ -54,7 +54,7 @@ Los archivos HTML pueden abrirse directamente. Para probar la entrada PHP se nec
 - Si un comprobante es rechazado, el enlace anterior se invalida y se envía uno
   nuevo para reintentar dentro del plazo configurado.
 - Confirmaciones por email desde `ventas@laboratorio-digital.com.ar`.
-- Confirmación final con el mensaje “Su pedido ha sido enviado” y acceso a WhatsApp para compartir únicamente el detalle del pedido.
+- Confirmaciones de pedido, comprobante, pago aprobado, cancelación y retiro listo por email opcional.
 - Retiro exclusivo en el local, sin envíos.
 
 ## Administración y punto de venta

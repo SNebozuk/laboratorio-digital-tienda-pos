@@ -26,9 +26,16 @@ return [
 
     // Activar únicamente después de crear y validar la casilla en DonWeb.
     'mail_enabled' => false,
+    // SMTP autenticado: las credenciales quedan solo en config.local.php.
+    'mail_transport' => 'smtp',
     'mail_from' => 'ventas@laboratorio-digital.com.ar',
     'mail_from_name' => 'Laboratorio Digital',
     'mail_reply_to' => 'ventas@laboratorio-digital.com.ar',
+    'mail_smtp_host' => 'CAMBIAR-POR-EL-SERVIDOR-SMTP',
+    'mail_smtp_port' => 587,
+    'mail_smtp_encryption' => 'tls',
+    'mail_smtp_username' => 'ventas@laboratorio-digital.com.ar',
+    'mail_smtp_password' => 'CAMBIAR-POR-LA-CONTRASENA-DE-LA-CASILLA',
 
     // Ayuda a revisar comprobantes; nunca aprueba pagos automáticamente.
     // Guardar la clave solo en config.local.php o en OPENAI_API_KEY del servidor.

@@ -76,6 +76,11 @@ final class Config
                 'mail_enabled',
                 filter_var(getenv('APP_MAIL_ENABLED') ?: false, FILTER_VALIDATE_BOOL)
             ),
+            'mail_transport' => self::string(
+                $local,
+                'mail_transport',
+                getenv('APP_MAIL_TRANSPORT') ?: 'smtp'
+            ),
             'mail_from' => self::string(
                 $local,
                 'mail_from',
@@ -91,6 +96,11 @@ final class Config
                 'mail_reply_to',
                 getenv('APP_MAIL_REPLY_TO') ?: 'ventas@laboratorio-digital.com.ar'
             ),
+            'mail_smtp_host' => self::string($local, 'mail_smtp_host', getenv('APP_MAIL_SMTP_HOST') ?: ''),
+            'mail_smtp_port' => self::integer($local, 'mail_smtp_port', (int) (getenv('APP_MAIL_SMTP_PORT') ?: 587)),
+            'mail_smtp_encryption' => self::string($local, 'mail_smtp_encryption', getenv('APP_MAIL_SMTP_ENCRYPTION') ?: 'tls'),
+            'mail_smtp_username' => self::string($local, 'mail_smtp_username', getenv('APP_MAIL_SMTP_USERNAME') ?: ''),
+            'mail_smtp_password' => self::string($local, 'mail_smtp_password', getenv('APP_MAIL_SMTP_PASSWORD') ?: ''),
             'receipt_ai_enabled' => self::bool(
                 $local,
                 'receipt_ai_enabled',
@@ -133,5 +143,13 @@ final class Config
         }
 
         return filter_var($values[$key], FILTER_VALIDATE_BOOL);
+    }
+
+    /** @param array<string, mixed> $values */
+    private static function integer(array $values, string $key, int $default): int
+    {
+        $value = $values[$key] ?? $default;
+
+        return is_numeric($value) ? (int) $value : $default;
     }
 }

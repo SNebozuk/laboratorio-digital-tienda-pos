@@ -123,6 +123,7 @@ final class OrderService
                 $mailPayload = [
                     'public_number' => $publicNumber,
                     'customer_name' => $customerName,
+                    'customer_email' => $customerEmail,
                     'customer_phone' => $customerPhone,
                     'total_cents' => $total,
                     'payment_deadline_at' => $deadline,
@@ -144,16 +145,13 @@ final class OrderService
                     'sales_email',
                     'ventas@laboratorio-digital.com.ar'
                 );
-                if (
-                    filter_var($salesEmail, FILTER_VALIDATE_EMAIL)
-                    && strcasecmp($salesEmail, (string) $customerEmail) !== 0
-                ) {
+                if (filter_var($salesEmail, FILTER_VALIDATE_EMAIL)) {
                     $mailPayload['audience'] = 'internal';
                     $this->queueOrderMail(
                         $pdo,
                         $orderId,
                         $salesEmail,
-                        'Nuevo pedido ' . $publicNumber,
+                        $customerName . ' ha realizado la compra #' . $publicNumber,
                         'order_created',
                         $mailPayload
                     );

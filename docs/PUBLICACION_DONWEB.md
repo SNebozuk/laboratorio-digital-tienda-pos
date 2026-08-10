@@ -22,7 +22,7 @@ Copiar `config.example.php` como `config.local.php` en el servidor y completar:
 - ruta pública de la tienda (`/v1` durante la prueba y vacía al lanzarla en la raíz);
 - ruta privada de almacenamiento;
 - clave larga para crear el primer administrador;
-- remitente de correo.
+- remitente y credenciales SMTP autenticadas de correo.
 
 La base, los comprobantes, la configuración privada y los respaldos no deben
 subirse a GitHub.
@@ -47,8 +47,8 @@ subirse a GitHub.
 php /ruta/privada/al/proyecto/tasks/maintenance.php
 ```
 
-12. Crear y validar la casilla de ventas, SPF y DKIM.
-13. Activar `mail_enabled` y comprobar recepción real.
+12. Crear y validar la casilla de ventas, SPF y DKIM. Configurar en `config.local.php` el servidor SMTP, puerto, cifrado, usuario y contraseña de la casilla.
+13. Activar `mail_enabled` y comprobar recepción real. La tarea de cron procesa la cola cada cinco minutos; para una prueba inmediata se puede ejecutar manualmente `php tasks/maintenance.php`.
 14. Activar HTTPS y revisar el sitio desde celular.
 15. Recién después mover la tienda desde `/v1/` a la raíz.
 
