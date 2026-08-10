@@ -807,7 +807,7 @@
             </div>
             <form id="checkout-form">
                 <label>
-                    Nombre o comercio
+                    Nombre y Apellido
                     <input name="name" required autocomplete="name">
                 </label>
                 <label>
@@ -1166,6 +1166,8 @@
     });
     elements.search.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
             closeSearchMode();
         }
         if (event.key === 'Enter') {
@@ -1187,7 +1189,42 @@
     });
     elements.modal.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
             closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape' || event.defaultPrevented) {
+            return;
+        }
+        if (elements.modal.classList.contains('open')) {
+            event.preventDefault();
+            closeModal();
+            return;
+        }
+        if (elements.orderPanel.classList.contains('mobile-open')) {
+            event.preventDefault();
+            elements.orderPanel.classList.remove('mobile-open');
+            return;
+        }
+        if (elements.categoryPanel.classList.contains('mobile-open')) {
+            event.preventDefault();
+            elements.categoryPanel.classList.remove('mobile-open');
+            elements.categoryToggle.setAttribute('aria-expanded', 'false');
+            return;
+        }
+        if (state.openedProductId !== null) {
+            event.preventDefault();
+            state.openedProductId = null;
+            renderCatalog();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+        if (state.searchActive || elements.search.value) {
+            event.preventDefault();
+            closeSearchMode();
         }
     });
 

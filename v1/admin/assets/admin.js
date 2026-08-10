@@ -2214,7 +2214,18 @@
             }
         }
         if (event.key === 'Escape') {
+            event.preventDefault();
             closePosSuggestions();
+        }
+    });
+    document.addEventListener('keydown', event => {
+        if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && elements.modal?.classList.contains('open')
+        ) {
+            event.preventDefault();
+            closeModal();
         }
     });
     document.addEventListener('keydown', captureGlobalBarcode);
