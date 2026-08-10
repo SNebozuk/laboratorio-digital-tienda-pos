@@ -25,6 +25,7 @@
     const elements = {
         categories: document.getElementById('category-list'),
         categoryPanel: document.querySelector('.category-panel'),
+        categoryMenu: document.getElementById('catalog-menu-button'),
         categoryToggle: document.getElementById('category-toggle'),
         categoryBreadcrumb: document.getElementById('category-breadcrumb'),
         search: document.getElementById('product-search'),
@@ -1129,7 +1130,9 @@
             state.remoteSearchIds = new Set();
             elements.search.value = '';
             elements.categoryPanel.classList.remove('mobile-open');
+            elements.categoryPanel.classList.remove('menu-open');
             elements.categoryToggle.setAttribute('aria-expanded', 'false');
+            elements.categoryMenu.setAttribute('aria-expanded', 'false');
             renderCategories();
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1245,6 +1248,10 @@
     elements.categoryToggle.addEventListener('click', () => {
         const isOpen = elements.categoryPanel.classList.toggle('mobile-open');
         elements.categoryToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    elements.categoryMenu.addEventListener('click', () => {
+        const isOpen = elements.categoryPanel.classList.toggle('menu-open');
+        elements.categoryMenu.setAttribute('aria-expanded', String(isOpen));
     });
     elements.modal.addEventListener('keydown', event => {
         if (event.key === 'Escape') {

@@ -45,6 +45,9 @@ header('Referrer-Policy: same-origin');
             </span>
         </a>
         <div class="header-actions">
+            <button class="catalog-menu-button" id="catalog-menu-button" type="button" aria-expanded="false" aria-controls="category-panel">
+                <span aria-hidden="true">☰</span><span>Categorías</span>
+            </button>
             <a class="header-link" href="<?= $escape($sizeGuideUrl) ?>">TABLA DE TALLES</a>
             <a class="header-link" href="https://www.laboratoriodigital.com.ar/">TIENDANUBE</a>
             <a class="header-link" href="https://wa.me/<?= $escape($whatsappNumber) ?>" target="_blank" rel="noopener">WHATSAPP +<?= $escape($whatsappNumber) ?></a>
@@ -55,7 +58,7 @@ header('Referrer-Policy: same-origin');
     </header>
 
     <main class="store-shell">
-        <aside class="category-panel" aria-label="Secciones del catálogo">
+        <aside class="category-panel" id="category-panel" aria-label="Secciones del catálogo">
             <div class="category-title">CATEGORÍAS</div>
             <button class="category-mobile-toggle" id="category-toggle" type="button" aria-expanded="false">
                 <span>Categorías</span><span aria-hidden="true">⌄</span>
