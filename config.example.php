@@ -19,6 +19,9 @@ return [
     // Cadena larga y aleatoria usada una sola vez para crear el primer administrador.
     'setup_token' => 'CAMBIAR-POR-UNA-CLAVE-LARGA-Y-ALEATORIA',
 
+    // SHA-256 de la clave privada usada por la tarea programada de DonWeb.
+    'maintenance_token_hash' => 'CAMBIAR-POR-UN-HASH-SHA256',
+
     'session_name' => 'laboratorio_digital_session',
     'debug' => false,
     // Mantener en false hasta cargar banco, retiro, correo y stock final.

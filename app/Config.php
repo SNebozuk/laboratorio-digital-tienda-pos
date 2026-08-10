@@ -58,6 +58,12 @@ final class Config
                 'setup_token',
                 getenv('APP_SETUP_TOKEN') ?: ''
             ),
+            'maintenance_token_hash' => self::string(
+                $local,
+                'maintenance_token_hash',
+                getenv('APP_MAINTENANCE_TOKEN_HASH')
+                    ?: '709696c8371bc2917f1f700c8c3d3cce1033213e1eead6c999aa875137c6d064'
+            ),
             'debug' => self::bool(
                 $local,
                 'debug',
