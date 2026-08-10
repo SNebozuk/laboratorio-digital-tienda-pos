@@ -29,7 +29,7 @@ header('Referrer-Policy: same-origin');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#050505">
+    <meta name="theme-color" content="#f4f2ed">
     <title>Laboratorio Digital · Catálogo mayorista</title>
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
 </head>
@@ -54,6 +54,9 @@ header('Referrer-Policy: same-origin');
     <main class="store-shell">
         <aside class="category-panel" aria-label="Secciones del catálogo">
             <div class="category-title">PRODUCTOS</div>
+            <button class="category-mobile-toggle" id="category-toggle" type="button" aria-expanded="false">
+                <span>Categorías</span><span aria-hidden="true">⌄</span>
+            </button>
             <nav id="category-list"></nav>
             <div class="category-help">
                 <strong>Compra práctica</strong>
@@ -66,10 +69,20 @@ header('Referrer-Policy: same-origin');
                 <p class="eyebrow">STOCK DISPONIBLE EN TIEMPO REAL</p>
                 <h1 id="catalog-title">ENCONTRÁ Y ARMÁ TU PEDIDO RÁPIDO</h1>
                 <p>
-                    El stock se muestra por variante. Las unidades se reservan
+                    Elegí las variantes que necesitás. Las unidades se reservan
                     cuando subís el comprobante de transferencia.
                 </p>
             </div>
+
+            <div class="trust-strip" aria-label="Información de compra">
+                <span>Pago por transferencia</span>
+                <span>Retiro en el local</span>
+                <span>Ayuda por WhatsApp</span>
+            </div>
+
+            <nav class="catalog-breadcrumb" id="category-breadcrumb" aria-label="Ubicación actual">
+                Todos los productos
+            </nav>
 
             <div class="search-mode-head" id="search-mode-head">
                 <h2>PRODUCTOS</h2>

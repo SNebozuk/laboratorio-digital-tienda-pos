@@ -19,6 +19,9 @@
 
     const elements = {
         categories: document.getElementById('category-list'),
+        categoryPanel: document.querySelector('.category-panel'),
+        categoryToggle: document.getElementById('category-toggle'),
+        categoryBreadcrumb: document.getElementById('category-breadcrumb'),
         search: document.getElementById('product-search'),
         closeSearch: document.getElementById('search-close'),
         results: document.getElementById('catalog-results'),
@@ -279,6 +282,7 @@
             return [];
         }
         return products
+            .filter(productHasStock)
             .map(product => {
                 const localScore = localSearchScore(product, query);
                 const codeMatch = state.remoteSearchIds.has(Number(product.id));
@@ -366,9 +370,11 @@
     }
 
     function availableLabel(available) {
-        return Number(available) === 1
-            ? '1 disponible'
-            : `${Number(available)} disponibles`;
+        const units = Number(available);
+        if (units === 1) {
+            return 'Última unidad';
+        }
+        return units <= 3 ? 'Últimas unidades' : 'Disponible';
     }
 
     function setQuantity(variantId, requestedQuantity) {
@@ -390,7 +396,7 @@
 
     function renderCategories() {
         const seen = new Map();
-        products.forEach(product => {
+        products.filter(productHasStock).forEach(product => {
             const category = product.category || {
                 name: 'Sin categoría',
                 slug: 'sin-categoria',
@@ -408,17 +414,28 @@
                 data-category="${escapeHtml(category.slug)}"
             >${escapeHtml(category.name)}</button>
         `).join('');
+        const current = categories.find(category => category.slug === state.category);
+        elements.categoryBreadcrumb.textContent = current?.slug
+            ? `Todos los productos › ${current.name}`
+            : 'Todos los productos';
     }
 
     function productImage(product, className) {
         const image = safeImage(product.image_path);
         return image
-            ? `<img class="${className}" src="${escapeHtml(image)}" alt="">`
+            ? `<button
+                    class="product-image-button"
+                    type="button"
+                    data-image-preview="${Number(product.id)}"
+                    aria-label="Ampliar imagen de ${escapeHtml(product.name)}"
+                ><img class="${className}" src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}"></button>`
             : `<div class="${className}-placeholder">SIN FOTO</div>`;
     }
 
     function priceRange(product) {
-        const prices = product.variants.map(variant => Number(variant.price_cents));
+        const prices = product.variants
+            .filter(variant => Number(variant.available_stock) > 0)
+            .map(variant => Number(variant.price_cents));
         const minimum = Math.min(...prices);
         const maximum = Math.max(...prices);
         return minimum === maximum
@@ -475,8 +492,11 @@
     }
 
     function productSummary(product) {
+        const availableVariants = product.variants.filter(
+            variant => Number(variant.available_stock) > 0
+        );
         const hasVariants = product.variants.length > 1;
-        const variant = product.variants[0];
+        const variant = availableVariants[0];
         if (hasVariants) {
             return `
                 <article class="catalog-product-summary expandable-product" role="listitem">
@@ -490,7 +510,7 @@
                         <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
                     </button>
                     <span class="summary-variant-count">
-                        ${product.variants.length} variantes
+                        ${availableVariants.length} ${availableVariants.length === 1 ? 'variante' : 'variantes'}
                     </span>
                     <strong class="summary-product-price">${priceRange(product)}</strong>
                     <button
@@ -557,14 +577,18 @@
                     </div>
                 </header>
                 <div class="opened-variant-list" role="list">
-                    ${product.variants.map(variant => {
+                    ${product.variants.filter(
+                        variant => Number(variant.available_stock) > 0
+                    ).map(variant => {
                         const quantity = cartQuantity(variant.id);
                         const available = visibleAvailable(variant);
-                        const name = variantDisplayName(product, variant) || 'Única';
+                        const name = variantDisplayName(product, variant);
                         return `
                             <div class="opened-variant-row ${available ? '' : 'out-of-stock'}" role="listitem">
                                 <div>${productImage(product, 'opened-variant-image')}</div>
-                                <strong class="opened-variant-name">${escapeHtml(name)}</strong>
+                                ${name
+                                    ? `<strong class="opened-variant-name">${escapeHtml(name)}</strong>`
+                                    : '<span></span>'}
                                 <span class="opened-variant-stock ${available ? '' : 'none'}">
                                     ${available ? availableLabel(available) : 'Sin stock'}
                                     ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
@@ -660,11 +684,14 @@
         elements.cartLines.innerHTML = items.length ? items.map(item => `
             <div class="cart-line">
                 <div class="cart-line-head">
-                    <div>
-                        <strong>${escapeHtml(item.product.name)}</strong>
-                        ${variantDisplayName(item.product, item.variant)
-                            ? `<br><small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
-                            : ''}
+                    <div class="cart-product-main">
+                        ${productImage(item.product, 'cart-product-image')}
+                        <div>
+                            <strong>${escapeHtml(item.product.name)}</strong>
+                            ${variantDisplayName(item.product, item.variant)
+                                ? `<br><small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
+                                : ''}
+                        </div>
                     </div>
                     <div class="cart-line-actions">
                         <strong>${money(item.lineTotal)}</strong>
@@ -718,6 +745,28 @@
         document.body.style.overflow = '';
     }
 
+    function showImagePreview(productId) {
+        const product = products.find(item => Number(item.id) === Number(productId));
+        const image = safeImage(product?.image_path);
+        if (!product || !image) {
+            return;
+        }
+        openModal(`
+            <div class="image-viewer">
+                <h2 id="modal-title">${escapeHtml(product.name)}</h2>
+                <p>Hacé clic sobre la imagen para acercar o alejar.</p>
+                <div class="image-viewer-stage">
+                    <img
+                        class="image-viewer-image"
+                        src="${escapeHtml(image)}"
+                        alt="${escapeHtml(product.name)}"
+                        data-zoomable-image
+                    >
+                </div>
+            </div>
+        `);
+    }
+
     function showDescription(productId) {
         const product = products.find(item => Number(item.id) === Number(productId));
         if (!product) {
@@ -726,7 +775,7 @@
         openModal(`
             <h2 id="modal-title">${escapeHtml(product.name)}</h2>
             ${safeImage(product.image_path)
-                ? `<img class="product-image" src="${escapeHtml(safeImage(product.image_path))}" alt="" style="width:100%;height:260px;margin-bottom:14px">`
+                ? `<img class="description-product-image" src="${escapeHtml(safeImage(product.image_path))}" alt="${escapeHtml(product.name)}" data-zoomable-image>`
                 : ''}
             <p>${escapeHtml(product.description || 'Este producto todavía no tiene descripción.')}</p>
             <div class="notice">
@@ -972,7 +1021,7 @@
             </div>
             <p>
                 Pedido <strong>${escapeHtml(result.public_number)}</strong><br>
-                Te avisaremos por email cuando esté aprobado y listo para retirar.
+                Te avisaremos por WhatsApp o email cuando esté aprobado y listo para retirar.
             </p>
             <div class="button-row">
                 <button class="secondary-button" type="button" data-finish-order>
@@ -1019,6 +1068,18 @@
     }
 
     document.addEventListener('click', event => {
+        const imagePreview = event.target.closest('[data-image-preview]');
+        if (imagePreview) {
+            showImagePreview(Number(imagePreview.dataset.imagePreview));
+            return;
+        }
+
+        const zoomableImage = event.target.closest('[data-zoomable-image]');
+        if (zoomableImage) {
+            zoomableImage.classList.toggle('zoomed');
+            return;
+        }
+
         const category = event.target.closest('[data-category]');
         if (category) {
             state.category = category.dataset.category;
@@ -1027,6 +1088,8 @@
             state.openedProductId = null;
             state.remoteSearchIds = new Set();
             elements.search.value = '';
+            elements.categoryPanel.classList.remove('mobile-open');
+            elements.categoryToggle.setAttribute('aria-expanded', 'false');
             renderCategories();
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1129,6 +1192,10 @@
     });
     elements.closeMobileCart.addEventListener('click', () => {
         elements.orderPanel.classList.remove('mobile-open');
+    });
+    elements.categoryToggle.addEventListener('click', () => {
+        const isOpen = elements.categoryPanel.classList.toggle('mobile-open');
+        elements.categoryToggle.setAttribute('aria-expanded', String(isOpen));
     });
     elements.modal.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
