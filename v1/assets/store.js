@@ -903,14 +903,14 @@
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
-            <p class="checkout-footnote">El stock se reserva al enviar el comprobante.</p>
+            <p class="checkout-footnote" data-payment-footnote>El stock se reserva al enviar el comprobante.</p>
         `);
     }
 
     function checkoutSteps(activeStep) {
         return `
             <ol class="checkout-steps" aria-label="Progreso del pedido">
-                ${['Tus datos', 'Transferencia', 'Comprobante'].map((label, index) => {
+                ${['Tus datos', 'Forma de pago', 'Confirmación'].map((label, index) => {
                     const step = index + 1;
                     const stateClass = step < activeStep ? 'done' : (step === activeStep ? 'active' : '');
                     return `<li class="${stateClass}"><span>${step}</span>${label}</li>`;
@@ -1306,6 +1306,12 @@
             const warning = document.getElementById('cash-reservation-warning');
             if (warning) {
                 warning.hidden = event.target.value !== 'cash';
+            }
+            const footnote = document.querySelector('[data-payment-footnote]');
+            if (footnote) {
+                footnote.textContent = event.target.value === 'cash'
+                    ? 'Al confirmar, el stock queda reservado por solamente 2 horas.'
+                    : 'El stock se reserva al enviar el comprobante.';
             }
         }
     });

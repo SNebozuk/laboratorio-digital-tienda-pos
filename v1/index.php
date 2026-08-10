@@ -77,12 +77,12 @@ header('Referrer-Policy: same-origin');
                 <h1 id="catalog-title">ENCONTRÁ Y ARMÁ TU PEDIDO RÁPIDO</h1>
                 <p>
                     Elegí las variantes que necesitás. Las unidades se reservan
-                    cuando subís el comprobante de transferencia.
+                    al confirmar efectivo o al subir el comprobante de transferencia.
                 </p>
             </div>
 
             <div class="trust-strip" aria-label="Información de compra">
-                <span>Pago por transferencia</span>
+                <span>Transferencia o efectivo</span>
                 <span>Retiro en el local</span>
                 <span>Ayuda por WhatsApp</span>
             </div>
@@ -135,7 +135,7 @@ header('Referrer-Policy: same-origin');
                 CONTINUAR PEDIDO
             </button>
             <p class="order-note">
-                Pago por transferencia · Retiro únicamente en el local
+                Transferencia o efectivo · Retiro únicamente en el local
             </p>
         </aside>
     </main>
