@@ -382,6 +382,15 @@
             : '<div class="product-admin-placeholder">SIN FOTO</div>';
     }
 
+    function adminProductPrice(product) {
+        const prices = product.variants.map(variant => Number(variant.price_cents));
+        const minimum = Math.min(...prices);
+        const maximum = Math.max(...prices);
+        return minimum === maximum
+            ? money(minimum)
+            : `${money(minimum)} a ${money(maximum)}`;
+    }
+
     function renderProducts() {
         if (!elements.productList) {
             return;
@@ -399,6 +408,10 @@
                         <strong>${escapeHtml(product.name)}</strong>
                         <small>${escapeHtml(product.category?.name || 'Sin categoría')} · ${product.active ? 'Activo' : 'Inactivo'}</small>
                     </button>
+                    <span class="product-admin-variant-count">
+                        ${product.variants.length} ${product.variants.length === 1 ? 'variante' : 'variantes'}
+                    </span>
+                    <strong class="product-admin-price">${adminProductPrice(product)}</strong>
                     <div class="product-admin-actions">
                         <button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button>
                     </div>

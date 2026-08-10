@@ -2280,3 +2280,115 @@ input:focus-visible {
         width: max-content;
     }
 }
+
+/* Fila de producto unificada: catálogo, categorías y búsqueda */
+.catalog-summary-list {
+    gap: 0;
+    border-top: 1px solid var(--line);
+}
+
+.catalog-product-summary.unified-product-row {
+    display: grid;
+    grid-template-columns: 76px minmax(220px, 1.5fr) minmax(110px, .55fr) minmax(170px, .75fr) 42px;
+    min-height: 104px;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 10px 14px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.catalog-product-summary.unified-product-row:hover {
+    border-color: var(--line);
+    background: rgba(93, 155, 255, .055);
+    box-shadow: none;
+    transform: none;
+}
+
+.unified-product-media,
+.unified-product-media .product-image-button {
+    width: 72px;
+}
+
+.unified-product-media .summary-product-image,
+.unified-product-media .summary-product-image-placeholder {
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+}
+
+.unified-product-row .summary-product-title {
+    gap: 3px;
+}
+
+.unified-product-row .summary-product-title > strong {
+    font-size: 15px;
+}
+
+.unified-product-row .summary-variant-count {
+    width: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.unified-product-row .summary-product-price {
+    justify-self: start;
+    color: var(--text);
+    font-size: 15px;
+}
+
+.unified-product-row .summary-product-chevron {
+    width: 36px;
+    height: 54px;
+    font-size: 38px;
+}
+
+@media (max-width: 760px) {
+    .catalog-product-summary.unified-product-row {
+        grid-template-columns: 62px minmax(0, 1fr) 32px;
+        grid-template-areas:
+            "image title chevron"
+            "image variants chevron"
+            "image price chevron";
+        min-height: 94px;
+        gap: 3px 11px;
+        padding: 12px 4px;
+    }
+
+    .unified-product-media {
+        grid-area: image;
+    }
+
+    .unified-product-row .summary-product-title {
+        grid-area: title;
+    }
+
+    .unified-product-row .summary-variant-count {
+        grid-area: variants;
+        font-size: 12px;
+    }
+
+    .unified-product-row .summary-product-price {
+        grid-area: price;
+        font-size: 13px;
+    }
+
+    .unified-product-row .summary-product-chevron {
+        grid-area: chevron;
+    }
+
+    .unified-product-media,
+    .unified-product-media .product-image-button,
+    .unified-product-media .summary-product-image,
+    .unified-product-media .summary-product-image-placeholder {
+        width: 58px;
+        height: 58px;
+    }
+}

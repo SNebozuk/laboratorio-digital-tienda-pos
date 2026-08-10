@@ -193,7 +193,7 @@
 
 .product-admin-head {
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr) auto;
+    grid-template-columns: 64px minmax(220px, 1fr) minmax(90px, .35fr) minmax(150px, .55fr) auto;
     align-items: center;
     gap: 14px;
     padding: 14px;
@@ -237,6 +237,17 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 .product-admin-title small {
     color: var(--muted);
+}
+
+.product-admin-variant-count,
+.product-admin-price {
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.product-admin-variant-count {
+    color: var(--muted);
+    font-weight: 700;
 }
 
 .product-admin-actions {
@@ -1141,6 +1152,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
     .product-admin-head {
         grid-template-columns: 50px minmax(0, 1fr);
+    }
+
+    .product-admin-variant-count,
+    .product-admin-price {
+        grid-column: 2;
     }
 
     .product-admin-image,

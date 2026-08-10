@@ -496,50 +496,30 @@
             variant => Number(variant.available_stock) > 0
         );
         const hasVariants = product.variants.length > 1;
-        const variant = availableVariants[0];
-        if (hasVariants) {
-            return `
-                <article class="catalog-product-summary expandable-product" role="listitem">
-                    <div>${productImage(product, 'summary-product-image')}</div>
-                    <button
-                        class="summary-product-title"
-                        type="button"
-                        data-open-product="${Number(product.id)}"
-                    >
-                        <strong>${escapeHtml(product.name)}</strong>
-                        <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
-                    </button>
-                    <span class="summary-variant-count">
-                        ${availableVariants.length} ${availableVariants.length === 1 ? 'variante' : 'variantes'}
-                    </span>
-                    <strong class="summary-product-price">${priceRange(product)}</strong>
-                    <button
-                        class="summary-product-chevron"
-                        type="button"
-                        data-open-product="${Number(product.id)}"
-                        aria-label="Ver variantes de ${escapeHtml(product.name)}"
-                    >›</button>
-                </article>
-            `;
-        }
-
-        const quantity = cartQuantity(variant.id);
-        const available = visibleAvailable(variant);
+        const availability = hasVariants
+            ? `${availableVariants.length} ${availableVariants.length === 1 ? 'variante' : 'variantes'}`
+            : 'Disponible';
         return `
-            <article class="catalog-product-summary single-product ${available ? '' : 'out-of-stock'}" role="listitem">
-                <div>${productImage(product, 'summary-product-image')}</div>
-                <div class="summary-product-title static-title">
-                    <button type="button" data-description="${Number(product.id)}">
-                        <strong>${escapeHtml(product.name)}</strong>
-                    </button>
+            <article class="catalog-product-summary unified-product-row" role="listitem">
+                <div class="unified-product-media">${productImage(product, 'summary-product-image')}</div>
+                <button
+                    class="summary-product-title"
+                    type="button"
+                    data-open-product="${Number(product.id)}"
+                >
+                    <strong>${escapeHtml(product.name)}</strong>
                     <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
-                </div>
-                <span class="summary-product-stock ${available ? '' : 'none'}">
-                    ${available ? availableLabel(available) : 'Sin stock'}
-                    ${quantity ? `<small>${quantity} en tu pedido</small>` : ''}
+                </button>
+                <span class="summary-variant-count">
+                    ${availability}
                 </span>
-                <strong class="summary-product-price">${money(Number(variant.price_cents))}</strong>
-                ${quantityControl(product, variant, 'summary-quantity-control')}
+                <strong class="summary-product-price">${priceRange(product)}</strong>
+                <button
+                    class="summary-product-chevron"
+                    type="button"
+                    data-open-product="${Number(product.id)}"
+                    aria-label="Abrir ${escapeHtml(product.name)}"
+                >›</button>
             </article>
         `;
     }
