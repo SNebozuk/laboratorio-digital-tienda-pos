@@ -256,6 +256,9 @@ INSERT OR IGNORE INTO settings(key, value) VALUES
     ('bank_alias', ''),
     ('bank_cbu', ''),
     ('pickup_address', ''),
-    ('business_hours', 'Lunes a viernes de 9 a 17 h');
+    ('business_hours', 'Lunes a viernes de 9 a 17 h'),
+    ('size_guide_intro', 'Las medidas son aproximadas. Si necesitas ayuda para elegir, escribinos por WhatsApp.'),
+    ('size_guide_json', '[]');
 
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (1);
+INSERT OR IGNORE INTO schema_migrations(version) VALUES (5);

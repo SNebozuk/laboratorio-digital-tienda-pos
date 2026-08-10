@@ -731,6 +731,27 @@ final class OrderService
         $items->execute(['order_id' => $orderId]);
         $order['items'] = $items->fetchAll();
 
+        $proof = $this->pdo->prepare(
+            'SELECT
+                id,
+                original_name,
+                mime_type,
+                size_bytes,
+                status,
+                review_note,
+                ai_status,
+                ai_risk_level,
+                ai_summary,
+                created_at,
+                reviewed_at
+             FROM payment_proofs
+             WHERE order_id = :order_id
+             ORDER BY id DESC
+             LIMIT 1'
+        );
+        $proof->execute(['order_id' => $orderId]);
+        $order['payment_proof'] = $proof->fetch() ?: null;
+
         $events = $this->pdo->prepare(
             'SELECT oe.*, u.name AS actor_name
              FROM order_events oe

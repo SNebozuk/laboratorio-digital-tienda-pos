@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tabla de Talles · Laboratorio Digital</title>
+<style>
+:root{--bg:#f5f2ec;--panel:#fff;--line:#d9d5cc;--text:#20302d;--muted:#6f7773;--green:#267666;font-family:Inter,system-ui,sans-serif}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 14% 4%,#dfeee8,transparent 34rem),var(--bg);color:var(--text)}header{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:74px;padding:14px 6%;border-bottom:1px solid var(--line);background:#fffffff0;backdrop-filter:blur(14px)}.brand{color:var(--text);font-weight:900;text-decoration:none}.back{padding:10px 14px;border:1px solid var(--line);border-radius:10px;color:var(--text);font-weight:800;text-decoration:none}main{width:min(1120px,calc(100% - 32px));margin:auto;padding:54px 0 90px}.eyebrow{color:var(--green);font-size:12px;font-weight:900;letter-spacing:.1em}h1{margin:4px 0 12px;font-size:clamp(38px,7vw,72px);line-height:.95;letter-spacing:-.045em}#intro{max-width:760px;color:var(--muted);line-height:1.6}.groups{display:grid;gap:18px;margin-top:34px}.card,.empty{overflow:hidden;border:1px solid var(--line);border-radius:17px;background:var(--panel);box-shadow:0 16px 45px #344b4312}.card h2,.empty{padding:20px 22px}.card h2{margin:0;border-bottom:1px solid var(--line);font-size:21px}.tablewrap{overflow:auto}table{width:100%;min-width:650px;border-collapse:collapse}th,td{padding:15px 20px;border-bottom:1px solid #ebe7de;text-align:left}thead th{color:var(--muted);font-size:11px;letter-spacing:.08em}tbody tr:last-child>*{border-bottom:0}.empty h2{margin:0 0 8px}.empty p{margin:0;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><a class="brand" href="modelo-navegable.html">LABORATORIO DIGITAL</a><a class="back" href="modelo-navegable.html">VOLVER A LA TIENDA</a></header>
+<main><p class="eyebrow">REFERENCIA DE MEDIDAS</p><h1>TABLA DE TALLES</h1><p id="intro"></p><div id="groups" class="groups"></div></main>
+<script>
+const defaultGuide={intro:'Las medidas son aproximadas. Podés completar y mantener esta información desde el administrador.',rows:[]};
+function readGuide(){try{return JSON.parse(localStorage.getItem('laboratorio-digital:size-guide-preview'))||defaultGuide}catch{return defaultGuide}}
+function escapeGuide(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))}
+function renderGuide(){let guide=readGuide(),grouped={};intro.textContent=guide.intro||'';(guide.rows||[]).forEach(row=>(grouped[row.group]??=[]).push(row));groups.innerHTML=Object.keys(grouped).length?Object.entries(grouped).map(([name,rows])=>`<section class="card"><h2>${escapeGuide(name)}</h2><div class="tablewrap"><table><thead><tr><th>Talle</th><th>Ancho</th><th>Largo</th><th>Observaciones</th></tr></thead><tbody>${rows.map(row=>`<tr><th>${escapeGuide(row.size)}</th><td>${escapeGuide(row.width||'—')}</td><td>${escapeGuide(row.length||'—')}</td><td>${escapeGuide(row.note||'—')}</td></tr>`).join('')}</tbody></table></div></section>`).join(''):'<section class="empty"><h2>Todavía no hay medidas cargadas</h2><p>Podés agregarlas desde Administrador → Tabla de Talles.</p></section>'}
+renderGuide();
+</script>
+</body>
+</html>

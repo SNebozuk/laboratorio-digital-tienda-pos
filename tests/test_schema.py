@@ -62,6 +62,23 @@ class SchemaContractTest(unittest.TestCase):
         ).fetchone()
         self.assertEqual(row["available"], 8)
 
+    def test_size_guide_settings_are_available(self) -> None:
+        settings = dict(
+            self.db.execute(
+                """
+                SELECT key, value FROM settings
+                WHERE key IN ('size_guide_intro', 'size_guide_json')
+                """
+            ).fetchall()
+        )
+        migration = self.db.execute(
+            "SELECT 1 FROM schema_migrations WHERE version = 5"
+        ).fetchone()
+
+        self.assertIn("size_guide_intro", settings)
+        self.assertEqual(settings["size_guide_json"], "[]")
+        self.assertIsNotNone(migration)
+
     def test_sku_is_unique_without_case_sensitivity(self) -> None:
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute(

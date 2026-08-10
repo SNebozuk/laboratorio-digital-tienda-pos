@@ -18,6 +18,7 @@ $assetVersion = (string) max(
     (int) @filemtime(__DIR__ . '/assets/admin.js')
 );
 $apiUrl = ($applicationPath === '' ? '' : $applicationPath) . '/api.php';
+$sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data: blob:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
@@ -94,6 +95,9 @@ header('Referrer-Policy: same-origin');
                         Ventas y pedidos
                     </button>
                     <?php if ($user['role'] === 'admin'): ?>
+                        <button class="admin-nav-button" type="button" data-view="size-guide">
+                            Tabla de Talles
+                        </button>
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
                         </button>
@@ -120,6 +124,7 @@ header('Referrer-Policy: same-origin');
                         <option value="pos">Punto de venta</option>
                         <option value="orders">Ventas y pedidos</option>
                         <?php if ($user['role'] === 'admin'): ?>
+                            <option value="size-guide">Tabla de Talles</option>
                             <option value="categories">Categorías</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
@@ -155,6 +160,32 @@ header('Referrer-Policy: same-origin');
                             <button class="primary-button fit-button" id="new-category-button" type="button">NUEVA CATEGORÍA</button>
                         </div>
                         <div id="category-admin-tree" class="category-admin-tree"></div>
+                    </section>
+
+                    <section class="admin-view" id="view-size-guide">
+                        <div class="view-heading">
+                            <div>
+                                <p class="eyebrow">REFERENCIA PARA CLIENTES</p>
+                                <h1>TABLA DE TALLES</h1>
+                                <p>Edita las medidas que se muestran en la tienda.</p>
+                            </div>
+                            <a class="secondary-button fit-button" href="<?= $escape($sizeGuideUrl) ?>" target="_blank" rel="noopener">VER PAGINA</a>
+                        </div>
+                        <form id="size-guide-form" class="size-guide-editor">
+                            <label>
+                                TEXTO INTRODUCTORIO
+                                <textarea id="size-guide-intro" rows="3" maxlength="1000"></textarea>
+                            </label>
+                            <div class="size-guide-editor-head">
+                                <div>
+                                    <strong>MEDIDAS</strong>
+                                    <small>Podes repetir el nombre de la prenda para agregar varios talles.</small>
+                                </div>
+                                <button class="secondary-button fit-button" id="add-size-guide-row" type="button">+ AGREGAR FILA</button>
+                            </div>
+                            <div id="size-guide-rows" class="size-guide-editor-rows"></div>
+                            <button class="primary-button fit-button" type="submit">GUARDAR TABLA DE TALLES</button>
+                        </form>
                     </section>
                 <?php endif ?>
 
@@ -342,6 +373,7 @@ header('Referrer-Policy: same-origin');
             'csrf_token' => $app['csrf_token'],
             'user' => $user,
             'setup_required' => $setupRequired,
+            'size_guide_url' => $sizeGuideUrl,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($assetVersion) ?>" defer></script>

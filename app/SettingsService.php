@@ -149,6 +149,120 @@ final class SettingsService
         return $this->values();
     }
 
+    /** @return array{intro: string, rows: list<array<string, string>>} */
+    public function sizeGuide(): array
+    {
+        $query = $this->pdo->query(
+            "SELECT key, value
+             FROM settings
+             WHERE key IN ('size_guide_intro', 'size_guide_json')"
+        );
+        $values = [];
+        foreach ($query->fetchAll() as $row) {
+            $values[(string) $row['key']] = (string) $row['value'];
+        }
+
+        $decoded = json_decode(
+            (string) ($values['size_guide_json'] ?? '[]'),
+            true
+        );
+        $rows = [];
+        if (is_array($decoded)) {
+            foreach ($decoded as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $group = trim((string) ($row['group'] ?? ''));
+                $size = trim((string) ($row['size'] ?? ''));
+                if ($group === '' || $size === '') {
+                    continue;
+                }
+                $rows[] = [
+                    'group' => $group,
+                    'size' => $size,
+                    'width' => trim((string) ($row['width'] ?? '')),
+                    'length' => trim((string) ($row['length'] ?? '')),
+                    'note' => trim((string) ($row['note'] ?? '')),
+                ];
+            }
+        }
+
+        return [
+            'intro' => trim((string) ($values['size_guide_intro'] ?? '')),
+            'rows' => $rows,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array{intro: string, rows: list<array<string, string>>}
+     */
+    public function updateSizeGuide(array $data): array
+    {
+        $intro = trim((string) ($data['intro'] ?? ''));
+        if (strlen($intro) > 1000) {
+            throw new ValidationException('La introduccion es demasiado larga.');
+        }
+
+        $inputRows = is_array($data['rows'] ?? null) ? $data['rows'] : [];
+        if (count($inputRows) > 200) {
+            throw new ValidationException('La tabla admite hasta 200 filas.');
+        }
+
+        $rows = [];
+        foreach ($inputRows as $row) {
+            if (!is_array($row)) {
+                throw new ValidationException('Hay una fila de talles invalida.');
+            }
+            $normalized = [
+                'group' => trim((string) ($row['group'] ?? '')),
+                'size' => trim((string) ($row['size'] ?? '')),
+                'width' => trim((string) ($row['width'] ?? '')),
+                'length' => trim((string) ($row['length'] ?? '')),
+                'note' => trim((string) ($row['note'] ?? '')),
+            ];
+            if ($normalized['group'] === '' || $normalized['size'] === '') {
+                throw new ValidationException(
+                    'Cada fila necesita una prenda o tabla y un talle.'
+                );
+            }
+            foreach ($normalized as $value) {
+                if (strlen($value) > 160) {
+                    throw new ValidationException('Una medida es demasiado larga.');
+                }
+            }
+            $rows[] = $normalized;
+        }
+
+        $values = [
+            'size_guide_intro' => $intro,
+            'size_guide_json' => json_encode(
+                $rows,
+                JSON_UNESCAPED_UNICODE
+                | JSON_UNESCAPED_SLASHES
+                | JSON_THROW_ON_ERROR
+            ),
+        ];
+
+        Database::immediate(
+            $this->pdo,
+            static function (PDO $pdo) use ($values): void {
+                $update = $pdo->prepare(
+                    'INSERT INTO settings(key, value, updated_at)
+                     VALUES(:key, :value, CURRENT_TIMESTAMP)
+                     ON CONFLICT(key) DO UPDATE SET
+                        value = excluded.value,
+                        updated_at = CURRENT_TIMESTAMP'
+                );
+                foreach ($values as $key => $value) {
+                    $update->execute(['key' => $key, 'value' => $value]);
+                }
+            }
+        );
+
+        return $this->sizeGuide();
+    }
+
     /** @param array<string, mixed> $data */
     private function text(
         array $data,

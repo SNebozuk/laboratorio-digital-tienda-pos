@@ -10,6 +10,7 @@
         orderStatus: '',
         orderChannel: '',
         settings: null,
+        sizeGuide: { intro: '', rows: [] },
         users: [],
         posCart: new Map(),
         posQuery: '',
@@ -68,6 +69,8 @@
         orderStatusFilter: document.getElementById('order-status-filter'),
         orderChannelFilter: document.getElementById('order-channel-filter'),
         userList: document.getElementById('user-list'),
+        sizeGuideIntro: document.getElementById('size-guide-intro'),
+        sizeGuideRows: document.getElementById('size-guide-rows'),
         mobileView: document.getElementById('mobile-view'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
@@ -191,6 +194,9 @@
         }
         if (view === 'categories') {
             loadCategories();
+        }
+        if (view === 'size-guide') {
+            loadSizeGuide();
         }
     }
 
@@ -1123,6 +1129,13 @@
         pos: 'Mostrador',
     };
 
+    const paymentMethodLabels = {
+        bank_transfer: 'Transferencia',
+        cash: 'Efectivo',
+        debit_card: 'D\u00e9bito',
+        credit_card: 'Cr\u00e9dito',
+    };
+
     function paymentAiBadge(order) {
         if (!order.payment_proof_id) {
             return '';
@@ -1226,6 +1239,86 @@
         }
     }
 
+    function formatFileSize(bytes) {
+        const size = Number(bytes || 0);
+        if (size < 1024) {
+            return `${size} B`;
+        }
+        if (size < 1024 * 1024) {
+            return `${Math.round(size / 1024)} KB`;
+        }
+        return `${(size / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    async function showOrderDetail(orderId) {
+        try {
+            const data = await apiGet('order', { id: orderId });
+            const order = data.order;
+            const proof = order.payment_proof || null;
+            const proofUrl = proof
+                ? `${app.api_url}?action=payment_proof&id=${Number(proof.id)}`
+                : '';
+            const proofPreview = proof
+                ? (proof.mime_type === 'application/pdf'
+                    ? `<iframe class="order-proof-preview" src="${escapeHtml(proofUrl)}" title="Comprobante de pago"></iframe>`
+                    : `<img class="order-proof-image" src="${escapeHtml(proofUrl)}" alt="Comprobante de pago de ${escapeHtml(order.public_number)}">`)
+                : '';
+            const actionOrder = {
+                ...order,
+                payment_proof_id: proof?.id || null,
+                payment_ai_status: proof?.ai_status || 'not_run',
+                payment_ai_risk_level: proof?.ai_risk_level || null,
+                payment_ai_summary: proof?.ai_summary || '',
+            };
+
+            openModal(`
+                <section class="order-detail">
+                    <header class="order-detail-head">
+                        <div>
+                            <p class="eyebrow">DETALLE DE LA VENTA</p>
+                            <h2 id="modal-title">${escapeHtml(order.public_number)}</h2>
+                        </div>
+                        <span class="status-pill status-${escapeHtml(order.status)}">
+                            ${escapeHtml(statusLabels[order.status] || order.status)}
+                        </span>
+                    </header>
+                    <div class="order-detail-meta">
+                        <div><span>CLIENTE</span><strong>${escapeHtml(order.customer_name)}</strong><small>${escapeHtml(order.customer_phone || order.customer_email || 'Sin contacto informado')}</small></div>
+                        <div><span>FECHA</span><strong>${escapeHtml(order.created_at)}</strong><small>${escapeHtml(channelLabels[order.channel] || order.channel)}</small></div>
+                        <div><span>FORMA DE PAGO</span><strong>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</strong><small>${proof ? 'Comprobante recibido' : 'Sin comprobante cargado'}</small></div>
+                    </div>
+                    <div class="order-detail-lines">
+                        ${order.items.map(item => `
+                            <div class="order-detail-line">
+                                <div>
+                                    <strong>${escapeHtml(item.product_name)}</strong>
+                                    ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
+                                </div>
+                                <span>${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>
+                                <strong>${money(item.line_total_cents)}</strong>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="order-detail-total"><span>TOTAL</span><strong>${money(order.total_cents)}</strong></div>
+                    <section class="order-payment-detail">
+                        <div class="order-payment-head">
+                            <div><p class="eyebrow">PAGO</p><h3>${proof ? 'COMPROBANTE RECIBIDO' : 'SIN COMPROBANTE'}</h3></div>
+                            ${proof ? `<a class="small-button" href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener">Abrir original</a>` : ''}
+                        </div>
+                        ${proof ? `
+                            <p class="order-proof-meta">${escapeHtml(proof.original_name)} &middot; ${formatFileSize(proof.size_bytes)} &middot; ${escapeHtml(proof.created_at)}</p>
+                            ${proofPreview}
+                        ` : `<p class="empty-copy">Esta venta no tiene un archivo de pago asociado. En mostrador puede corresponder a ${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}.</p>`}
+                    </section>
+                    <div class="order-actions order-detail-actions">${orderActions(actionOrder)}</div>
+                    <p class="order-print-note">La impresi\u00f3n incluye la compra y el total, pero nunca el archivo del comprobante de pago.</p>
+                </section>
+            `);
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
     function renderOrders() {
         const query = fold(state.orderQuery.trim());
         const matchingOrders = state.orders.filter(order => {
@@ -1268,6 +1361,26 @@
                     <small>esperando retiro</small>
                 </article>
             `;
+        }
+
+        if (matchingOrders.length) {
+            elements.orderList.innerHTML = `
+                <div class="order-list-head" aria-hidden="true">
+                    <span>VENTA</span><span>CLIENTE</span><span>ORIGEN</span><span>PAGO</span><span>ESTADO</span><span>TOTAL</span><span></span>
+                </div>
+                ${matchingOrders.map(order => `
+                    <button class="order-list-row" type="button" data-view-order="${Number(order.id)}">
+                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.created_at)}</small></span>
+                        <span><strong>${escapeHtml(order.customer_name)}</strong><small>${Number(order.unit_count)} unidades</small></span>
+                        <span>${escapeHtml(channelLabels[order.channel] || order.channel)}</span>
+                        <span>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}${order.payment_proof_id ? '<small>Comprobante recibido</small>' : ''}</span>
+                        <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status] || order.status)}</span></span>
+                        <strong class="order-list-total">${money(order.total_cents)}</strong>
+                        <span class="order-list-chevron" aria-hidden="true">&rsaquo;</span>
+                    </button>
+                `).join('')}
+            `;
+            return;
         }
 
         elements.orderList.innerHTML = matchingOrders.length ? matchingOrders.map(order => `
@@ -1537,6 +1650,7 @@
         };
         try {
             await apiPost(payloads[action]);
+            closeModal();
             await Promise.all([loadOrders(), loadProducts()]);
             toast('Pedido actualizado.');
         } catch (error) {
@@ -1876,6 +1990,79 @@
         }
     }
 
+    function sizeGuideRowTemplate(row, index) {
+        return `
+            <div class="size-guide-editor-row" data-size-guide-index="${index}">
+                <label>PRENDA O TABLA<input data-size-guide-field="group" value="${escapeHtml(row.group || '')}" placeholder="Ej.: Remeras de adulto" required></label>
+                <label>TALLE<input data-size-guide-field="size" value="${escapeHtml(row.size || '')}" placeholder="Ej.: Talle 1" required></label>
+                <label>ANCHO<input data-size-guide-field="width" value="${escapeHtml(row.width || '')}" placeholder="Ej.: 53 cm"></label>
+                <label>LARGO<input data-size-guide-field="length" value="${escapeHtml(row.length || '')}" placeholder="Ej.: 62 cm"></label>
+                <label>OBSERVACIONES<input data-size-guide-field="note" value="${escapeHtml(row.note || '')}" placeholder="Opcional"></label>
+                <button class="small-button danger-button" type="button" data-remove-size-guide-row="${index}">Quitar</button>
+            </div>
+        `;
+    }
+
+    function renderSizeGuideRows() {
+        if (!elements.sizeGuideRows) {
+            return;
+        }
+        elements.sizeGuideRows.innerHTML = state.sizeGuide.rows.length
+            ? state.sizeGuide.rows.map(sizeGuideRowTemplate).join('')
+            : '<p class="empty-copy">Todavia no cargaste medidas. Usa "+ Agregar fila" para comenzar.</p>';
+    }
+
+    function readSizeGuideRows() {
+        if (!elements.sizeGuideRows) {
+            return [];
+        }
+        return Array.from(
+            elements.sizeGuideRows.querySelectorAll('[data-size-guide-index]')
+        ).map(container => Object.fromEntries(
+            Array.from(container.querySelectorAll('[data-size-guide-field]')).map(field => [
+                field.dataset.sizeGuideField,
+                field.value.trim(),
+            ])
+        ));
+    }
+
+    async function loadSizeGuide() {
+        if (!elements.sizeGuideRows || app.user?.role !== 'admin') {
+            return;
+        }
+        try {
+            const data = await apiGet('size_guide');
+            state.sizeGuide = data.size_guide;
+            elements.sizeGuideIntro.value = state.sizeGuide.intro || '';
+            renderSizeGuideRows();
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    async function saveSizeGuide(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'GUARDANDO...';
+        try {
+            const response = await apiPost({
+                action: 'size_guide_update',
+                size_guide: {
+                    intro: elements.sizeGuideIntro.value.trim(),
+                    rows: readSizeGuideRows(),
+                },
+            });
+            state.sizeGuide = response.size_guide;
+            renderSizeGuideRows();
+            toast('Tabla de talles guardada.');
+        } catch (error) {
+            toast(error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'GUARDAR TABLA DE TALLES';
+        }
+    }
+
     async function loadCash() {
         if (!elements.cashContent) {
             return;
@@ -2000,6 +2187,10 @@
             event.preventDefault();
             saveSettings(event.target);
         }
+        if (event.target.id === 'size-guide-form') {
+            event.preventDefault();
+            saveSizeGuide(event.target);
+        }
         if (event.target.id === 'user-form') {
             event.preventDefault();
             saveUser(event.target);
@@ -2007,6 +2198,39 @@
     });
 
     document.addEventListener('click', event => {
+        if (event.target.closest('#add-size-guide-row')) {
+            state.sizeGuide = {
+                intro: elements.sizeGuideIntro?.value.trim() || '',
+                rows: readSizeGuideRows(),
+            };
+            state.sizeGuide.rows.push({
+                group: '',
+                size: '',
+                width: '',
+                length: '',
+                note: '',
+            });
+            renderSizeGuideRows();
+            window.requestAnimationFrame(() => {
+                elements.sizeGuideRows
+                    ?.querySelector('.size-guide-editor-row:last-child input')
+                    ?.focus();
+            });
+            return;
+        }
+        const removeSizeGuideRow = event.target.closest('[data-remove-size-guide-row]');
+        if (removeSizeGuideRow) {
+            state.sizeGuide = {
+                intro: elements.sizeGuideIntro?.value.trim() || '',
+                rows: readSizeGuideRows(),
+            };
+            state.sizeGuide.rows.splice(
+                Number(removeSizeGuideRow.dataset.removeSizeGuideRow),
+                1
+            );
+            renderSizeGuideRows();
+            return;
+        }
         const view = event.target.closest('[data-view]');
         if (view) {
             showView(view.dataset.view);
@@ -2086,6 +2310,11 @@
         const suggestion = event.target.closest('[data-pos-suggestion]');
         if (suggestion) {
             choosePosProduct(Number(suggestion.dataset.posSuggestion));
+            return;
+        }
+        const viewOrder = event.target.closest('[data-view-order]');
+        if (viewOrder) {
+            showOrderDetail(Number(viewOrder.dataset.viewOrder));
             return;
         }
         const orderAction = event.target.closest('[data-order-action]');

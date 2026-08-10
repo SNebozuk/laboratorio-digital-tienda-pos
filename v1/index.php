@@ -16,6 +16,7 @@ $assetVersion = (string) max(
     (int) @filemtime(__DIR__ . '/assets/store.js')
 );
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
+$sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $apiUrl = ($applicationPath === '' ? '' : $applicationPath) . '/api.php';
 $whatsappNumber = preg_replace('/\D+/', '', (string) ($publicSettings['whatsapp_number'] ?? '5493415699338')) ?: '5493415699338';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
@@ -43,6 +44,7 @@ header('Referrer-Policy: same-origin');
             </span>
         </a>
         <div class="header-actions">
+            <a class="header-link" href="<?= $escape($sizeGuideUrl) ?>">TABLA DE TALLES</a>
             <a class="header-link" href="https://www.laboratoriodigital.com.ar/">TIENDANUBE</a>
             <a class="header-link" href="https://wa.me/<?= $escape($whatsappNumber) ?>" target="_blank" rel="noopener">WHATSAPP +<?= $escape($whatsappNumber) ?></a>
             <button class="cart-mobile" id="cart-mobile" type="button">

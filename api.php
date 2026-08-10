@@ -32,6 +32,12 @@ try {
                     ),
                 ]);
 
+            case 'size_guide':
+                Http::json([
+                    'ok' => true,
+                    'size_guide' => $app['settings']->sizeGuide(),
+                ]);
+
             case 'session':
                 Http::json([
                     'ok' => true,
@@ -311,6 +317,17 @@ try {
                 'settings' => $app['settings']->update(
                     is_array($input['settings'] ?? null)
                         ? $input['settings']
+                        : []
+                ),
+            ]);
+
+        case 'size_guide_update':
+            $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'size_guide' => $app['settings']->updateSizeGuide(
+                    is_array($input['size_guide'] ?? null)
+                        ? $input['size_guide']
                         : []
                 ),
             ]);
