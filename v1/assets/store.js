@@ -1335,10 +1335,12 @@
         state.cart.clear();
         persistCart();
         state.order = null;
-        renderCatalog();
-        renderCart();
-        closeModal();
-        refreshCatalog();
+        // Volvemos a una portada limpia después de confirmar el pedido. Así el
+        // cliente no queda detenido en un carrito vacío ni en el checkout.
+        const homeUrl = new URL(window.location.href);
+        homeUrl.search = '';
+        homeUrl.hash = '';
+        window.location.assign(homeUrl.href);
     }
 
     function toast(message) {
