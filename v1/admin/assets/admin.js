@@ -2783,9 +2783,14 @@
         state.selectedOrderIds.clear();
         await loadOrders();
     });
-    elements.applyBulkOrderStatus?.addEventListener('click', applySelectedOrderStatus);
-    elements.applyBulkOrderAction?.addEventListener('click', () => {
+    elements.bulkOrderStatus?.addEventListener('change', async () => {
+        if (!elements.bulkOrderStatus.value) return;
+        await applySelectedOrderStatus();
+        elements.bulkOrderStatus.value = '';
+    });
+    elements.bulkOrderAction?.addEventListener('change', () => {
         const action = elements.bulkOrderAction?.value || '';
+        if (!action) return;
         const ids = selectedOrders().map(order => Number(order.id));
         if (!action || !ids.length) {
             toast('Elegí una acción y al menos una venta.');
@@ -2796,6 +2801,7 @@
         } else if (action === 'archive') {
             archiveSelectedOrders(ids);
         }
+        elements.bulkOrderAction.value = '';
     });
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;

@@ -332,7 +332,6 @@ header('Referrer-Policy: same-origin');
                                 <option value="deliver">Entregada</option>
                             </select>
                         </label>
-                        <button class="secondary-button fit-button" id="apply-bulk-order-status" type="button">APLICAR</button>
                         <?php if ($user['role'] === 'admin'): ?>
                             <label>
                                 <span>M&Aacute;S ACCIONES</span>
@@ -342,7 +341,6 @@ header('Referrer-Policy: same-origin');
                                     <option value="archive">Archivar entregadas</option>
                                 </select>
                             </label>
-                            <button class="secondary-button fit-button" id="apply-bulk-order-action" type="button">APLICAR</button>
                         <?php endif ?>
                     </div>
                     <div id="order-list" class="order-list"></div>

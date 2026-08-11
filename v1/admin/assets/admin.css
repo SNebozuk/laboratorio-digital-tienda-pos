@@ -890,6 +890,56 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     background: #0b111a;
 }
 
+/* Ventas: lectura y operación rápida durante la jornada. */
+#view-orders .view-heading {
+    align-items: center;
+    padding: 20px;
+    border: 1px solid rgba(101, 121, 148, .25);
+    border-radius: 18px;
+    background: radial-gradient(circle at right top, rgba(60, 131, 255, .17), transparent 30%), #0c121b;
+}
+
+#view-orders .order-toolbar {
+    border-color: rgba(101, 121, 148, .32);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(19, 29, 43, .96), rgba(9, 14, 22, .96));
+    box-shadow: 0 14px 32px rgba(0, 0, 0, .16);
+}
+
+#view-orders .order-toolbar input,
+#view-orders .order-toolbar select,
+#view-orders .order-bulk-toolbar select {
+    min-height: 42px;
+    border-radius: 11px;
+}
+
+#view-orders .order-overview article {
+    min-height: 112px;
+    padding: 17px;
+    border-radius: 16px;
+}
+
+#view-orders .order-bulk-toolbar {
+    align-items: center;
+    border-radius: 14px;
+    border-color: rgba(91, 151, 255, .36);
+    background: linear-gradient(100deg, rgba(34, 77, 138, .18), rgba(12, 18, 28, .95));
+}
+
+#view-orders .order-list-row {
+    margin-bottom: 7px;
+    border: 1px solid rgba(101, 121, 148, .2);
+    border-radius: 13px;
+    background: linear-gradient(100deg, rgba(20, 29, 42, .88), rgba(10, 15, 23, .9));
+    transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+
+#view-orders .order-list-row:hover {
+    transform: translateX(3px);
+    border-color: rgba(98, 160, 255, .5);
+    background: linear-gradient(100deg, rgba(27, 41, 61, .98), rgba(12, 19, 29, .96));
+}
+
 .login-card input:focus,
 .admin-search input:focus,
 .pos-cart input:focus,
