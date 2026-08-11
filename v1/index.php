@@ -52,8 +52,9 @@ header('Referrer-Policy: same-origin');
         </div>
         <div class="header-actions">
             <a class="header-link" href="<?= $escape($sizeGuideUrl) ?>">TABLA DE TALLES</a>
-            <button class="cart-mobile" id="cart-mobile" type="button">
-                Pedido <span id="cart-mobile-count">0</span>
+            <button class="cart-mobile" id="cart-mobile" type="button" aria-label="Abrir pedido">
+                <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 1.9-1.4L20 8H7M10 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm7 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
+                <span id="cart-mobile-count">0</span>
             </button>
         </div>
     </header>

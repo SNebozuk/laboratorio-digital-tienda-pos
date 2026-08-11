@@ -66,9 +66,10 @@ if ($isCashOrder && in_array($order['status'], ['pending_payment', 'ready_pickup
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#050505">
+    <meta name="theme-color" content="#f7faf7">
     <title>Seguimiento de pedido · Laboratorio Digital</title>
     <link rel="stylesheet" href="assets/app.css">
+    <link rel="stylesheet" href="assets/light.css?v=2">
 </head>
 <body class="payment-page">
     <header class="store-header">

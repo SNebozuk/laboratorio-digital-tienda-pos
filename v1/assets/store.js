@@ -506,9 +506,9 @@
             ${roots.map(node => renderNode(node)).join('')}
         `;
         const path = state.category ? findPath(roots, state.category) : null;
-        elements.categoryBreadcrumb.textContent = path
-            ? `Todos los productos › ${path.map(node => node.name).join(' › ')}`
-            : 'Todos los productos';
+        elements.categoryBreadcrumb.innerHTML = path
+            ? `<button type="button" data-category="">Todos los productos</button><span aria-hidden="true">›</span><span>${escapeHtml(path.map(node => node.name).join(' › '))}</span>`
+            : '<button type="button" data-category="">Todos los productos</button>';
     }
 
     function productImage(product, className) {
@@ -1314,6 +1314,7 @@
             elements.categoryBackdrop.classList.remove('menu-open');
             elements.categoryToggle.setAttribute('aria-expanded', 'false');
             elements.categoryMenu.setAttribute('aria-expanded', 'false');
+            window.history.pushState({ catalog: true }, '', window.location.href);
             renderCategories();
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1323,6 +1324,7 @@
         if (event.target.closest('[data-show-all-products]')) {
             state.category = '';
             state.showAll = true;
+            window.history.pushState({ catalog: true }, '', window.location.href);
             renderCategories();
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1429,6 +1431,16 @@
         state.openedProductId = null;
         syncProductUrl(null);
         scheduleCodeSearch(state.query);
+        renderCatalog();
+    });
+    window.addEventListener('popstate', () => {
+        state.category = '';
+        state.showAll = false;
+        state.query = '';
+        state.searchActive = false;
+        state.openedProductId = null;
+        elements.search.value = '';
+        renderCategories();
         renderCatalog();
     });
     elements.search.addEventListener('keydown', event => {
