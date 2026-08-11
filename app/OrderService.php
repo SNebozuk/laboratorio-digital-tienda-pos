@@ -771,7 +771,7 @@ final class OrderService
                 ) AS payment_ai_summary
              FROM orders o
               LEFT JOIN order_items oi ON oi.order_id = o.id
-             ' . ($includeArchived ? '' : 'WHERE o.archived_at IS NULL') . '
+             ' . ($includeArchived ? '' : "WHERE o.archived_at IS NULL AND o.status <> 'cancelled'") . '
              GROUP BY o.id
              ORDER BY o.id DESC
              LIMIT ' . $limit

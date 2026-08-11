@@ -243,7 +243,7 @@ header('Referrer-Policy: same-origin');
                                 <span>Total</span>
                                 <strong id="pos-total">$ 0</strong>
                             </div>
-                            <label>Cliente<input id="pos-customer" value="Consumidor final"></label>
+                            <label>Cliente<input id="pos-customer" value="Consumidor final" placeholder="Consumidor final"></label>
                             <label>
                                 Medio de pago
                                 <select id="pos-payment">
@@ -254,7 +254,7 @@ header('Referrer-Policy: same-origin');
                                 </select>
                             </label>
                             <button class="primary-button" id="complete-sale-button" type="button" disabled>
-                                COBRAR E IMPRIMIR
+                                FINALIZAR VENTA
                             </button>
                         </aside>
                     </div>

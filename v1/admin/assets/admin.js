@@ -1151,7 +1151,7 @@
             persistPosCart();
             await loadProducts();
             renderPosCart();
-            printReceipt(sale);
+            showPosSaleFinished(sale);
             toast(`Venta ${sale.public_number} registrada.`);
         } catch (error) {
             toast(error.message);
@@ -1168,6 +1168,18 @@
         if (!receipt) {
             toast('La venta se guardó, pero el navegador bloqueó la impresión.');
         }
+    }
+
+    function showPosSaleFinished(sale) {
+        openModal(`
+            <h2 id="modal-title">VENTA REGISTRADA</h2>
+            <p class="checkout-lead">${escapeHtml(sale.public_number)} quedó guardada en Ventas.</p>
+            <div class="button-row">
+                <button class="secondary-button" type="button" data-pos-sale-finish="archive" data-order-id="${Number(sale.id)}">ARCHIVAR</button>
+                <button class="primary-button" type="button" data-pos-sale-finish="print" data-order-id="${Number(sale.id)}">IMPRIMIR</button>
+            </div>
+            <p class="checkout-footnote">Podés cerrar esta ventana con Esc sin hacer nada más.</p>
+        `);
     }
 
     async function loadOrders() {
@@ -2660,6 +2672,18 @@
         const archiveOrder = event.target.closest('[data-archive-order]');
         if (archiveOrder) {
             archiveSelectedOrders([Number(archiveOrder.dataset.archiveOrder)]);
+            return;
+        }
+        const posFinish = event.target.closest('[data-pos-sale-finish]');
+        if (posFinish) {
+            const orderId = Number(posFinish.dataset.orderId);
+            if (posFinish.dataset.posSaleFinish === 'print') {
+                printReceipt({ id: orderId });
+                closeModal();
+            } else {
+                archiveSelectedOrders([orderId]);
+                closeModal();
+            }
             return;
         }
         if (event.target.closest('[data-select-order], #select-all-orders')) {
