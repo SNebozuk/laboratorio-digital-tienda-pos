@@ -57,7 +57,7 @@ header('Referrer-Policy: same-origin');
                     <form id="setup-form">
                         <label>Nombre<input name="name" required autocomplete="name"></label>
                         <label>Email<input name="email" type="email" required autocomplete="email"></label>
-                        <label>Contraseña<input name="password" type="password" minlength="12" required autocomplete="new-password"></label>
+                        <label>Contraseña<span class="password-field"><input name="password" type="password" minlength="12" required autocomplete="new-password"><button type="button" class="password-toggle" aria-label="Mostrar contraseña">◉</button></span></label>
                         <label>Clave de instalación<input name="setup_token" type="password" required autocomplete="off"></label>
                         <button class="primary-button" type="submit">CREAR ADMINISTRADOR</button>
                     </form>
@@ -66,7 +66,7 @@ header('Referrer-Policy: same-origin');
                     <h1>INGRESAR</h1>
                     <form id="login-form">
                         <label>Email<input name="email" type="email" required autocomplete="username"></label>
-                        <label>Contraseña<input name="password" type="password" required autocomplete="current-password"></label>
+                        <label>Contraseña<span class="password-field"><input name="password" type="password" required autocomplete="current-password"><button type="button" class="password-toggle" aria-label="Mostrar contraseña">◉</button></span></label>
                         <button class="primary-button" type="submit">INGRESAR</button>
                     </form>
                 <?php endif ?>
@@ -244,15 +244,6 @@ header('Referrer-Policy: same-origin');
                                 <strong id="pos-total">$ 0</strong>
                             </div>
                             <label>Cliente<input id="pos-customer" value="Consumidor final" placeholder="Consumidor final"></label>
-                            <label>
-                                Medio de pago
-                                <select id="pos-payment">
-                                    <option value="cash">Efectivo</option>
-                                    <option value="bank_transfer">Transferencia</option>
-                                    <option value="debit_card">Débito</option>
-                                    <option value="credit_card">Crédito</option>
-                                </select>
-                            </label>
                             <button class="primary-button" id="complete-sale-button" type="button" disabled>
                                 FINALIZAR VENTA
                             </button>

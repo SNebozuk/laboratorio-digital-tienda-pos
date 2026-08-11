@@ -362,6 +362,29 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     gap: 10px;
 }
 
+.pos-idle {
+    display: grid;
+    gap: 7px;
+    min-height: 230px;
+    place-content: center;
+    padding: 22px;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.pos-idle strong {
+    color: #fff;
+    font-size: 13px;
+    letter-spacing: .04em;
+}
+
+.pos-idle span {
+    max-width: 370px;
+    line-height: 1.5;
+}
+
 .pos-search-summary {
     padding: 12px 14px;
     border: 1px solid rgba(93, 155, 255, .3);

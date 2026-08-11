@@ -830,6 +830,14 @@
             return;
         }
         const query = state.posQuery.trim();
+        if (!query) {
+            elements.posProducts.innerHTML = `
+                <div class="pos-idle">
+                    <strong>BUSCÁ UN PRODUCTO O ESCANEÁ SU CÓDIGO</strong>
+                    <span>Los resultados aparecerán acá. Al escanear, el producto se suma directamente al carrito.</span>
+                </div>`;
+            return;
+        }
         const products = rankedProducts(
             query,
             state.products.filter(product => product.active)
@@ -841,7 +849,7 @@
         elements.posProducts.innerHTML = products.length ? `
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
             ${products.map(product => `
-            <article class="pos-product ${Number(state.posProductId) === Number(product.id) ? 'pos-expanded' : ''}">
+            <article class="pos-product ${product.variants.length === 1 || Number(state.posProductId) === Number(product.id) ? 'pos-expanded' : ''}">
                 ${safeImage(product.image_path)
                     ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="">`
                     : '<div class="pos-product-placeholder">SIN FOTO</div>'}
@@ -853,7 +861,7 @@
                     ${product.variants.length > 1 ? `<button class="pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}">${product.variants.length} variantes ${Number(state.posProductId) === Number(product.id) ? '⌃' : '⌄'}</button>` : ''}
                     ${product.variants.filter(variant => (
                         variant.active
-                        && (query || Number(variant.available_stock) > 0)
+                        && Number(variant.available_stock) > 0
                     )).map(variant => {
                         const quantity = posQuantity(variant.id);
                         const remaining = Math.max(
@@ -961,7 +969,7 @@
         );
         elements.posSearch.value = '';
         state.posQuery = '';
-        state.posProductId = Number(indexed.product.id);
+        state.posProductId = null;
         closePosSuggestions();
         renderPos();
         return true;
@@ -1145,7 +1153,7 @@
                 action: 'pos_sale',
                 items,
                 customer_name: document.getElementById('pos-customer').value,
-                payment_method: document.getElementById('pos-payment').value,
+                payment_method: 'pos',
             });
             const sale = data.order;
             state.posCart.clear();
