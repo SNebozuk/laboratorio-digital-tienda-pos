@@ -726,6 +726,11 @@
                         <strong>¿QUÉ ESTÁS BUSCANDO HOY?</strong>
                         <span>Usá el buscador o elegí una categoría para empezar.</span>
                     </div>
+                    <section class="home-people-gallery" aria-label="Inspiración para tus próximos productos">
+                        <img src="https://dcdn-us.mitiendanube.com/stores/049/818/themes/baires/2-slide-1755981445955-5882924938-c4a02649a40d20932fb3ef4e8f567f161755981445-1024-1024.webp?8974833076900823817" alt="Prenda personalizada en uso" loading="eager">
+                        <img src="https://dcdn-us.mitiendanube.com/stores/049/818/themes/baires/2-slide-1755981445955-8059015339-191ac43835a9c81f91204309b2ef1fc71755981445-1024-1024.webp?8974833076900823817" alt="Indumentaria personalizada" loading="lazy">
+                        <img src="https://dcdn-us.mitiendanube.com/stores/049/818/themes/baires/2-slide-1755981445955-496219717-9db0f1a3fe031329e9b295758995710f1755981446-1024-1024.webp?8974833076900823817" alt="Productos para personalizar" loading="lazy">
+                    </section>
                     <div class="quick-categories">
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
                     </div>
