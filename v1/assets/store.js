@@ -1080,10 +1080,18 @@
                 })),
             });
             state.order = data.order;
+            const transferWhatsappUrl = paymentMethod === 'bank_transfer'
+                ? whatsappUrl(data.order)
+                : '';
+            state.cart.clear();
+            persistCart();
+            renderCatalog();
+            renderCart();
+            refreshCatalog();
             if (paymentMethod === 'cash') {
                 showCashConfirmationSixHours(data.order);
             } else {
-                showTransferConfirmation(data.order);
+                showTransferConfirmation(data.order, transferWhatsappUrl);
             }
         } catch (error) {
             errorBox.hidden = false;
@@ -1100,11 +1108,10 @@
         return match ? `${match[3]}/${match[2]} a las ${match[4]}:${match[5]}` : String(value || '');
     }
 
-    function showTransferConfirmation(order) {
+    function showTransferConfirmation(order, whatsapp) {
         const alias = order.bank?.alias || 'Pendiente de configurar';
         const holder = order.bank?.holder || 'Laboratorio Digital';
         const total = money(Number(order.total_cents));
-        const whatsapp = whatsappUrl(order);
         openModal(`
             ${checkoutSteps(3)}
             <h2 id="modal-title">¡Gracias por tu pedido!</h2>

@@ -1,5 +1,6 @@
 /* Tema claro de Laboratorio Digital. Se carga después de la hoja histórica. */
 :root { color-scheme: light; --bg:#f7faf7; --panel:#fff; --panel-2:#eff7f0; --line:#d7e4d9; --line-soft:#e7eee8; --text:#18231b; --muted:#617165; --accent:#168342; --success:#168342; }
+.payment-instructions span:last-child{display:none!important;}
 body { background:#f7faf7 !important; color:var(--text) !important; }
 .store-header { background:rgba(255,255,255,.97) !important; border-color:var(--line) !important; box-shadow:0 8px 25px rgba(24,35,27,.08) !important; }
 .brand strong,.header-link { color:var(--text) !important; }.header-link:hover { color:var(--accent) !important; background:#edf7ef !important; }

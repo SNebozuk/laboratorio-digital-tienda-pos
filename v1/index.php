@@ -15,7 +15,8 @@ $applicationPath = $storePath === '' || $lastPathSlash === false
 $assetPath = $storePath . '/assets';
 $assetVersion = (string) max(
     (int) @filemtime(__DIR__ . '/assets/app.css'),
-    (int) @filemtime(__DIR__ . '/assets/store.js')
+    (int) @filemtime(__DIR__ . '/assets/store.js'),
+    (int) @filemtime(__DIR__ . '/assets/light.css')
 );
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
@@ -35,7 +36,7 @@ header('Referrer-Policy: same-origin');
     <meta name="theme-color" content="#f4f2ed">
     <title>Laboratorio Digital · Catálogo mayorista</title>
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
-    <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=1">
+    <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
 </head>
 <body>
     <header class="store-header">
