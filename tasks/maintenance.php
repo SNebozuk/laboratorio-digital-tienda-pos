@@ -28,6 +28,7 @@ if (PHP_SAPI !== 'cli') {
 
     $app = require $projectRoot . '/app/container.php';
     $app['stock']->expireOrders();
+    $app['mail']->process(30);
     http_response_code(204);
     exit;
 }
