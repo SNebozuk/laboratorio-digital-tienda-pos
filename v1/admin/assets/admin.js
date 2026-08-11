@@ -219,7 +219,7 @@
         if (view === 'contact') {
             loadContact();
         }
-        if (view === 'emails') {
+        if (view === 'whatsapp') {
             loadEmailSettings();
         }
         if (view === 'users') {
@@ -1263,6 +1263,9 @@
         const actions = [
             `<button class="small-button" type="button" data-print-order="${Number(order.id)}">Imprimir</button>`,
         ];
+        if (String(order.customer_phone || '').replace(/\D+/g, '').length >= 8) {
+            actions.push(`<button class="small-button" type="button" data-whatsapp-order="${Number(order.id)}">WhatsApp</button>`);
+        }
         if (
             ['web', 'whatsapp'].includes(order.channel)
             && ['pending_payment', 'payment_reported', 'rejected'].includes(order.status)
@@ -1293,6 +1296,28 @@
             actions.push(`<button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>`);
         }
         return actions.join('');
+    }
+
+    async function openOrderWhatsapp(orderId) {
+        try {
+            const [orderData, settingsData] = await Promise.all([
+                apiGet('order', { id: orderId }), apiGet('settings'),
+            ]);
+            const order = orderData.order;
+            const settings = settingsData.settings;
+            const key = order.status === 'cancelled' ? 'cancelled'
+                : order.status === 'ready_pickup' ? 'ready_pickup'
+                : order.payment_method === 'cash' ? 'cash_created'
+                : 'order_created';
+            const template = String(settings[`whatsapp_message_${key}`] || 'Hola {{cliente}}! Tu pedido {{pedido}} está actualizado.');
+            const message = template
+                .replaceAll('{{cliente}}', String(order.customer_name || ''))
+                .replaceAll('{{pedido}}', String(order.public_number || ''))
+                .replaceAll('{{total}}', money(order.total_cents))
+                .replaceAll('{{plazo}}', String(order.payment_deadline_at || ''));
+            const phone = String(order.customer_phone || '').replace(/\D+/g, '');
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+        } catch (error) { toast(error.message); }
     }
 
     function selectedOrders() {
@@ -2299,7 +2324,7 @@
     }
 
     async function loadEmailSettings() {
-        const form = document.getElementById('email-settings-form');
+        const form = document.getElementById('whatsapp-settings-form');
         if (!form || app.user?.role !== 'admin') return;
         try {
             const data = await apiGet('settings');
@@ -2313,7 +2338,6 @@
                     field.value = value;
                 }
             });
-            await loadMailDiagnostics();
         } catch (error) { toast(error.message); }
     }
 
@@ -2342,7 +2366,6 @@
                 state.settings = (await apiGet('settings')).settings;
             }
             const values = Object.fromEntries(data.entries());
-            values.mail_enabled = form.elements.mail_enabled.checked ? '1' : '0';
             const response = await apiPost({
                 action: 'settings_update',
                 settings: { ...state.settings, ...values },
@@ -2352,7 +2375,7 @@
         } catch (error) { toast(error.message); }
         finally {
             button.disabled = false;
-            button.textContent = 'GUARDAR E-MAILS';
+            button.textContent = 'GUARDAR MENSAJES';
         }
     }
 
@@ -2562,7 +2585,7 @@
             event.preventDefault();
             saveSettings(event.target);
         }
-        if (event.target.id === 'email-settings-form') {
+        if (event.target.id === 'whatsapp-settings-form') {
             event.preventDefault();
             saveEmailSettings(event.target);
         }
@@ -2581,6 +2604,11 @@
     });
 
     document.addEventListener('click', event => {
+        const whatsappOrder = event.target.closest('[data-whatsapp-order]');
+        if (whatsappOrder) {
+            openOrderWhatsapp(Number(whatsappOrder.dataset.whatsappOrder));
+            return;
+        }
         if (event.target.closest('#refresh-mail-diagnostics')) {
             loadMailDiagnostics();
             return;

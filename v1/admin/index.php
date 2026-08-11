@@ -101,8 +101,8 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button" type="button" data-view="contact">
                             Contacto
                         </button>
-                        <button class="admin-nav-button" type="button" data-view="emails">
-                            E-mails automáticos
+                        <button class="admin-nav-button" type="button" data-view="whatsapp">
+                            WhatsApp
                         </button>
                         <button class="admin-nav-button" type="button" data-view="users">
                             Usuarios
@@ -130,7 +130,7 @@ header('Referrer-Policy: same-origin');
                             <option value="size-guide">Tabla de Talles</option>
                             <option value="categories">Categorías</option>
                             <option value="contact">Contacto</option>
-                            <option value="emails">E-mails automáticos</option>
+                            <option value="whatsapp">WhatsApp</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
                         <?php endif ?>
@@ -213,15 +213,15 @@ header('Referrer-Policy: same-origin');
                         </form>
                     </section>
 
-                    <section class="admin-view" id="view-emails">
+                    <section class="admin-view" id="view-whatsapp">
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">AVISOS DE PEDIDOS</p>
-                                <h1>E-MAILS AUTOMÁTICOS</h1>
+                                <h1>WHATSAPP</h1>
                                 <p>Configurá el remitente, servidor SMTP y los mensajes que recibe el cliente.</p>
                             </div>
                         </div>
-                        <form id="email-settings-form" class="settings-card">
+                        <form id="whatsapp-settings-form" class="settings-card">
                             <div class="email-settings-section">
                                 <label class="checkbox-setting"><input name="mail_enabled" type="checkbox" value="1"><span><strong>ACTIVAR ENVÍO AUTOMÁTICO</strong><small>Solo activalo después de probar la casilla. La contraseña SMTP no se muestra ni se guarda en el navegador.</small></span></label>
                             </div>
@@ -238,10 +238,10 @@ header('Referrer-Policy: same-origin');
                             <div class="email-diagnostics" id="email-diagnostics" aria-live="polite"></div>
                             <button class="secondary-button fit-button" id="refresh-mail-diagnostics" type="button">REVISAR ESTADO DEL ENVÃO</button>
                             <div class="email-template-grid">
-                                <label>PEDIDO CREADO<textarea name="mail_message_order_created" rows="3" placeholder="Hola {{cliente}}, recibimos tu pedido {{pedido}}."></textarea></label>
-                                <label>PAGO APROBADO<textarea name="mail_message_payment_approved" rows="3"></textarea></label>
-                                <label>PEDIDO LISTO<textarea name="mail_message_order_ready" rows="3"></textarea></label>
-                                <label>PEDIDO CANCELADO<textarea name="mail_message_order_cancelled" rows="3"></textarea></label>
+                                <label>PEDIDO POR TRANSFERENCIA<textarea name="whatsapp_message_order_created" rows="4"></textarea></label>
+                                <label>PEDIDO EN EFECTIVO<textarea name="whatsapp_message_cash_created" rows="4"></textarea></label>
+                                <label>PEDIDO LISTO PARA RETIRAR<textarea name="whatsapp_message_ready_pickup" rows="4"></textarea></label>
+                                <label>PEDIDO CANCELADO<textarea name="whatsapp_message_cancelled" rows="4"></textarea></label>
                             </div>
                             <p class="form-hint">Podés usar: <code>{{cliente}}</code>, <code>{{pedido}}</code>, <code>{{total}}</code> y <code>{{plazo}}</code>. Si dejás un texto vacío, se usa el mensaje estándar.</p>
                             <button class="primary-button fit-button" type="submit">GUARDAR E-MAILS</button>

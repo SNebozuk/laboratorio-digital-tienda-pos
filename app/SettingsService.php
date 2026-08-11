@@ -9,7 +9,6 @@ final class SettingsService
 {
     private const EDITABLE_KEYS = [
         'store_name',
-        'sales_email',
         'whatsapp_number',
         'payment_window_minutes',
         'rejected_retry_minutes',
@@ -19,20 +18,10 @@ final class SettingsService
         'bank_cbu',
         'pickup_address',
         'business_hours',
-        'mail_enabled',
-        'mail_from',
-        'mail_from_name',
-        'mail_reply_to',
-        'mail_smtp_host',
-        'mail_smtp_port',
-        'mail_smtp_encryption',
-        'mail_smtp_username',
-        'mail_message_order_created',
-        'mail_message_payment_reported',
-        'mail_message_payment_approved',
-        'mail_message_payment_rejected',
-        'mail_message_order_ready',
-        'mail_message_order_cancelled',
+        'whatsapp_message_order_created',
+        'whatsapp_message_cash_created',
+        'whatsapp_message_ready_pickup',
+        'whatsapp_message_cancelled',
     ];
 
     public function __construct(private readonly PDO $pdo)
@@ -47,7 +36,6 @@ final class SettingsService
              FROM settings
              WHERE key IN (
                 'store_name',
-                'sales_email',
                 'whatsapp_number',
                 'payment_window_minutes',
                 'rejected_retry_minutes',
@@ -56,13 +44,9 @@ final class SettingsService
                 'bank_alias',
                 'bank_cbu',
                 'pickup_address',
-                'business_hours'
-                ,'mail_enabled', 'mail_from', 'mail_from_name', 'mail_reply_to',
-                'mail_smtp_host', 'mail_smtp_port', 'mail_smtp_encryption',
-                'mail_smtp_username', 'mail_message_order_created',
-                'mail_message_payment_reported', 'mail_message_payment_approved',
-                'mail_message_payment_rejected', 'mail_message_order_ready',
-                'mail_message_order_cancelled'
+                'business_hours',
+                'whatsapp_message_order_created', 'whatsapp_message_cash_created',
+                'whatsapp_message_ready_pickup', 'whatsapp_message_cancelled'
              )"
         );
         $values = [];
@@ -80,20 +64,10 @@ final class SettingsService
             1
         );
         $values += [
-            'mail_enabled' => '0',
-            'mail_from' => (string) ($values['sales_email'] ?? ''),
-            'mail_from_name' => (string) ($values['store_name'] ?? 'Laboratorio Digital'),
-            'mail_reply_to' => (string) ($values['sales_email'] ?? ''),
-            'mail_smtp_host' => 'a0160161.ferozo.com',
-            'mail_smtp_port' => '465',
-            'mail_smtp_encryption' => 'ssl',
-            'mail_smtp_username' => (string) ($values['sales_email'] ?? ''),
-            'mail_message_order_created' => '',
-            'mail_message_payment_reported' => '',
-            'mail_message_payment_approved' => '',
-            'mail_message_payment_rejected' => '',
-            'mail_message_order_ready' => '',
-            'mail_message_order_cancelled' => '',
+            'whatsapp_message_order_created' => 'Hola {{cliente}}! Recibimos tu pedido {{pedido}} por {{total}}. Cuando realices la transferencia, por favor respondé a este chat para que podamos prepararlo. Gracias por elegirnos.',
+            'whatsapp_message_cash_created' => 'Hola {{cliente}}! Recibimos tu pedido {{pedido}} por {{total}}. Lo reservamos por 6 horas para que puedas retirarlo y abonarlo en efectivo. Te esperamos!',
+            'whatsapp_message_ready_pickup' => 'Hola {{cliente}}! Tu pedido {{pedido}} ya está listo para retirar. Gracias por elegirnos!',
+            'whatsapp_message_cancelled' => 'Hola {{cliente}}! Cancelamos el pedido {{pedido}}. Si necesitás ayuda para armar uno nuevo, escribinos por acá y te ayudamos con gusto.',
         ];
 
         return $values;
@@ -104,11 +78,6 @@ final class SettingsService
     {
         $current = $this->values();
         $storeName = $this->text($data, 'store_name', 2, 100);
-        $salesEmail = trim((string) ($data['sales_email'] ?? ''));
-        if (!filter_var($salesEmail, FILTER_VALIDATE_EMAIL)) {
-            throw new ValidationException('Ingresá un email de ventas válido.');
-        }
-
         $whatsapp = preg_replace(
             '/\D+/',
             '',
@@ -156,7 +125,7 @@ final class SettingsService
             throw new ValidationException('Revisá los horarios de atención.');
         }
 
-        $mailFrom = trim((string) ($data['mail_from'] ?? $current['mail_from'] ?? $salesEmail));
+        /*
         $mailReplyTo = trim((string) ($data['mail_reply_to'] ?? $current['mail_reply_to'] ?? $mailFrom));
         $mailUsername = trim((string) ($data['mail_smtp_username'] ?? $current['mail_smtp_username'] ?? $mailFrom));
         foreach ([$mailFrom, $mailReplyTo, $mailUsername] as $email) {
@@ -182,9 +151,18 @@ final class SettingsService
             $mailMessages['mail_message_' . $event] = $message;
         }
 
+        */
+        $whatsappMessages = [];
+        foreach (['order_created', 'cash_created', 'ready_pickup', 'cancelled'] as $event) {
+            $message = trim((string) ($data['whatsapp_message_' . $event] ?? $current['whatsapp_message_' . $event] ?? ''));
+            if ($message === '' || strlen($message) > 3000) {
+                throw new ValidationException('Completá un mensaje de WhatsApp de hasta 3000 caracteres.');
+            }
+            $whatsappMessages['whatsapp_message_' . $event] = $message;
+        }
+
         $values = [
             'store_name' => $storeName,
-            'sales_email' => $salesEmail,
             'whatsapp_number' => (string) $whatsapp,
             'payment_window_minutes' => (string) $paymentMinutes,
             'rejected_retry_minutes' => (string) $retryMinutes,
@@ -194,18 +172,7 @@ final class SettingsService
             'bank_cbu' => (string) $bankCbu,
             'pickup_address' => $pickupAddress,
             'business_hours' => $businessHours,
-            'mail_enabled' => filter_var($data['mail_enabled'] ?? $current['mail_enabled'] ?? false, FILTER_VALIDATE_BOOL) ? '1' : '0',
-            'mail_from' => $mailFrom,
-            'mail_from_name' => $this->mailFromName(
-                $data + ['mail_from_name' => $current['mail_from_name'] ?? $storeName],
-                $storeName
-            ),
-            'mail_reply_to' => $mailReplyTo,
-            'mail_smtp_host' => $mailHost,
-            'mail_smtp_port' => (string) $mailPort,
-            'mail_smtp_encryption' => $mailEncryption,
-            'mail_smtp_username' => $mailUsername,
-            ...$mailMessages,
+            ...$whatsappMessages,
         ];
 
         Database::immediate(

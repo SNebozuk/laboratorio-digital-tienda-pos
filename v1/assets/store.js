@@ -945,10 +945,6 @@
                         value="${escapeHtml(customer.phone || '')}"
                     >
                 </label>
-                <label>
-                    Email para recibir una copia (opcional)
-                    <input name="email" type="email" autocomplete="email" value="${escapeHtml(customer.email || '')}">
-                </label>
                 <fieldset class="payment-choice">
                     <legend>¿Cómo vas a pagar?</legend>
                     <label class="payment-option">
@@ -1149,7 +1145,6 @@
                 <p>Después de las 6 horas, liberaremos la mercadería para que otras personas también puedan aprovecharla.</p>
             </div>
             ${order.pickup_address ? `<p>Retiro en: <strong>${escapeHtml(order.pickup_address)}</strong></p>` : ''}
-            <p class="checkout-footnote">También enviaremos los detalles de tu pedido al email que indicaste.</p>
             <button class="primary-button" type="button" data-finish-order>ENTENDIDO</button>
         `);
     }
@@ -1324,7 +1319,7 @@
             </div>
             <p>
                 Pedido <strong>${escapeHtml(result.public_number)}</strong><br>
-                Te avisaremos por WhatsApp o email cuando esté aprobado y listo para retirar.
+                Te avisaremos por WhatsApp cuando esté aprobado y listo para retirar.
             </p>
             <button class="primary-button" type="button" data-finish-order>LISTO</button>
         `);

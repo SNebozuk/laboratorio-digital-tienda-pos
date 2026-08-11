@@ -2468,3 +2468,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .email-diagnostics.warning { border-color: #f1d3a5; background: #fff9ed; color: #875000; }
 .email-diagnostics.warning span,
 .email-diagnostics.warning small { color: #7c6340; }
+
+#view-whatsapp .email-settings-section,
+#view-whatsapp .settings-grid,
+#view-whatsapp .email-diagnostics,
+#view-whatsapp #refresh-mail-diagnostics { display: none; }
