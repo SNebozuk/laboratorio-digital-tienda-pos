@@ -704,9 +704,6 @@ final class OrderService
                 if (!$order) {
                     throw new ValidationException('La venta no existe.');
                 }
-                if ((string) $order['status'] !== 'delivered') {
-                    throw new ConflictException('Solo se pueden archivar ventas entregadas.');
-                }
                 if ($order['archived_at'] !== null) {
                     return;
                 }
@@ -724,9 +721,9 @@ final class OrderService
                     $orderId,
                     $actorUserId,
                     'order_archived',
-                    'delivered',
-                    'delivered',
-                    'Venta entregada archivada.'
+                    (string) $order['status'],
+                    (string) $order['status'],
+                    'Venta archivada.'
                 );
             }
         );

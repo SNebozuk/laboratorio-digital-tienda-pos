@@ -841,7 +841,7 @@
         elements.posProducts.innerHTML = products.length ? `
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
             ${products.map(product => `
-            <article class="pos-product">
+            <article class="pos-product ${Number(state.posProductId) === Number(product.id) ? 'pos-expanded' : ''}">
                 ${safeImage(product.image_path)
                     ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="">`
                     : '<div class="pos-product-placeholder">SIN FOTO</div>'}
@@ -850,6 +850,7 @@
                         <strong>${escapeHtml(product.name)}</strong>
                         <small>${escapeHtml(product.category?.name || '')}</small>
                     </div>
+                    ${product.variants.length > 1 ? `<button class="pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}">${product.variants.length} variantes ${Number(state.posProductId) === Number(product.id) ? '⌃' : '⌄'}</button>` : ''}
                     ${product.variants.filter(variant => (
                         variant.active
                         && (query || Number(variant.available_stock) > 0)
@@ -1375,7 +1376,7 @@
         const selected = orderIds
             .map(id => state.orders.find(order => Number(order.id) === Number(id)))
             .filter(Boolean);
-        if (!selected.length || selected.some(order => order.status !== 'delivered')) {
+        if (!selected.length) {
             toast('Para archivar, seleccioná únicamente ventas entregadas.');
             return;
         }
@@ -2643,6 +2644,13 @@
                 Number(posQuantity.dataset.posQuantity),
                 Number(posQuantity.dataset.value)
             );
+            return;
+        }
+        const posOpenProduct = event.target.closest('[data-pos-open-product]');
+        if (posOpenProduct) {
+            const productId = Number(posOpenProduct.dataset.posOpenProduct);
+            state.posProductId = Number(state.posProductId) === productId ? null : productId;
+            renderPos();
             return;
         }
         const assignBarcode = event.target.closest('[data-assign-barcode-variant]');

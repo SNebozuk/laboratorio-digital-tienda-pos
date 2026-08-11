@@ -187,10 +187,39 @@ final class SettingsService
             }
         }
 
+        if ($rows === []) {
+            $rows = $this->defaultSizeGuideRows();
+        }
+
         return [
-            'intro' => trim((string) ($values['size_guide_intro'] ?? '')),
+            'intro' => trim((string) ($values['size_guide_intro'] ?? '')) ?: 'Las medidas son de la prenda extendida y sin lavar. Puede existir una variación de hasta ±2 cm según el lote. Lavar con agua fría y evitar el secado al sol directo ayuda a conservar el talle.',
             'rows' => $rows,
         ];
+    }
+
+    /** @return list<array<string, string>> */
+    private function defaultSizeGuideRows(): array
+    {
+        $tables = [
+            'Niño · Algodón peinado' => [['4','30','40'],['6','33','44'],['8','36','47'],['10','37','49'],['12','39','52'],['14','42','55'],['16','45','59']],
+            'Niño · Modal / Spum' => [['6','33','43'],['8','33','46'],['10','35','48'],['12','37','50'],['14','37','53'],['16','43','56']],
+            'Unisex · Algodón peinado 24.1' => [['1','46','66'],['2','50','67'],['3','53','69'],['4','55','72'],['5','57','76'],['6','59','77'],['8','61','82'],['10','63','84']],
+            'Unisex · Algodón peinado 20.1' => [['1','53','66'],['2','55','68'],['3','58','72'],['4','59','74'],['5','60','75'],['6','63','78'],['8','65','81'],['10','68','83'],['12','69','86'],['14','72','86']],
+            'Oversize · Algodón peinado 20.1' => [['1','56','73'],['2','60','74'],['3','61','75'],['4','62','78'],['5','63','80']],
+            'Unisex · Modal / Spum' => [['1','48','64'],['2','49','65'],['3','52','66'],['4','56','68'],['5','58','72'],['6','62','79'],['8','65','80']],
+            'Mujer · Algodón peinado' => [['1','39','55'],['2','42','58'],['3','43','61'],['4','46','64'],['5','49','68']],
+            'Mujer · Modal / Spum' => [['1','38','53'],['2','41','57'],['3','43','58'],['4','44','62'],['5','47','62'],['6','50','66'],['8','52','67']],
+            'Buzo cuello redondo · Friza clásica' => [['1','52','66'],['2','55','67'],['3','56','67'],['4','59','72'],['5','63','73'],['6','64','76'],['8','65','79'],['10','67','82']],
+            'Buzo canguro · Friza clásica' => [['1','53','61'],['2','54','63'],['3','57','67'],['4','58','70'],['5','61','72'],['6','63','78'],['8','71','82']],
+            'Campera · Friza clásica' => [['1','51','60'],['2','53','64'],['3','56','68'],['4','59','71'],['5','62','73']],
+        ];
+        $rows = [];
+        foreach ($tables as $group => $sizes) {
+            foreach ($sizes as [$size, $width, $length]) {
+                $rows[] = ['group' => $group, 'size' => $size, 'width' => $width . ' cm', 'length' => $length . ' cm', 'note' => ''];
+            }
+        }
+        return $rows;
     }
 
     /**
