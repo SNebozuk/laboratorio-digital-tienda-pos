@@ -20,7 +20,12 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_set_cookie_params([
         'lifetime' => $sessionLifetime,
         'path' => '/',
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        // Ferozo puede terminar HTTPS delante de PHP. Consideramos también el
+        // encabezado del proxy para conservar la cookie como segura.
+        'secure' => (
+            (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+        ),
         'httponly' => true,
         'samesite' => 'Lax',
     ]);

@@ -1,0 +1,8 @@
+# La seguridad del administrador la gestiona la aplicación mediante su inicio
+# de sesión. Esto reemplaza una protección HTTP antigua del hosting que impedía
+# conservar correctamente la sesión del administrador.
+AuthType None
+
+<IfModule mod_authz_core.c>
+  Require all granted
+</IfModule>
