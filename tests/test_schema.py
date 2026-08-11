@@ -107,6 +107,27 @@ class SchemaContractTest(unittest.TestCase):
         self.assertIn("payload_json", columns)
         self.assertIsNotNone(migration)
 
+    def test_variants_can_store_an_independent_image(self) -> None:
+        columns = {
+            row["name"]
+            for row in self.db.execute("PRAGMA table_info(product_variants)")
+        }
+        migration = self.db.execute(
+            "SELECT 1 FROM schema_migrations WHERE version = 8"
+        ).fetchone()
+
+        self.assertIn("image_path", columns)
+        self.db.execute(
+            "UPDATE product_variants SET image_path = ? WHERE id = ?",
+            ("/uploads/products/talle-1.webp", self.variant_id),
+        )
+        image_path = self.db.execute(
+            "SELECT image_path FROM product_variants WHERE id = ?",
+            (self.variant_id,),
+        ).fetchone()["image_path"]
+        self.assertEqual(image_path, "/uploads/products/talle-1.webp")
+        self.assertIsNotNone(migration)
+
     def test_sku_is_unique_without_case_sensitivity(self) -> None:
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute(

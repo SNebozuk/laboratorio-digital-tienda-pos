@@ -29,6 +29,7 @@ final class ProductService
                 c.slug AS category_slug,
                 v.id AS variant_id,
                 v.name AS variant_name,
+                v.image_path AS variant_image_path,
                 v.price_cents,
                 (v.stock_on_hand - v.stock_reserved) AS available_stock
              FROM products p
@@ -110,6 +111,7 @@ final class ProductService
                 c.slug AS category_slug,
                 v.id AS variant_id,
                 v.name AS variant_name,
+                v.image_path AS variant_image_path,
                 v.sku,
                 v.barcode,
                 v.price_cents,
@@ -255,6 +257,7 @@ final class ProductService
                          SET name = :name,
                              sku = :sku,
                              barcode = :barcode,
+                             image_path = :image_path,
                              price_cents = :price_cents,
                              stock_on_hand = :stock_on_hand,
                              min_stock = :min_stock,
@@ -267,6 +270,7 @@ final class ProductService
                         'name' => $variant['name'],
                         'sku' => $variant['sku'],
                         'barcode' => $variant['barcode'],
+                        'image_path' => $variant['image_path'],
                         'price_cents' => $variant['price_cents'],
                         'stock_on_hand' => $variant['stock_on_hand'],
                         'min_stock' => $variant['min_stock'],
@@ -460,11 +464,11 @@ final class ProductService
         }
     }
 
-    public function duplicate(int $productId, int $actorUserId): int
+    public function duplicate(int $productId, int $actorUserId, bool $copyImages = true): int
     {
         return Database::immediate(
             $this->pdo,
-            function (PDO $pdo) use ($productId, $actorUserId): int {
+            function (PDO $pdo) use ($productId, $actorUserId, $copyImages): int {
                 $productQuery = $pdo->prepare('SELECT * FROM products WHERE id = :id');
                 $productQuery->execute(['id' => $productId]);
                 $product = $productQuery->fetch();
@@ -483,7 +487,7 @@ final class ProductService
                     'category_id' => $product['category_id'],
                     'name' => $product['name'] . ' (COPIA)',
                     'description' => $product['description'],
-                    'image_path' => $product['image_path'],
+                    'image_path' => $copyImages ? $product['image_path'] : null,
                     'sort_order' => $product['sort_order'],
                 ]);
                 $newProductId = (int) $pdo->lastInsertId();
@@ -505,6 +509,7 @@ final class ProductService
                             'name' => $variant['name'],
                             'sku' => $newSku,
                             'barcode' => null,
+                            'image_path' => $copyImages ? $variant['image_path'] : null,
                             'price_cents' => (int) $variant['price_cents'],
                             'stock_on_hand' => 0,
                             'min_stock' => (int) $variant['min_stock'],
@@ -555,6 +560,7 @@ final class ProductService
             $variant = [
                 'id' => (int) $row['variant_id'],
                 'name' => $row['variant_name'],
+                'image_path' => $row['variant_image_path'] ?? null,
                 'price_cents' => (int) $row['price_cents'],
                 'available_stock' => (int) $row['available_stock'],
             ];
@@ -629,12 +635,21 @@ final class ProductService
                 throw new ValidationException('No se puede repetir el SKU dentro del producto.');
             }
             $seenSkus[$sku] = true;
+            $variantImagePath = trim((string) ($variant['image_path'] ?? ''));
+            if (
+                $variantImagePath !== ''
+                && !str_starts_with($variantImagePath, '/')
+                && !preg_match('#^https://#i', $variantImagePath)
+            ) {
+                throw new ValidationException('La foto de una variante debe usar HTTPS o una ruta local.');
+            }
 
             $validatedVariants[] = [
                 'id' => isset($variant['id']) ? (int) $variant['id'] : null,
                 'name' => $variantName,
                 'sku' => $sku,
                 'barcode' => trim((string) ($variant['barcode'] ?? '')) ?: null,
+                'image_path' => $variantImagePath ?: null,
                 'price_cents' => $price,
                 'stock_on_hand' => $stock,
                 'min_stock' => $minimum,
@@ -699,10 +714,10 @@ final class ProductService
     ): int {
         $insert = $pdo->prepare(
             'INSERT INTO product_variants(
-                product_id, name, sku, barcode, price_cents,
+                product_id, name, sku, barcode, image_path, price_cents,
                 stock_on_hand, min_stock, sort_order, active
              ) VALUES(
-                :product_id, :name, :sku, :barcode, :price_cents,
+                :product_id, :name, :sku, :barcode, :image_path, :price_cents,
                 :stock_on_hand, :min_stock, :sort_order, :active
              )'
         );
@@ -711,6 +726,7 @@ final class ProductService
             'name' => $variant['name'],
             'sku' => $variant['sku'],
             'barcode' => $variant['barcode'],
+            'image_path' => $variant['image_path'],
             'price_cents' => $variant['price_cents'],
             'stock_on_hand' => $variant['stock_on_hand'],
             'min_stock' => $variant['min_stock'],

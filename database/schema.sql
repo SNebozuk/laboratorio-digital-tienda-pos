@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS product_variants (
     name TEXT NOT NULL,
     sku TEXT NOT NULL COLLATE NOCASE UNIQUE,
     barcode TEXT COLLATE NOCASE UNIQUE,
+    image_path TEXT,
     price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
     stock_on_hand INTEGER NOT NULL DEFAULT 0 CHECK (stock_on_hand >= 0),
     stock_reserved INTEGER NOT NULL DEFAULT 0 CHECK (
@@ -285,3 +286,4 @@ INSERT OR IGNORE INTO schema_migrations(version) VALUES (1);
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (5);
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (6);
 INSERT OR IGNORE INTO schema_migrations(version) VALUES (7);
+INSERT OR IGNORE INTO schema_migrations(version) VALUES (8);

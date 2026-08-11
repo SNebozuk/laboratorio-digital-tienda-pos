@@ -839,6 +839,20 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     margin: 0;
 }
 
+.variant-image-field {
+    grid-column: span 2;
+}
+
+.variant-image-preview {
+    display: block;
+    width: 46px;
+    height: 46px;
+    margin-top: 7px;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
 .admin-modal-card {
     width: min(850px, 100%);
 }

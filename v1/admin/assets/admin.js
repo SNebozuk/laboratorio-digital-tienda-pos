@@ -525,6 +525,12 @@
                     <input class="variant-stock" type="number" min="${Number(variant.stock_reserved || 0)}" value="${Number(variant.stock_on_hand || 0)}" required>
                 </label>
                 <button class="small-button danger-button" type="button" data-remove-variant>Quitar</button>
+                <label class="variant-image-field">
+                    FOTO DE ESTA VARIANTE
+                    <input class="variant-image-file" type="file" accept="image/jpeg,image/png,image/webp">
+                    <input class="variant-image-path" type="hidden" value="${escapeHtml(variant.image_path || '')}">
+                    ${variant.image_path ? `<img class="variant-image-preview" src="${escapeHtml(variant.image_path)}" alt="Foto actual de la variante">` : '<small>Opcional: si no cargás una, se usa la foto del producto.</small>'}
+                </label>
                 <label>
                     CÓDIGO DE BARRAS
                     <input class="variant-barcode" value="${escapeHtml(variant.barcode || '')}" placeholder="Opcional">
@@ -554,7 +560,8 @@
                 </label>
                 <label>
                     CATEGORÍA
-                    <select name="category_id"><option value="">Sin categoría</option>${flatCategories().map(item => `<option value="${Number(item.id)}" ${Number(product?.category?.id) === Number(item.id) ? 'selected' : ''}>${'— '.repeat(item.depth)}${escapeHtml(item.name)}</option>`).join('')}</select>
+                    <select name="category_id"><option value="">Elegí una categoría</option>${flatCategories().map(item => `<option value="${Number(item.id)}" ${Number(product?.category?.id) === Number(item.id) ? 'selected' : ''}>${'— '.repeat(item.depth)}${escapeHtml(item.name)}</option>`).join('')}</select>
+                    <small>Elegí la subcategoría más específica. El árbol se mantiene desde Categorías.</small>
                 </label>
                 <label>
                     DESCRIPCIÓN
@@ -596,6 +603,7 @@
             name: row.querySelector('.variant-name').value.trim(),
             sku: row.querySelector('.variant-sku').value.trim(),
             barcode: row.querySelector('.variant-barcode').value.trim(),
+            image_path: row.querySelector('.variant-image-path').value.trim(),
             price_cents: Math.round(Number(row.querySelector('.variant-price').value) * 100),
             stock_on_hand: Number(row.querySelector('.variant-stock').value),
             min_stock: Number(row.querySelector('.variant-min').value),
@@ -626,6 +634,13 @@
             if (imageFile) {
                 button.textContent = 'SUBIENDO FOTO…';
                 product.image_path = await uploadProductImage(imageFile);
+            }
+            const variantRows = Array.from(form.querySelectorAll('[data-variant-row]'));
+            for (let index = 0; index < variantRows.length; index += 1) {
+                const file = variantRows[index].querySelector('.variant-image-file').files[0];
+                if (!file) continue;
+                button.textContent = `SUBIENDO FOTO ${index + 1}/${variantRows.length}…`;
+                product.variants[index].image_path = await uploadProductImage(file);
             }
             button.textContent = 'GUARDANDO…';
             await apiPost({
@@ -673,12 +688,16 @@
 
     async function duplicateProduct(productId) {
         try {
+            const copyImages = window.confirm(
+                '¿Querés duplicar también la foto del producto y las fotos de sus variantes?\n\nAceptar: duplicar con fotos.\nCancelar: duplicar sin fotos.'
+            );
             await apiPost({
                 action: 'product_duplicate',
                 product_id: productId,
+                copy_images: copyImages,
             });
             await loadProducts();
-            toast('Producto duplicado con stock cero e inactivo.');
+            toast(`Producto duplicado ${copyImages ? 'con sus fotos' : 'sin fotos'}, con stock cero e inactivo.`);
         } catch (error) {
             toast(error.message);
         }

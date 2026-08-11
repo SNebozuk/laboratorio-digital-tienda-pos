@@ -241,7 +241,8 @@ try {
             $user = $app['auth']->requireAdmin();
             $newProductId = $app['products']->duplicate(
                 (int) ($input['product_id'] ?? 0),
-                (int) $user['id']
+                (int) $user['id'],
+                !isset($input['copy_images']) || (bool) $input['copy_images']
             );
             Http::json(['ok' => true, 'product_id' => $newProductId], 201);
 

@@ -57,6 +57,7 @@ final class Database
         self::migrateReceiptPrevalidation($pdo);
         self::migrateCategoryTree($pdo);
         self::migrateOrderArchive($pdo);
+        self::migrateVariantImages($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
@@ -91,6 +92,19 @@ final class Database
             'CREATE INDEX IF NOT EXISTS idx_orders_archived_created ON orders(archived_at, created_at)'
         );
         $pdo->exec('INSERT OR IGNORE INTO schema_migrations(version) VALUES(6)');
+    }
+
+    /** Permite que cada variante tenga su propia foto. */
+    private static function migrateVariantImages(PDO $pdo): void
+    {
+        $columns = [];
+        foreach ($pdo->query('PRAGMA table_info(product_variants)')->fetchAll() as $row) {
+            $columns[(string) $row['name']] = true;
+        }
+        if (!isset($columns['image_path'])) {
+            $pdo->exec('ALTER TABLE product_variants ADD COLUMN image_path TEXT');
+        }
+        $pdo->exec('INSERT OR IGNORE INTO schema_migrations(version) VALUES(8)');
     }
 
     /** Agrega campos a bases ya creadas antes de la prevalidación de pagos. */
