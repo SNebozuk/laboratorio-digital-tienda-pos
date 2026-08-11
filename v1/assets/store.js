@@ -1128,7 +1128,7 @@
                 <strong>Un último paso, muy simple</strong>
                 <span>Cuando hagas la transferencia, escribinos por WhatsApp para avisarnos.</span>
             </div>
-            <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener">AVISAR TRANSFERENCIA POR WHATSAPP</a>
+            <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener" data-whatsapp-order-complete>AVISAR TRANSFERENCIA POR WHATSAPP</a>
             <button class="secondary-button" type="button" data-finish-order>VOLVER A LA TIENDA</button>
         `);
     }
@@ -1474,6 +1474,13 @@
 
         if (event.target.closest('[data-finish-order]')) {
             finishOrder();
+            return;
+        }
+
+        if (event.target.closest('[data-whatsapp-order-complete]')) {
+            // El enlace abre WhatsApp en otra pestaña. La pestaña de la tienda
+            // queda lista para una compra nueva, sin mantener un resumen vacío.
+            window.setTimeout(finishOrder, 0);
         }
     });
 
