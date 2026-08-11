@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 $app = require dirname(__DIR__) . '/app/container.php';
+\LaboratorioDigital\Http::noCache();
 $catalog = $app['products']->publicCatalog();
 $categoryTree = $app['categories']->tree();
 $publicSettings = $app['settings']->values();

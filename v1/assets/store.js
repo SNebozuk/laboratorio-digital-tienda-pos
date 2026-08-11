@@ -979,13 +979,29 @@
         `;
     }
 
-    async function apiJson(payload) {
+    async function refreshCsrfToken() {
+        const url = new URL(app.api_url, window.location.href);
+        url.searchParams.set('action', 'session');
+        const response = await fetch(url, {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store',
+            credentials: 'same-origin',
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok || !data.csrf_token) {
+            throw new Error('No pudimos renovar la sesión. Actualizá la página e intentá nuevamente.');
+        }
+        app.csrf_token = data.csrf_token;
+    }
+
+    async function apiJson(payload, retried = false) {
         const response = await fetch(app.api_url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-Token': app.csrf_token,
             },
+            credentials: 'same-origin',
             body: JSON.stringify({
                 ...payload,
                 csrf_token: app.csrf_token,
@@ -997,6 +1013,12 @@
             data = JSON.parse(responseText);
         } catch {
             throw new Error('No pudimos comunicarnos con el servidor. Intentá nuevamente.');
+        }
+        const sessionExpired = response.status === 401
+            && /sesión venció|sesion vencio/i.test(String(data?.error || ''));
+        if (sessionExpired && !retried) {
+            await refreshCsrfToken();
+            return apiJson(payload, true);
         }
         if (!response.ok || !data.ok) {
             throw new Error(data.error || 'No pudimos completar la operación.');
