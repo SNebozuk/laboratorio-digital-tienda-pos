@@ -3349,3 +3349,37 @@ body.category-menu-open .category-panel {
 }
 
 .header-link-short { display: none; }
+
+/* En teléfono el buscador es una herramienta permanente, no una tarjeta que
+   flota entre los productos. Se fija inmediatamente debajo del encabezado. */
+@media (max-width: 760px) {
+    .catalog-column {
+        padding-top: 76px !important;
+    }
+
+    .catalog-column > .search-wrap {
+        position: fixed;
+        z-index: 29;
+        top: 58px;
+        right: 0;
+        left: 0;
+        width: auto;
+        margin: 0;
+        padding: 7px 10px;
+        border-radius: 0;
+        background: rgba(247, 250, 247, .98) !important;
+        box-shadow: 0 5px 14px rgba(24, 35, 27, .1);
+        backdrop-filter: blur(10px);
+    }
+
+    .catalog-column > .search-wrap .search-field input {
+        min-height: 42px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        border-radius: 9px;
+    }
+
+    body.category-menu-open .category-panel {
+        top: 116px !important;
+    }
+}
