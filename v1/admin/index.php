@@ -239,6 +239,8 @@ header('Referrer-Policy: same-origin');
                                 <label>USUARIO SMTP<input name="mail_smtp_username" type="email" required></label>
                             </div>
                             <p class="form-hint">Para proteger la casilla, la contraseña SMTP se conserva únicamente en la configuración privada del servidor, fuera de esta pantalla.</p>
+                            <div class="email-diagnostics" id="email-diagnostics" aria-live="polite"></div>
+                            <button class="secondary-button fit-button" id="refresh-mail-diagnostics" type="button">REVISAR ESTADO DEL ENVÃO</button>
                             <div class="email-template-grid">
                                 <label>PEDIDO CREADO<textarea name="mail_message_order_created" rows="3" placeholder="Hola {{cliente}}, recibimos tu pedido {{pedido}}."></textarea></label>
                                 <label>PAGO APROBADO<textarea name="mail_message_payment_approved" rows="3"></textarea></label>

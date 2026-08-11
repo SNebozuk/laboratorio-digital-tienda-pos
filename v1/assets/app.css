@@ -3359,7 +3359,7 @@ body.category-menu-open .category-panel {
 
     .catalog-column > .search-wrap {
         position: fixed;
-        z-index: 29;
+        z-index: 19;
         top: 58px;
         right: 0;
         left: 0;
@@ -3381,5 +3381,6 @@ body.category-menu-open .category-panel {
 
     body.category-menu-open .category-panel {
         top: 116px !important;
+        z-index: 31;
     }
 }

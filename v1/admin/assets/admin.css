@@ -2450,3 +2450,21 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .product-admin-actions { grid-column: 1 / -1; justify-content: flex-start; }
     .settings-card { padding: 16px; }
 }
+
+.email-diagnostics {
+    display: grid;
+    gap: 5px;
+    margin: 14px 0 10px;
+    padding: 12px 14px;
+    border: 1px solid #cfe5d6;
+    border-radius: 10px;
+    background: #f4fbf6;
+    color: #1d4d2d;
+    font-size: 13px;
+}
+
+.email-diagnostics span,
+.email-diagnostics small { color: #4b6654; }
+.email-diagnostics.warning { border-color: #f1d3a5; background: #fff9ed; color: #875000; }
+.email-diagnostics.warning span,
+.email-diagnostics.warning small { color: #7c6340; }

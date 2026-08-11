@@ -90,6 +90,10 @@ try {
                     'settings' => $app['settings']->values(),
                 ]);
 
+            case 'mail_diagnostics':
+                $app['auth']->requireAdmin();
+                Http::json(['ok' => true, 'diagnostics' => $app['mail']->diagnostics()]);
+
             case 'users':
                 $app['auth']->requireAdmin();
                 Http::json([

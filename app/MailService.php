@@ -121,6 +121,30 @@ final class MailService
         return $result;
     }
 
+    /** @return array<string, mixed> */
+    public function diagnostics(): array
+    {
+        $config = $this->runtimeConfig();
+        $counts = ['pending' => 0, 'sending' => 0, 'sent' => 0, 'failed' => 0];
+        foreach ($this->pdo->query('SELECT status, COUNT(*) AS total FROM mail_queue GROUP BY status')->fetchAll() as $row) {
+            $status = (string) $row['status'];
+            if (array_key_exists($status, $counts)) $counts[$status] = (int) $row['total'];
+        }
+        $latestError = $this->pdo->query("SELECT last_error FROM mail_queue WHERE last_error IS NOT NULL AND last_error <> '' ORDER BY id DESC LIMIT 1")->fetchColumn();
+
+        return [
+            'enabled' => !empty($config['mail_enabled']),
+            'smtp_ready' => trim((string) ($config['mail_smtp_host'] ?? '')) !== ''
+                && trim((string) ($config['mail_smtp_username'] ?? '')) !== ''
+                && trim((string) ($config['mail_smtp_password'] ?? '')) !== '',
+            'host' => (string) ($config['mail_smtp_host'] ?? ''),
+            'port' => (int) ($config['mail_smtp_port'] ?? 0),
+            'encryption' => (string) ($config['mail_smtp_encryption'] ?? ''),
+            'counts' => $counts,
+            'latest_error' => $latestError === false ? null : (string) $latestError,
+        ];
+    }
+
     private function send(string $recipient, string $subject, string $html): bool
     {
         if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {

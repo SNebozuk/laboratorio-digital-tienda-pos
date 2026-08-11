@@ -2313,7 +2313,23 @@
                     field.value = value;
                 }
             });
+            await loadMailDiagnostics();
         } catch (error) { toast(error.message); }
+    }
+
+    async function loadMailDiagnostics() {
+        const target = document.getElementById('email-diagnostics');
+        if (!target || app.user?.role !== 'admin') return;
+        try {
+            const { diagnostics } = await apiGet('mail_diagnostics');
+            const counts = diagnostics.counts || {};
+            const ready = diagnostics.enabled && diagnostics.smtp_ready;
+            target.className = `email-diagnostics ${ready ? 'ready' : 'warning'}`;
+            target.innerHTML = `<strong>${ready ? 'ConfiguraciÃ³n lista para enviar' : 'Falta completar la configuraciÃ³n SMTP'}</strong><span>${escapeHtml(diagnostics.host || 'Sin servidor')} Â· puerto ${Number(diagnostics.port || 0)} Â· ${escapeHtml(String(diagnostics.encryption || '').toUpperCase())}</span><span>Cola: ${Number(counts.pending || 0)} pendientes, ${Number(counts.sent || 0)} enviados, ${Number(counts.failed || 0)} fallidos.</span>${diagnostics.latest_error ? `<small>Ãšltimo error: ${escapeHtml(diagnostics.latest_error)}</small>` : ''}`;
+        } catch (error) {
+            target.className = 'email-diagnostics warning';
+            target.textContent = `No pudimos leer el diagnÃ³stico: ${error.message}`;
+        }
     }
 
     async function saveEmailSettings(form) {
@@ -2565,6 +2581,10 @@
     });
 
     document.addEventListener('click', event => {
+        if (event.target.closest('#refresh-mail-diagnostics')) {
+            loadMailDiagnostics();
+            return;
+        }
         const passwordToggle = event.target.closest('.password-toggle');
         if (passwordToggle) {
             const field = passwordToggle.closest('.password-field')?.querySelector('input');
