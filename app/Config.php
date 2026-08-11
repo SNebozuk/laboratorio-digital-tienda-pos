@@ -24,6 +24,7 @@ final class Config
                 throw new \RuntimeException('config.mail.local.php debe devolver un array.');
             }
             $local = array_replace($local, $mailLocal);
+            $local['mail_smtp_force_config'] = true;
         }
 
         $storagePath = self::string(
@@ -118,6 +119,7 @@ final class Config
             'mail_smtp_encryption' => self::string($local, 'mail_smtp_encryption', getenv('APP_MAIL_SMTP_ENCRYPTION') ?: 'tls'),
             'mail_smtp_username' => self::string($local, 'mail_smtp_username', getenv('APP_MAIL_SMTP_USERNAME') ?: ''),
             'mail_smtp_password' => self::string($local, 'mail_smtp_password', getenv('APP_MAIL_SMTP_PASSWORD') ?: ''),
+            'mail_smtp_force_config' => self::bool($local, 'mail_smtp_force_config', false),
             'receipt_ai_enabled' => self::bool(
                 $local,
                 'receipt_ai_enabled',

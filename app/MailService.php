@@ -411,6 +411,9 @@ final class MailService
         }
         $config = $this->config;
         foreach ($keys as $key) {
+            if (!empty($config['mail_smtp_force_config'])) {
+                continue;
+            }
             // Una habilitación explícita en la configuración privada del servidor
             // tiene prioridad sobre el valor inicial de la base de datos.
             if ($key === 'mail_enabled' && !empty($config[$key])) {
