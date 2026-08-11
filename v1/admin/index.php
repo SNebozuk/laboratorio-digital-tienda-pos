@@ -8,11 +8,11 @@ $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'),
 $storePath = $storePath === '/' ? '' : $storePath;
 $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
-$assetVersion = (string) max(
-    (int) @filemtime(dirname(__DIR__) . '/assets/app.css'),
-    (int) @filemtime(__DIR__ . '/assets/admin.css'),
-    (int) @filemtime(__DIR__ . '/assets/admin.js')
-);
+$assetVersion = substr(hash('sha256',
+    (string) @file_get_contents(dirname(__DIR__) . '/assets/app.css')
+    . (string) @file_get_contents(__DIR__ . '/assets/admin.css')
+    . (string) @file_get_contents(__DIR__ . '/assets/admin.js')
+), 0, 12);
 $apiUrl = $storePath . '/api.php';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';

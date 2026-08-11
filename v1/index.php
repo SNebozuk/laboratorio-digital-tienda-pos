@@ -9,11 +9,11 @@ $publicSettings = $app['settings']->values();
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
 $assetPath = $storePath . '/assets';
-$assetVersion = (string) max(
-    (int) @filemtime(__DIR__ . '/assets/app.css'),
-    (int) @filemtime(__DIR__ . '/assets/store.js'),
-    (int) @filemtime(__DIR__ . '/assets/light.css')
-);
+$assetVersion = substr(hash('sha256',
+    (string) @file_get_contents(__DIR__ . '/assets/app.css')
+    . (string) @file_get_contents(__DIR__ . '/assets/light.css')
+    . (string) @file_get_contents(__DIR__ . '/assets/store.js')
+), 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $apiUrl = $storePath . '/api.php';
