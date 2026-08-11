@@ -22,6 +22,7 @@
     let codeSearchRequest = 0;
     const collapsedCategories = new Set();
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
+    const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
 
     const elements = {
         categories: document.getElementById('category-list'),
@@ -140,6 +141,23 @@
             } catch {
                 // El carrito sigue funcionando durante la sesión actual.
             }
+        }
+    }
+
+    function savedCustomer() {
+        try {
+            const value = JSON.parse(localStorage.getItem(CUSTOMER_STORAGE_KEY) || 'null');
+            return value && typeof value === 'object' ? value : {};
+        } catch {
+            return {};
+        }
+    }
+
+    function persistCustomer(name, phone, email) {
+        try {
+            localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify({ name, phone, email }));
+        } catch {
+            // El autocompletado nativo sigue funcionando aunque el navegador bloquee storage.
         }
     }
 
@@ -859,6 +877,7 @@
             return;
         }
         const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
+        const customer = savedCustomer();
         openModal(`
             ${checkoutSteps(1)}
             <h2 id="modal-title">TUS DATOS</h2>
@@ -877,7 +896,7 @@
             <form id="checkout-form" novalidate>
                 <label>
                     Nombre y Apellido
-                    <input name="name" required autocomplete="name">
+                    <input name="name" required autocomplete="name" value="${escapeHtml(customer.name || '')}">
                 </label>
                 <label>
                     WhatsApp
@@ -887,11 +906,12 @@
                         required
                         autocomplete="tel"
                         placeholder="Ej.: 341 569 9338"
+                        value="${escapeHtml(customer.phone || '')}"
                     >
                 </label>
                 <label>
                     Email para recibir una copia (opcional)
-                    <input name="email" type="email" autocomplete="email">
+                    <input name="email" type="email" autocomplete="email" value="${escapeHtml(customer.email || '')}">
                 </label>
                 <fieldset class="payment-choice">
                     <legend>¿Cómo vas a pagar?</legend>
@@ -971,6 +991,7 @@
             return;
         }
         errorBox.hidden = true;
+        persistCustomer(customerName, String(formData.get('phone') || '').trim(), String(formData.get('email') || '').trim());
         button.disabled = true;
         button.textContent = 'PREPARANDO TRANSFERENCIA…';
         try {
