@@ -24,6 +24,7 @@
     const collapsedCategories = new Set();
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
+    const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
 
     const elements = {
         categories: document.getElementById('category-list'),
@@ -1329,7 +1330,32 @@
         `);
     }
 
+    function rememberCompletedOrder() {
+        if (!state.order?.public_number) {
+            return;
+        }
+        try {
+            sessionStorage.setItem(ORDER_COMPLETE_STORAGE_KEY, JSON.stringify({
+                public_number: String(state.order.public_number),
+            }));
+        } catch {
+            // Si el navegador bloquea el almacenamiento, la compra igualmente finaliza.
+        }
+    }
+
+    function showCompletedOrderNotice(order) {
+        openModal(`
+            <div class="success-box">
+                <strong>¡Gracias por tu compra!</strong>
+                <span>Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</span>
+            </div>
+            <p class="checkout-lead">Ya recibimos tu solicitud. Te contactaremos por WhatsApp para continuar con el pedido.</p>
+            <button class="primary-button" type="button" data-close-modal>SEGUIR COMPRANDO</button>
+        `);
+    }
+
     function finishOrder() {
+        rememberCompletedOrder();
         state.cart.clear();
         persistCart();
         state.order = null;
@@ -1629,6 +1655,17 @@
     renderCategories();
     renderCatalog();
     renderCart();
+    try {
+        const completedOrder = JSON.parse(
+            sessionStorage.getItem(ORDER_COMPLETE_STORAGE_KEY) || 'null'
+        );
+        sessionStorage.removeItem(ORDER_COMPLETE_STORAGE_KEY);
+        if (completedOrder?.public_number) {
+            window.setTimeout(() => showCompletedOrderNotice(completedOrder), 120);
+        }
+    } catch {
+        sessionStorage.removeItem(ORDER_COMPLETE_STORAGE_KEY);
+    }
     window.setInterval(() => {
         if (document.visibilityState === 'visible') {
             refreshCatalog();
