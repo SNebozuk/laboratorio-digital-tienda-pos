@@ -3358,9 +3358,9 @@ body.category-menu-open .category-panel {
     }
 
     .catalog-column > .search-wrap {
-        position: sticky;
-        z-index: 19;
-        top: 58px;
+        position: relative;
+        z-index: 1;
+        top: auto;
         width: auto;
         margin: 0 -10px 14px;
         padding: 7px 10px;
