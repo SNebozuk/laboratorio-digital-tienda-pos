@@ -1222,7 +1222,7 @@
         paid_prepare: 'Pagado / preparar',
         ready_pickup: 'Listo para retirar',
         delivered: 'Entregado',
-        rejected: 'Comprobante rechazado',
+        rejected: 'Pago rechazado',
         cancelled: 'Cancelado',
     };
 
@@ -1269,15 +1269,6 @@
         ) {
             actions.push(
                 `<button class="small-button" type="button" data-edit-order="${Number(order.id)}">Editar productos</button>`
-            );
-        }
-        if (order.payment_proof_id) {
-            actions.push(`
-                <a class="small-button" href="${escapeHtml(app.api_url)}?action=payment_proof&id=${Number(order.payment_proof_id)}" target="_blank" rel="noopener">
-                    Comprobante de pago
-                </a>
-            `,
-                `<button class="small-button" type="button" data-proof-analysis="${Number(order.payment_proof_id)}">Análisis IA</button>`
             );
         }
         if (order.status === 'payment_reported') {
@@ -1497,22 +1488,7 @@
         try {
             const data = await apiGet('order', { id: orderId });
             const order = data.order;
-            const proof = order.payment_proof || null;
-            const proofUrl = proof
-                ? `${app.api_url}?action=payment_proof&id=${Number(proof.id)}`
-                : '';
-            const proofPreview = proof
-                ? (proof.mime_type === 'application/pdf'
-                    ? `<iframe class="order-proof-preview" src="${escapeHtml(proofUrl)}" title="Comprobante de pago"></iframe>`
-                    : `<img class="order-proof-image" src="${escapeHtml(proofUrl)}" alt="Comprobante de pago de ${escapeHtml(order.public_number)}">`)
-                : '';
-            const actionOrder = {
-                ...order,
-                payment_proof_id: proof?.id || null,
-                payment_ai_status: proof?.ai_status || 'not_run',
-                payment_ai_risk_level: proof?.ai_risk_level || null,
-                payment_ai_summary: proof?.ai_summary || '',
-            };
+            const actionOrder = { ...order, payment_proof_id: null };
 
             openModal(`
                 <section class="order-detail">
@@ -1528,7 +1504,7 @@
                     <div class="order-detail-meta">
                         <div><span>CLIENTE</span><strong>${escapeHtml(order.customer_name)}</strong><small>${escapeHtml(order.customer_phone || order.customer_email || 'Sin contacto informado')}</small></div>
                         <div><span>FECHA</span><strong>${escapeHtml(order.created_at)}</strong><small>${escapeHtml(channelLabels[order.channel] || order.channel)}</small></div>
-                        <div><span>FORMA DE PAGO</span><strong>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</strong><small>${order.payment_method === 'cash' ? `Reserva hasta ${escapeHtml(order.payment_deadline_at || '')}` : (proof ? 'Comprobante recibido' : 'Sin comprobante cargado')}</small></div>
+                        <div><span>FORMA DE PAGO</span><strong>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</strong><small>${order.payment_method === 'cash' ? `Reserva hasta ${escapeHtml(order.payment_deadline_at || '')}` : 'El cliente avisa la transferencia por WhatsApp.'}</small></div>
                     </div>
                     <div class="order-detail-lines">
                         ${order.items.map(item => `
@@ -1545,18 +1521,14 @@
                     <div class="order-detail-total"><span>TOTAL</span><strong>${money(order.total_cents)}</strong></div>
                     <section class="order-payment-detail">
                         <div class="order-payment-head">
-                            <div><p class="eyebrow">PAGO</p><h3>${order.payment_method === 'cash' ? 'EFECTIVO AL RETIRAR' : (proof ? 'COMPROBANTE RECIBIDO' : 'SIN COMPROBANTE')}</h3></div>
-                            ${proof ? `<a class="small-button" href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener">Abrir original</a>` : ''}
+                            <div><p class="eyebrow">PAGO</p><h3>${order.payment_method === 'cash' ? 'EFECTIVO AL RETIRAR' : 'TRANSFERENCIA'}</h3></div>
                         </div>
-                        ${proof ? `
-                            <p class="order-proof-meta">${escapeHtml(proof.original_name)} &middot; ${formatFileSize(proof.size_bytes)} &middot; ${escapeHtml(proof.created_at)}</p>
-                            ${proofPreview}
-                        ` : (order.payment_method === 'cash'
-                            ? `<div class="notice"><strong>Reserva automática por 2 horas.</strong><br>Vence: ${escapeHtml(order.payment_deadline_at || '')}. Si no se entrega, la tarea programada cancela la venta y devuelve las unidades al stock.</div>`
-                            : `<p class="empty-copy">Esta venta no tiene un archivo de pago asociado.</p>`)}
+                        ${order.payment_method === 'cash'
+                            ? `<div class="notice"><strong>Reserva automática por 6 horas.</strong><br>Vence: ${escapeHtml(order.payment_deadline_at || '')}. Si no se entrega, la tarea programada cancela la venta y devuelve las unidades al stock.</div>`
+                            : `<p class="empty-copy">El cliente coordina la transferencia por WhatsApp.</p>`}
                     </section>
                     <div class="order-actions order-detail-actions">${orderActions(actionOrder)}</div>
-                    <p class="order-print-note">La impresi\u00f3n incluye la compra y el total, pero nunca el archivo del comprobante de pago.</p>
+                    <p class="order-print-note">La impresión incluye la compra y el total.</p>
                 </section>
             `);
         } catch (error) {
@@ -1617,9 +1589,9 @@
                     <small>pedidos y ventas</small>
                 </article>
                 <article class="attention">
-                    <span>REVISAR PAGO</span>
-                    <strong>${countStatus('payment_reported')}</strong>
-                    <small>comprobantes informados</small>
+                    <span>TRANSFERENCIAS</span>
+                    <strong>${countStatus('pending_payment')}</strong>
+                    <small>por coordinar</small>
                 </article>
                 <article>
                     <span>PREPARAR</span>
@@ -1665,7 +1637,7 @@
                         <span><strong>${escapeHtml(order.customer_name)}</strong></span>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <span class="order-list-units">${Number(order.unit_count)} unid.⌄</span>
-                        <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_proof_id ? 'Pago informado' : (order.payment_method === 'cash' ? 'Efectivo' : 'Pendiente'))}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
+                        <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia')}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
                         <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status] || order.status)}</span><small>${escapeHtml(channelLabels[order.channel] || order.channel)}</small></span>
                         <span class="order-list-chevron" aria-hidden="true">&rsaquo;</span>
                     </div>

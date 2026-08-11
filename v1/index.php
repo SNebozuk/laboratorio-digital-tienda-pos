@@ -195,8 +195,6 @@ header('Referrer-Policy: same-origin');
             'categories' => $categoryTree,
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
-            'receipt_ai_enabled' => $app['receipt_ai']->isConfigured(),
-            'proof_max_bytes' => (int) ($publicSettings['proof_max_bytes'] ?? (8 * 1024 * 1024)),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>

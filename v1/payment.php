@@ -11,6 +11,11 @@ header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('X-Robots-Tag: noindex, nofollow, noarchive');
 
+// La tienda ya no recibe comprobantes dentro de la plataforma. Los enlaces
+// anteriores vuelven de forma segura al catálogo, sin exponer una carga.
+header('Location: ./', true, 302);
+exit;
+
 $orderId = filter_input(INPUT_GET, 'order', FILTER_VALIDATE_INT) ?: 0;
 $uploadToken = strtolower(trim((string) ($_GET['token'] ?? '')));
 $order = null;

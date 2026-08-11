@@ -952,7 +952,7 @@
                     <legend>¿Cómo vas a pagar?</legend>
                     <label class="payment-option">
                         <input name="payment_method" type="radio" value="bank_transfer" checked>
-                        <span><strong>Transferencia</strong><small>Después vas a subir el comprobante.</small></span>
+                        <span><strong>Transferencia</strong><small>Te mostraremos los datos para realizarla.</small></span>
                     </label>
                     <label class="payment-option">
                         <input name="payment_method" type="radio" value="cash">
@@ -966,7 +966,7 @@
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
-            <p class="checkout-footnote" data-payment-footnote>El stock se reserva al enviar el comprobante.</p>
+            <p class="checkout-footnote" data-payment-footnote>Elegí la forma de pago que te resulte más cómoda.</p>
         `);
         const transferOption = elements.modalContent.querySelector('[value="bank_transfer"]')?.closest('.payment-option');
         const cashOption = elements.modalContent.querySelector('[value="cash"]')?.closest('.payment-option');
@@ -1126,10 +1126,9 @@
             </dl>
             <div class="payment-instructions">
                 <strong>Un último paso, muy simple</strong>
-                <span>Cuando hagas la transferencia, enviá el comprobante a nuestro WhatsApp.</span>
-                <span>No necesitás cargar archivos en esta página.</span>
+                <span>Cuando hagas la transferencia, escribinos por WhatsApp para avisarnos.</span>
             </div>
-            <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener">ENVIAR COMPROBANTE POR WHATSAPP</a>
+            <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener">AVISAR TRANSFERENCIA POR WHATSAPP</a>
             <p class="checkout-footnote">También enviaremos los detalles de tu pedido al email que indicaste.</p>
             <button class="secondary-button" type="button" data-finish-order>VOLVER A LA TIENDA</button>
         `);
@@ -1170,7 +1169,7 @@
                 <p>Al finalizar el plazo, liberaremos los productos nuevamente para que otras personas puedan pedirlos.</p>
             </div>
             ${order.pickup_address ? `<p>Retiro en: <strong>${escapeHtml(order.pickup_address)}</strong></p>` : ''}
-            <p class="checkout-footnote">No necesitás subir ningún comprobante.</p>
+            <p class="checkout-footnote">Te esperamos en el local dentro del horario indicado.</p>
             <button class="primary-button" type="button" data-finish-order>ENTENDIDO</button>
         `);
     }
@@ -1486,9 +1485,6 @@
                 Number(event.target.value)
             );
         }
-        if (event.target.matches('#proof-file')) {
-            proofFileSelected(event.target);
-        }
         if (event.target.matches('input[name="payment_method"]')) {
             const warning = document.getElementById('cash-reservation-warning');
             if (warning) {
@@ -1497,8 +1493,8 @@
             const footnote = document.querySelector('[data-payment-footnote]');
             if (footnote) {
                 footnote.textContent = event.target.value === 'cash'
-                    ? 'Al confirmar, guardamos el stock para vos durante 2 horas.'
-                    : 'El stock se reserva al enviar el comprobante.';
+                    ? 'Al confirmar, guardamos el stock para vos durante 6 horas.'
+                    : 'Elegí la forma de pago que te resulte más cómoda.';
             }
         }
     });
@@ -1507,10 +1503,6 @@
         if (event.target.id === 'checkout-form') {
             event.preventDefault();
             createOrder(event.target);
-        }
-        if (event.target.id === 'proof-form') {
-            event.preventDefault();
-            uploadProof(event.target);
         }
     });
 

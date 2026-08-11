@@ -241,9 +241,7 @@ header('Referrer-Policy: same-origin');
                             <p class="form-hint">Para proteger la casilla, la contraseña SMTP se conserva únicamente en la configuración privada del servidor, fuera de esta pantalla.</p>
                             <div class="email-template-grid">
                                 <label>PEDIDO CREADO<textarea name="mail_message_order_created" rows="3" placeholder="Hola {{cliente}}, recibimos tu pedido {{pedido}}."></textarea></label>
-                                <label>COMPROBANTE RECIBIDO<textarea name="mail_message_payment_reported" rows="3"></textarea></label>
                                 <label>PAGO APROBADO<textarea name="mail_message_payment_approved" rows="3"></textarea></label>
-                                <label>COMPROBANTE A CORREGIR<textarea name="mail_message_payment_rejected" rows="3"></textarea></label>
                                 <label>PEDIDO LISTO<textarea name="mail_message_order_ready" rows="3"></textarea></label>
                                 <label>PEDIDO CANCELADO<textarea name="mail_message_order_cancelled" rows="3"></textarea></label>
                             </div>
@@ -318,7 +316,6 @@ header('Referrer-Policy: same-origin');
                                 <option value="paid_prepare">Pagado / preparar</option>
                                 <option value="ready_pickup">Listo para retirar</option>
                                 <option value="delivered">Entregado</option>
-                                <option value="rejected">Comprobante rechazado</option>
                                 <option value="cancelled">Cancelado</option>
                             </select>
                         </label>
@@ -442,10 +439,6 @@ header('Referrer-Policy: same-origin');
                                 <label>
                                     PLAZO TRAS RECHAZO · MINUTOS
                                     <input name="rejected_retry_minutes" type="number" min="15" max="10080" step="15" required>
-                                </label>
-                                <label>
-                                    TAMAÑO MÁXIMO DEL COMPROBANTE · MB
-                                    <input name="proof_max_mb" type="number" min="1" max="20" step="1" required>
                                 </label>
                             </div>
                             <button class="primary-button fit-button" type="submit">

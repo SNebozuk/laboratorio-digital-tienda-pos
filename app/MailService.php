@@ -290,10 +290,10 @@ final class MailService
                     . '</strong></p>'
                     . '<p>' . ($cashOrder
                         ? 'Tenés que retirar y pagar antes del '
-                        : 'Podés informar el pago hasta ')
-                    . $this->escape(
+                        : 'Cuando realices la transferencia, avisanos por WhatsApp. ')
+                    . ($cashOrder ? $this->escape(
                         (string) ($payload['payment_deadline_at'] ?? '')
-                    )
+                    ) : '')
                     . '.</p>'
                     . ($cashOrder
                         ? '<p><strong>Al vencer el plazo, el pedido se cancela y los productos vuelven al stock.</strong></p>'
@@ -301,10 +301,10 @@ final class MailService
                         $internal
                             ? rtrim((string) ($this->config['base_url'] ?? ''), '/')
                                 . '/admin/'
-                            : (string) ($payload['payment_url'] ?? ''),
+                            : rtrim((string) ($this->config['base_url'] ?? ''), '/') . '/',
                         $internal
                             ? 'ABRIR ADMINISTRACIÓN'
-                            : 'VER DATOS Y SUBIR COMPROBANTE'
+                            : 'VER LA TIENDA'
                     ));
                 if ($internal) {
                     $content .= '<p>WhatsApp del cliente: <strong>'
@@ -318,9 +318,8 @@ final class MailService
                 break;
 
             case 'payment_reported':
-                $title = 'Comprobante recibido';
-                $content = '<p>Recibimos el comprobante y reservamos el stock. '
-                    . 'El pago está pendiente de verificación.</p>';
+                $title = 'Pago informado';
+                $content = '<p>Recibimos tu aviso de pago y verificaremos la acreditación.</p>';
                 break;
 
             case 'payment_approved':
@@ -329,17 +328,8 @@ final class MailService
                 break;
 
             case 'payment_rejected':
-                $title = 'Necesitamos otro comprobante';
-                $content = '<p>No pudimos validar el comprobante. Podés volver a '
-                    . 'cargarlo hasta '
-                    . $this->escape(
-                        (string) ($payload['retry_deadline_at'] ?? '')
-                    )
-                    . '.</p>'
-                    . $this->actionButton(
-                        (string) ($payload['payment_url'] ?? ''),
-                        'VOLVER A SUBIR COMPROBANTE'
-                    );
+                $title = 'Necesitamos revisar el pago';
+                $content = '<p>Necesitamos que te comuniques por WhatsApp para revisar los datos del pago.</p>';
                 break;
 
             case 'order_ready':
