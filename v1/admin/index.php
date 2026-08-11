@@ -142,7 +142,7 @@ header('Referrer-Policy: same-origin');
                 </header>
 
                 <section class="admin-view active" id="view-products">
-                    <div class="view-heading">
+                    <div class="view-heading order-page-heading">
                         <div>
                             <p class="eyebrow">CATÁLOGO Y STOCK</p>
                             <h1>PRODUCTOS</h1>
@@ -294,12 +294,14 @@ header('Referrer-Policy: same-origin');
                     <div class="view-heading">
                         <div>
                             <p class="eyebrow">OPERACIÓN DIARIA</p>
-                            <h1>PEDIDOS Y VENTAS</h1>
+                            <h1>VENTAS <small id="open-orders-count"></small></h1>
                             <p>Controlá pagos, preparación, retiros y ventas de mostrador.</p>
                         </div>
-                        <button class="secondary-button fit-button" id="refresh-orders" type="button">
-                            ACTUALIZAR
-                        </button>
+                        <div class="order-page-actions">
+                            <button class="secondary-button" id="order-auto-cancel-info" type="button">⚙ Cancelación automática</button>
+                            <button class="secondary-button" id="refresh-orders" type="button">⇩ Exportar lista</button>
+                            <button class="primary-button" type="button" data-view="pos">⊕ Agregar orden de compra</button>
+                        </div>
                     </div>
                     <div class="order-overview" id="order-overview" aria-label="Resumen de pedidos"></div>
                     <div class="order-toolbar">

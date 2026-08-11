@@ -69,6 +69,7 @@
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
         orderOverview: document.getElementById('order-overview'),
+        openOrdersCount: document.getElementById('open-orders-count'),
         orderSearch: document.getElementById('order-search'),
         orderStatusFilter: document.getElementById('order-status-filter'),
         orderChannelFilter: document.getElementById('order-channel-filter'),
@@ -1633,23 +1634,39 @@
             `;
         }
 
+        if (elements.orderOverview) {
+            const countFor = statuses => state.orders.filter(order => statuses.includes(order.status)).length;
+            const openCount = countFor(['pending_payment', 'payment_reported', 'paid_prepare', 'ready_pickup', 'rejected']);
+            if (elements.openOrdersCount) {
+                elements.openOrdersCount.textContent = `${openCount} abiertas`;
+            }
+            elements.orderOverview.innerHTML = `
+                <button class="order-state-tab ${!state.orderStatus ? 'active' : ''}" type="button" data-order-status="">Todas <b>${state.orders.length}</b></button>
+                <button class="order-state-tab ${['pending_payment', 'payment_reported'].includes(state.orderStatus) ? 'active' : ''}" type="button" data-order-status="pending_payment">Por cobrar <b>${countFor(['pending_payment', 'payment_reported'])}</b></button>
+                <button class="order-state-tab ${state.orderStatus === 'paid_prepare' ? 'active' : ''}" type="button" data-order-status="paid_prepare">Por empaquetar <b>${countFor(['paid_prepare'])}</b></button>
+                <button class="order-state-tab ${state.orderStatus === 'ready_pickup' ? 'active' : ''}" type="button" data-order-status="ready_pickup">Por retirar <b>${countFor(['ready_pickup'])}</b></button>
+                <button class="order-state-tab ${state.orderStatus === 'delivered' ? 'active' : ''}" type="button" data-order-status="delivered">Por archivar <b>${countFor(['delivered'])}</b></button>
+            `;
+        }
+
         if (matchingOrders.length) {
             const allMatchingSelected = matchingOrders.every(order => (
                 state.selectedOrderIds.has(Number(order.id))
             ));
             elements.orderList.innerHTML = `
                 <div class="order-list-head" aria-hidden="true">
-                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''}><span>TODO</span></label><span>VENTA</span><span>CLIENTE</span><span>ORIGEN</span><span>PAGO</span><span>ESTADO</span><span>TOTAL</span><span></span>
+                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''}><span class="visually-hidden">TODO</span></label><span>VENTA</span><span>FECHA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>PAGO</span><span>ENVÍO</span><span></span>
                 </div>
                 ${matchingOrders.map(order => `
                     <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
-                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.created_at)}</small>${order.archived_at ? '<small>Archivada</small>' : ''}</span>
-                        <span><strong>${escapeHtml(order.customer_name)}</strong><small>${Number(order.unit_count)} unidades</small></span>
-                        <span>${escapeHtml(channelLabels[order.channel] || order.channel)}</span>
-                        <span>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}${order.payment_proof_id ? '<small>Comprobante recibido</small>' : ''}</span>
-                        <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status] || order.status)}</span></span>
+                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : ''}</span>
+                        <span class="order-list-date">${escapeHtml(String(order.created_at || '').replace('T', ' '))}</span>
+                        <span><strong>${escapeHtml(order.customer_name)}</strong></span>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
+                        <span class="order-list-units">${Number(order.unit_count)} unid.⌄</span>
+                        <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_proof_id ? 'Pago informado' : (order.payment_method === 'cash' ? 'Efectivo' : 'Pendiente'))}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
+                        <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status] || order.status)}</span><small>${escapeHtml(channelLabels[order.channel] || order.channel)}</small></span>
                         <span class="order-list-chevron" aria-hidden="true">&rsaquo;</span>
                     </div>
                 `).join('')}
@@ -2641,6 +2658,17 @@
         const view = event.target.closest('[data-view]');
         if (view) {
             showView(view.dataset.view);
+            return;
+        }
+        const orderStatusTab = event.target.closest('[data-order-status]');
+        if (orderStatusTab) {
+            state.orderStatus = orderStatusTab.dataset.orderStatus || '';
+            if (elements.orderStatusFilter) elements.orderStatusFilter.value = state.orderStatus;
+            renderOrders();
+            return;
+        }
+        if (event.target.closest('#order-auto-cancel-info')) {
+            toast('Las reservas en efectivo se cancelan automáticamente al cumplirse las 2 horas.');
             return;
         }
         if (event.target.closest('[data-close-modal]')) {
