@@ -1,0 +1,7 @@
+# La autenticaciÃ³n de la tienda y del administrador la controla la aplicaciÃ³n.
+# No debe heredarse una clave HTTP del directorio de hosting.
+AuthType None
+
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>

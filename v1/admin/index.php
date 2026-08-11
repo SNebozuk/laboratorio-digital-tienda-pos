@@ -6,10 +6,6 @@ $user = $app['auth']->user();
 $setupRequired = (int) $app['pdo']->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0;
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
-$lastPathSlash = strrpos($storePath, '/');
-$applicationPath = $storePath === '' || $lastPathSlash === false
-    ? ''
-    : substr($storePath, 0, $lastPathSlash);
 $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
 $assetVersion = (string) max(
@@ -17,7 +13,7 @@ $assetVersion = (string) max(
     (int) @filemtime(__DIR__ . '/assets/admin.css'),
     (int) @filemtime(__DIR__ . '/assets/admin.js')
 );
-$apiUrl = ($applicationPath === '' ? '' : $applicationPath) . '/api.php';
+$apiUrl = $storePath . '/api.php';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');

@@ -8,10 +8,6 @@ $categoryTree = $app['categories']->tree();
 $publicSettings = $app['settings']->values();
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
-$lastPathSlash = strrpos($storePath, '/');
-$applicationPath = $storePath === '' || $lastPathSlash === false
-    ? ''
-    : substr($storePath, 0, $lastPathSlash);
 $assetPath = $storePath . '/assets';
 $assetVersion = (string) max(
     (int) @filemtime(__DIR__ . '/assets/app.css'),
@@ -20,7 +16,7 @@ $assetVersion = (string) max(
 );
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
-$apiUrl = ($applicationPath === '' ? '' : $applicationPath) . '/api.php';
+$apiUrl = $storePath . '/api.php';
 $whatsappNumber = preg_replace('/\D+/', '', (string) ($publicSettings['whatsapp_number'] ?? '5493415699338')) ?: '5493415699338';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
