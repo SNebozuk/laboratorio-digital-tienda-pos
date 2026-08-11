@@ -3312,20 +3312,26 @@ body.product-detail-mode .catalog-column {
 /* Encabezado compacto para teléfonos: evita que logo y acciones se superpongan. */
 @media (max-width: 760px) {
     .store-header {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
         min-height: 58px !important;
         gap: 8px !important;
         padding: 8px 10px !important;
     }
 
-    .header-leading { min-width: 0; gap: 7px !important; }
+    .header-leading { min-width: 0; gap: 7px !important; overflow: hidden; }
     .catalog-menu-button { flex: 0 0 auto; padding: 8px !important; font-size: 0; }
     .catalog-menu-button span:first-child { font-size: 18px; }
-    .brand { min-width: 0; }
-    .brand-logo { width: min(112px, 34vw) !important; height: 32px !important; }
+    .brand { min-width: 0; overflow: hidden; }
+    .brand-logo { display: block !important; width: min(108px, 31vw) !important; height: 30px !important; object-position: left center !important; }
     .brand > span:not(.brand-logo) { display: none !important; }
     .header-actions { flex: 0 0 auto; gap: 4px !important; }
-    .header-link { padding: 7px 6px !important; font-size: 9px !important; letter-spacing: 0 !important; white-space: nowrap; }
+    .header-link { display: inline-flex !important; align-items: center; padding: 7px 6px !important; font-size: 9px !important; letter-spacing: 0 !important; white-space: nowrap; }
+    .header-link-long { display: none; }
+    .store-header .header-link-short { display: inline; }
     .cart-mobile { min-width: 38px !important; padding: 7px !important; }
     .cart-mobile svg { width: 18px !important; height: 18px !important; }
     .cart-mobile span { min-width: 18px !important; height: 18px !important; font-size: 10px !important; }
 }
+
+.header-link-short { display: none; }
