@@ -1,0 +1,90 @@
+name: Desplegar en DonWeb
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: donweb-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Permite que el mismo archivo funcione si la rama principal se llama main o master.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Descargar versión aprobada
+        uses: actions/checkout@v6
+
+      - name: Verificar que estén cargados los Secrets de DonWeb
+        id: configuration
+        env:
+          FTP_SERVER: ${{ secrets.DONWEB_FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.DONWEB_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.DONWEB_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.DONWEB_FTP_PORT }}
+          FTP_REMOTE_DIR: ${{ secrets.DONWEB_FTP_REMOTE_DIR }}
+        run: |
+          if [ -z "$FTP_SERVER" ] || [ -z "$FTP_USERNAME" ] || [ -z "$FTP_PASSWORD" ] || [ -z "$FTP_PORT" ] || [ -z "$FTP_REMOTE_DIR" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "El deploy se omitió: todavía faltan Secrets de DonWeb."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sincronizar cambios por FTPS
+        if: steps.configuration.outputs.configured == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.DONWEB_FTP_SERVER }}
+          username: ${{ secrets.DONWEB_FTP_USERNAME }}
+          password: ${{ secrets.DONWEB_FTP_PASSWORD }}
+          port: ${{ secrets.DONWEB_FTP_PORT }}
+          protocol: ftps
+          security: strict
+          local-dir: ./
+          server-dir: ${{ secrets.DONWEB_FTP_REMOTE_DIR }}
+          dangerous-clean-slate: false
+          log-level: standard
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .github/**
+            .idea/**
+            .vscode/**
+            node_modules/**
+            vendor/**
+            .env
+            .env.*
+            config.local.php
+            storage/**
+            uploads/**
+            v1/uploads/**
+            data/**
+            backups/**
+            logs/**
+            cache/**
+            tests/**
+            docs/**
+            outputs/**
+            tools/**
+            work/**
+            git-history/**
+            maintenance/**
+            preview.html
+            README.md
+            SECURITY.md
+            AGENTS.md
+            CHANGELOG.md
+            config.example.php
+            database/catalog_seed.sql
+            **/*.log
+            **/*.tmp
+            **/*.bak
+            .ftp-deploy-sync-state.json
