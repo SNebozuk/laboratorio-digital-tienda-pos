@@ -3217,6 +3217,20 @@ body.product-detail-mode .catalog-column {
     pointer-events: auto;
 }
 
+/* Respaldo para navegadores móviles: el estado del documento prevalece sobre
+   reglas antiguas del tema y garantiza que el panel lateral sea interactivo. */
+body.category-menu-open .category-backdrop {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+body.category-menu-open .category-panel {
+    display: block !important;
+    visibility: visible !important;
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
+}
+
 @media (max-width: 1120px) {
     .store-shell,
     body.product-detail-mode .store-shell {

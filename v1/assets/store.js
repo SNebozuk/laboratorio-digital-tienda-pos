@@ -1331,9 +1331,7 @@
             syncProductUrl(null);
             state.remoteSearchIds = new Set();
             elements.search.value = '';
-            elements.categoryPanel.classList.remove('mobile-open');
-            elements.categoryPanel.classList.remove('menu-open');
-            elements.categoryBackdrop.classList.remove('menu-open');
+            setCategoryMenuOpen(false);
             elements.categoryToggle.setAttribute('aria-expanded', 'false');
             elements.categoryMenu.setAttribute('aria-expanded', 'false');
             window.history.pushState({ catalog: true }, '', window.location.href);
@@ -1488,15 +1486,19 @@
         const isOpen = elements.categoryPanel.classList.toggle('mobile-open');
         elements.categoryToggle.setAttribute('aria-expanded', String(isOpen));
     });
+    function setCategoryMenuOpen(open) {
+        elements.categoryPanel.classList.toggle('menu-open', open);
+        elements.categoryPanel.classList.toggle('mobile-open', open);
+        elements.categoryBackdrop.classList.toggle('menu-open', open);
+        document.body.classList.toggle('category-menu-open', open);
+        elements.categoryMenu.setAttribute('aria-expanded', String(open));
+    }
+
     elements.categoryMenu.addEventListener('click', () => {
-        const isOpen = elements.categoryPanel.classList.toggle('menu-open');
-        elements.categoryBackdrop.classList.toggle('menu-open', isOpen);
-        elements.categoryMenu.setAttribute('aria-expanded', String(isOpen));
+        setCategoryMenuOpen(!elements.categoryPanel.classList.contains('menu-open'));
     });
     elements.categoryBackdrop.addEventListener('click', () => {
-        elements.categoryPanel.classList.remove('menu-open');
-        elements.categoryBackdrop.classList.remove('menu-open');
-        elements.categoryMenu.setAttribute('aria-expanded', 'false');
+        setCategoryMenuOpen(false);
     });
     elements.modal.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
@@ -1522,15 +1524,17 @@
         }
         if (elements.categoryPanel.classList.contains('mobile-open')) {
             event.preventDefault();
+            if (elements.categoryPanel.classList.contains('menu-open')) {
+                setCategoryMenuOpen(false);
+                return;
+            }
             elements.categoryPanel.classList.remove('mobile-open');
             elements.categoryToggle.setAttribute('aria-expanded', 'false');
             return;
         }
         if (elements.categoryPanel.classList.contains('menu-open')) {
             event.preventDefault();
-            elements.categoryPanel.classList.remove('menu-open');
-            elements.categoryBackdrop.classList.remove('menu-open');
-            elements.categoryMenu.setAttribute('aria-expanded', 'false');
+            setCategoryMenuOpen(false);
             return;
         }
         if (state.openedProductId !== null) {
