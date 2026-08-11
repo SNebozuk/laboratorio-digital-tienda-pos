@@ -3276,3 +3276,35 @@ body.product-detail-mode .catalog-column {
         border: 1px solid transparent;
     }
 }
+
+/* Tema claro definitivo: estas reglas van al final para reemplazar la presentación oscura anterior. */
+.store-header { background: rgba(255,255,255,.95) !important; border-color: var(--line) !important; box-shadow: 0 8px 25px rgba(24,35,27,.08) !important; }
+.brand strong { color: var(--text) !important; }
+.header-link { color: var(--text) !important; }
+.header-link:hover, .header-link:focus-visible { color: var(--accent) !important; background: #edf7ef !important; }
+.category-panel { background: rgba(255,255,255,.98) !important; border-color: var(--line) !important; box-shadow: 14px 0 34px rgba(24,35,27,.12) !important; }
+.category-title, .eyebrow { color: var(--muted) !important; }
+.category-button { color: #344238 !important; }
+.category-button:hover { color: var(--accent) !important; background: #edf7ef !important; border-color: #c7dec9 !important; }
+.category-button.active { color: var(--accent) !important; background: #e6f4e9 !important; border-color: #b9dbbf !important; box-shadow: inset 3px 0 0 var(--accent) !important; }
+.category-help { background: #edf7ef !important; border-color: #c7dec9 !important; }
+.catalog-intro { background: linear-gradient(135deg, #ffffff, #edf7ef) !important; }
+.catalog-intro .eyebrow { color: var(--accent) !important; background: #e6f4e9 !important; border-color: #b9dbbf !important; }
+.catalog-intro h1, .summary-product-title > strong, .summary-product-title button > strong, .order-panel h2, .order-total strong { color: var(--text) !important; text-shadow: none !important; }
+.catalog-intro > p:last-child, .summary-product-title > small, .summary-product-title button + small, .search-result-count { color: var(--muted) !important; }
+.search-wrap { background: rgba(247,250,247,.94) !important; }
+.search-wrap .search-field input { background: #fff !important; border-color: #b9cdbd !important; color: var(--text) !important; box-shadow: 0 8px 20px rgba(24,35,27,.07) !important; }
+.search-wrap .search-field input:focus { border-color: var(--accent) !important; background: #fff !important; box-shadow: 0 0 0 4px rgba(22,131,66,.12) !important; }
+.search-field svg { stroke: var(--accent) !important; }
+.catalog-product-summary, .opened-variant-row, .cart-line { background: #fff !important; border-color: var(--line) !important; box-shadow: 0 6px 18px rgba(24,35,27,.06) !important; }
+.catalog-product-summary:hover, .opened-variant-row:hover { border-color: #9ec8a5 !important; background: #fbfefb !important; box-shadow: 0 10px 24px rgba(24,35,27,.10) !important; }
+.summary-variant-count, .summary-product-chevron, .opened-product-back { color: var(--accent) !important; background: #e6f4e9 !important; border-color: #b9dbbf !important; }
+.summary-product-price, .opened-variant-price { color: var(--text) !important; }
+.summary-product-stock:not(.none), .opened-variant-stock:not(.none) { color: var(--accent) !important; }
+.quantity-control { background: #fff !important; border-color: #b9cdbd !important; box-shadow: none !important; }
+.quantity-control button, .quantity-control input { background: #fff !important; color: var(--text) !important; }
+.quantity-control button { color: var(--accent) !important; }
+.quantity-control button:hover:not(:disabled) { background: var(--accent) !important; color: #fff !important; }
+.opened-product-head { background: #edf7ef !important; }
+.order-panel { background: #fff !important; border-color: var(--line) !important; box-shadow: -10px 0 25px rgba(24,35,27,.06) !important; }
+.primary-button { background: var(--accent) !important; color: #fff !important; }
