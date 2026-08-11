@@ -1862,3 +1862,250 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-search input:focus, .pos-cart input:focus, .pos-cart select:focus, .admin-modal-card input:focus, .admin-modal-card textarea:focus, .admin-modal-card select:focus { border-color: #7668e8; box-shadow: 0 0 0 3px rgba(118, 104, 232, .14); }
 .small-button { border-color: #d9deea; background: #fff; color: #4d566b; }
 .small-button:hover { border-color: #8c82e8; color: #5b4fc7; }
+
+/* Escala y composición del administrador. */
+.admin-body {
+    min-width: 320px;
+    font-size: 14px;
+    line-height: 1.45;
+    letter-spacing: -.006em;
+}
+
+.admin-shell { grid-template-columns: 252px minmax(0, 1fr); }
+
+.admin-sidebar {
+    padding: 28px 18px 18px;
+}
+
+.admin-brand {
+    gap: 10px;
+    padding: 0 8px;
+}
+
+.admin-brand strong {
+    font-size: 14px;
+    font-weight: 780;
+    letter-spacing: -.02em;
+}
+
+.admin-brand small {
+    margin-top: 2px;
+    font-size: 9px;
+    font-weight: 750;
+    letter-spacing: .085em;
+}
+
+.admin-nav { gap: 4px; margin-top: 34px; }
+
+.admin-nav-button {
+    min-height: 42px;
+    padding: 11px 13px;
+    text-align: left;
+    transition: background .16s ease, color .16s ease, transform .16s ease;
+}
+
+.admin-nav-button:hover { transform: translateX(2px); }
+
+.admin-user {
+    gap: 3px;
+    padding: 16px 8px 2px;
+    font-size: 13px;
+}
+
+.admin-main {
+    max-width: 1620px;
+    margin: 0 auto;
+    padding: 36px clamp(24px, 4vw, 64px) 82px;
+}
+
+.view-heading {
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.view-heading h1 {
+    font-size: clamp(28px, 2.8vw, 40px);
+    font-weight: 760;
+    line-height: 1.08;
+    letter-spacing: -.045em;
+}
+
+.view-heading .eyebrow,
+.eyebrow {
+    color: #786de0;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .1em;
+}
+
+.view-heading p:last-child {
+    max-width: 680px;
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.admin-search,
+.order-filter-search { margin-bottom: 18px; }
+
+.admin-search input,
+.order-filter-search input {
+    min-height: 44px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.product-admin-card,
+.order-card,
+.settings-card,
+.category-admin-row,
+.user-card,
+.size-guide-editor,
+.cash-card {
+    box-shadow: 0 5px 20px rgba(30, 40, 70, .035);
+}
+
+.product-admin-card { margin-bottom: 10px; }
+
+.product-admin-head {
+    grid-template-columns: 56px minmax(260px, 1fr) minmax(110px, .32fr) minmax(150px, .5fr) auto;
+    gap: 16px;
+    min-height: 84px;
+    padding: 14px 16px;
+}
+
+.product-admin-image,
+.product-admin-placeholder { width: 56px; height: 56px; border-radius: 10px; }
+
+.product-admin-title strong {
+    font-size: 14px;
+    font-weight: 740;
+    letter-spacing: -.014em;
+}
+
+.product-admin-title small,
+.product-admin-variant-count,
+.product-admin-price {
+    margin-top: 3px;
+    font-size: 12px;
+}
+
+.product-admin-actions { gap: 6px; }
+
+.variant-admin-row {
+    grid-template-columns: minmax(200px, 1fr) 150px 136px 124px;
+    padding: 13px 16px;
+}
+
+.order-toolbar,
+.order-bulk-toolbar {
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 12px rgba(30, 40, 70, .025);
+}
+
+.order-list-head,
+.order-list-row {
+    grid-template-columns: 38px minmax(105px, .45fr) minmax(190px, 1.3fr) minmax(120px, .7fr) minmax(125px, .7fr) minmax(110px, .55fr) 28px;
+    column-gap: 13px;
+}
+
+.order-list-head {
+    padding: 11px 16px;
+    color: #7a8293;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .075em;
+}
+
+.order-list-row {
+    min-height: 70px;
+    padding: 12px 16px;
+    border-color: #edf0f5;
+    font-size: 13px;
+}
+
+.order-list-row:hover { background: #fafaff; }
+
+.status-pill {
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .03em;
+}
+
+.settings-grid { gap: 16px; }
+.settings-card { padding: 22px; }
+.settings-card h2,
+.size-guide-editor h2 { font-size: 17px; letter-spacing: -.02em; }
+
+.admin-main label {
+    color: #667087;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .055em;
+}
+
+.admin-main input,
+.admin-main select,
+.admin-main textarea {
+    min-height: 42px;
+    margin-top: 5px;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: normal;
+}
+
+.admin-main textarea { min-height: 100px; line-height: 1.5; }
+
+.admin-body .primary-button {
+    min-height: 42px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #635bdb;
+    box-shadow: 0 5px 12px rgba(99, 91, 219, .18);
+    font-size: 12px;
+    font-weight: 780;
+    letter-spacing: .015em;
+}
+
+.admin-body .primary-button:hover { background: #554cc7; }
+.admin-body .secondary-button { border-color: #d9deea; color: #596176; }
+
+.admin-modal-card {
+    width: min(760px, calc(100vw - 32px));
+    max-height: min(850px, calc(100vh - 32px));
+    border-color: #e2e6ef;
+    border-radius: 16px;
+    background: #fff;
+    color: #252a3a;
+    box-shadow: 0 24px 80px rgba(29, 37, 62, .24);
+}
+
+.admin-modal-card h2 { font-size: 23px; letter-spacing: -.035em; }
+
+@media (max-width: 1050px) {
+    .admin-shell { grid-template-columns: 212px minmax(0, 1fr); }
+    .admin-main { padding: 28px 24px 64px; }
+    .product-admin-head { grid-template-columns: 56px minmax(200px, 1fr) auto; }
+    .product-admin-variant-count, .product-admin-price { display: none; }
+    .order-list-head, .order-list-row { grid-template-columns: 36px minmax(150px, 1fr) minmax(100px, .5fr) 26px; }
+    .order-list-head > :nth-child(4), .order-list-head > :nth-child(5), .order-list-head > :nth-child(6), .order-list-row > :nth-child(4), .order-list-row > :nth-child(5), .order-list-row > :nth-child(6) { display: none; }
+}
+
+@media (max-width: 760px) {
+    .admin-main { padding: 20px 16px 54px; }
+    .view-heading { align-items: flex-start; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+    .view-heading h1 { font-size: 29px; }
+    .product-admin-head { grid-template-columns: 48px minmax(0, 1fr); gap: 11px; padding: 12px; }
+    .product-admin-image, .product-admin-placeholder { width: 48px; height: 48px; }
+    .product-admin-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .settings-card { padding: 16px; }
+}
