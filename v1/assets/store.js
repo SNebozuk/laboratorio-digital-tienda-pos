@@ -1129,7 +1129,6 @@
                 <span>Cuando hagas la transferencia, escribinos por WhatsApp para avisarnos.</span>
             </div>
             <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener">AVISAR TRANSFERENCIA POR WHATSAPP</a>
-            <p class="checkout-footnote">También enviaremos los detalles de tu pedido al email que indicaste.</p>
             <button class="secondary-button" type="button" data-finish-order>VOLVER A LA TIENDA</button>
         `);
     }
