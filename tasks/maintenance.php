@@ -28,18 +28,15 @@ if (PHP_SAPI !== 'cli') {
 
     $app = require $projectRoot . '/app/container.php';
     $app['stock']->expireOrders();
-    $app['mail']->process(30);
     http_response_code(204);
     exit;
 }
 
 $app = require $projectRoot . '/app/container.php';
 $expired = $app['stock']->expireOrders();
-$mail = $app['mail']->process(30);
 
 echo json_encode([
     'ok' => true,
     'expired_orders' => $expired,
-    'mail' => $mail,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 echo PHP_EOL;

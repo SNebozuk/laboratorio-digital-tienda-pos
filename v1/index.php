@@ -147,11 +147,6 @@ header('Referrer-Policy: same-origin');
         <a href="https://wa.me/<?= $escape($whatsappNumber) ?>" target="_blank" rel="noopener">
             WhatsApp +<?= $escape($whatsappNumber) ?>
         </a>
-        <?php if (!empty($publicSettings['sales_email'])): ?>
-            <a href="mailto:<?= $escape((string) $publicSettings['sales_email']) ?>">
-                <?= $escape((string) $publicSettings['sales_email']) ?>
-            </a>
-        <?php endif ?>
         <?php if (!empty($publicSettings['pickup_address'])): ?>
             <span><?= $escape((string) $publicSettings['pickup_address']) ?></span>
         <?php endif ?>
