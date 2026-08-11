@@ -1369,7 +1369,7 @@
             ${skipped ? `<p class="notice">${skipped} venta${skipped === 1 ? '' : 's'} entregada${skipped === 1 ? '' : 's'} no se puede${skipped === 1 ? '' : 'n'} cancelar y quedará${skipped === 1 ? '' : 'n'} sin cambios.</p>` : ''}
             <label class="order-confirm-option">
                 <input id="cancel-notify-customer" type="checkbox" checked>
-                <span><strong>Informar al cliente por email</strong><small>Solo se envía si esa venta tiene un email cargado.</small></span>
+                <span><strong>Abrir WhatsApp para avisar al cliente</strong><small>Se abrirá el mensaje de cancelación listo para revisar y enviar.</small></span>
             </label>
             <label class="order-confirm-option">
                 <input type="checkbox" checked disabled>
@@ -1388,8 +1388,9 @@
                 await apiPost({
                     action: 'order_cancel',
                     order_id: Number(orderId),
-                    notify_customer: Boolean(notifyCustomer),
+                    notify_customer: false,
                 });
+                if (notifyCustomer) await openOrderWhatsapp(Number(orderId));
             }
             closeModal();
             state.selectedOrderIds.clear();
