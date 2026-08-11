@@ -63,12 +63,11 @@ final class OrderService
         }
 
         $quantities = $this->normalizeItems($items);
-        $minutes = $paymentMethod === 'cash'
-            ? 120
-            : max(15, $this->integerSetting('payment_window_minutes', 120));
-        $deadline = (new DateTimeImmutable())
-            ->add(new DateInterval('PT' . $minutes . 'M'))
-            ->format('Y-m-d H:i:s');
+        // El efectivo se reserva durante seis horas. Las transferencias se
+        // coordinan por WhatsApp y no dependen de una carga de comprobante.
+        $deadline = $paymentMethod === 'cash'
+            ? (new DateTimeImmutable())->add(new DateInterval('PT6H'))->format('Y-m-d H:i:s')
+            : null;
         $uploadToken = bin2hex(random_bytes(24));
         $tokenHash = hash('sha256', $uploadToken);
 

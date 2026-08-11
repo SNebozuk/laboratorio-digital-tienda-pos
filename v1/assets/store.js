@@ -910,6 +910,9 @@
         }
         const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
         const customer = savedCustomer();
+        // Crea un paso de historial interno: Atrás cierra el checkout y no
+        // abandona la tienda hacia la página anterior del navegador.
+        window.history.pushState({ catalogCheckout: true }, '', window.location.href);
         openModal(`
             ${checkoutSteps(1)}
             <h2 id="modal-title">TUS DATOS</h2>
@@ -965,6 +968,19 @@
             </form>
             <p class="checkout-footnote" data-payment-footnote>El stock se reserva al enviar el comprobante.</p>
         `);
+        const transferOption = elements.modalContent.querySelector('[value="bank_transfer"]')?.closest('.payment-option');
+        const cashOption = elements.modalContent.querySelector('[value="cash"]')?.closest('.payment-option');
+        transferOption?.querySelector('small') && (transferOption.querySelector('small').textContent = 'Te mostraremos los datos y lo enviás por WhatsApp.');
+        cashOption?.querySelector('small') && (cashOption.querySelector('small').textContent = 'Guardamos tu pedido durante 6 horas.');
+        const reservationMessage = elements.modalContent.querySelector('#cash-reservation-warning');
+        if (reservationMessage) {
+            reservationMessage.innerHTML = '<strong>Guardamos tu pedido por 6 horas</strong><span>Así tenés tiempo para acercarte con tranquilidad. Después liberaremos los productos para otras personas.</span>';
+        }
+        elements.modalContent.querySelector('[data-payment-footnote]')?.replaceChildren(
+            document.createTextNode('Elegí la forma de pago que te resulte más cómoda.')
+        );
+        const checkoutButton = elements.modalContent.querySelector('#checkout-form button[type="submit"]');
+        if (checkoutButton) checkoutButton.textContent = 'CONFIRMAR PEDIDO';
     }
 
     function checkoutSteps(activeStep) {
@@ -1065,9 +1081,9 @@
             });
             state.order = data.order;
             if (paymentMethod === 'cash') {
-                showCashConfirmation(data.order);
+                showCashConfirmationSixHours(data.order);
             } else {
-                showPayment(data.order);
+                showTransferConfirmation(data.order);
             }
         } catch (error) {
             errorBox.hidden = false;
@@ -1075,13 +1091,61 @@
             toast(error.message);
             await refreshCatalog();
             button.disabled = false;
-            button.textContent = 'CONTINUAR AL PAGO';
+            button.textContent = 'CONFIRMAR PEDIDO';
         }
     }
 
     function formatLocalDeadline(value) {
         const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
         return match ? `${match[3]}/${match[2]} a las ${match[4]}:${match[5]}` : String(value || '');
+    }
+
+    function showTransferConfirmation(order) {
+        const alias = order.bank?.alias || 'Pendiente de configurar';
+        const holder = order.bank?.holder || 'Laboratorio Digital';
+        const total = money(Number(order.total_cents));
+        const whatsapp = whatsappUrl(order);
+        openModal(`
+            ${checkoutSteps(3)}
+            <h2 id="modal-title">¡Gracias por tu pedido!</h2>
+            <p class="checkout-lead">Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</p>
+            <div class="payment-focus">
+                <span>Para confirmarlo, transferí</span>
+                <strong class="payment-amount">${total}</strong>
+                <span>a nombre de ${escapeHtml(holder)}</span>
+            </div>
+            <dl class="bank-details">
+                <div><dt>Alias</dt><dd>${escapeHtml(alias)} <button class="copy-button" type="button" data-copy-bank="${escapeHtml(alias)}" aria-label="Copiar alias">⧉</button></dd></div>
+            </dl>
+            <div class="payment-instructions">
+                <strong>Un último paso, muy simple</strong>
+                <span>Cuando hagas la transferencia, enviá el comprobante a nuestro WhatsApp.</span>
+                <span>No necesitás cargar archivos en esta página.</span>
+            </div>
+            <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener">ENVIAR COMPROBANTE POR WHATSAPP</a>
+            <p class="checkout-footnote">También enviaremos los detalles de tu pedido al email que indicaste.</p>
+            <button class="secondary-button" type="button" data-finish-order>VOLVER A LA TIENDA</button>
+        `);
+    }
+
+    function showCashConfirmationSixHours(order) {
+        openModal(`
+            ${checkoutSteps(3)}
+            <h2 id="modal-title">¡Gracias por tu pedido!</h2>
+            <p class="checkout-lead">Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</p>
+            <div class="cash-confirmation">
+                <span>Elegiste pagar al retirar</span>
+                <strong>Guardamos estos productos para vos durante 6 horas</strong>
+                <span>Hasta el ${escapeHtml(formatLocalDeadline(order.payment_deadline_at))}</span>
+            </div>
+            <div class="cash-expiry-explanation">
+                <strong>Te esperamos con gusto dentro de ese plazo.</strong>
+                <p>Después de las 6 horas, liberaremos la mercadería para que otras personas también puedan aprovecharla.</p>
+            </div>
+            ${order.pickup_address ? `<p>Retiro en: <strong>${escapeHtml(order.pickup_address)}</strong></p>` : ''}
+            <p class="checkout-footnote">También enviaremos los detalles de tu pedido al email que indicaste.</p>
+            <button class="primary-button" type="button" data-finish-order>ENTENDIDO</button>
+        `);
     }
 
     function showCashConfirmation(order) {
@@ -1454,6 +1518,10 @@
         renderCatalog();
     });
     window.addEventListener('popstate', () => {
+        if (elements.modal.classList.contains('open')) {
+            closeModal();
+            return;
+        }
         state.category = '';
         state.showAll = false;
         state.query = '';
