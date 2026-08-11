@@ -66,6 +66,7 @@ jobs:
             .env
             .env.*
             config.local.php
+            config.mail.local.php
             storage/**
             uploads/**
             v1/uploads/**

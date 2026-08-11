@@ -411,6 +411,11 @@ final class MailService
         }
         $config = $this->config;
         foreach ($keys as $key) {
+            // Una habilitación explícita en la configuración privada del servidor
+            // tiene prioridad sobre el valor inicial de la base de datos.
+            if ($key === 'mail_enabled' && !empty($config[$key])) {
+                continue;
+            }
             if (array_key_exists($key, $stored) && $stored[$key] !== '') {
                 $config[$key] = $stored[$key];
             }

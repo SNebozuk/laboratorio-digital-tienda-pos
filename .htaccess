@@ -16,7 +16,7 @@ DirectoryIndex index.php
   RewriteRule ^admin/?$ v1/admin/index.php [L,QSA]
 </IfModule>
 
-<FilesMatch "^(config\.local\.php|.*\.(sqlite|sqlite3|db))$">
+<FilesMatch "^(config(?:\.mail)?\.local\.php|.*\.(sqlite|sqlite3|db))$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

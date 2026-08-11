@@ -15,6 +15,17 @@ final class Config
             throw new \RuntimeException('config.local.php debe devolver un array.');
         }
 
+        // Credenciales operativas separadas del resto de la configuración para
+        // que nunca se suban al repositorio ni queden expuestas en el panel web.
+        $mailLocalFile = $projectRoot . '/config.mail.local.php';
+        if (is_file($mailLocalFile)) {
+            $mailLocal = require $mailLocalFile;
+            if (!is_array($mailLocal)) {
+                throw new \RuntimeException('config.mail.local.php debe devolver un array.');
+            }
+            $local = array_replace($local, $mailLocal);
+        }
+
         $storagePath = self::string(
             $local,
             'storage_path',

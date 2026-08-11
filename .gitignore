@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 config.local.php
+config.mail.local.php
 
 # Bases de datos y archivos temporales de SQLite
 data/*.sqlite
