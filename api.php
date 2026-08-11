@@ -168,6 +168,13 @@ try {
                 (string) ($input['channel'] ?? 'web'),
                 (string) ($input['payment_method'] ?? 'bank_transfer')
             );
+            // Intentamos entregar la confirmación al instante. La tarea programada
+            // conserva los reintentos y procesa cualquier correo pendiente.
+            try {
+                $app['mail']->process(5);
+            } catch (Throwable $exception) {
+                error_log('No se pudo procesar el correo inmediato: ' . $exception->getMessage());
+            }
             Http::json(['ok' => true, 'order' => $order], 201);
 
         case 'upload_proof':
