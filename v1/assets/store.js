@@ -1046,19 +1046,16 @@
         const customerName = String(formData.get('name') || '').trim();
         const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
         const paymentMethod = String(formData.get('payment_method') || 'bank_transfer');
-        const emailField = form.querySelector('[name="email"]');
-        if (customerName.length < 2 || customerPhone.length < 8 || !emailField.checkValidity()) {
+        if (customerName.length < 2 || customerPhone.length < 8) {
             errorBox.hidden = false;
-            errorBox.textContent = !emailField.checkValidity()
-                ? 'Revisá el email o dejalo vacío.'
-                : 'Completá Nombre y Apellido y un WhatsApp válido para crear el pedido.';
+            errorBox.textContent = 'Completá Nombre y Apellido y un WhatsApp válido para crear el pedido.';
             form.querySelector(customerName.length < 2
                 ? '[name="name"]'
-                : (customerPhone.length < 8 ? '[name="phone"]' : '[name="email"]'))?.focus();
+                : '[name="phone"]')?.focus();
             return;
         }
         errorBox.hidden = true;
-        persistCustomer(customerName, String(formData.get('phone') || '').trim(), String(formData.get('email') || '').trim());
+        persistCustomer(customerName, String(formData.get('phone') || '').trim(), '');
         button.disabled = true;
         button.textContent = 'PREPARANDO TRANSFERENCIA…';
         try {
@@ -1068,7 +1065,7 @@
                 payment_method: paymentMethod,
                 customer: {
                     name: formData.get('name'),
-                    email: formData.get('email'),
+                    email: '',
                     phone: formData.get('phone'),
                 },
                 items: cartItems().map(item => ({
