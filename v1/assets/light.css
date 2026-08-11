@@ -15,5 +15,22 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 .modal-card { background:#fff !important; color:var(--text) !important; border-color:var(--line) !important; box-shadow:0 24px 70px rgba(24,35,27,.2) !important; }.modal-card h2,.modal-card label,.modal-card .checkout-line strong,.modal-card .order-total strong { color:var(--text) !important; }.modal-close { background:#fff !important; color:var(--text) !important; border-color:var(--line) !important; }.modal-card input,.modal-card label.payment-option { background:#fff !important; color:var(--text) !important; border-color:#b9cdbd !important; }.modal-card label.payment-option:has(input:checked) { background:#edf7ef !important; border-color:var(--accent) !important; }.modal-card .payment-option input { accent-color:var(--accent) !important; }.checkout-steps li.active,.checkout-steps li.done { color:var(--text) !important; }.checkout-steps li.active span { border-color:var(--accent) !important; background:var(--accent) !important; color:#fff !important; }
 .modal-card .bank-details div { background:#f0f7f1 !important; border-color:#c7dec9 !important; }.modal-card .bank-details dt { color:var(--muted) !important; }.modal-card .bank-details dd { color:var(--text) !important; }.modal-card .copy-button { background:#fff !important; border-color:#b9cdbd !important; color:var(--accent) !important; }
 
+/* Escritorio: listado compacto y carrito bajo demanda, como en el administrador. */
+@media (min-width:761px){
+  .store-shell{grid-template-columns:minmax(0,1fr) !important;}
+  .order-panel{position:fixed;z-index:80;top:0;right:0;width:min(380px,92vw);max-height:100vh;min-height:100vh;transform:translateX(105%);transition:transform .22s ease;box-shadow:-20px 0 70px rgba(24,35,27,.22) !important;}
+  .order-panel.mobile-open{transform:translateX(0);}
+  .cart-mobile,.icon-button{display:inline-flex;}
+  .cart-mobile{align-items:center;gap:7px;border:1px solid var(--accent) !important;border-radius:9px;background:var(--accent) !important;color:#fff !important;}
+  .cart-mobile span{display:grid;min-width:22px;height:22px;place-items:center;border-radius:50%;background:#fff;color:var(--accent);font-size:11px;font-weight:850;}
+  .icon-button{border:0;background:transparent;color:var(--text);font-size:28px;}
+  .catalog-product-summary.unified-product-row{grid-template-columns:76px minmax(0,1.75fr) minmax(118px,.5fr) minmax(160px,.55fr) 42px;min-height:88px;padding-block:8px;}
+  .unified-product-row .summary-product-title{min-width:0;}
+  .unified-product-row .summary-product-title>strong{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px !important;line-height:1.25;letter-spacing:0;}
+  .unified-product-row .summary-product-title>small{font-size:9px;}
+  .unified-product-row .summary-variant-count,.unified-product-row .summary-product-price{font-size:13px;white-space:nowrap;}
+  .catalog-intro h1{font-size:clamp(26px,2.4vw,36px);line-height:1.05;}
+}
+
 /* Checkout claro y legible en teléfonos. */
 @media (max-width:760px){.modal{padding:0 !important;align-items:end !important;}.modal.open{place-items:end stretch !important;}.modal-backdrop{background:rgba(24,35,27,.3) !important;}.modal-card{width:100% !important;max-height:calc(100vh - 42px) !important;padding:22px 18px 28px !important;border-radius:18px 18px 0 0 !important;background:#fff !important;color:var(--text) !important;box-shadow:0 -14px 40px rgba(24,35,27,.16) !important;}.modal-card p,.modal-card small,.checkout-footnote{color:var(--muted) !important;}.modal-close{background:#fff !important;color:var(--text) !important;}.payment-focus,.cash-confirmation,.cash-expiry-explanation,.payment-instructions,.bank-details{background:#f0f7f1 !important;border-color:#c7dec9 !important;color:var(--text) !important;}.payment-focus span,.cash-confirmation span,.payment-instructions span,.cash-expiry-explanation p,.bank-details dt{color:var(--muted) !important;}.payment-focus strong,.cash-confirmation strong,.bank-details dd{color:var(--text) !important;}.button-link{display:block;text-align:center;text-decoration:none;}}
