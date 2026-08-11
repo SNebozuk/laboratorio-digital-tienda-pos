@@ -1032,6 +1032,7 @@
 
     function showCashConfirmation(order) {
         openModal(`
+            <p class="checkout-lead"><strong>¡Gracias por tu compra!</strong> Tu pedido ya quedó registrado.</p>
             ${checkoutSteps(3)}
             <h2 id="modal-title">PAGO EN EFECTIVO</h2>
             <div class="cash-confirmation">
@@ -1066,8 +1067,8 @@
                 <span>a nombre de ${escapeHtml(order.bank?.holder || 'Laboratorio Digital')}</span>
             </div>
             <dl class="bank-details">
-                <div><dt>Alias</dt><dd>${escapeHtml(alias)}</dd></div>
-                <div><dt>CBU</dt><dd>${escapeHtml(cbu)}</dd></div>
+                <div><dt>Alias</dt><dd>${escapeHtml(alias)} <button class="copy-button" type="button" data-copy-bank="${escapeHtml(alias)}" aria-label="Copiar alias" title="Copiar alias">⧉</button></dd></div>
+                <div><dt>CBU</dt><dd>${escapeHtml(cbu)} ${order.bank?.cbu ? `<button class="copy-button" type="button" data-copy-bank="${escapeHtml(cbu)}" aria-label="Copiar CBU" title="Copiar CBU">⧉</button>` : ''}</dd></div>
             </dl>
             <div class="payment-instructions">
                 <strong>Después de transferir:</strong>
@@ -1191,6 +1192,7 @@
             ? 'El comprobante coincide de forma preliminar con el importe y el destinatario.'
             : 'Recibimos el comprobante y revisaremos la acreditación.';
         openModal(`
+            <p class="checkout-lead"><strong>¡Gracias por tu compra!</strong> Recibimos tu pedido y el comprobante.</p>
             ${checkoutSteps(3)}
             <h2 id="modal-title">¡LISTO!</h2>
             <div class="success-box">
@@ -1234,6 +1236,13 @@
     }
 
     document.addEventListener('click', event => {
+        const copyBank = event.target.closest('[data-copy-bank]');
+        if (copyBank) {
+            navigator.clipboard.writeText(copyBank.dataset.copyBank)
+                .then(() => toast('Dato bancario copiado.'))
+                .catch(() => window.prompt('Copiá este dato:', copyBank.dataset.copyBank));
+            return;
+        }
         const imagePreview = event.target.closest('[data-image-preview]');
         if (imagePreview) {
             showImagePreview(Number(imagePreview.dataset.imagePreview));

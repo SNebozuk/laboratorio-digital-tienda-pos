@@ -49,6 +49,12 @@ final class SettingsService
         foreach ($query->fetchAll() as $row) {
             $values[(string) $row['key']] = (string) $row['value'];
         }
+        if (empty($values['bank_alias'])) {
+            $values['bank_alias'] = 'labdigital';
+        }
+        if (empty($values['bank_holder']) || $values['bank_holder'] === 'Laboratorio Digital') {
+            $values['bank_holder'] = 'Allessandra Lear · Banco Galicia';
+        }
         $values['proof_max_mb'] = round(
             ((int) ($values['proof_max_bytes'] ?? 8388608)) / 1024 / 1024,
             1
