@@ -218,6 +218,9 @@
         if (view === 'contact') {
             loadContact();
         }
+        if (view === 'emails') {
+            loadEmailSettings();
+        }
         if (view === 'users') {
             loadUsers();
         }
@@ -2306,6 +2309,48 @@
         }
     }
 
+    async function loadEmailSettings() {
+        const form = document.getElementById('email-settings-form');
+        if (!form || app.user?.role !== 'admin') return;
+        try {
+            const data = await apiGet('settings');
+            state.settings = data.settings;
+            Object.entries(data.settings).forEach(([key, value]) => {
+                const field = form.elements.namedItem(key);
+                if (!field) return;
+                if (field.type === 'checkbox') {
+                    field.checked = String(value) === '1' || String(value) === 'true';
+                } else {
+                    field.value = value;
+                }
+            });
+        } catch (error) { toast(error.message); }
+    }
+
+    async function saveEmailSettings(form) {
+        const data = new FormData(form);
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'GUARDANDO…';
+        try {
+            if (!state.settings) {
+                state.settings = (await apiGet('settings')).settings;
+            }
+            const values = Object.fromEntries(data.entries());
+            values.mail_enabled = form.elements.mail_enabled.checked ? '1' : '0';
+            const response = await apiPost({
+                action: 'settings_update',
+                settings: { ...state.settings, ...values },
+            });
+            state.settings = response.settings;
+            toast('Configuración de e-mails guardada.');
+        } catch (error) { toast(error.message); }
+        finally {
+            button.disabled = false;
+            button.textContent = 'GUARDAR E-MAILS';
+        }
+    }
+
     function sizeGuideRowTemplate(row, index) {
         return `
             <tr data-size-guide-index="${index}">
@@ -2512,6 +2557,10 @@
             event.preventDefault();
             saveSettings(event.target);
         }
+        if (event.target.id === 'email-settings-form') {
+            event.preventDefault();
+            saveEmailSettings(event.target);
+        }
         if (event.target.id === 'contact-form') {
             event.preventDefault();
             saveContact(event.target);
@@ -2527,6 +2576,17 @@
     });
 
     document.addEventListener('click', event => {
+        const passwordToggle = event.target.closest('.password-toggle');
+        if (passwordToggle) {
+            const field = passwordToggle.closest('.password-field')?.querySelector('input');
+            if (!field) return;
+            const showing = field.type === 'text';
+            field.type = showing ? 'password' : 'text';
+            passwordToggle.textContent = showing ? '◉' : '◉̸';
+            passwordToggle.setAttribute('aria-label', showing ? 'Mostrar contraseña' : 'Ocultar contraseña');
+            passwordToggle.setAttribute('aria-pressed', showing ? 'false' : 'true');
+            return;
+        }
         if (event.target.closest('#add-size-guide-row')) {
             state.sizeGuide = {
                 intro: elements.sizeGuideIntro?.value.trim() || '',

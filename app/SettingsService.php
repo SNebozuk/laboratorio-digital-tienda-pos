@@ -19,6 +19,20 @@ final class SettingsService
         'bank_cbu',
         'pickup_address',
         'business_hours',
+        'mail_enabled',
+        'mail_from',
+        'mail_from_name',
+        'mail_reply_to',
+        'mail_smtp_host',
+        'mail_smtp_port',
+        'mail_smtp_encryption',
+        'mail_smtp_username',
+        'mail_message_order_created',
+        'mail_message_payment_reported',
+        'mail_message_payment_approved',
+        'mail_message_payment_rejected',
+        'mail_message_order_ready',
+        'mail_message_order_cancelled',
     ];
 
     public function __construct(private readonly PDO $pdo)
@@ -43,6 +57,12 @@ final class SettingsService
                 'bank_cbu',
                 'pickup_address',
                 'business_hours'
+                ,'mail_enabled', 'mail_from', 'mail_from_name', 'mail_reply_to',
+                'mail_smtp_host', 'mail_smtp_port', 'mail_smtp_encryption',
+                'mail_smtp_username', 'mail_message_order_created',
+                'mail_message_payment_reported', 'mail_message_payment_approved',
+                'mail_message_payment_rejected', 'mail_message_order_ready',
+                'mail_message_order_cancelled'
              )"
         );
         $values = [];
@@ -59,6 +79,22 @@ final class SettingsService
             ((int) ($values['proof_max_bytes'] ?? 8388608)) / 1024 / 1024,
             1
         );
+        $values += [
+            'mail_enabled' => '0',
+            'mail_from' => (string) ($values['sales_email'] ?? ''),
+            'mail_from_name' => (string) ($values['store_name'] ?? 'Laboratorio Digital'),
+            'mail_reply_to' => (string) ($values['sales_email'] ?? ''),
+            'mail_smtp_host' => 'a0160161.ferozo.com',
+            'mail_smtp_port' => '465',
+            'mail_smtp_encryption' => 'ssl',
+            'mail_smtp_username' => (string) ($values['sales_email'] ?? ''),
+            'mail_message_order_created' => '',
+            'mail_message_payment_reported' => '',
+            'mail_message_payment_approved' => '',
+            'mail_message_payment_rejected' => '',
+            'mail_message_order_ready' => '',
+            'mail_message_order_cancelled' => '',
+        ];
 
         return $values;
     }
@@ -66,6 +102,7 @@ final class SettingsService
     /** @param array<string, mixed> $data */
     public function update(array $data): array
     {
+        $current = $this->values();
         $storeName = $this->text($data, 'store_name', 2, 100);
         $salesEmail = trim((string) ($data['sales_email'] ?? ''));
         if (!filter_var($salesEmail, FILTER_VALIDATE_EMAIL)) {
@@ -119,6 +156,32 @@ final class SettingsService
             throw new ValidationException('Revisá los horarios de atención.');
         }
 
+        $mailFrom = trim((string) ($data['mail_from'] ?? $current['mail_from'] ?? $salesEmail));
+        $mailReplyTo = trim((string) ($data['mail_reply_to'] ?? $current['mail_reply_to'] ?? $mailFrom));
+        $mailUsername = trim((string) ($data['mail_smtp_username'] ?? $current['mail_smtp_username'] ?? $mailFrom));
+        foreach ([$mailFrom, $mailReplyTo, $mailUsername] as $email) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new ValidationException('Revisá los datos de la casilla de e-mail.');
+            }
+        }
+        $mailHost = trim((string) ($data['mail_smtp_host'] ?? $current['mail_smtp_host'] ?? ''));
+        if ($mailHost === '' || strlen($mailHost) > 255 || preg_match('/\s/', $mailHost)) {
+            throw new ValidationException('Ingresá un servidor SMTP válido.');
+        }
+        $mailPort = $this->integer($data + ['mail_smtp_port' => $current['mail_smtp_port'] ?? 465], 'mail_smtp_port', 1, 65535);
+        $mailEncryption = strtolower(trim((string) ($data['mail_smtp_encryption'] ?? $current['mail_smtp_encryption'] ?? 'ssl')));
+        if (!in_array($mailEncryption, ['ssl', 'tls', 'none'], true)) {
+            throw new ValidationException('Elegí un cifrado SMTP válido.');
+        }
+        $mailMessages = [];
+        foreach (['order_created', 'payment_reported', 'payment_approved', 'payment_rejected', 'order_ready', 'order_cancelled'] as $event) {
+            $message = trim((string) ($data['mail_message_' . $event] ?? $current['mail_message_' . $event] ?? ''));
+            if (strlen($message) > 3000) {
+                throw new ValidationException('Un mensaje automático es demasiado largo.');
+            }
+            $mailMessages['mail_message_' . $event] = $message;
+        }
+
         $values = [
             'store_name' => $storeName,
             'sales_email' => $salesEmail,
@@ -131,6 +194,18 @@ final class SettingsService
             'bank_cbu' => (string) $bankCbu,
             'pickup_address' => $pickupAddress,
             'business_hours' => $businessHours,
+            'mail_enabled' => filter_var($data['mail_enabled'] ?? $current['mail_enabled'] ?? false, FILTER_VALIDATE_BOOL) ? '1' : '0',
+            'mail_from' => $mailFrom,
+            'mail_from_name' => $this->mailFromName(
+                $data + ['mail_from_name' => $current['mail_from_name'] ?? $storeName],
+                $storeName
+            ),
+            'mail_reply_to' => $mailReplyTo,
+            'mail_smtp_host' => $mailHost,
+            'mail_smtp_port' => (string) $mailPort,
+            'mail_smtp_encryption' => $mailEncryption,
+            'mail_smtp_username' => $mailUsername,
+            ...$mailMessages,
         ];
 
         Database::immediate(
@@ -331,5 +406,16 @@ final class SettingsService
         }
 
         return (int) $value;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function mailFromName(array $data, string $fallback): string
+    {
+        $value = trim((string) ($data['mail_from_name'] ?? $fallback));
+        if (strlen($value) < 2 || strlen($value) > 120) {
+            throw new ValidationException('Revisá el nombre del remitente.');
+        }
+
+        return $value;
     }
 }

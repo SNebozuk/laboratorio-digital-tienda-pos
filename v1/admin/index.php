@@ -105,6 +105,9 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button" type="button" data-view="contact">
                             Contacto
                         </button>
+                        <button class="admin-nav-button" type="button" data-view="emails">
+                            E-mails automáticos
+                        </button>
                         <button class="admin-nav-button" type="button" data-view="users">
                             Usuarios
                         </button>
@@ -131,6 +134,7 @@ header('Referrer-Policy: same-origin');
                             <option value="size-guide">Tabla de Talles</option>
                             <option value="categories">Categorías</option>
                             <option value="contact">Contacto</option>
+                            <option value="emails">E-mails automáticos</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
                         <?php endif ?>
@@ -210,6 +214,41 @@ header('Referrer-Policy: same-origin');
                                 <label>HORARIOS DE ATENCIÓN<input name="business_hours" required></label>
                             </div>
                             <button class="primary-button fit-button" type="submit">GUARDAR CONTACTO</button>
+                        </form>
+                    </section>
+
+                    <section class="admin-view" id="view-emails">
+                        <div class="view-heading">
+                            <div>
+                                <p class="eyebrow">AVISOS DE PEDIDOS</p>
+                                <h1>E-MAILS AUTOMÁTICOS</h1>
+                                <p>Configurá el remitente, servidor SMTP y los mensajes que recibe el cliente.</p>
+                            </div>
+                        </div>
+                        <form id="email-settings-form" class="settings-card">
+                            <div class="email-settings-section">
+                                <label class="checkbox-setting"><input name="mail_enabled" type="checkbox" value="1"><span><strong>ACTIVAR ENVÍO AUTOMÁTICO</strong><small>Solo activalo después de probar la casilla. La contraseña SMTP no se muestra ni se guarda en el navegador.</small></span></label>
+                            </div>
+                            <div class="settings-grid">
+                                <label>CASILLA REMITENTE<input name="mail_from" type="email" required></label>
+                                <label>NOMBRE DEL REMITENTE<input name="mail_from_name" required></label>
+                                <label>RESPONDER A<input name="mail_reply_to" type="email" required></label>
+                                <label>SERVIDOR SMTP<input name="mail_smtp_host" required placeholder="a0160161.ferozo.com"></label>
+                                <label>PUERTO SMTP<input name="mail_smtp_port" type="number" min="1" max="65535" required></label>
+                                <label>CIFRADO<select name="mail_smtp_encryption"><option value="ssl">SSL · recomendado para puerto 465</option><option value="tls">TLS / STARTTLS</option><option value="none">Sin cifrado</option></select></label>
+                                <label>USUARIO SMTP<input name="mail_smtp_username" type="email" required></label>
+                            </div>
+                            <p class="form-hint">Para proteger la casilla, la contraseña SMTP se conserva únicamente en la configuración privada del servidor, fuera de esta pantalla.</p>
+                            <div class="email-template-grid">
+                                <label>PEDIDO CREADO<textarea name="mail_message_order_created" rows="3" placeholder="Hola {{cliente}}, recibimos tu pedido {{pedido}}."></textarea></label>
+                                <label>COMPROBANTE RECIBIDO<textarea name="mail_message_payment_reported" rows="3"></textarea></label>
+                                <label>PAGO APROBADO<textarea name="mail_message_payment_approved" rows="3"></textarea></label>
+                                <label>COMPROBANTE A CORREGIR<textarea name="mail_message_payment_rejected" rows="3"></textarea></label>
+                                <label>PEDIDO LISTO<textarea name="mail_message_order_ready" rows="3"></textarea></label>
+                                <label>PEDIDO CANCELADO<textarea name="mail_message_order_cancelled" rows="3"></textarea></label>
+                            </div>
+                            <p class="form-hint">Podés usar: <code>{{cliente}}</code>, <code>{{pedido}}</code>, <code>{{total}}</code> y <code>{{plazo}}</code>. Si dejás un texto vacío, se usa el mensaje estándar.</p>
+                            <button class="primary-button fit-button" type="submit">GUARDAR E-MAILS</button>
                         </form>
                     </section>
                 <?php endif ?>

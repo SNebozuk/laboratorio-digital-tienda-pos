@@ -18,7 +18,7 @@ final class MailService
     /** @return array{sent: int, retried: int, failed: int, disabled: bool} */
     public function process(int $limit = 20): array
     {
-        if (empty($this->config['mail_enabled'])) {
+        if (empty($this->runtimeConfig()['mail_enabled'])) {
             return [
                 'sent' => 0,
                 'retried' => 0,
@@ -127,9 +127,10 @@ final class MailService
             throw new ValidationException('El destinatario del correo no es válido.');
         }
 
-        $from = (string) $this->config['mail_from'];
-        $replyTo = (string) $this->config['mail_reply_to'];
-        $fromName = $this->cleanHeader((string) $this->config['mail_from_name']);
+        $config = $this->runtimeConfig();
+        $from = (string) $config['mail_from'];
+        $replyTo = (string) $config['mail_reply_to'];
+        $fromName = $this->cleanHeader((string) $config['mail_from_name']);
         if (!filter_var($from, FILTER_VALIDATE_EMAIL)) {
             throw new \RuntimeException('El remitente de correo no está configurado.');
         }
@@ -153,7 +154,7 @@ final class MailService
             'X-Mailer: Laboratorio Digital',
         ]);
 
-        $transport = strtolower((string) ($this->config['mail_transport'] ?? 'smtp'));
+        $transport = strtolower((string) ($config['mail_transport'] ?? 'smtp'));
         if ($transport === 'mail') {
             return mail($recipient, $encodedSubject, $html, $headers);
         }
@@ -161,16 +162,17 @@ final class MailService
             throw new \RuntimeException('El transporte de correo no es válido.');
         }
 
-        return $this->sendSmtp($recipient, $encodedSubject, $html, $from, $headers);
+        return $this->sendSmtp($recipient, $encodedSubject, $html, $from, $headers, $config);
     }
 
-    private function sendSmtp(string $recipient, string $subject, string $html, string $from, string $headers): bool
+    /** @param array<string, mixed> $config */
+    private function sendSmtp(string $recipient, string $subject, string $html, string $from, string $headers, array $config): bool
     {
-        $host = trim((string) ($this->config['mail_smtp_host'] ?? ''));
-        $port = (int) ($this->config['mail_smtp_port'] ?? 587);
-        $encryption = strtolower((string) ($this->config['mail_smtp_encryption'] ?? 'tls'));
-        $username = trim((string) ($this->config['mail_smtp_username'] ?? ''));
-        $password = (string) ($this->config['mail_smtp_password'] ?? '');
+        $host = trim((string) ($config['mail_smtp_host'] ?? ''));
+        $port = (int) ($config['mail_smtp_port'] ?? 587);
+        $encryption = strtolower((string) ($config['mail_smtp_encryption'] ?? 'tls'));
+        $username = trim((string) ($config['mail_smtp_username'] ?? ''));
+        $password = (string) ($config['mail_smtp_password'] ?? '');
         if ($host === '' || $port < 1 || $port > 65535 || $username === '' || $password === '') {
             throw new \RuntimeException('Falta configurar el SMTP autenticado.');
         }
@@ -355,6 +357,13 @@ final class MailService
                 break;
         }
 
+        if (!$internal) {
+            $customMessage = $this->customMessage($template, $payload);
+            if ($customMessage !== '') {
+                $content = '<p>' . nl2br($this->escape($customMessage)) . '</p>' . $content;
+            }
+        }
+
         return '<!doctype html><html lang="es"><body style="margin:0;background:#f1f1f1;color:#111;font:16px Arial,sans-serif">'
             . '<div style="max-width:620px;margin:auto;padding:28px 16px">'
             . '<div style="background:#050505;color:#fff;padding:28px;border-radius:14px">'
@@ -381,6 +390,59 @@ final class MailService
     private function escape(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    /** @return array<string, mixed> */
+    private function runtimeConfig(): array
+    {
+        $keys = [
+            'mail_enabled', 'mail_from', 'mail_from_name', 'mail_reply_to',
+            'mail_smtp_host', 'mail_smtp_port', 'mail_smtp_encryption',
+            'mail_smtp_username',
+        ];
+        $placeholders = implode(',', array_fill(0, count($keys), '?'));
+        $query = $this->pdo->prepare(
+            'SELECT key, value FROM settings WHERE key IN (' . $placeholders . ')'
+        );
+        $query->execute($keys);
+        $stored = [];
+        foreach ($query->fetchAll() as $row) {
+            $stored[(string) $row['key']] = (string) $row['value'];
+        }
+        $config = $this->config;
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $stored) && $stored[$key] !== '') {
+                $config[$key] = $stored[$key];
+            }
+        }
+        $config['mail_enabled'] = filter_var(
+            $config['mail_enabled'] ?? false,
+            FILTER_VALIDATE_BOOL
+        );
+
+        return $config;
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function customMessage(string $template, array $payload): string
+    {
+        $query = $this->pdo->prepare(
+            'SELECT value FROM settings WHERE key = :key LIMIT 1'
+        );
+        $query->execute(['key' => 'mail_message_' . $template]);
+        $message = trim((string) $query->fetchColumn());
+        if ($message === '') {
+            return '';
+        }
+        $replacements = [
+            '{{cliente}}' => (string) ($payload['customer_name'] ?? ''),
+            '{{pedido}}' => (string) ($payload['public_number'] ?? ''),
+            '{{total}}' => $this->money((int) ($payload['total_cents'] ?? 0)),
+            '{{plazo}}' => (string) ($payload['payment_deadline_at']
+                ?? $payload['retry_deadline_at'] ?? ''),
+        ];
+
+        return strtr($message, $replacements);
     }
 
     private function cleanHeader(string $value): string
