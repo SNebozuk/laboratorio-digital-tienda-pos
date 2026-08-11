@@ -1205,13 +1205,20 @@ body.product-detail-mode .catalog-column {
 .quick-categories small { color: var(--muted); font-size: 11px; }
 .show-all-products { justify-self: start; padding: 11px 0; border: 0; background: transparent; color: #fff; font-weight: 850; letter-spacing: .05em; cursor: pointer; }
 .show-all-products span { color: #9fc2ff; font-size: 19px; margin-left: 7px; }
-.home-featured { display: grid; gap: 10px; padding-top: 8px; }
-.home-featured h2 { margin: 0; font-size: 22px; }
+.home-how-it-works { display: grid; gap: 14px; margin-top: 8px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.025); }
+.home-how-it-works h2 { margin: 0; font-size: 20px; }
+.home-how-it-works ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.home-how-it-works li { display: flex; align-items: flex-start; gap: 10px; }
+.home-how-it-works li > span { display: grid; flex: 0 0 27px; width: 27px; height: 27px; place-items: center; border-radius: 50%; background: #1a2b42; color: #a9ceff; font-size: 12px; font-weight: 900; }
+.home-how-it-works strong, .home-how-it-works small { display: block; }
+.home-how-it-works strong { font-size: 13px; line-height: 1.3; }
+.home-how-it-works small { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.35; }
 body.home-mode .catalog-breadcrumb { display: none; }
 
 @media (max-width: 720px) {
     .quick-categories { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .quick-categories button { min-height: 112px; }
+    .home-how-it-works ol { grid-template-columns: 1fr; gap: 13px; }
 }
 
 .product-row {

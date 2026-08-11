@@ -720,7 +720,6 @@
 
         if (isHome) {
             const roots = (categoryTree.length ? categoryTree : []).filter(node => node.active !== false).slice(0, 4);
-            const featured = products.filter(productHasStock).slice(0, 6);
             elements.results.innerHTML = `
                 <section class="store-home" aria-label="Empezar a comprar">
                     <div class="home-search-prompt">
@@ -731,7 +730,14 @@
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
                     </div>
                     <button class="show-all-products" type="button" data-show-all-products>VER TODOS LOS PRODUCTOS <span>→</span></button>
-                    <section class="home-featured"><div><p class="eyebrow">PARA EMPEZAR</p><h2>PRODUCTOS MÁS BUSCADOS</h2></div>${featured.length ? productSummaryList(featured) : ''}</section>
+                    <section class="home-how-it-works" aria-labelledby="home-how-title">
+                        <div><p class="eyebrow">COMPRA SIMPLE</p><h2 id="home-how-title">ARMÁ TU PEDIDO EN TRES PASOS</h2></div>
+                        <ol>
+                            <li><span>1</span><div><strong>Buscá o elegí una categoría</strong><small>Encontrá el producto y la variante que necesitás.</small></div></li>
+                            <li><span>2</span><div><strong>Sumá cantidades al pedido</strong><small>El carrito se actualiza al instante.</small></div></li>
+                            <li><span>3</span><div><strong>Confirmá y elegí cómo pagar</strong><small>Transferencia o efectivo al retirar en el local.</small></div></li>
+                        </ol>
+                    </section>
                 </section>`;
             return;
         }
