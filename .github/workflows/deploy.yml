@@ -38,7 +38,7 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Sincronizar cambios por FTPS
+      - name: Sincronizar cambios por FTP
         if: steps.configuration.outputs.configured == 'true'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -46,8 +46,8 @@ jobs:
           username: ${{ secrets.DONWEB_FTP_USERNAME }}
           password: ${{ secrets.DONWEB_FTP_PASSWORD }}
           port: ${{ secrets.DONWEB_FTP_PORT }}
-          protocol: ftps
-          security: strict
+          # DonWeb Web Hosting informa FTP por el puerto 21; no expone SFTP.
+          protocol: ftp
           local-dir: ./
           server-dir: ${{ secrets.DONWEB_FTP_REMOTE_DIR }}
           dangerous-clean-slate: false
