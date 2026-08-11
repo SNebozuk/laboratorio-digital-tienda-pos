@@ -186,7 +186,19 @@ final class MailService
             throw new \RuntimeException('El transporte de correo no es válido.');
         }
 
-        return $this->sendSmtp($recipient, $encodedSubject, $html, $from, $headers, $config);
+        try {
+            return $this->sendSmtp($recipient, $encodedSubject, $html, $from, $headers, $config);
+        } catch (Throwable $smtpError) {
+            // Respaldo provisto por el propio hosting cuando SMTP autenticado
+            // no estÃ¡ disponible desde el proceso PHP.
+            if (@mail($recipient, $encodedSubject, $html, $headers)) {
+                error_log('Correo entregado por transporte local tras fallo SMTP: ' . $smtpError->getMessage());
+                return true;
+            }
+            throw new \RuntimeException(
+                $smtpError->getMessage() . ' El transporte local tampoco aceptÃ³ el correo.'
+            );
+        }
     }
 
     /** @param array<string, mixed> $config */

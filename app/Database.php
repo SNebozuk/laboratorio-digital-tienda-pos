@@ -58,10 +58,23 @@ final class Database
         self::migrateCategoryTree($pdo);
         self::migrateOrderArchive($pdo);
         self::migrateVariantImages($pdo);
+        self::migrateLegacyMailAddress($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
         );
+    }
+
+    /** Corrige la casilla provisoria usada antes de crear ventas@artjet.com.ar. */
+    private static function migrateLegacyMailAddress(PDO $pdo): void
+    {
+        $update = $pdo->prepare(
+            "UPDATE settings
+             SET value = 'ventas@artjet.com.ar', updated_at = CURRENT_TIMESTAMP
+             WHERE key IN ('sales_email', 'mail_from', 'mail_reply_to', 'mail_smtp_username')
+               AND value = :legacy"
+        );
+        $update->execute(['legacy' => 'ventas@laboratorio-digital.com.ar']);
     }
 
     private static function migrateCategoryTree(PDO $pdo): void

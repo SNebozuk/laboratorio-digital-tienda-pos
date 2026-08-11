@@ -3354,17 +3354,15 @@ body.category-menu-open .category-panel {
    flota entre los productos. Se fija inmediatamente debajo del encabezado. */
 @media (max-width: 760px) {
     .catalog-column {
-        padding-top: 76px !important;
+        padding-top: 0 !important;
     }
 
     .catalog-column > .search-wrap {
-        position: fixed;
+        position: sticky;
         z-index: 19;
         top: 58px;
-        right: 0;
-        left: 0;
         width: auto;
-        margin: 0;
+        margin: 0 -10px 14px;
         padding: 7px 10px;
         border-radius: 0;
         background: rgba(247, 250, 247, .98) !important;
@@ -3380,7 +3378,7 @@ body.category-menu-open .category-panel {
     }
 
     body.category-menu-open .category-panel {
-        top: 116px !important;
+        top: 58px !important;
         z-index: 31;
     }
 }

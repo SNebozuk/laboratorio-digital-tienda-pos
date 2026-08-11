@@ -121,7 +121,7 @@ final class Config
             'mail_from' => self::string(
                 $local,
                 'mail_from',
-                getenv('APP_MAIL_FROM') ?: 'ventas@laboratorio-digital.com.ar'
+                getenv('APP_MAIL_FROM') ?: 'ventas@artjet.com.ar'
             ),
             'mail_from_name' => self::string(
                 $local,
@@ -131,7 +131,7 @@ final class Config
             'mail_reply_to' => self::string(
                 $local,
                 'mail_reply_to',
-                getenv('APP_MAIL_REPLY_TO') ?: 'ventas@laboratorio-digital.com.ar'
+                getenv('APP_MAIL_REPLY_TO') ?: 'ventas@artjet.com.ar'
             ),
             'mail_smtp_host' => self::string($local, 'mail_smtp_host', getenv('APP_MAIL_SMTP_HOST') ?: ''),
             'mail_smtp_port' => self::integer($local, 'mail_smtp_port', (int) (getenv('APP_MAIL_SMTP_PORT') ?: 587)),

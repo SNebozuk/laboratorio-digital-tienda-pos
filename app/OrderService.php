@@ -160,7 +160,7 @@ final class OrderService
 
                 $salesEmail = $this->stringSetting(
                     'sales_email',
-                    'ventas@laboratorio-digital.com.ar'
+                    'ventas@artjet.com.ar'
                 );
                 if (filter_var($salesEmail, FILTER_VALIDATE_EMAIL)) {
                     $mailPayload['audience'] = 'internal';
