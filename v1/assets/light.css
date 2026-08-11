@@ -30,6 +30,9 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
   .unified-product-row .summary-product-title>small{font-size:9px;}
   .unified-product-row .summary-variant-count,.unified-product-row .summary-product-price{font-size:13px;white-space:nowrap;}
   .catalog-intro h1{font-size:clamp(26px,2.4vw,36px);line-height:1.05;}
+  .catalog-column > .search-wrap{margin:22px 0 18px;z-index:15;}
+  .category-backdrop{z-index:40;}
+  .category-panel{z-index:41;}
 }
 
 /* Checkout claro y legible en teléfonos. */
