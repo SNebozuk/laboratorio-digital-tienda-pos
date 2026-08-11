@@ -24,7 +24,26 @@ final class Config
                 throw new \RuntimeException('config.mail.local.php debe devolver un array.');
             }
             $local = array_replace($local, $mailLocal);
-            $local['mail_smtp_force_config'] = true;
+
+            // El archivo privado puede contener solamente la contraseÃ±a SMTP.
+            // En ese caso, el resto de los datos se completa desde el panel de
+            // administraciÃ³n. Solo se bloquea el panel cuando el servidor tiene
+            // una configuraciÃ³n SMTP completa y autosuficiente.
+            $smtpKeys = [
+                'mail_smtp_host',
+                'mail_smtp_port',
+                'mail_smtp_encryption',
+                'mail_smtp_username',
+                'mail_smtp_password',
+            ];
+            $hasCompletePrivateSmtp = true;
+            foreach ($smtpKeys as $key) {
+                if (!array_key_exists($key, $mailLocal) || trim((string) $mailLocal[$key]) === '') {
+                    $hasCompletePrivateSmtp = false;
+                    break;
+                }
+            }
+            $local['mail_smtp_force_config'] = $hasCompletePrivateSmtp;
         }
 
         $storagePath = self::string(
