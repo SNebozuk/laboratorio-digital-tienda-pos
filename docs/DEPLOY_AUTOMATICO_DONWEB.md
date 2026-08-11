@@ -1,6 +1,6 @@
 # Deploy automático a DonWeb
 
-La fuente oficial es GitHub. El workflow `.github/workflows/deploy.yml` publica los cambios de la rama principal mediante FTP y no requiere subir archivos desde una computadora.
+La fuente oficial es GitHub. El workflow `.github/workflows/deploy.yml` publica los cambios de la rama principal mediante FTPS y no requiere subir archivos desde una computadora.
 
 ## Datos que hay que obtener en DonWeb
 
@@ -20,7 +20,7 @@ En el repositorio abrir **Settings → Secrets and variables → Actions → New
 | `DONWEB_FTP_PORT` | puerto FTP informado por DonWeb (21) |
 | `DONWEB_FTP_REMOTE_DIR` | carpeta remota exacta, terminada en `/` |
 
-DonWeb informa que su Web Hosting utiliza FTP por el puerto 21. El workflow usa ese protocolo para ser compatible con el servicio actual.
+DonWeb utiliza el puerto 21 y el servidor exige TLS en el canal FTP. El workflow usa FTPS explícito y validación estricta del certificado.
 
 ## Datos persistentes protegidos
 
