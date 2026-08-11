@@ -2273,14 +2273,17 @@
 
     function sizeGuideRowTemplate(row, index) {
         return `
-            <div class="size-guide-editor-row" data-size-guide-index="${index}">
-                <label>PRENDA O TABLA<input data-size-guide-field="group" value="${escapeHtml(row.group || '')}" placeholder="Ej.: Remeras de adulto" required></label>
-                <label>TALLE<input data-size-guide-field="size" value="${escapeHtml(row.size || '')}" placeholder="Ej.: Talle 1" required></label>
-                <label>ANCHO<input data-size-guide-field="width" value="${escapeHtml(row.width || '')}" placeholder="Ej.: 53 cm"></label>
-                <label>LARGO<input data-size-guide-field="length" value="${escapeHtml(row.length || '')}" placeholder="Ej.: 62 cm"></label>
-                <label>OBSERVACIONES<input data-size-guide-field="note" value="${escapeHtml(row.note || '')}" placeholder="Opcional"></label>
-                <button class="small-button danger-button" type="button" data-remove-size-guide-row="${index}">Quitar</button>
-            </div>
+            <tr data-size-guide-index="${index}">
+                <td><input aria-label="Prenda" data-size-guide-field="group" value="${escapeHtml(row.group || '')}" placeholder="Ej.: Remeras adulto" required></td>
+                <td><input aria-label="Talle" data-size-guide-field="size" value="${escapeHtml(row.size || '')}" placeholder="Ej.: M" required></td>
+                <td><input aria-label="Ancho" data-size-guide-field="width" value="${escapeHtml(row.width || '')}" placeholder="Ej.: 53 cm"></td>
+                <td><input aria-label="Largo" data-size-guide-field="length" value="${escapeHtml(row.length || '')}" placeholder="Ej.: 62 cm"></td>
+                <td><input aria-label="Observaciones" data-size-guide-field="note" value="${escapeHtml(row.note || '')}" placeholder="Opcional"></td>
+                <td class="size-guide-row-actions">
+                    <button class="icon-button" type="button" title="Duplicar esta fila" aria-label="Duplicar esta fila" data-duplicate-size-guide-row="${index}">⧉</button>
+                    <button class="icon-button danger-button" type="button" title="Eliminar esta fila" aria-label="Eliminar esta fila" data-remove-size-guide-row="${index}">🗑</button>
+                </td>
+            </tr>
         `;
     }
 
@@ -2288,9 +2291,15 @@
         if (!elements.sizeGuideRows) {
             return;
         }
-        elements.sizeGuideRows.innerHTML = state.sizeGuide.rows.length
-            ? state.sizeGuide.rows.map(sizeGuideRowTemplate).join('')
-            : '<p class="empty-copy">Todavia no cargaste medidas. Usa "+ Agregar fila" para comenzar.</p>';
+        elements.sizeGuideRows.innerHTML = `
+            <div class="size-guide-table-wrap">
+                <table class="size-guide-edit-table">
+                    <thead><tr><th>PRENDA</th><th>TALLE</th><th>ANCHO</th><th>LARGO</th><th>OBSERVACIONES</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+                    <tbody>${state.sizeGuide.rows.length
+                        ? state.sizeGuide.rows.map(sizeGuideRowTemplate).join('')
+                        : '<tr><td class="size-guide-empty-cell" colspan="6">Todavía no cargaste medidas. Usá “Agregar fila” para comenzar.</td></tr>'}</tbody>
+                </table>
+            </div>`;
     }
 
     function readSizeGuideRows() {
@@ -2498,7 +2507,25 @@
             renderSizeGuideRows();
             window.requestAnimationFrame(() => {
                 elements.sizeGuideRows
-                    ?.querySelector('.size-guide-editor-row:last-child input')
+                    ?.querySelector('tbody tr:last-child input')
+                    ?.focus();
+            });
+            return;
+        }
+        const duplicateSizeGuideRow = event.target.closest('[data-duplicate-size-guide-row]');
+        if (duplicateSizeGuideRow) {
+            state.sizeGuide = {
+                intro: elements.sizeGuideIntro?.value.trim() || '',
+                rows: readSizeGuideRows(),
+            };
+            const index = Number(duplicateSizeGuideRow.dataset.duplicateSizeGuideRow);
+            const source = state.sizeGuide.rows[index];
+            if (!source) return;
+            state.sizeGuide.rows.splice(index + 1, 0, { ...source, size: '' });
+            renderSizeGuideRows();
+            window.requestAnimationFrame(() => {
+                elements.sizeGuideRows
+                    ?.querySelector(`tbody tr:nth-child(${index + 2}) [data-size-guide-field="size"]`)
                     ?.focus();
             });
             return;

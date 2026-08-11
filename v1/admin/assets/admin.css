@@ -1635,42 +1635,79 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 }
 
 .size-guide-editor-rows {
-    display: grid;
-    gap: 9px;
-}
-
-.size-guide-editor-row {
-    display: grid;
-    grid-template-columns: minmax(160px, 1.2fr) minmax(105px, .65fr) minmax(100px, .55fr) minmax(100px, .55fr) minmax(150px, 1fr) auto;
-    align-items: end;
-    gap: 8px;
-    padding: 12px;
-    border: 1px solid rgba(101, 121, 148, .22);
+    overflow: hidden;
+    border: 1px solid rgba(101, 121, 148, .28);
     border-radius: 12px;
-    background: rgba(14, 20, 29, .86);
+    background: rgba(5, 9, 14, .45);
 }
 
-.size-guide-editor-row label {
-    display: grid;
-    gap: 5px;
-    margin: 0;
-    color: var(--muted);
+.size-guide-table-wrap {
+    overflow-x: auto;
+}
+
+.size-guide-edit-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+}
+
+.size-guide-edit-table th,
+.size-guide-edit-table td {
+    padding: 9px 8px;
+    border-bottom: 1px solid rgba(101, 121, 148, .2);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.size-guide-edit-table th {
+    color: #aeb8c6;
     font-size: 10px;
     font-weight: 850;
+    letter-spacing: .06em;
+    background: rgba(28, 39, 56, .65);
 }
 
-.size-guide-editor-row input {
+.size-guide-edit-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.size-guide-edit-table tbody tr:focus-within {
+    background: rgba(51, 122, 255, .08);
+}
+
+.size-guide-edit-table input {
     width: 100%;
+    min-width: 82px;
+    border-color: transparent;
+    background: transparent;
+}
+
+.size-guide-edit-table input:hover,
+.size-guide-edit-table input:focus {
+    border-color: #5376a6;
+    background: #0b111a;
+}
+
+.size-guide-row-actions {
+    display: flex;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.size-guide-row-actions .icon-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+}
+
+.size-guide-empty-cell {
+    padding: 25px !important;
+    color: var(--muted);
+    text-align: center !important;
 }
 
 @media (max-width: 1050px) {
-    .size-guide-editor-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .size-guide-editor-row > :last-child {
-        justify-self: start;
-    }
+    .size-guide-table-wrap { margin: 0 -1px; }
 }
 
 @media (max-width: 560px) {
@@ -1683,7 +1720,4 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
         flex-direction: column;
     }
 
-    .size-guide-editor-row {
-        grid-template-columns: 1fr;
-    }
 }

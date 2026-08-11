@@ -172,7 +172,7 @@ header('Referrer-Policy: same-origin');
                             <div>
                                 <p class="eyebrow">REFERENCIA PARA CLIENTES</p>
                                 <h1>TABLA DE TALLES</h1>
-                                <p>Edita las medidas que se muestran en la tienda.</p>
+                                <p>Editá la tabla tal como la verá el cliente: escribí directamente en cada celda.</p>
                             </div>
                             <a class="secondary-button fit-button" href="<?= $escape($sizeGuideUrl) ?>" target="_blank" rel="noopener">VER PAGINA</a>
                         </div>
@@ -184,7 +184,7 @@ header('Referrer-Policy: same-origin');
                             <div class="size-guide-editor-head">
                                 <div>
                                     <strong>MEDIDAS</strong>
-                                    <small>Podes repetir el nombre de la prenda para agregar varios talles.</small>
+                                    <small>Una fila por talle. Duplicá una fila para cargar medidas similares más rápido.</small>
                                 </div>
                                 <button class="secondary-button fit-button" id="add-size-guide-row" type="button">+ AGREGAR FILA</button>
                             </div>
