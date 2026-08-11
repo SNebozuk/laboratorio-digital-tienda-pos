@@ -10,6 +10,7 @@
     })();
     const state = {
         category: '',
+        showAll: false,
         query: '',
         searchActive: false,
         openedProductId: linkedProductId,
@@ -701,6 +702,8 @@
 
     function renderCatalog() {
         document.body.classList.toggle('search-mode', state.searchActive);
+        const isHome = !state.searchActive && !state.category && !state.showAll;
+        document.body.classList.toggle('home-mode', isHome);
         elements.results.classList.toggle('search-results-mode', state.searchActive);
         const openedProduct = products.find(product => (
             Number(product.id) === Number(state.openedProductId)
@@ -712,6 +715,24 @@
         }
         if (state.searchActive) {
             renderSearchCatalog();
+            return;
+        }
+
+        if (isHome) {
+            const roots = (categoryTree.length ? categoryTree : []).filter(node => node.active !== false).slice(0, 4);
+            const featured = products.filter(productHasStock).slice(0, 6);
+            elements.results.innerHTML = `
+                <section class="store-home" aria-label="Empezar a comprar">
+                    <div class="home-search-prompt">
+                        <strong>¿QUÉ ESTÁS BUSCANDO HOY?</strong>
+                        <span>Usá el buscador o elegí una categoría para empezar.</span>
+                    </div>
+                    <div class="quick-categories">
+                        ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
+                    </div>
+                    <button class="show-all-products" type="button" data-show-all-products>VER TODOS LOS PRODUCTOS <span>→</span></button>
+                    <section class="home-featured"><div><p class="eyebrow">PARA EMPEZAR</p><h2>PRODUCTOS MÁS BUSCADOS</h2></div>${featured.length ? productSummaryList(featured) : ''}</section>
+                </section>`;
             return;
         }
 
@@ -1270,6 +1291,7 @@
         const category = event.target.closest('[data-category]');
         if (category) {
             state.category = category.dataset.category;
+            state.showAll = state.category === '';
             state.query = '';
             state.searchActive = false;
             state.openedProductId = null;
@@ -1281,6 +1303,15 @@
             elements.categoryBackdrop.classList.remove('menu-open');
             elements.categoryToggle.setAttribute('aria-expanded', 'false');
             elements.categoryMenu.setAttribute('aria-expanded', 'false');
+            renderCategories();
+            renderCatalog();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if (event.target.closest('[data-show-all-products]')) {
+            state.category = '';
+            state.showAll = true;
             renderCategories();
             renderCatalog();
             window.scrollTo({ top: 0, behavior: 'smooth' });

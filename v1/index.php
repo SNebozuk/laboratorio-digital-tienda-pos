@@ -74,10 +74,9 @@ header('Referrer-Policy: same-origin');
         <section class="catalog-column" aria-labelledby="catalog-title">
             <div class="catalog-intro">
                 <p class="eyebrow">STOCK DISPONIBLE EN TIEMPO REAL</p>
-                <h1 id="catalog-title">ENCONTRÁ Y ARMÁ TU PEDIDO RÁPIDO</h1>
+                <h1 id="catalog-title">TODO PARA CREAR, PERSONALIZAR Y VENDER</h1>
                 <p>
-                    Elegí las variantes que necesitás. Las unidades se reservan
-                    al confirmar efectivo o al subir el comprobante de transferencia.
+                    Buscá lo que necesitás, elegí variantes y armá tu pedido en pocos pasos.
                 </p>
             </div>
 
