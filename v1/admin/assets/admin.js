@@ -127,6 +127,7 @@
     }
 
     async function uploadProductImage(file) {
+        await validateProductImage(file);
         const payload = new FormData();
         payload.append('action', 'product_image_upload');
         payload.append('csrf_token', app.csrf_token);
@@ -141,6 +142,18 @@
             throw new Error(data.error || 'No pudimos subir la foto.');
         }
         return data.image_path;
+    }
+
+    async function validateProductImage(file) {
+        if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type)) {
+            throw new Error('Elegí una imagen JPG, PNG o WebP.');
+        }
+        const bitmap = await createImageBitmap(file);
+        const valid = bitmap.width === 800 && bitmap.height === 800;
+        bitmap.close();
+        if (!valid) {
+            throw new Error('Las fotos deben medir exactamente 800 × 800 píxeles.');
+        }
     }
 
     function toast(message) {
@@ -570,6 +583,7 @@
                 <label>
                     FOTO DEL PRODUCTO
                     <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp">
+                    <span class="image-drop-zone" data-image-drop data-image-input="image_file">Arrastrá la foto aquí o hacé clic para elegirla<br><small>La imagen debe medir 800 × 800 px.</small></span>
                     <small>JPG, PNG o WebP · máximo 8 MB. Se sube automáticamente al alojamiento.</small>
                 </label>
                 <label>
@@ -2757,6 +2771,29 @@
         }
     });
 
+    document.addEventListener('click', event => {
+        const zone = event.target.closest('[data-image-drop]');
+        if (zone) zone.closest('label')?.querySelector('[name="image_file"]')?.click();
+    });
+    document.addEventListener('dragover', event => {
+        const zone = event.target.closest('[data-image-drop]');
+        if (zone) { event.preventDefault(); zone.classList.add('dragging'); }
+    });
+    document.addEventListener('drop', async event => {
+        const zone = event.target.closest('[data-image-drop]');
+        if (!zone) return;
+        event.preventDefault();
+        zone.classList.remove('dragging');
+        const file = event.dataTransfer?.files?.[0];
+        if (!file) return;
+        try {
+            await validateProductImage(file);
+            const input = zone.closest('label')?.querySelector('[name="image_file"]');
+            const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files;
+            zone.textContent = `Foto lista: ${file.name}`;
+            zone.classList.add('ready');
+        } catch (error) { toast(error.message); }
+    });
     elements.productSearch?.addEventListener('input', renderProducts);
     elements.orderSearch?.addEventListener('input', event => {
         state.orderQuery = event.target.value;
