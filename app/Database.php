@@ -63,6 +63,7 @@ final class Database
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
         );
+        self::seedCategoryTree($pdo);
     }
 
     /** Corrige la casilla provisoria usada antes de crear ventas@artjet.com.ar. */
@@ -75,6 +76,46 @@ final class Database
                AND value = :legacy"
         );
         $update->execute(['legacy' => 'ventas@laboratorio-digital.com.ar']);
+    }
+
+    /** Replica la jerarquÃ­a de categorÃ­as exportada desde Tiendanube. */
+    private static function seedCategoryTree(PDO $pdo): void
+    {
+        $tree = [
+            'SUBLIMABLES' => ['Madera Cristal', 'PolÃ­mero', 'CerÃ¡mica', 'CartÃ³n', 'Botellas y Termos', 'Bolsas Friselina', 'Accesorios para sublimar'],
+            'REMERAS' => ['de AlgodÃ³n', 'Remeras sublimables'],
+            'PAPELES' => ['Papeles AdorÃ­', 'FotogrÃ¡fico Brillante', 'Holofan', 'FotogrÃ¡fico Mate - Matelina', 'Filmilo', 'SublimaciÃ³n', 'Papel Obra', 'Winky, TermocontraÃ­ble', 'Tatufan, Tatuajes Temporales', 'Duralite, Transfer', 'MagnÃ©tico'],
+            'TINTAS' => ['FotogrÃ¡fica', 'SublimaciÃ³n'],
+            'GORRAS' => ['Trucker Adulto', 'Trucker Infantil', 'Gabardina'],
+        ];
+        $parentQuery = $pdo->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
+        $insert = $pdo->prepare(
+            'INSERT INTO categories(name, slug, parent_id, sort_order, active)
+             VALUES(:name, :slug, :parent_id, :sort_order, 1)
+             ON CONFLICT(name) DO UPDATE SET parent_id = excluded.parent_id, sort_order = excluded.sort_order, active = 1, updated_at = CURRENT_TIMESTAMP'
+        );
+        foreach ($tree as $parentName => $children) {
+            $parentQuery->execute(['name' => $parentName]);
+            $parentId = (int) $parentQuery->fetchColumn();
+            if ($parentId < 1) {
+                continue;
+            }
+            foreach ($children as $position => $childName) {
+                $insert->execute([
+                    'name' => $childName,
+                    'slug' => self::categorySlug($parentName . '-' . $childName),
+                    'parent_id' => $parentId,
+                    'sort_order' => $position,
+                ]);
+            }
+        }
+    }
+
+    private static function categorySlug(string $value): string
+    {
+        $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
+        $value = strtolower((string) preg_replace('/[^a-zA-Z0-9]+/', '-', $value));
+        return trim($value, '-');
     }
 
     private static function migrateCategoryTree(PDO $pdo): void
