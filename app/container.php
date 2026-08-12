@@ -4,7 +4,6 @@ declare(strict_types=1);
 use LaboratorioDigital\Auth;
 use LaboratorioDigital\BackupService;
 use LaboratorioDigital\CategoryService;
-use LaboratorioDigital\MailService;
 use LaboratorioDigital\OrderService;
 use LaboratorioDigital\PaymentProofService;
 use LaboratorioDigital\ProductService;
@@ -25,7 +24,6 @@ require_once __DIR__ . '/StockService.php';
 require_once __DIR__ . '/OrderService.php';
 require_once __DIR__ . '/PaymentProofService.php';
 require_once __DIR__ . '/ReceiptAiService.php';
-require_once __DIR__ . '/MailService.php';
 require_once __DIR__ . '/SettingsService.php';
 
 $app['auth'] = new Auth($app['pdo']);
@@ -49,7 +47,6 @@ $app['proofs'] = new PaymentProofService(
     $app['receipt_ai']
 );
 $app['backups'] = new BackupService($app['pdo'], $app['config']);
-$app['mail'] = new MailService($app['pdo'], $app['config']);
 $app['settings'] = new SettingsService($app['pdo']);
 
 return $app;

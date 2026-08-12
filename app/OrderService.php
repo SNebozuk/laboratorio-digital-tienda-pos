@@ -42,7 +42,9 @@ final class OrderService
         }
 
         $customerName = trim((string) ($customer['name'] ?? ''));
-        $customerEmail = trim((string) ($customer['email'] ?? '')) ?: null;
+        // Los pedidos se identifican por nombre y WhatsApp; no se conserva ni
+        // utiliza correo del cliente para comunicaciones.
+        $customerEmail = null;
         $customerPhone = preg_replace(
             '/\D+/',
             '',
@@ -1105,6 +1107,9 @@ final class OrderService
         string $template,
         array $payload
     ): void {
+        // Los avisos por correo fueron reemplazados por WhatsApp.
+        return;
+
         $insert = $pdo->prepare(
             'INSERT INTO mail_queue(
                 order_id, recipient, subject, template, payload_json

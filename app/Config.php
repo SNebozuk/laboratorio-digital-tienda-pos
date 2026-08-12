@@ -108,11 +108,10 @@ final class Config
                     FILTER_VALIDATE_BOOL
                 )
             ),
-            'mail_enabled' => self::bool(
-                $local,
-                'mail_enabled',
-                filter_var(getenv('APP_MAIL_ENABLED') ?: false, FILTER_VALIDATE_BOOL)
-            ),
+            // La comunicación con clientes se realiza únicamente por WhatsApp.
+            // Esta bandera se fuerza a falso aun si quedó una configuración SMTP
+            // antigua en el hosting.
+            'mail_enabled' => false,
             'mail_transport' => self::string(
                 $local,
                 'mail_transport',

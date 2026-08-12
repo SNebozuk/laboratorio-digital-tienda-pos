@@ -60,12 +60,29 @@ final class Database
         self::migrateVariantImages($pdo);
         self::migrateLegacyMailAddress($pdo);
         self::clearLegacyOrders($pdo);
+        self::disableMailQueues($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
         );
         self::migrateCatalogImagesToLocal($pdo);
         self::seedCategoryTree($pdo);
+    }
+
+    /** Elimina mensajes pendientes: la tienda se comunica con clientes por WhatsApp. */
+    private static function disableMailQueues(PDO $pdo): void
+    {
+        $version = 10;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+        self::immediate($pdo, function (PDO $pdo) use ($version): void {
+            $pdo->exec('DELETE FROM mail_queue');
+            $pdo->exec('DELETE FROM customer_notification_queue');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
     }
 
     /** Vacía una sola vez las ventas de prueba antes de iniciar la operatoria real. */

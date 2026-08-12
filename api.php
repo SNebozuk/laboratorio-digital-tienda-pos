@@ -90,10 +90,6 @@ try {
                     'settings' => $app['settings']->values(),
                 ]);
 
-            case 'mail_diagnostics':
-                $app['auth']->requireAdmin();
-                Http::json(['ok' => true, 'diagnostics' => $app['mail']->diagnostics()]);
-
             case 'users':
                 $app['auth']->requireAdmin();
                 Http::json([
@@ -319,7 +315,9 @@ try {
             $user = $app['auth']->requireAdmin();
             $app['orders']->cancel(
                 (int) ($input['order_id'] ?? 0),
-                (int) $user['id']
+                (int) $user['id'],
+                'manual_cancellation',
+                false
             );
             Http::json(['ok' => true]);
 

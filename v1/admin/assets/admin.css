@@ -2566,3 +2566,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-whatsapp .settings-grid,
 #view-whatsapp .email-diagnostics,
 #view-whatsapp #refresh-mail-diagnostics { display: none; }
+#view-whatsapp .checkbox-setting:has(input[name="mail_enabled"]),
+#view-whatsapp .settings-grid,
+#view-whatsapp .form-hint:has(code),
+#view-contact label:has(input[name="sales_email"]) { display: none; }
