@@ -165,5 +165,5 @@ aprobadas:
 - Sin facturación fiscal hasta confirmar el alcance.
 - Sin envíos: retiro en el local.
 - Sin cobro automático: la transferencia se verifica manualmente.
-- Sin integración directa con Tiendanube en producción inicial; la importación
+- Sin integración directa con catálogo anterior en producción inicial; la importación
   se realizará como proceso controlado.

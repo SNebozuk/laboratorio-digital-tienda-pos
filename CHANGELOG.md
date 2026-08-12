@@ -30,7 +30,7 @@ Los cambios relevantes del proyecto se registran en este archivo.
 ### Incluido
 
 - El catálogo público elimina por completo el menú y las pantallas de administración y POS.
-- Menú lateral importado de la estructura pública de Tiendanube.
+- Menú lateral importado de la estructura pública de catálogo anterior.
 - Títulos de productos normalizados en mayúsculas.
 - El buscador se limpia después de seleccionar un producto.
 - Confirmación final “Su pedido ha sido enviado” con acceso a WhatsApp.

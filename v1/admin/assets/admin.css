@@ -1889,6 +1889,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     box-shadow: none;
 }
 
+/* Las fotos se cargan al hosting propio; no se admiten URLs de terceros. */
+#product-form label:has(input[name="image_path"]) { display: none; }
+
 .product-admin-head { min-height: 76px; border-bottom-color: #edf0f3; }
 
 @media (max-width: 1050px) {

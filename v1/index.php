@@ -41,7 +41,7 @@ header('Referrer-Policy: same-origin');
                 <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
             <a class="brand" href="<?= $escape($storeUrl) ?>" aria-label="Laboratorio Digital, inicio">
-                <img class="brand-logo" src="https://dcdn-us.mitiendanube.com/stores/049/818/themes/common/logo-436687044-1747520554-0b16708fabd90c8031c104ad84c4dcad1747520555.png?0" alt="Laboratorio Digital">
+                <img class="brand-logo" src="<?= $escape($assetPath) ?>/brand/logo.png" alt="Laboratorio Digital">
                 <span>
                     <strong>LABORATORIO DIGITAL</strong>
                     <small>CATÁLOGO MAYORISTA · RETIRO EN EL LOCAL</small>

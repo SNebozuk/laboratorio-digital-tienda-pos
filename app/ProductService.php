@@ -639,9 +639,8 @@ final class ProductService
             if (
                 $variantImagePath !== ''
                 && !str_starts_with($variantImagePath, '/')
-                && !preg_match('#^https://#i', $variantImagePath)
             ) {
-                throw new ValidationException('La foto de una variante debe usar HTTPS o una ruta local.');
+                throw new ValidationException('La foto de una variante debe estar alojada en este sitio.');
             }
 
             $validatedVariants[] = [
@@ -661,10 +660,9 @@ final class ProductService
         if (
             $imagePath !== ''
             && !str_starts_with($imagePath, '/')
-            && !preg_match('#^https://#i', $imagePath)
         ) {
             throw new ValidationException(
-                'La imagen debe usar HTTPS o una ruta local.'
+                'La imagen debe estar alojada en este sitio.'
             );
         }
 

@@ -114,7 +114,7 @@ def load_catalog(source: Path) -> tuple[list[str], list[dict[str, object]]]:
 
 def build_sql(categories: list[str], products: list[dict[str, object]]) -> str:
     lines = [
-        "-- Generado desde catalogo-tiendanube-corregido.csv.",
+        "-- Generado desde catalogo-catalogo-anterior-corregido.csv.",
         "-- Se aplica una sola vez mediante schema_migrations(version = 2).",
         "",
     ]

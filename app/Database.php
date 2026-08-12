@@ -63,7 +63,40 @@ final class Database
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
         );
+        self::migrateCatalogImagesToLocal($pdo);
         self::seedCategoryTree($pdo);
+    }
+
+    /** Reemplaza las fotos heredadas por copias servidas desde este hosting. */
+    private static function migrateCatalogImagesToLocal(PDO $pdo): void
+    {
+        $rows = $pdo->query("SELECT id, image_path FROM products WHERE image_path LIKE 'http%'")->fetchAll();
+        $update = $pdo->prepare('UPDATE products SET image_path = :image_path, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+        foreach ($rows as $row) {
+            $path = (string) parse_url((string) $row['image_path'], PHP_URL_PATH);
+            $filename = basename($path);
+            if ($filename === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
+                continue;
+            }
+            $update->execute([
+                'id' => (int) $row['id'],
+                'image_path' => '/v1/assets/catalog/' . $filename,
+            ]);
+        }
+
+        $variantRows = $pdo->query("SELECT id, image_path FROM product_variants WHERE image_path LIKE 'http%'")->fetchAll();
+        $variantUpdate = $pdo->prepare('UPDATE product_variants SET image_path = :image_path WHERE id = :id');
+        foreach ($variantRows as $row) {
+            $path = (string) parse_url((string) $row['image_path'], PHP_URL_PATH);
+            $filename = basename($path);
+            if ($filename === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
+                continue;
+            }
+            $variantUpdate->execute([
+                'id' => (int) $row['id'],
+                'image_path' => '/v1/assets/catalog/' . $filename,
+            ]);
+        }
     }
 
     /** Corrige la casilla provisoria usada antes de crear ventas@artjet.com.ar. */
@@ -78,7 +111,7 @@ final class Database
         $update->execute(['legacy' => 'ventas@laboratorio-digital.com.ar']);
     }
 
-    /** Replica la jerarquÃ­a de categorÃ­as exportada desde Tiendanube. */
+    /** Replica la jerarquÃ­a de categorÃ­as exportada desde catálogo anterior. */
     private static function seedCategoryTree(PDO $pdo): void
     {
         $tree = [

@@ -51,7 +51,7 @@
 
     const safeImage = value => {
         const url = String(value || '').trim();
-        return url.startsWith('/') || /^https:\/\//i.test(url) ? url : '';
+        return url.startsWith('/') ? url : '';
     };
 
     const elements = {
