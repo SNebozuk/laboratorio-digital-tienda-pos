@@ -535,9 +535,20 @@ button:disabled {
     border: 0;
     border-radius: 9px;
     background: transparent;
-    color: var(--muted);
-    font-size: 20px;
+    color: var(--text);
+    font-size: 0;
     cursor: pointer;
+}
+
+.category-expand::after {
+    content: '›';
+    font-size: 25px;
+    line-height: 1;
+}
+
+.category-expand[aria-expanded="true"]::after {
+    content: '⌄';
+    font-size: 22px;
 }
 
 .category-expand:hover,

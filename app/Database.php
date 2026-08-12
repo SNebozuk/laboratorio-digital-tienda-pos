@@ -88,6 +88,28 @@ final class Database
             'TINTAS' => ['FotogrÃ¡fica', 'SublimaciÃ³n'],
             'GORRAS' => ['Trucker Adulto', 'Trucker Infantil', 'Gabardina'],
         ];
+        // Los primeros registros se importaron con la codificación dañada. Se
+        // reemplaza la estructura por los nombres UTF-8 correctos y se corrigen
+        // las categorías ya guardadas antes de volver a sembrar el árbol.
+        $tree = [
+            'SUBLIMABLES' => ['Madera Cristal', 'Polímero', 'Cerámica', 'Cartón', 'Botellas y Termos', 'Bolsas Friselina', 'Accesorios para sublimar'],
+            'REMERAS' => ['de Algodón', 'Remeras sublimables'],
+            'PAPELES' => ['Papeles Adorí', 'Fotográfico Brillante', 'Holofan', 'Fotográfico Mate - Matelina', 'Filmilo', 'Sublimación', 'Papel Obra', 'Winky, Termocontraíble', 'Tatufan, Tatuajes Temporales', 'Duralite, Transfer', 'Magnético'],
+            'TINTAS' => ['Fotográfica', 'Sublimación'],
+            'GORRAS' => ['Trucker Adulto', 'Trucker Infantil', 'Gabardina'],
+        ];
+        $repairs = [
+            'PolÃƒÂ­mero' => 'Polímero', 'CerÃƒÂ¡mica' => 'Cerámica', 'CartÃƒÂ³n' => 'Cartón',
+            'de AlgodÃƒÂ³n' => 'de Algodón', 'Papeles AdorÃƒÂ­' => 'Papeles Adorí',
+            'FotogrÃƒÂ¡fico Brillante' => 'Fotográfico Brillante',
+            'FotogrÃƒÂ¡fico Mate - Matelina' => 'Fotográfico Mate - Matelina',
+            'SublimaciÃƒÂ³n' => 'Sublimación', 'Winky, TermocontraÃƒÂ­ble' => 'Winky, Termocontraíble',
+            'MagnÃƒÂ©tico' => 'Magnético', 'FotogrÃƒÂ¡fica' => 'Fotográfica',
+        ];
+        $rename = $pdo->prepare('UPDATE categories SET name = :new_name, slug = :slug, updated_at = CURRENT_TIMESTAMP WHERE name = :old_name');
+        foreach ($repairs as $oldName => $newName) {
+            $rename->execute(['old_name' => $oldName, 'new_name' => $newName, 'slug' => self::categorySlug($newName)]);
+        }
         $parentQuery = $pdo->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
         $insert = $pdo->prepare(
             'INSERT INTO categories(name, slug, parent_id, sort_order, active)

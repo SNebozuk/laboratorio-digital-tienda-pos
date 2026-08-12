@@ -21,7 +21,12 @@
 
     let codeSearchController = null;
     let codeSearchRequest = 0;
-    const collapsedCategories = new Set();
+    // El menú arranca compacto: cada rama se abre con el indicador ›.
+    const collapsedCategories = new Set(
+        categoryTree
+            .filter(category => Array.isArray(category.children) && category.children.some(child => child.active !== false))
+            .map(category => category.slug)
+    );
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
