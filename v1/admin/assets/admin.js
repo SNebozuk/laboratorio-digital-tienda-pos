@@ -1484,6 +1484,22 @@
         return `${(size / 1024 / 1024).toFixed(1)} MB`;
     }
 
+    function sortedOrderItems(items) {
+        return [...items].sort((first, second) => {
+            const byProduct = String(first.product_name || '').localeCompare(
+                String(second.product_name || ''),
+                'es',
+                { sensitivity: 'base', numeric: true }
+            );
+            if (byProduct !== 0) return byProduct;
+            return String(first.variant_name || '').localeCompare(
+                String(second.variant_name || ''),
+                'es',
+                { sensitivity: 'base', numeric: true }
+            );
+        });
+    }
+
     async function showOrderDetail(orderId) {
         try {
             const data = await apiGet('order', { id: orderId });
@@ -1510,7 +1526,7 @@
                         <div><span>FORMA DE PAGO</span><strong>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</strong><small>${order.payment_method === 'cash' ? `Reserva hasta ${escapeHtml(order.payment_deadline_at || '')}` : 'El cliente avisa la transferencia por WhatsApp.'}</small></div>
                     </div>
                     <div class="order-detail-lines">
-                        ${order.items.map(item => `
+                        ${sortedOrderItems(order.items).map(item => `
                             <div class="order-detail-line">
                                 <div>
                                     <div class="order-detail-product">
@@ -1556,7 +1572,7 @@
                         <h2 id="modal-title">${escapeHtml(order.public_number)}</h2>
                     </header>
                     <div class="order-detail-lines">
-                        ${order.items.map(item => `
+                        ${sortedOrderItems(order.items).map(item => `
                             <div class="order-detail-line">
                                 <div class="order-detail-product">
                                     ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
