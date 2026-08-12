@@ -28,6 +28,10 @@ h1 {
     font-size: 24px;
 }
 
+.receipt-title-row { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
+.receipt-title-row p { margin: 4px 0 0; color: #5e6875; }
+.order-number { padding: 8px 11px; border: 2px solid #111; border-radius: 8px; font-size: 21px; white-space: nowrap; }
+
 dl {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -74,6 +78,13 @@ td:not(:first-child) {
     text-align: right;
 }
 
+.check-cell { width: 42px; text-align: center !important; }
+.check-box { display: inline-block; width: 21px; height: 21px; border: 2px solid #111; border-radius: 4px; }
+.receipt-product { display: flex; align-items: center; gap: 10px; }
+.receipt-product img { width: 48px; height: 48px; border: 1px solid #ddd; border-radius: 6px; object-fit: cover; }
+.receipt-product small { display: block; margin-top: 3px; }
+.quantity { font-size: 25px; font-weight: 800; text-align: center !important; }
+
 small,
 .footer {
     color: #666;
@@ -85,6 +96,11 @@ small,
     gap: 18px;
     font-size: 22px;
 }
+
+.preparation-check { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; padding-top: 14px; border-top: 2px solid #111; }
+.preparation-check strong { width: 100%; text-transform: uppercase; font-size: 11px; }
+.preparation-check span { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.preparation-check i { display: inline-block; width: 16px; height: 16px; border: 1px solid #111; border-radius: 3px; }
 
 .footer {
     display: none;
@@ -104,8 +120,8 @@ small,
         gap: 8px;
     }
 
-    th:nth-child(3),
-    td:nth-child(3) {
+    th:nth-child(4),
+    td:nth-child(4) {
         display: none;
     }
 }

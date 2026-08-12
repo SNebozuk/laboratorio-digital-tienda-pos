@@ -25,6 +25,7 @@ function receiptMoney(int $cents): string
 {
     return '$ ' . number_format($cents / 100, 0, ',', '.');
 }
+$unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['quantity'], $order['items']));
 ?>
 <!doctype html>
 <html lang="es">
@@ -38,33 +39,29 @@ function receiptMoney(int $cents): string
     <main class="receipt">
         <header>
             <p class="brand">LABORATORIO DIGITAL</p>
-            <h1>COMPROBANTE INTERNO</h1>
-            <strong><?= receiptText($order['public_number']) ?></strong>
+            <div class="receipt-title-row"><div><h1>HOJA DE PREPARACI&Oacute;N</h1><p>Control&aacute; cada producto antes de entregarlo.</p></div><strong class="order-number"><?= receiptText($order['public_number']) ?></strong></div>
         </header>
 
         <dl>
-            <div><dt>Fecha</dt><dd><?= receiptText($order['created_at']) ?></dd></div>
             <div><dt>Cliente</dt><dd><?= receiptText($order['customer_name']) ?></dd></div>
+            <div><dt>Contacto</dt><dd><?= receiptText($order['customer_phone'] ?: 'Sin teléfono informado') ?></dd></div>
+            <div><dt>Fecha</dt><dd><?= receiptText($order['created_at']) ?></dd></div>
         </dl>
 
         <table>
             <thead>
                 <tr>
-                    <th>Producto</th>
+                    <th>OK</th><th>Producto</th>
                     <th>Cant.</th>
-                    <th>Precio</th>
                     <th>Subtotal</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($order['items'] as $item): ?>
                     <tr>
-                        <td>
-                            <strong><?= receiptText($item['product_name']) ?></strong><br>
-                            <small><?= receiptText($item['variant_name']) ?></small>
-                        </td>
-                        <td><?= (int) $item['quantity'] ?></td>
-                        <td><?= receiptMoney((int) $item['unit_price_cents']) ?></td>
+                        <td class="check-cell"><span class="check-box"></span></td>
+                        <td><div class="receipt-product"><?php if (!empty($item['image_path'])): ?><img src="<?= receiptText($item['image_path']) ?>" alt=""><?php endif ?><span><strong><?= receiptText($item['product_name']) ?></strong><small><?= receiptText($item['variant_name']) ?> · SKU: <?= receiptText($item['sku']) ?></small></span></div></td>
+                        <td class="quantity"><?= (int) $item['quantity'] ?></td>
                         <td><?= receiptMoney((int) $item['line_total_cents']) ?></td>
                     </tr>
                 <?php endforeach ?>
@@ -72,9 +69,10 @@ function receiptMoney(int $cents): string
         </table>
 
         <p class="total">
-            <span>Total</span>
+            <span><?= $unitCount ?> <?= $unitCount === 1 ? 'unidad' : 'unidades' ?> · Total</span>
             <strong><?= receiptMoney((int) $order['total_cents']) ?></strong>
         </p>
+        <section class="preparation-check"><strong>Control final</strong><span><i></i> Productos completos</span><span><i></i> Cliente identificado</span><span><i></i> Entrega verificada</span></section>
         <p class="footer">
             Comprobante interno no fiscal · Retiro en el local
         </p>

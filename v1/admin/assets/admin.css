@@ -1553,7 +1553,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .order-detail {
     display: grid;
     gap: 14px;
-    color: #fff;
+    color: #27313d;
 }
 
 .order-detail-head,
@@ -1585,9 +1585,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     display: grid;
     gap: 5px;
     padding: 13px;
-    border: 1px solid rgba(101, 121, 148, .24);
+    border: 1px solid #e1e5eb;
     border-radius: 12px;
-    background: rgba(11, 16, 24, .82);
+    background: #fff;
 }
 
 .order-detail-meta span,
@@ -1600,10 +1600,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 .order-detail-lines {
     overflow: hidden;
-    border: 1px solid #2c363e;
+    border: 1px solid #e1e5eb;
     border-bottom: 0;
     border-radius: 12px 12px 0 0;
-    background: #080b0d;
+    background: #fff;
 }
 
 .order-detail-line {
@@ -1613,7 +1613,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     gap: 16px;
     min-height: 68px;
     padding: 12px 16px;
-    border-bottom: 1px solid #2c363e;
+    border-bottom: 1px solid #edf0f4;
 }
 
 .order-detail-line small {
@@ -1653,10 +1653,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .order-detail-total {
     margin-top: -14px;
     padding: 15px 16px;
-    border: 1px solid #2c363e;
+    border: 1px solid #e1e5eb;
     border-top: 0;
     border-radius: 0 0 12px 12px;
-    background: #080b0d;
+    background: #f8faf9;
     display: flex;
     align-items: center;
     justify-content: flex-end;
