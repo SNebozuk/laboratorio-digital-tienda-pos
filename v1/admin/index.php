@@ -250,40 +250,21 @@ header('Referrer-Policy: same-origin');
                 <?php endif ?>
 
                 <section class="admin-view" id="view-pos">
-                    <div class="view-heading">
+                    <div class="view-heading pos-launch-heading">
                         <div>
                             <p class="eyebrow">MOSTRADOR</p>
                             <h1>PUNTO DE VENTA</h1>
-                            <p>Buscá o escaneá un código y cargá varios productos.</p>
-                            <p class="pos-scanner-status">
-                                <span aria-hidden="true"></span>
-                                LECTOR ACTIVO EN TODA ESTA PANTALLA
-                            </p>
+                            <p>Usá una pantalla completa para buscar o escanear productos y registrar la venta con comodidad.</p>
                         </div>
                     </div>
-                    <div class="pos-shell">
+                    <section class="pos-launch-card">
+                        <div class="pos-launch-icon" aria-hidden="true">⌁</div>
                         <div>
-                            <div class="search-wrap pos-search-wrap">
-                                <label for="pos-search">Buscar productos</label>
-                                <input id="pos-search" type="search" autocomplete="off" placeholder="Producto, talle, SKU o código de barras">
-                                <div id="pos-suggestions" class="suggestions"></div>
-                            </div>
-                            <div id="pos-products" class="pos-products"></div>
+                            <strong>CAJA Y MOSTRADOR</strong>
+                            <p>El Punto de Venta se abre en una página independiente, optimizada para trabajar con teclado, lector de código y pantalla completa.</p>
                         </div>
-                        <aside class="pos-cart">
-                            <p class="eyebrow">VENTA ACTUAL</p>
-                            <h2>RESUMEN</h2>
-                            <div id="pos-cart-lines" class="cart-lines"></div>
-                            <div class="order-total">
-                                <span>Total</span>
-                                <strong id="pos-total">$ 0</strong>
-                            </div>
-                            <label>Cliente<input id="pos-customer" value="Consumidor final" placeholder="Consumidor final"></label>
-                            <button class="primary-button" id="complete-sale-button" type="button" disabled>
-                                REGISTRAR VENTA
-                            </button>
-                        </aside>
-                    </div>
+                        <a class="primary-button" href="pos.php">ABRIR PUNTO DE VENTA</a>
+                    </section>
                 </section>
 
                 <section class="admin-view" id="view-orders">
