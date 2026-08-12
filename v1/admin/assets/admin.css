@@ -2048,6 +2048,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-orders .order-toolbar label:not(.order-filter-search) { min-width: 132px; }
 #view-orders .order-toolbar label:has(#order-channel-filter),
 #view-orders .order-toolbar label:has(#order-date-filter) { display: none; }
+#order-auto-cancel-info { display: none !important; }
 #view-orders .order-toolbar span { color: #a9b3bb; }
 #view-orders .order-toolbar select,
 #view-orders .order-bulk-toolbar select {
