@@ -854,21 +854,26 @@
         ));
         elements.posProducts.innerHTML = products.length ? `
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
-            ${products.map(product => `
-            <article class="pos-product ${product.variants.length === 1 || Number(state.posProductId) === Number(product.id) ? 'pos-expanded' : ''}">
+            ${products.map(product => {
+                const variants = product.variants.filter(variant => variant.active);
+                const availableVariants = variants.filter(variant => Number(variant.available_stock) > 0);
+                const hasVariants = variants.length > 1;
+                const expanded = Number(state.posProductId) === Number(product.id);
+                const single = variants[0];
+                const singleQuantity = single ? posQuantity(single.id) : 0;
+                const singleRemaining = single ? Math.max(0, Number(single.available_stock) - singleQuantity) : 0;
+                return `
+            <article class="pos-product pos-result-product ${expanded ? 'pos-expanded' : ''}">
                 ${safeImage(product.image_path)
-                    ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="">`
+                    ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="${escapeHtml(product.name)}">`
                     : '<div class="pos-product-placeholder">SIN FOTO</div>'}
-                <div>
-                    <div class="pos-product-head">
-                        <strong>${escapeHtml(product.name)}</strong>
-                        <span class="pos-product-price">${posProductPrice(product)}</span>
-                    </div>
-                    ${product.variants.length > 1 ? `<button class="pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}">${product.variants.length} variantes ${Number(state.posProductId) === Number(product.id) ? '‹' : '›'}</button>` : ''}
-                    ${product.variants.filter(variant => (
-                        variant.active
-                        && Number(variant.available_stock) > 0
-                    )).map(variant => {
+                <strong class="pos-result-name">${escapeHtml(product.name)}</strong>
+                <span class="pos-result-meta">${hasVariants ? `${variants.length} variantes` : `${singleRemaining} unidades disponibles`}</span>
+                <span class="pos-product-price">${posProductPrice(product)}</span>
+                ${hasVariants
+                    ? `<button class="pos-result-action pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}">${expanded ? '‹' : '›'}</button>`
+                    : `<button class="pos-result-action pos-add-one" type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity + 1}" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(product.name)}">+</button>`}
+                ${hasVariants ? `<div class="pos-result-variants">${availableVariants.map(variant => {
                         const quantity = posQuantity(variant.id);
                         const remaining = Math.max(
                             0,
@@ -890,10 +895,9 @@
                                 </div>
                             </div>
                         `;
-                    }).join('')}
-                </div>
+                    }).join('')}</div>` : ''}
             </article>
-        `).join('')}` : '<p class="empty-copy">No encontramos productos.</p>';
+        `;}).join('')}` : '<p class="empty-copy">No encontramos productos.</p>';
     }
 
     function renderPosCart() {
@@ -3144,6 +3148,13 @@
         ) {
             event.preventDefault();
             closeModal();
+        } else if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && document.body.classList.contains('pos-search-page')
+        ) {
+            event.preventDefault();
+            window.location.href = 'pos.php';
         }
     });
     document.addEventListener('keydown', captureGlobalBarcode);

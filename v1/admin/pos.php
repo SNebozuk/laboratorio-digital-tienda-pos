@@ -52,13 +52,15 @@ header('Referrer-Policy: same-origin');
                     <span><strong>AGREGAR PRODUCTOS</strong><small>Buscar por producto, variante, SKU o código de barras</small></span>
                     <b>›</b>
                 </a>
+                <section class="pos-sale-details">
+                    <label class="pos-customer-field">CLIENTE<input id="pos-customer" value="Consumidor final" placeholder="Consumidor final"></label>
+                    <div class="pos-main-total"><span>TOTAL</span><strong id="pos-total">$ 0</strong></div>
+                </section>
             </div>
             <aside class="pos-cart pos-page-cart">
                 <p class="eyebrow">VENTA ACTUAL</p>
                 <h2>RESUMEN</h2>
                 <div id="pos-cart-lines" class="cart-lines"></div>
-                <div class="order-total"><span>Total</span><strong id="pos-total">$ 0</strong></div>
-                <label>Cliente<input id="pos-customer" value="Consumidor final" placeholder="Consumidor final"></label>
                 <button class="primary-button" id="complete-sale-button" type="button" disabled>REGISTRAR VENTA</button>
             </aside>
         </section>

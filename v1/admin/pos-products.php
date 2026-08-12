@@ -39,7 +39,7 @@ header('Referrer-Policy: same-origin');
         <header class="pos-page-header">
             <a href="pos.php" class="pos-back-link">← Volver a la venta</a>
             <div class="pos-page-brand"><strong>LABORATORIO DIGITAL</strong><span>PUNTO DE VENTA</span></div>
-            <span class="pos-live-status"><i></i> AGREGAR PRODUCTOS</span>
+            <a href="pos.php" class="pos-search-close" aria-label="Cerrar búsqueda">×</a>
         </header>
         <section class="pos-page-intro">
             <div class="pos-page-title"><p class="eyebrow">PRODUCTOS</p><h1>AGREGAR PRODUCTOS</h1></div>
