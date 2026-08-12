@@ -2147,6 +2147,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-orders .status-pill { border: 1px solid #bc7300; background: #3a2605; color: #fff; }
 #view-orders .status-ready_pickup,
 #view-orders .status-delivered { border-color: #00b56c; background: #063d2c; }
+#view-orders .status-archived { border-color: #74808a; background: #27313a; }
 
 #view-orders .order-bulk-toolbar {
     border-color: #2c363e;

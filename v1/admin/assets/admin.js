@@ -1163,7 +1163,7 @@
             toast(error.message);
         } finally {
             elements.completeSale.disabled = state.posCart.size === 0;
-            elements.completeSale.textContent = 'COBRAR E IMPRIMIR';
+            elements.completeSale.textContent = 'REGISTRAR VENTA';
         }
     }
 
@@ -1178,13 +1178,13 @@
 
     function showPosSaleFinished(sale) {
         openModal(`
-            <h2 id="modal-title">VENTA REGISTRADA</h2>
+            <h2 id="modal-title">REGISTRAR VENTA</h2>
             <p class="checkout-lead">${escapeHtml(sale.public_number)} quedó guardada en Ventas.</p>
             <div class="button-row">
                 <button class="secondary-button" type="button" data-pos-sale-finish="archive" data-order-id="${Number(sale.id)}">ARCHIVAR</button>
                 <button class="primary-button" type="button" data-pos-sale-finish="print" data-order-id="${Number(sale.id)}">IMPRIMIR</button>
             </div>
-            <p class="checkout-footnote">Podés cerrar esta ventana con Esc sin hacer nada más.</p>
+            <p class="checkout-footnote">La venta ya quedó registrada. Imprimir mantiene este menú abierto; archivarla lo cierra.</p>
         `);
     }
 
@@ -1496,6 +1496,7 @@
                         <div>
                             <p class="eyebrow">DETALLE DE LA VENTA</p>
                             <h2 id="modal-title">${escapeHtml(order.public_number)}</h2>
+                            <span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : order.status)}">${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</span>
                         </div>
                         <div class="order-detail-head-actions">
                             <button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>
@@ -1504,7 +1505,7 @@
                     </header>
                     <div class="order-detail-meta">
                         <div><span>CLIENTE</span><strong>${escapeHtml(order.customer_name)}</strong><small>${escapeHtml(order.customer_phone || order.customer_email || 'Sin contacto informado')}</small></div>
-                        <div><span>FECHA</span><strong>${escapeHtml(order.created_at)}</strong><small>${escapeHtml(channelLabels[order.channel] || order.channel)}</small></div>
+                        <div><span>FECHA</span><strong>${escapeHtml(order.created_at)}</strong><small>${escapeHtml(order.archived_at ? 'Venta archivada' : (order.status === 'cancelled' ? 'Venta cancelada' : 'Venta activa'))}</small></div>
                         <div><span>FORMA DE PAGO</span><strong>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</strong><small>${order.payment_method === 'cash' ? `Reserva hasta ${escapeHtml(order.payment_deadline_at || '')}` : 'El cliente avisa la transferencia por WhatsApp.'}</small></div>
                     </div>
                     <div class="order-detail-lines">
@@ -1642,7 +1643,7 @@
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <span class="order-list-units">${Number(order.unit_count)} unid.⌄</span>
                         <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia')}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
-                        <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status] || order.status)}</span><small>${escapeHtml(channelLabels[order.channel] || order.channel)}</small></span>
+                        <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : order.status)}">${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</span></span>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
                         <span class="order-list-chevron" aria-hidden="true">&rsaquo;</span>
                     </div>
@@ -1661,7 +1662,6 @@
                 </div>
                 <p>
                     <strong>${escapeHtml(order.customer_name)}</strong><br>
-                    ${escapeHtml(channelLabels[order.channel] || order.channel)} ·
                     ${Number(order.unit_count)} unidades<br>
                     ${escapeHtml(order.created_at)}
                 </p>
@@ -2783,10 +2783,8 @@
             const orderId = Number(posFinish.dataset.orderId);
             if (posFinish.dataset.posSaleFinish === 'print') {
                 printReceipt({ id: orderId });
-                closeModal();
             } else {
-                archiveSelectedOrders([orderId]);
-                closeModal();
+                archiveSelectedOrders([orderId]).then(closeModal);
             }
             return;
         }

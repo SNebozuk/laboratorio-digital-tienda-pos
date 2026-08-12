@@ -280,7 +280,7 @@ header('Referrer-Policy: same-origin');
                             </div>
                             <label>Cliente<input id="pos-customer" value="Consumidor final" placeholder="Consumidor final"></label>
                             <button class="primary-button" id="complete-sale-button" type="button" disabled>
-                                FINALIZAR VENTA
+                                REGISTRAR VENTA
                             </button>
                         </aside>
                     </div>
@@ -332,9 +332,8 @@ header('Referrer-Policy: same-origin');
                             <span>ACCIONES SOBRE LAS VENTAS SELECCIONADAS</span>
                             <select id="bulk-order-action">
                                 <option value="">Acciones</option>
-                                <option value="archive">Archivar</option>
-                                <option value="cancel">Cancelar</option>
-                                <option value="reopen">Reabrir</option>
+                                <option value="archive">Archivar Ventas</option>
+                                <option value="cancel">Cancelar Ventas</option>
                             </select>
                         </label>
                     </div>
