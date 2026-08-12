@@ -1497,9 +1497,10 @@
                             <p class="eyebrow">DETALLE DE LA VENTA</p>
                             <h2 id="modal-title">${escapeHtml(order.public_number)}</h2>
                         </div>
-                        <span class="status-pill status-${escapeHtml(order.status)}">
-                            ${escapeHtml(statusLabels[order.status] || order.status)}
-                        </span>
+                        <div class="order-detail-head-actions">
+                            <button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>
+                            <button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar</button>
+                        </div>
                     </header>
                     <div class="order-detail-meta">
                         <div><span>CLIENTE</span><strong>${escapeHtml(order.customer_name)}</strong><small>${escapeHtml(order.customer_phone || order.customer_email || 'Sin contacto informado')}</small></div>
@@ -1642,6 +1643,7 @@
                         <span class="order-list-units">${Number(order.unit_count)} unid.⌄</span>
                         <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia')}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
                         <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status] || order.status)}</span><small>${escapeHtml(channelLabels[order.channel] || order.channel)}</small></span>
+                        <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
                         <span class="order-list-chevron" aria-hidden="true">&rsaquo;</span>
                     </div>
                 `).join('')}
