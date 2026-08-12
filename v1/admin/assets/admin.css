@@ -2732,6 +2732,19 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-page-intro { width: 100%; padding: 30px 30px 0; }
 .pos-page-intro .pos-page-title { margin-bottom: 18px; }
 .pos-page-intro .pos-search-wrap { width: 100%; max-width: none; margin: 0; }
+.pos-add-products-link { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 82px; padding: 16px 18px; border: 1px solid #dce2ed; border-radius: 14px; background: #fff; color: #252a3a; text-decoration: none; box-shadow: 0 4px 18px rgba(30, 40, 70, .035); }
+.pos-add-products-link:hover { border-color: #1769e0; box-shadow: 0 8px 24px rgba(30, 80, 160, .1); }
+.pos-add-products-link span:nth-child(2) { display: grid; gap: 4px; }
+.pos-add-products-link small { color: #667087; }
+.pos-add-products-link > b { color: #1769e0; font-size: 30px; }
+.pos-add-products-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 10px; background: #1769e0; color: #fff; font-size: 26px; }
+.pos-search-results { width: 100%; padding: 24px 30px 40px; }
+.pos-search-page .pos-products { width: 100%; }
+.pos-search-page .pos-product { width: 100%; grid-template-columns: 74px minmax(0, 1fr); border-radius: 0; border-width: 0 0 1px; box-shadow: none; }
+.pos-search-page .pos-product img, .pos-search-page .pos-product-placeholder { width: 64px; height: 64px; transition: transform .18s ease, box-shadow .18s ease; position: relative; z-index: 1; }
+.pos-search-page .pos-product img:hover { transform: scale(2.35); box-shadow: 0 12px 34px rgba(0,0,0,.35); z-index: 8; }
+.pos-search-page .pos-product-head strong { text-transform: uppercase; }
+.pos-product-price { color: #252a3a; font-weight: 800; white-space: nowrap; }
 .pos-page-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 70px; padding: 0 30px; border-bottom: 1px solid #e2e6ef; background: #fff; }
 .pos-back-link { color: #596176; font-size: 13px; font-weight: 700; text-decoration: none; }
 .pos-page-brand { display: grid; justify-items: center; gap: 2px; color: #252a3a; }
@@ -2757,6 +2770,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .pos-page-header { grid-template-columns: 1fr auto; padding: 0 16px; }
     .pos-live-status { display: none; }
     .pos-page-intro { padding: 18px 16px 0; }
+    .pos-search-results { padding: 18px 16px 40px; }
     .pos-page-workspace { grid-template-columns: 1fr; padding: 18px 16px 40px; }
     .pos-page-cart { position: static; }
     .pos-launch-card { grid-template-columns: auto 1fr; }

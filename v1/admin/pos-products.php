@@ -30,38 +30,26 @@ header('Referrer-Policy: same-origin');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#ffffff">
-    <title>Punto de Venta · Laboratorio Digital</title>
+    <title>Agregar productos · Punto de Venta</title>
     <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($assetVersion) ?>">
 </head>
-<body class="admin-body pos-page-body">
+<body class="admin-body pos-page-body pos-search-page">
     <main class="pos-page">
         <header class="pos-page-header">
-            <a href="./" class="pos-back-link">← Administración</a>
+            <a href="pos.php" class="pos-back-link">← Volver a la venta</a>
             <div class="pos-page-brand"><strong>LABORATORIO DIGITAL</strong><span>PUNTO DE VENTA</span></div>
-            <span class="pos-live-status"><i></i> LISTO PARA VENDER</span>
+            <span class="pos-live-status"><i></i> AGREGAR PRODUCTOS</span>
         </header>
-        <section class="pos-page-workspace">
-            <div class="pos-page-products">
-                <div class="pos-page-title">
-                    <p class="eyebrow">MOSTRADOR</p>
-                    <h1>NUEVA VENTA</h1>
-                </div>
-                <a class="pos-add-products-link" href="pos-products.php">
-                    <span class="pos-add-products-icon">+</span>
-                    <span><strong>AGREGAR PRODUCTOS</strong><small>Buscar por producto, variante, SKU o código de barras</small></span>
-                    <b>›</b>
-                </a>
+        <section class="pos-page-intro">
+            <div class="pos-page-title"><p class="eyebrow">PRODUCTOS</p><h1>AGREGAR PRODUCTOS</h1></div>
+            <div class="search-wrap pos-search-wrap">
+                <label for="pos-search">Buscar o escanear</label>
+                <input id="pos-search" type="search" autocomplete="off" autofocus placeholder="Producto, talle, SKU o código de barras">
+                <div id="pos-suggestions" class="suggestions"></div>
             </div>
-            <aside class="pos-cart pos-page-cart">
-                <p class="eyebrow">VENTA ACTUAL</p>
-                <h2>RESUMEN</h2>
-                <div id="pos-cart-lines" class="cart-lines"></div>
-                <div class="order-total"><span>Total</span><strong id="pos-total">$ 0</strong></div>
-                <label>Cliente<input id="pos-customer" value="Consumidor final" placeholder="Consumidor final"></label>
-                <button class="primary-button" id="complete-sale-button" type="button" disabled>REGISTRAR VENTA</button>
-            </aside>
         </section>
+        <section class="pos-search-results"><div id="pos-products" class="pos-products"></div></section>
     </main>
     <div class="modal" id="modal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><section class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close" type="button" data-close-modal aria-label="Cerrar">×</button><div id="modal-content"></div></section></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

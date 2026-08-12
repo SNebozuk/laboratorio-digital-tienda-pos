@@ -36,6 +36,15 @@
         maximumFractionDigits: 0,
     }).format(Number(cents || 0) / 100);
 
+    const posProductPrice = product => {
+        const prices = product.variants
+            .filter(variant => variant.active)
+            .map(variant => Number(variant.price_cents));
+        const minimum = Math.min(...prices);
+        const maximum = Math.max(...prices);
+        return minimum === maximum ? money(minimum) : `${money(minimum)} a ${money(maximum)}`;
+    };
+
     const fold = value => String(value || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -853,9 +862,9 @@
                 <div>
                     <div class="pos-product-head">
                         <strong>${escapeHtml(product.name)}</strong>
-                        <small>${escapeHtml(product.category?.name || '')}</small>
+                        <span class="pos-product-price">${posProductPrice(product)}</span>
                     </div>
-                    ${product.variants.length > 1 ? `<button class="pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}">${product.variants.length} variantes ${Number(state.posProductId) === Number(product.id) ? '⌃' : '⌄'}</button>` : ''}
+                    ${product.variants.length > 1 ? `<button class="pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}">${product.variants.length} variantes ${Number(state.posProductId) === Number(product.id) ? '‹' : '›'}</button>` : ''}
                     ${product.variants.filter(variant => (
                         variant.active
                         && Number(variant.available_stock) > 0
