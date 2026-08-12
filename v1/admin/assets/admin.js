@@ -1204,6 +1204,16 @@
         `);
     }
 
+    async function archivePosSale(orderId) {
+        try {
+            await apiPost({ action: 'order_archive', order_id: Number(orderId) });
+            closeModal();
+            toast('Venta archivada en la lista de ventas.');
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
     async function loadOrders() {
         if (!elements.orderList) {
             return;
@@ -2897,7 +2907,7 @@
             if (posFinish.dataset.posSaleFinish === 'print') {
                 printReceipt({ id: orderId });
             } else {
-                archiveSelectedOrders([orderId]).then(closeModal);
+                archivePosSale(orderId);
             }
             return;
         }
