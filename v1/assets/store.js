@@ -1030,6 +1030,7 @@
         const formData = new FormData(form);
         const customerName = String(formData.get('name') || '').trim();
         const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
+        // La tienda opera con transferencia como único medio de pago web.
         const paymentMethod = 'bank_transfer';
         if (customerName.trim().split(/\s+/).length < 2 || customerPhone.length < 8) {
             errorBox.hidden = false;
