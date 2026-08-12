@@ -1638,7 +1638,7 @@
                     <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
                         <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : ''}</span>
-                        <span class="order-list-date">${escapeHtml(String(order.created_at || '').replace('T', ' '))}</span>
+                        <span class="order-list-date">${escapeHtml(String(order.created_at || '').replace('T', ' ').split(' ')[0])}<small>${escapeHtml(String(order.created_at || '').replace('T', ' ').split(' ').slice(1).join(' '))}</small></span>
                         <span><strong>${escapeHtml(order.customer_name)}</strong></span>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <span class="order-list-units">${Number(order.unit_count)} unid.⌄</span>

@@ -2124,9 +2124,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-orders .order-list-number,
 #view-orders .order-list-row > :nth-child(4) { cursor: pointer; }
 #view-orders .order-list-row:hover .order-list-number strong,
-#view-orders .order-list-row:hover > :nth-child(4) strong { text-decoration: underline; text-underline-offset: 3px; }
+#view-orders .order-list-row:hover > :nth-child(4) strong { text-decoration: none; }
 #view-orders .order-list-row small { color: #fff; }
-#view-orders .order-list-date { color: #fff; line-height: 1.55; }
+#view-orders .order-list-date { display: grid; color: #fff; line-height: 1.35; }
+#view-orders .order-list-date small { margin-top: 3px; color: #a9b3bb; font-size: 10px; font-weight: 500; }
 #view-orders .order-list-total { color: #fff; text-align: left; }
 #view-orders .order-list-units { color: #1bd8f2; font-weight: 700; }
 #view-orders .order-list-chevron { color: #fff; }
