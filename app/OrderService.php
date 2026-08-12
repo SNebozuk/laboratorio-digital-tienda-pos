@@ -177,6 +177,7 @@ final class OrderService
                 return [
                     'id' => $orderId,
                     'public_number' => $publicNumber,
+                    'customer_name' => $customerName,
                     'status' => 'pending_payment',
                     'total_cents' => $total,
                     'payment_method' => $paymentMethod,

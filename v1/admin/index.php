@@ -327,14 +327,6 @@ header('Referrer-Policy: same-origin');
                             </select>
                         </label>
                         <label>
-                            <span>PAGO</span>
-                            <select id="order-payment-filter">
-                                <option value="">Todas las formas</option>
-                                <option value="bank_transfer">Transferencia</option>
-                                <option value="cash">Efectivo</option>
-                            </select>
-                        </label>
-                        <label>
                             <span>PERÍODO</span>
                             <select id="order-date-filter">
                                 <option value="">Cualquier fecha</option>

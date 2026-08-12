@@ -945,21 +945,6 @@
                         value="${escapeHtml(customer.phone || '')}"
                     >
                 </label>
-                <fieldset class="payment-choice">
-                    <legend>¿Cómo vas a pagar?</legend>
-                    <label class="payment-option">
-                        <input name="payment_method" type="radio" value="bank_transfer" checked>
-                        <span><strong>Transferencia</strong><small>Te mostraremos los datos para realizarla.</small></span>
-                    </label>
-                    <label class="payment-option">
-                        <input name="payment_method" type="radio" value="cash">
-                        <span><strong>Efectivo al retirar</strong><small>Guardamos tu pedido durante 2 horas.</small></span>
-                    </label>
-                </fieldset>
-                <div class="cash-reservation-warning" id="cash-reservation-warning" hidden>
-                    <strong>Guardamos tu pedido por 2 horas</strong>
-                    <span>Así tenés tiempo para acercarte al local. Si el retiro no se realiza dentro de ese plazo, liberaremos los productos para que otras personas puedan pedirlos.</span>
-                </div>
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
@@ -1045,8 +1030,8 @@
         const formData = new FormData(form);
         const customerName = String(formData.get('name') || '').trim();
         const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
-        const paymentMethod = String(formData.get('payment_method') || 'bank_transfer');
-        if (customerName.length < 2 || customerPhone.length < 8) {
+        const paymentMethod = 'bank_transfer';
+        if (customerName.trim().split(/\s+/).length < 2 || customerPhone.length < 8) {
             errorBox.hidden = false;
             errorBox.textContent = 'Completá Nombre y Apellido y un WhatsApp válido para crear el pedido.';
             form.querySelector(customerName.length < 2
@@ -1074,19 +1059,13 @@
                 })),
             });
             state.order = data.order;
-            const transferWhatsappUrl = paymentMethod === 'bank_transfer'
-                ? whatsappUrl(data.order)
-                : '';
+            const transferWhatsappUrl = whatsappUrl(data.order);
             state.cart.clear();
             persistCart();
             renderCatalog();
             renderCart();
             refreshCatalog();
-            if (paymentMethod === 'cash') {
-                showCashConfirmationSixHours(data.order);
-            } else {
-                showTransferConfirmation(data.order, transferWhatsappUrl);
-            }
+            showTransferConfirmation(data.order, transferWhatsappUrl);
         } catch (error) {
             errorBox.hidden = false;
             errorBox.textContent = error.message;
@@ -1293,6 +1272,7 @@
         const message = [
             'Hola Laboratorio Digital.',
             '',
+            `Soy ${order.customer_name || 'el cliente'}.`,
             `Comparto el detalle del pedido ${order.public_number}.`,
             '',
             'Productos:',
