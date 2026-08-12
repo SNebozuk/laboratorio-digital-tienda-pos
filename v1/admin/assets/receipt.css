@@ -16,21 +16,14 @@ body {
     background: #fff;
 }
 
-.brand {
-    margin: 0 0 8px;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: .12em;
-}
-
 h1 {
     margin: 0 0 6px;
-    font-size: 24px;
+    font-size: 31px;
 }
 
 .receipt-title-row { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
 .receipt-title-row p { margin: 4px 0 0; color: #5e6875; }
-.order-number { padding: 8px 11px; border: 2px solid #111; border-radius: 8px; font-size: 21px; white-space: nowrap; }
+.receipt-logo { display: block; width: 190px; max-height: 60px; object-fit: contain; object-position: right center; }
 
 dl {
     display: grid;
@@ -119,6 +112,8 @@ small,
         grid-template-columns: 1fr;
         gap: 8px;
     }
+
+    .receipt-logo { width: 130px; max-height: 44px; }
 
     th:nth-child(4),
     td:nth-child(4) {
