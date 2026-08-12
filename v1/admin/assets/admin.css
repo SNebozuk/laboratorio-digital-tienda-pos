@@ -1639,7 +1639,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 .order-detail-line {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(140px, .4fr) minmax(110px, .3fr);
+    grid-template-columns: minmax(0, 1fr) minmax(110px, .3fr);
     align-items: center;
     gap: 16px;
     min-height: 68px;
@@ -1658,6 +1658,34 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     grid-template-columns: 54px minmax(0, 1fr);
     gap: 12px;
     align-items: center;
+}
+
+.order-detail-product-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.order-detail-product-copy > strong {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.order-detail-product-copy small {
+    margin: 0;
+    font-size: 11px;
+}
+
+.order-detail-sku {
+    color: #556276 !important;
+    font-weight: 700;
+}
+
+.order-detail-quantity {
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 750;
 }
 
 .order-detail-product img,
@@ -2620,3 +2648,12 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     filter: brightness(.78);
 }
 .admin-body button:disabled { cursor: not-allowed; opacity: .45; }
+
+/* En la lista, Productos abre una vista breve del contenido de la venta. */
+#view-orders button.order-list-units {
+    color: #1bd8f2 !important;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}

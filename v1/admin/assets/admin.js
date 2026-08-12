@@ -1515,11 +1515,14 @@
                                 <div>
                                     <div class="order-detail-product">
                                         ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
-                                        <strong>${escapeHtml(item.product_name)}</strong>
+                                        <span class="order-detail-product-copy">
+                                            <strong>${escapeHtml(item.product_name)}</strong>
+                                            <small class="order-detail-sku">SKU: ${escapeHtml(item.sku || 'Sin SKU')}</small>
+                                            ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
+                                            <span class="order-detail-quantity">${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>
+                                        </span>
                                     </div>
-                                    ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
                                 </div>
-                                <span>${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>
                                 <strong>${money(item.line_total_cents)}</strong>
                             </div>
                         `).join('')}
@@ -1535,6 +1538,40 @@
                     </section>
                     <div class="order-actions order-detail-actions">${orderActions(actionOrder)}</div>
                     <p class="order-print-note">La impresión incluye la compra y el total.</p>
+                </section>
+            `);
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    async function showOrderProducts(orderId) {
+        try {
+            const data = await apiGet('order', { id: orderId });
+            const order = data.order;
+            openModal(`
+                <section class="order-products-preview">
+                    <header>
+                        <p class="eyebrow">PRODUCTOS DE LA VENTA</p>
+                        <h2 id="modal-title">${escapeHtml(order.public_number)}</h2>
+                    </header>
+                    <div class="order-detail-lines">
+                        ${order.items.map(item => `
+                            <div class="order-detail-line">
+                                <div class="order-detail-product">
+                                    ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
+                                    <span class="order-detail-product-copy">
+                                        <strong>${escapeHtml(item.product_name)}</strong>
+                                        <small class="order-detail-sku">SKU: ${escapeHtml(item.sku || 'Sin SKU')}</small>
+                                        ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
+                                        <span class="order-detail-quantity">${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>
+                                    </span>
+                                </div>
+                                <strong>${money(item.line_total_cents)}</strong>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="order-detail-total"><span>TOTAL</span><strong>${money(order.total_cents)}</strong></div>
                 </section>
             `);
         } catch (error) {
@@ -1644,7 +1681,7 @@
                         <span class="order-list-date">${escapeHtml(String(order.created_at || '').replace('T', ' ').split(' ')[0])}<small>${escapeHtml(String(order.created_at || '').replace('T', ' ').split(' ').slice(1).join(' '))}</small></span>
                         <span><strong>${escapeHtml(order.customer_name)}</strong></span>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
-                        <span class="order-list-units">${Number(order.unit_count)} unid.⌄</span>
+                        <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
                         <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia')}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
                         <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : order.status)}">${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</span></span>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
@@ -2804,6 +2841,13 @@
             event.preventDefault();
             event.stopPropagation();
             printStoredOrder(Number(printOrder.dataset.printOrder));
+            return;
+        }
+        const previewOrder = event.target.closest('[data-preview-order]');
+        if (previewOrder) {
+            event.preventDefault();
+            event.stopPropagation();
+            showOrderProducts(Number(previewOrder.dataset.previewOrder));
             return;
         }
         const viewOrder = event.target.closest('[data-view-order]');
