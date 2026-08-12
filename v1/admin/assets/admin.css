@@ -2596,3 +2596,27 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-whatsapp .settings-grid,
 #view-whatsapp .form-hint:has(code),
 #view-contact label:has(input[name="sales_email"]) { display: none; }
+
+/* Acciones del administrador: texto simple, sin cajas visuales. */
+.admin-body button {
+    min-height: auto !important;
+    padding: 6px 4px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #315fa9 !important;
+    cursor: pointer;
+}
+.admin-body button.primary-button { color: #1559c5 !important; }
+.admin-body button.secondary-button,
+.admin-body button.small-button { color: #4e5c70 !important; }
+.admin-body button.danger-button,
+.admin-body button[data-confirm-cancel-orders] { color: #bd3030 !important; }
+.admin-body button:hover,
+.admin-body button:focus-visible {
+    background: transparent !important;
+    text-decoration: none !important;
+    filter: brightness(.78);
+}
+.admin-body button:disabled { cursor: not-allowed; opacity: .45; }
