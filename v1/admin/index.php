@@ -324,7 +324,7 @@ header('Referrer-Policy: same-origin');
                         </label>
                         <label class="archive-orders-toggle">
                             <input id="show-archived-orders" type="checkbox">
-                            <span>VER ARCHIVADAS</span>
+                            <span>MOSTRAR TODAS</span>
                         </label>
                     </div>
                     <div id="order-actions-bar" class="order-actions-bar" hidden>

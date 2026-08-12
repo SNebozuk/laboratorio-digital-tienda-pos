@@ -2657,3 +2657,45 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     text-align: left;
     white-space: nowrap;
 }
+
+/* La administraciÃ³n trabaja siempre sobre fondo claro. */
+#view-orders { color: #252a3a; }
+#view-orders::before { background: #f6f7fb; }
+#view-orders .order-page-heading { border-bottom-color: #e2e6ef; }
+#view-orders .view-heading h1 { color: #242a3a; }
+#view-orders .order-toolbar,
+#view-orders .order-actions-bar,
+#view-orders .order-list,
+#view-orders .order-list-head,
+#view-orders .order-list-row,
+#view-orders .order-bulk-toolbar { border-color: #e2e6ef; background: #fff; color: #252a3a; }
+#view-orders .order-list-head { background: #fafbfc; color: #6b7484; }
+#view-orders .order-list-row { border-bottom-color: #edf0f5; }
+#view-orders .order-list-row:hover { background: #f7f8fc; }
+#view-orders .order-filter-search input,
+#view-orders .order-toolbar select,
+#view-orders .order-bulk-toolbar select,
+#view-orders .bulk-actions-control select { border-color: #dce1eb; background: #fff; color: #252a3a; }
+#view-orders .order-toolbar span,
+#view-orders .order-list-row small,
+#view-orders .order-list-date,
+#view-orders .order-list-date small,
+#view-orders .order-list-total,
+#view-orders .order-list-chevron { color: #596176; }
+#view-orders .order-list-number strong,
+#view-orders button.order-list-units { color: #315fa9 !important; }
+#view-orders .order-list-print { border: 0; background: transparent; color: #315fa9; }
+#view-orders .status-pill { color: #334155; background: #eef2f7; border-color: #d9e0e8; }
+#view-orders .status-cancelled { color: #a12a2a; background: #fff0f0; border-color: #f2caca; }
+#view-orders .status-archived { color: #596176; background: #eef1f4; border-color: #d9dfe6; }
+.admin-main .size-guide-editor,
+.admin-main .size-guide-table-wrap,
+.admin-main .user-card,
+.admin-main .cash-card,
+.admin-main .settings-card,
+.admin-main .category-admin-row { background: #fff !important; color: #252a3a !important; border-color: #e2e6ef !important; }
+.admin-main .size-guide-edit-table th { background: #fafbfc; color: #596176; }
+.admin-main .size-guide-edit-table td { border-bottom-color: #edf0f5; }
+.admin-main .size-guide-edit-table input:hover,
+.admin-main .size-guide-edit-table input:focus { background: #fff; border-color: #7668e8; }
+#view-orders button.order-list-customer { color: #252a3a !important; font: inherit; font-weight: 700; text-align: left; }

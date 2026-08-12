@@ -123,6 +123,7 @@ small,
 
 @media print {
     @page {
+        size: A4;
         margin: 10mm;
     }
 
@@ -131,8 +132,12 @@ small,
     }
 
     .receipt {
+        max-width: 190mm;
         width: 100%;
         margin: 0;
         padding: 0;
     }
+
+    .receipt-logo { width: 170px; }
+    .receipt-product img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

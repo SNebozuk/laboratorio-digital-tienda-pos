@@ -11,6 +11,7 @@
         orderChannel: '',
         orderPayment: '',
         orderDateRange: '',
+        customerHistoryName: '',
         selectedOrderIds: new Set(),
         showArchivedOrders: false,
         settings: null,
@@ -1369,15 +1370,14 @@
             toast('Para archivar, seleccioná únicamente ventas entregadas.');
             return;
         }
-        if (!window.confirm(`¿Archivar ${selected.length} ${selected.length === 1 ? 'venta entregada' : 'ventas entregadas'}? Podrás verlas activando “Ver archivadas”.`)) {
-            return;
-        }
         try {
             for (const order of selected) {
                 await apiPost({ action: 'order_archive', order_id: Number(order.id) });
             }
             state.selectedOrderIds.clear();
             await loadOrders();
+            closeModal();
+            showView('orders');
             toast('Ventas archivadas.');
         } catch (error) {
             toast(error.message);
@@ -1498,6 +1498,18 @@
                 { sensitivity: 'base', numeric: true }
             );
         });
+    }
+
+    async function showCustomerHistory(customerName) {
+        state.customerHistoryName = String(customerName || '').trim();
+        state.orderQuery = '';
+        if (elements.orderSearch) elements.orderSearch.value = '';
+        state.showArchivedOrders = true;
+        if (elements.showArchivedOrders) elements.showArchivedOrders.checked = true;
+        closeModal();
+        showView('orders');
+        await loadOrders();
+        toast(`Historial de ${state.customerHistoryName}.`);
     }
 
     async function showOrderDetail(orderId) {
@@ -1626,6 +1638,7 @@
             order.customer_phone,
         ].join(' ')).includes(query);
         return matchesQuery
+            && (!state.customerHistoryName || fold(order.customer_name) === fold(state.customerHistoryName))
             && (!state.orderStatus || order.status === state.orderStatus)
             && (!state.orderChannel || order.channel === state.orderChannel)
             && (!state.orderPayment || order.payment_method === state.orderPayment)
@@ -1633,7 +1646,9 @@
     }
 
     function renderOrders() {
-        const matchingOrders = state.orders.filter(orderMatchesFilters);
+        const matchingOrders = state.orders
+            .filter(orderMatchesFilters)
+            .sort((first, second) => String(second.created_at || '').localeCompare(String(first.created_at || '')));
         const actionsBar = document.getElementById('order-actions-bar');
         if (actionsBar) actionsBar.hidden = selectedOrders().length === 0;
 
@@ -1695,7 +1710,7 @@
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
                         <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : ''}</span>
                         <span class="order-list-date">${escapeHtml(String(order.created_at || '').replace('T', ' ').split(' ')[0])}<small>${escapeHtml(String(order.created_at || '').replace('T', ' ').split(' ').slice(1).join(' '))}</small></span>
-                        <span><strong>${escapeHtml(order.customer_name)}</strong></span>
+                        <button class="order-list-customer" type="button" data-customer-history="${escapeHtml(order.customer_name)}" aria-label="Ver historial de ${escapeHtml(order.customer_name)}"><strong>${escapeHtml(order.customer_name)}</strong></button>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
                         <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia')}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
@@ -2866,6 +2881,13 @@
             showOrderProducts(Number(previewOrder.dataset.previewOrder));
             return;
         }
+        const customerHistory = event.target.closest('[data-customer-history]');
+        if (customerHistory) {
+            event.preventDefault();
+            event.stopPropagation();
+            showCustomerHistory(customerHistory.dataset.customerHistory);
+            return;
+        }
         const viewOrder = event.target.closest('[data-view-order]');
         if (viewOrder) {
             showOrderDetail(Number(viewOrder.dataset.viewOrder));
@@ -2993,6 +3015,7 @@
     elements.productSearch?.addEventListener('input', renderProducts);
     elements.orderSearch?.addEventListener('input', event => {
         state.orderQuery = event.target.value;
+        state.customerHistoryName = '';
         renderOrders();
     });
     elements.orderStatusFilter?.addEventListener('change', event => {
