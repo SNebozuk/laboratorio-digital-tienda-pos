@@ -45,7 +45,6 @@ function receiptMoney(int $cents): string
         <dl>
             <div><dt>Fecha</dt><dd><?= receiptText($order['created_at']) ?></dd></div>
             <div><dt>Cliente</dt><dd><?= receiptText($order['customer_name']) ?></dd></div>
-            <div><dt>Pago</dt><dd><?= receiptText($order['payment_method']) ?></dd></div>
         </dl>
 
         <table>

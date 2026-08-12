@@ -309,9 +309,9 @@ header('Referrer-Policy: same-origin');
                             <span>ESTADO</span>
                             <select id="order-status-filter">
                                 <option value="">Todos los estados</option>
-                                <option value="pending_payment">Pendiente de pago</option>
-                                <option value="payment_reported">Pago informado</option>
-                                <option value="paid_prepare">Pagado / preparar</option>
+                                <option value="pending_payment">Nueva</option>
+                                <option value="payment_reported">Confirmada</option>
+                                <option value="paid_prepare">En preparación</option>
                                 <option value="ready_pickup">Listo para retirar</option>
                                 <option value="delivered">Entregado</option>
                                 <option value="cancelled">Cancelado</option>
@@ -346,7 +346,7 @@ header('Referrer-Policy: same-origin');
                             <span>ACTUALIZAR ESTADO</span>
                             <select id="bulk-order-status">
                                 <option value="">Elegir estado</option>
-                                <option value="approve">Pagado / preparar</option>
+                                <option value="approve">Preparar pedido</option>
                                 <option value="ready">Listo para retirar</option>
                                 <option value="deliver">Entregada</option>
                             </select>

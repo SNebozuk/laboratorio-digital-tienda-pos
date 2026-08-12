@@ -1217,12 +1217,12 @@
     }
 
     const statusLabels = {
-        pending_payment: 'Pendiente de pago',
-        payment_reported: 'Pago informado',
-        paid_prepare: 'Pagado / preparar',
+        pending_payment: 'Nueva',
+        payment_reported: 'Confirmada',
+        paid_prepare: 'En preparación',
         ready_pickup: 'Listo para retirar',
         delivered: 'Entregado',
-        rejected: 'Pago rechazado',
+        rejected: 'Revisar',
         cancelled: 'Cancelado',
     };
 
@@ -1276,8 +1276,7 @@
         }
         if (order.status === 'payment_reported') {
             actions.push(
-                `<button class="small-button" type="button" data-order-action="approve" data-order-id="${Number(order.id)}">Aprobar pago</button>`,
-                `<button class="small-button danger-button" type="button" data-order-action="reject" data-order-id="${Number(order.id)}">Rechazar</button>`
+                `<button class="small-button" type="button" data-order-action="approve" data-order-id="${Number(order.id)}">Preparar pedido</button>`
             );
         }
         if (order.status === 'paid_prepare') {
@@ -1615,14 +1614,14 @@
                     <small>pedidos y ventas</small>
                 </article>
                 <article class="attention">
-                    <span>TRANSFERENCIAS</span>
+                    <span>NUEVAS</span>
                     <strong>${countStatus('pending_payment')}</strong>
-                    <small>por coordinar</small>
+                    <small>por revisar</small>
                 </article>
                 <article>
                     <span>PREPARAR</span>
                     <strong>${countStatus('paid_prepare')}</strong>
-                    <small>pedidos pagados</small>
+                    <small>en preparación</small>
                 </article>
                 <article class="ready">
                     <span>LISTOS</span>
@@ -1640,7 +1639,7 @@
             }
             elements.orderOverview.innerHTML = `
                 <button class="order-state-tab ${!state.orderStatus ? 'active' : ''}" type="button" data-order-status="">Todas <b>${state.orders.length}</b></button>
-                <button class="order-state-tab ${['pending_payment', 'payment_reported'].includes(state.orderStatus) ? 'active' : ''}" type="button" data-order-status="pending_payment">Por cobrar <b>${countFor(['pending_payment', 'payment_reported'])}</b></button>
+                <button class="order-state-tab ${['pending_payment', 'payment_reported'].includes(state.orderStatus) ? 'active' : ''}" type="button" data-order-status="pending_payment">Nuevas <b>${countFor(['pending_payment', 'payment_reported'])}</b></button>
                 <button class="order-state-tab ${state.orderStatus === 'paid_prepare' ? 'active' : ''}" type="button" data-order-status="paid_prepare">Por empaquetar <b>${countFor(['paid_prepare'])}</b></button>
                 <button class="order-state-tab ${state.orderStatus === 'ready_pickup' ? 'active' : ''}" type="button" data-order-status="ready_pickup">Por retirar <b>${countFor(['ready_pickup'])}</b></button>
                 <button class="order-state-tab ${state.orderStatus === 'delivered' ? 'active' : ''}" type="button" data-order-status="delivered">Por archivar <b>${countFor(['delivered'])}</b></button>

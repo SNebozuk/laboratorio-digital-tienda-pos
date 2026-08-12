@@ -2003,7 +2003,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 }
 #view-orders .order-list-head,
 #view-orders .order-list-row {
-    grid-template-columns: 34px minmax(90px, .55fr) minmax(100px, .6fr) minmax(160px, 1.1fr) minmax(110px, .7fr) minmax(105px, .6fr) minmax(190px, 1.2fr) minmax(160px, 1fr) 28px;
+    grid-template-columns: 34px minmax(90px, .55fr) minmax(100px, .6fr) minmax(160px, 1.1fr) minmax(110px, .7fr) minmax(105px, .6fr) minmax(150px, .9fr) 28px;
     column-gap: 14px;
 }
 #view-orders .order-list-head {
@@ -2018,6 +2018,16 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     color: #fff;
 }
 #view-orders .order-list-row:hover { background: #10171c; }
+#view-orders .view-heading > div:first-child > p:last-child { display: none; }
+#view-orders .order-list-head > :nth-child(7),
+#view-orders .order-list-row > :nth-child(7) { display: none; }
+#view-orders .order-list-head > :nth-child(8) { font-size: 0; }
+#view-orders .order-list-head > :nth-child(8)::after {
+    content: 'ESTADO';
+    font-size: 11px;
+}
+#view-orders .order-detail-meta > :nth-child(3),
+#view-orders .order-payment-detail { display: none; }
 #view-orders .order-list-number strong { color: #1bd8f2; }
 #view-orders .order-list-number,
 #view-orders .order-list-row > :nth-child(4) { cursor: pointer; }
@@ -2043,7 +2053,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     #view-orders .order-overview { margin-left: 0; }
     #view-orders .order-toolbar { margin-top: 0; }
     #view-orders .order-list-head,
-    #view-orders .order-list-row { min-width: 1060px; }
+    #view-orders .order-list-row { min-width: 900px; }
     #view-orders .order-list { overflow-x: auto; }
 }
 
