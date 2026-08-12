@@ -11,7 +11,6 @@
         orderChannel: '',
         orderPayment: '',
         orderDateRange: '',
-        customerHistoryName: '',
         selectedOrderIds: new Set(),
         showArchivedOrders: false,
         settings: null,
@@ -1501,15 +1500,38 @@
     }
 
     async function showCustomerHistory(customerName) {
-        state.customerHistoryName = String(customerName || '').trim();
-        state.orderQuery = '';
-        if (elements.orderSearch) elements.orderSearch.value = '';
-        state.showArchivedOrders = true;
-        if (elements.showArchivedOrders) elements.showArchivedOrders.checked = true;
-        closeModal();
-        showView('orders');
-        await loadOrders();
-        toast(`Historial de ${state.customerHistoryName}.`);
+        const name = String(customerName || '').trim();
+        try {
+            const data = await apiGet('orders', { limit: 150, include_archived: 1 });
+            const orders = (data.orders || [])
+                .filter(order => fold(order.customer_name) === fold(name))
+                .sort((first, second) => String(second.created_at || '').localeCompare(String(first.created_at || '')));
+            openModal(`
+                <section class="customer-history">
+                    <header>
+                        <p class="eyebrow">HISTORIAL DE VENTAS</p>
+                        <h2 id="modal-title">${escapeHtml(name)}</h2>
+                        <p class="empty-copy">${orders.length} ${orders.length === 1 ? 'venta registrada' : 'ventas registradas'}.</p>
+                    </header>
+                    <div class="customer-history-table-wrap">
+                        <table class="customer-history-table">
+                            <thead><tr><th>Venta</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Estado</th></tr></thead>
+                            <tbody>${orders.map(order => `
+                                <tr>
+                                    <td><strong>${escapeHtml(order.public_number)}</strong></td>
+                                    <td>${escapeHtml(String(order.created_at || '').replace('T', ' '))}</td>
+                                    <td>${Number(order.unit_count)} unid.</td>
+                                    <td><strong>${money(order.total_cents)}</strong></td>
+                                    <td>${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</td>
+                                </tr>
+                            `).join('') || '<tr><td colspan="5">No hay ventas para este cliente.</td></tr>'}</tbody>
+                        </table>
+                    </div>
+                </section>
+            `);
+        } catch (error) {
+            toast(error.message);
+        }
     }
 
     async function showOrderDetail(orderId) {
@@ -1638,7 +1660,6 @@
             order.customer_phone,
         ].join(' ')).includes(query);
         return matchesQuery
-            && (!state.customerHistoryName || fold(order.customer_name) === fold(state.customerHistoryName))
             && (!state.orderStatus || order.status === state.orderStatus)
             && (!state.orderChannel || order.channel === state.orderChannel)
             && (!state.orderPayment || order.payment_method === state.orderPayment)
@@ -3015,7 +3036,6 @@
     elements.productSearch?.addEventListener('input', renderProducts);
     elements.orderSearch?.addEventListener('input', event => {
         state.orderQuery = event.target.value;
-        state.customerHistoryName = '';
         renderOrders();
     });
     elements.orderStatusFilter?.addEventListener('change', event => {

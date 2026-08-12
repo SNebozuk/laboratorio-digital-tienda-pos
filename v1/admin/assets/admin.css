@@ -2699,3 +2699,14 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-main .size-guide-edit-table input:hover,
 .admin-main .size-guide-edit-table input:focus { background: #fff; border-color: #7668e8; }
 #view-orders button.order-list-customer { color: #252a3a !important; font: inherit; font-weight: 700; text-align: left; }
+
+.modal:has(.customer-history) .admin-modal-card { width: min(900px, calc(100vw - 32px)); }
+.customer-history { color: #252a3a; }
+.customer-history header { margin-bottom: 18px; }
+.customer-history h2 { margin: 4px 0; }
+.customer-history-table-wrap { overflow-x: auto; border: 1px solid #e2e6ef; border-radius: 10px; }
+.customer-history-table { width: 100%; min-width: 650px; border-collapse: collapse; font-size: 13px; }
+.customer-history-table th,
+.customer-history-table td { padding: 12px 14px; border-bottom: 1px solid #edf0f5; text-align: left; }
+.customer-history-table th { color: #6b7484; background: #fafbfc; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.customer-history-table tbody tr:last-child td { border-bottom: 0; }
