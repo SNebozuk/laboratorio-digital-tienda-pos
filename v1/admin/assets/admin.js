@@ -1499,7 +1499,7 @@
                         </div>
                         <div class="order-detail-head-actions">
                             <button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>
-                            <button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar</button>
+                            <button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar Venta</button>
                         </div>
                     </header>
                     <div class="order-detail-meta">
@@ -1648,11 +1648,6 @@
                     </div>
                 `).join('')}
             `;
-            const selector = document.createElement('select');
-            selector.className = 'bulk-actions-inline';
-            selector.dataset.bulkOrderAction = '';
-            selector.innerHTML = '<option value="">Acciones</option><option value="archive">Archivar</option><option value="cancel">Cancelar</option><option value="reopen">Reabrir</option>';
-            document.getElementById('select-all-orders')?.insertAdjacentElement('afterend', selector);
             return;
         }
 
@@ -2798,6 +2793,13 @@
         if (event.target.closest('[data-select-order], #select-all-orders')) {
             return;
         }
+        const printOrder = event.target.closest('[data-print-order]');
+        if (printOrder) {
+            event.preventDefault();
+            event.stopPropagation();
+            printStoredOrder(Number(printOrder.dataset.printOrder));
+            return;
+        }
         const viewOrder = event.target.closest('[data-view-order]');
         if (viewOrder) {
             showOrderDetail(Number(viewOrder.dataset.viewOrder));
@@ -2852,11 +2854,6 @@
                 Number(removeOrderVariant.dataset.orderEditRemove)
             );
             renderOrderEditor();
-            return;
-        }
-        const printOrder = event.target.closest('[data-print-order]');
-        if (printOrder) {
-            printStoredOrder(Number(printOrder.dataset.printOrder));
             return;
         }
     });
@@ -2970,6 +2967,8 @@
             showCancellationDialog(ids);
         } else if (action === 'archive') {
             archiveSelectedOrders(ids);
+        } else if (action === 'reopen') {
+            reopenSelectedOrders(ids);
         }
         elements.bulkOrderAction.value = '';
     });

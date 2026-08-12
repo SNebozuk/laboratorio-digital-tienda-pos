@@ -1033,6 +1033,29 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     box-shadow: inset 3px 0 0 #5d9bff;
     color: #fff;
 }
+#view-orders .order-actions-bar {
+    display: flex;
+    justify-content: flex-start;
+    margin: -8px 0 16px;
+}
+#view-orders .bulk-actions-control {
+    display: grid;
+    gap: 5px;
+    width: min(100%, 285px);
+}
+#view-orders .bulk-actions-control span {
+    color: #a9b3bb;
+    font-size: 10px;
+    font-weight: 800;
+}
+#view-orders .bulk-actions-control select {
+    min-height: 40px;
+    border: 1px solid #47535d;
+    border-radius: 7px;
+    background: #11181e;
+    color: #fff;
+}
+#view-orders .bulk-actions-inline { display: none !important; }
 
 .admin-main {
     background:
