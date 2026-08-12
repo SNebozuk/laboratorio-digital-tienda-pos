@@ -75,6 +75,7 @@
         posProducts: document.getElementById('pos-products'),
         posCartLines: document.getElementById('pos-cart-lines'),
         posTotal: document.getElementById('pos-total'),
+        posClearCart: document.getElementById('pos-clear-cart'),
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
         openOrdersCount: document.getElementById('open-orders-count'),
@@ -916,6 +917,7 @@
         );
         elements.posTotal.textContent = money(total);
         elements.completeSale.disabled = items.length === 0;
+        elements.posClearCart.disabled = items.length === 0;
         elements.posCartLines.innerHTML = items.length ? items.map(item => `
             <div class="cart-line">
                 <div class="cart-line-head">
@@ -933,6 +935,7 @@
                         <input type="number" value="${item.quantity}" min="0" max="${Number(item.variant.available_stock)}" data-pos-input="${item.variantId}">
                         <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity + 1}" ${item.quantity >= Number(item.variant.available_stock) ? 'disabled' : ''}>+</button>
                     </div>
+                    <button class="pos-remove-cart-line" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito">🗑</button>
                 </div>
             </div>
         `).join('') : '<p class="empty-copy">Sin productos.</p>';
@@ -3168,6 +3171,11 @@
         }
     });
     elements.completeSale?.addEventListener('click', completeSale);
+    elements.posClearCart?.addEventListener('click', () => {
+        state.posCart.clear();
+        persistPosCart();
+        renderPosCart();
+    });
     document.getElementById('new-product-button')?.addEventListener('click', () => {
         showProductForm();
     });

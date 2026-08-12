@@ -2743,6 +2743,13 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-customer-field input { margin: 7px 0 0; font-size: 16px; }
 .pos-main-total { display: grid; min-width: 220px; justify-items: end; gap: 7px; padding-left: 22px; border-left: 1px solid #e4e8f0; color: #7a8294; font-size: 10px; font-weight: 850; letter-spacing: .14em; }
 .pos-main-total strong { color: #252a3a; font-size: clamp(32px, 3.4vw, 48px); font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -.04em; }
+.pos-cart-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.pos-cart-heading h2 { margin-bottom: 12px; }
+.pos-clear-cart { padding: 7px 9px; border: 0; background: transparent; color: #d54b4b; font-size: 10px; font-weight: 850; letter-spacing: .04em; cursor: pointer; }
+.pos-clear-cart:hover { text-decoration: underline; }
+.pos-clear-cart:disabled { color: #a7adba; cursor: default; text-decoration: none; }
+.pos-remove-cart-line { display: grid; width: 34px; height: 34px; place-items: center; padding: 0; border: 1px solid #e7d7d7; border-radius: 8px; background: #fff; color: #c64242; cursor: pointer; font-size: 15px; }
+.pos-remove-cart-line:hover { border-color: #d85a5a; background: #fff4f4; }
 .pos-search-close { justify-self: end; display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; color: #252a3a; font-size: 32px; line-height: 1; text-decoration: none; }
 .pos-search-close:hover { background: #eef1f7; }
 .pos-search-results { width: 100%; padding: 24px 30px 40px; }

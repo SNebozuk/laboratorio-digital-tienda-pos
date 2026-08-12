@@ -58,8 +58,10 @@ header('Referrer-Policy: same-origin');
                 </section>
             </div>
             <aside class="pos-cart pos-page-cart">
-                <p class="eyebrow">VENTA ACTUAL</p>
-                <h2>RESUMEN</h2>
+                <div class="pos-cart-heading">
+                    <div><p class="eyebrow">VENTA ACTUAL</p><h2>RESUMEN</h2></div>
+                    <button class="pos-clear-cart" id="pos-clear-cart" type="button" disabled>VACIAR CARRITO</button>
+                </div>
                 <div id="pos-cart-lines" class="cart-lines"></div>
                 <button class="primary-button" id="complete-sale-button" type="button" disabled>REGISTRAR VENTA</button>
             </aside>
