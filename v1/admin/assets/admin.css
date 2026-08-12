@@ -1496,6 +1496,21 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     min-width: 175px;
 }
 
+#view-orders .bulk-actions-inline {
+    display: inline-flex;
+    width: auto;
+    min-width: 108px;
+    min-height: 30px;
+    margin-left: 9px;
+    padding: 4px 25px 4px 9px;
+    border: 1px solid #3e4b54;
+    border-radius: 6px;
+    background: #11181e;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 750;
+}
+
 .order-confirm-option {
     display: flex;
     gap: 10px;

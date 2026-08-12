@@ -68,20 +68,13 @@
         posTotal: document.getElementById('pos-total'),
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
-        orderOverview: document.getElementById('order-overview'),
         openOrdersCount: document.getElementById('open-orders-count'),
         orderSearch: document.getElementById('order-search'),
-        orderStatusFilter: document.getElementById('order-status-filter'),
         orderChannelFilter: document.getElementById('order-channel-filter'),
         orderPaymentFilter: document.getElementById('order-payment-filter'),
         orderDateFilter: document.getElementById('order-date-filter'),
         showArchivedOrders: document.getElementById('show-archived-orders'),
-        orderBulkToolbar: document.getElementById('order-bulk-toolbar'),
-        selectedOrdersCount: document.getElementById('selected-orders-count'),
-        bulkOrderStatus: document.getElementById('bulk-order-status'),
-        applyBulkOrderStatus: document.getElementById('apply-bulk-order-status'),
         bulkOrderAction: document.getElementById('bulk-order-action'),
-        applyBulkOrderAction: document.getElementById('apply-bulk-order-action'),
         userList: document.getElementById('user-list'),
         sizeGuideIntro: document.getElementById('size-guide-intro'),
         sizeGuideRows: document.getElementById('size-guide-rows'),
@@ -1217,12 +1210,12 @@
     }
 
     const statusLabels = {
-        pending_payment: 'Nueva',
-        payment_reported: 'Confirmada',
-        paid_prepare: 'En preparación',
-        ready_pickup: 'Listo para retirar',
-        delivered: 'Entregado',
-        rejected: 'Revisar',
+        pending_payment: 'Abierta',
+        payment_reported: 'Abierta',
+        paid_prepare: 'Abierta',
+        ready_pickup: 'Abierta',
+        delivered: 'Abierta',
+        rejected: 'Abierta',
         cancelled: 'Cancelado',
     };
 
@@ -1266,33 +1259,10 @@
         if (String(order.customer_phone || '').replace(/\D+/g, '').length >= 8) {
             actions.push(`<button class="small-button" type="button" data-whatsapp-order="${Number(order.id)}">WhatsApp</button>`);
         }
-        if (
-            ['web', 'whatsapp'].includes(order.channel)
-            && ['pending_payment', 'payment_reported', 'rejected'].includes(order.status)
-        ) {
+        if (['web', 'whatsapp'].includes(order.channel) && order.status !== 'cancelled') {
             actions.push(
                 `<button class="small-button" type="button" data-edit-order="${Number(order.id)}">Editar productos</button>`
             );
-        }
-        if (order.status === 'payment_reported') {
-            actions.push(
-                `<button class="small-button" type="button" data-order-action="approve" data-order-id="${Number(order.id)}">Preparar pedido</button>`
-            );
-        }
-        if (order.status === 'paid_prepare') {
-            actions.push(`<button class="small-button" type="button" data-order-action="ready" data-order-id="${Number(order.id)}">Marcar listo</button>`);
-        }
-        if (order.status === 'pending_payment' && order.payment_method === 'cash' && order.stock_reserved_at) {
-            actions.push(`<button class="small-button" type="button" data-order-action="ready" data-order-id="${Number(order.id)}">Marcar listo para retirar</button>`);
-        }
-        if (order.status === 'ready_pickup') {
-            actions.push(`<button class="small-button" type="button" data-order-action="deliver" data-order-id="${Number(order.id)}">Entregar</button>`);
-        }
-        if (!['delivered', 'cancelled'].includes(order.status)) {
-            actions.push(`<button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar</button>`);
-        }
-        if (order.status === 'delivered' && !order.archived_at && app.user?.role === 'admin') {
-            actions.push(`<button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>`);
         }
         return actions.join('');
     }
@@ -1321,15 +1291,6 @@
 
     function selectedOrders() {
         return state.orders.filter(order => state.selectedOrderIds.has(Number(order.id)));
-    }
-
-    function renderOrderBulkToolbar() {
-        if (!elements.orderBulkToolbar || !elements.selectedOrdersCount) {
-            return;
-        }
-        const count = selectedOrders().length;
-        elements.orderBulkToolbar.hidden = count === 0;
-        elements.selectedOrdersCount.textContent = `${count} ${count === 1 ? 'seleccionada' : 'seleccionadas'}`;
     }
 
     function setOrderSelection(orderId, selected) {
@@ -1418,6 +1379,20 @@
             state.selectedOrderIds.clear();
             await loadOrders();
             toast('Ventas archivadas.');
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    async function reopenSelectedOrders(orderIds) {
+        if (!window.confirm(`¿Reabrir ${orderIds.length} ${orderIds.length === 1 ? 'venta' : 'ventas'}?`)) return;
+        try {
+            for (const orderId of orderIds) {
+                await apiPost({ action: 'order_reopen', order_id: Number(orderId) });
+            }
+            state.selectedOrderIds.clear();
+            await loadOrders();
+            toast('Ventas reabiertas.');
         } catch (error) {
             toast(error.message);
         }
@@ -1601,9 +1576,9 @@
     function renderOrders() {
         const matchingOrders = state.orders.filter(orderMatchesFilters);
 
-        renderOrderBulkToolbar();
+        // Las acciones masivas se muestran junto a la selección total.
 
-        if (elements.orderOverview) {
+        if (false && elements.orderOverview) {
             const countStatus = status => state.orders.filter(order => (
                 order.status === status
             )).length;
@@ -1631,7 +1606,7 @@
             `;
         }
 
-        if (elements.orderOverview) {
+        if (false && elements.orderOverview) {
             const countFor = statuses => state.orders.filter(order => statuses.includes(order.status)).length;
             const openCount = countFor(['pending_payment', 'payment_reported', 'paid_prepare', 'ready_pickup', 'rejected']);
             if (elements.openOrdersCount) {
@@ -1668,6 +1643,11 @@
                     </div>
                 `).join('')}
             `;
+            const selector = document.createElement('select');
+            selector.className = 'bulk-actions-inline';
+            selector.dataset.bulkOrderAction = '';
+            selector.innerHTML = '<option value="">Acciones</option><option value="archive">Archivar</option><option value="cancel">Cancelar</option><option value="reopen">Reabrir</option>';
+            document.getElementById('select-all-orders')?.insertAdjacentElement('afterend', selector);
             return;
         }
 
@@ -2987,6 +2967,24 @@
             archiveSelectedOrders(ids);
         }
         elements.bulkOrderAction.value = '';
+    });
+    document.addEventListener('change', event => {
+        const selector = event.target.closest('[data-bulk-order-action]');
+        if (!selector || !selector.value) return;
+        const action = selector.value;
+        const ids = selectedOrders().map(order => Number(order.id));
+        selector.value = '';
+        if (!ids.length) {
+            toast('Elegí al menos una venta.');
+            return;
+        }
+        if (action === 'cancel') {
+            showCancellationDialog(ids);
+        } else if (action === 'archive') {
+            archiveSelectedOrders(ids);
+        } else if (action === 'reopen') {
+            reopenSelectedOrders(ids);
+        }
     });
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;

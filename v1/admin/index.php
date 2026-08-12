@@ -299,23 +299,10 @@ header('Referrer-Policy: same-origin');
                             <button class="primary-button" type="button" data-view="pos">⊕ Agregar orden de compra</button>
                         </div>
                     </div>
-                    <div class="order-overview" id="order-overview" aria-label="Resumen de pedidos"></div>
                     <div class="order-toolbar">
                         <label class="order-filter-search">
                             <span>BUSCAR</span>
                             <input id="order-search" type="search" placeholder="N.º de venta, nombre o apellido">
-                        </label>
-                        <label>
-                            <span>ESTADO</span>
-                            <select id="order-status-filter">
-                                <option value="">Todos los estados</option>
-                                <option value="pending_payment">Nueva</option>
-                                <option value="payment_reported">Confirmada</option>
-                                <option value="paid_prepare">En preparación</option>
-                                <option value="ready_pickup">Listo para retirar</option>
-                                <option value="delivered">Entregado</option>
-                                <option value="cancelled">Cancelado</option>
-                            </select>
                         </label>
                         <label>
                             <span>ORIGEN</span>
@@ -339,28 +326,6 @@ header('Referrer-Policy: same-origin');
                             <input id="show-archived-orders" type="checkbox">
                             <span>VER ARCHIVADAS</span>
                         </label>
-                    </div>
-                    <div class="order-bulk-toolbar" id="order-bulk-toolbar" hidden>
-                        <strong id="selected-orders-count">0 seleccionadas</strong>
-                        <label>
-                            <span>ACTUALIZAR ESTADO</span>
-                            <select id="bulk-order-status">
-                                <option value="">Elegir estado</option>
-                                <option value="approve">Preparar pedido</option>
-                                <option value="ready">Listo para retirar</option>
-                                <option value="deliver">Entregada</option>
-                            </select>
-                        </label>
-                        <?php if ($user['role'] === 'admin'): ?>
-                            <label>
-                                <span>M&Aacute;S ACCIONES</span>
-                                <select id="bulk-order-action">
-                                    <option value="">Elegir acci&oacute;n</option>
-                                    <option value="cancel">Cancelar ventas</option>
-                                    <option value="archive">Archivar entregadas</option>
-                                </select>
-                            </label>
-                        <?php endif ?>
                     </div>
                     <div id="order-list" class="order-list"></div>
                 </section>

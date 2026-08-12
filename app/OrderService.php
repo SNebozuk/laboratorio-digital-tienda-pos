@@ -729,6 +729,43 @@ final class OrderService
         );
     }
 
+    public function reopen(int $orderId, int $actorUserId): void
+    {
+        Database::immediate(
+            $this->pdo,
+            function (PDO $pdo) use ($orderId, $actorUserId): void {
+                $query = $pdo->prepare('SELECT status, archived_at FROM orders WHERE id = :id');
+                $query->execute(['id' => $orderId]);
+                $order = $query->fetch();
+                if (!$order) {
+                    throw new ValidationException('La venta no existe.');
+                }
+                if ((string) $order['status'] !== 'cancelled' && $order['archived_at'] === null) {
+                    throw new ValidationException('La venta ya está abierta.');
+                }
+                $oldStatus = (string) $order['status'];
+                $update = $pdo->prepare(
+                    'UPDATE orders
+                     SET status = :status,
+                         archived_at = NULL,
+                         archived_by = NULL,
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE id = :id'
+                );
+                $update->execute(['status' => 'pending_payment', 'id' => $orderId]);
+                $this->recordEvent(
+                    $pdo,
+                    $orderId,
+                    $actorUserId,
+                    'order_reopened',
+                    $oldStatus,
+                    'pending_payment',
+                    'Venta reabierta.'
+                );
+            }
+        );
+    }
+
     /** @return list<array<string, mixed>> */
     public function recentOrders(int $limit = 100, bool $includeArchived = false): array
     {

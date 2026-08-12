@@ -299,6 +299,14 @@ try {
             );
             Http::json(['ok' => true]);
 
+        case 'order_reopen':
+            $user = $app['auth']->requireAdmin();
+            $app['orders']->reopen(
+                (int) ($input['order_id'] ?? 0),
+                (int) $user['id']
+            );
+            Http::json(['ok' => true]);
+
         case 'order_deliver':
             $user = $app['auth']->requireUser();
             $app['orders']->deliver(
