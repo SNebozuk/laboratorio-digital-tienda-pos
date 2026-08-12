@@ -1,4 +1,5 @@
 # Historial de versiones
+<!-- Reintento de publicación FTPS. -->
 
 Los cambios relevantes del proyecto se registran en este archivo.
 
