@@ -3137,7 +3137,11 @@
         }
         if (event.key === 'Escape') {
             event.preventDefault();
-            closePosSuggestions();
+            if (document.body.classList.contains('pos-search-page')) {
+                window.location.href = 'pos.php';
+            } else {
+                closePosSuggestions();
+            }
         }
     });
     document.addEventListener('keydown', event => {
