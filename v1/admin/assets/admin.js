@@ -1510,7 +1510,10 @@
                         ${order.items.map(item => `
                             <div class="order-detail-line">
                                 <div>
-                                    <strong>${escapeHtml(item.product_name)}</strong>
+                                    <div class="order-detail-product">
+                                        ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
+                                        <strong>${escapeHtml(item.product_name)}</strong>
+                                    </div>
                                     ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
                                 </div>
                                 <span>${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>

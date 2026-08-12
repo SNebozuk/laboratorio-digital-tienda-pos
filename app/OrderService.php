@@ -825,7 +825,12 @@ final class OrderService
         }
 
         $items = $this->pdo->prepare(
-            'SELECT * FROM order_items WHERE order_id = :order_id ORDER BY id'
+            'SELECT oi.*, COALESCE(v.image_path, p.image_path) AS image_path
+             FROM order_items oi
+             LEFT JOIN product_variants v ON v.id = oi.variant_id
+             LEFT JOIN products p ON p.id = v.product_id
+             WHERE oi.order_id = :order_id
+             ORDER BY oi.id'
         );
         $items->execute(['order_id' => $orderId]);
         $order['items'] = $items->fetchAll();

@@ -1611,6 +1611,30 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     color: var(--muted);
 }
 
+.order-detail-product {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+}
+
+.order-detail-product img,
+.order-detail-product-placeholder {
+    width: 54px;
+    height: 54px;
+    border-radius: 9px;
+    object-fit: cover;
+    background: #fff;
+}
+
+.order-detail-product-placeholder {
+    display: grid;
+    place-items: center;
+    color: #788392;
+    font-size: 8px;
+    font-weight: 800;
+}
+
 .order-detail-line > strong:last-child {
     text-align: right;
 }

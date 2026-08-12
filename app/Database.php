@@ -59,12 +59,34 @@ final class Database
         self::migrateOrderArchive($pdo);
         self::migrateVariantImages($pdo);
         self::migrateLegacyMailAddress($pdo);
+        self::clearLegacyOrders($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
         );
         self::migrateCatalogImagesToLocal($pdo);
         self::seedCategoryTree($pdo);
+    }
+
+    /** Vacía una sola vez las ventas de prueba antes de iniciar la operatoria real. */
+    private static function clearLegacyOrders(PDO $pdo): void
+    {
+        $version = 9;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+
+        self::immediate($pdo, function (PDO $pdo) use ($version): void {
+            $pdo->exec('DELETE FROM orders');
+            $pdo->exec('DELETE FROM payment_proofs');
+            $pdo->exec('DELETE FROM order_events');
+            $pdo->exec('UPDATE stock_movements SET order_id = NULL');
+            $pdo->exec('UPDATE product_variants SET stock_reserved = 0, updated_at = CURRENT_TIMESTAMP');
+            $insert = $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)');
+            $insert->execute(['version' => $version]);
+        });
     }
 
     /** Reemplaza las fotos heredadas por copias servidas desde este hosting. */
