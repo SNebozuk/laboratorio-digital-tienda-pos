@@ -41,17 +41,19 @@ header('Referrer-Policy: same-origin');
             <div class="pos-page-brand"><strong>LABORATORIO DIGITAL</strong><span>PUNTO DE VENTA</span></div>
             <span class="pos-live-status"><i></i> LISTO PARA VENDER</span>
         </header>
+        <section class="pos-page-intro">
+            <div class="pos-page-title">
+                <p class="eyebrow">MOSTRADOR</p>
+                <h1>NUEVA VENTA</h1>
+            </div>
+            <div class="search-wrap pos-search-wrap">
+                <label for="pos-search">Buscar o escanear</label>
+                <input id="pos-search" type="search" autocomplete="off" placeholder="Producto, talle, SKU o código de barras">
+                <div id="pos-suggestions" class="suggestions"></div>
+            </div>
+        </section>
         <section class="pos-page-workspace">
             <div class="pos-page-products">
-                <div class="pos-page-title">
-                    <p class="eyebrow">MOSTRADOR</p>
-                    <h1>NUEVA VENTA</h1>
-                </div>
-                <div class="search-wrap pos-search-wrap">
-                    <label for="pos-search">Buscar o escanear</label>
-                    <input id="pos-search" type="search" autocomplete="off" placeholder="Producto, talle, SKU o código de barras">
-                    <div id="pos-suggestions" class="suggestions"></div>
-                </div>
                 <div id="pos-products" class="pos-products"></div>
             </div>
             <aside class="pos-cart pos-page-cart">
