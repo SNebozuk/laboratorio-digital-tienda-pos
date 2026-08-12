@@ -1038,6 +1038,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     justify-content: flex-start;
     margin: -8px 0 16px;
 }
+#view-orders .order-actions-bar[hidden] { display: none; }
 #view-orders .bulk-actions-control {
     display: grid;
     gap: 5px;

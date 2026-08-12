@@ -327,13 +327,14 @@ header('Referrer-Policy: same-origin');
                             <span>VER ARCHIVADAS</span>
                         </label>
                     </div>
-                    <div class="order-actions-bar">
+                    <div id="order-actions-bar" class="order-actions-bar" hidden>
                         <label class="bulk-actions-control">
                             <span>ACCIONES SOBRE LAS VENTAS SELECCIONADAS</span>
                             <select id="bulk-order-action">
                                 <option value="">Acciones</option>
                                 <option value="archive">Archivar Ventas</option>
                                 <option value="cancel">Cancelar Ventas</option>
+                                <option value="reopen">Reabrir Ventas</option>
                             </select>
                         </label>
                     </div>

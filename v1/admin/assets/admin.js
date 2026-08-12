@@ -1500,6 +1500,7 @@
                         </div>
                         <div class="order-detail-head-actions">
                             <button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>
+                            <button class="small-button" type="button" data-reopen-order="${Number(order.id)}">Reabrir</button>
                             <button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar Venta</button>
                         </div>
                     </header>
@@ -1580,6 +1581,8 @@
 
     function renderOrders() {
         const matchingOrders = state.orders.filter(orderMatchesFilters);
+        const actionsBar = document.getElementById('order-actions-bar');
+        if (actionsBar) actionsBar.hidden = selectedOrders().length === 0;
 
         // Las acciones masivas se muestran junto a la selección total.
 
@@ -2776,6 +2779,11 @@
         const archiveOrder = event.target.closest('[data-archive-order]');
         if (archiveOrder) {
             archiveSelectedOrders([Number(archiveOrder.dataset.archiveOrder)]);
+            return;
+        }
+        const reopenOrder = event.target.closest('[data-reopen-order]');
+        if (reopenOrder) {
+            reopenSelectedOrders([Number(reopenOrder.dataset.reopenOrder)]);
             return;
         }
         const posFinish = event.target.closest('[data-pos-sale-finish]');
