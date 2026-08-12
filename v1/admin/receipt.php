@@ -43,7 +43,10 @@ $unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['qu
                     <h1><?= receiptText($order['public_number']) ?></h1>
                     <p>Control&aacute; cada producto antes de entregarlo.</p>
                 </div>
-                <img class="receipt-logo" src="../assets/brand/logo.png" alt="Laboratorio Digital">
+                <div class="receipt-logo-text" aria-label="Laboratorio Digital">
+                    <strong>LABORATORIO</strong>
+                    <span>DIGITAL</span>
+                </div>
             </div>
         </header>
 
