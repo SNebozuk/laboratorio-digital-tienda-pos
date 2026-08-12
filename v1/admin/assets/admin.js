@@ -1688,7 +1688,7 @@
             ));
             elements.orderList.innerHTML = `
                 <div class="order-list-head" aria-hidden="true">
-                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''}><span class="visually-hidden">TODO</span></label><span>VENTA</span><span>FECHA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>PAGO</span><span>ENVÍO</span><span></span>
+                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''} aria-label="Seleccionar todas las ventas"></label><span>VENTA</span><span>FECHA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>PAGO</span><span>ENVÍO</span><span></span>
                 </div>
                 ${matchingOrders.map(order => `
                     <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">

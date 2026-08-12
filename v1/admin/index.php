@@ -82,21 +82,21 @@ header('Referrer-Policy: same-origin');
                     </span>
                 </a>
                 <nav class="admin-nav">
+                    <button class="admin-nav-button" type="button" data-view="orders">
+                        Ventas
+                    </button>
                     <button class="admin-nav-button active" type="button" data-view="products">
                         Productos
                     </button>
                     <button class="admin-nav-button" type="button" data-view="pos">
-                        Punto de venta
-                    </button>
-                    <button class="admin-nav-button" type="button" data-view="orders">
-                        Ventas y pedidos
+                        Punto de Venta
                     </button>
                     <?php if ($user['role'] === 'admin'): ?>
-                        <button class="admin-nav-button" type="button" data-view="size-guide">
-                            Tabla de Talles
-                        </button>
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
+                        </button>
+                        <button class="admin-nav-button" type="button" data-view="size-guide">
+                            Tabla de Talles
                         </button>
                         <button class="admin-nav-button" type="button" data-view="contact">
                             Contacto
@@ -123,12 +123,12 @@ header('Referrer-Policy: same-origin');
                 <header class="admin-mobile-header">
                     <strong>LABORATORIO DIGITAL</strong>
                     <select id="mobile-view">
+                        <option value="orders">Ventas</option>
                         <option value="products">Productos</option>
-                        <option value="pos">Punto de venta</option>
-                        <option value="orders">Ventas y pedidos</option>
+                        <option value="pos">Punto de Venta</option>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <option value="size-guide">Tabla de Talles</option>
                             <option value="categories">Categorías</option>
+                            <option value="size-guide">Tabla de Talles</option>
                             <option value="contact">Contacto</option>
                             <option value="whatsapp">WhatsApp</option>
                             <option value="users">Usuarios</option>
