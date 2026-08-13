@@ -1344,23 +1344,23 @@
         const orders = orderIds
             .map(id => state.orders.find(order => Number(order.id) === Number(id)))
             .filter(Boolean);
-        const cancellable = orders.filter(order => !['delivered', 'cancelled'].includes(order.status));
+        const cancellable = orders.filter(order => order.status !== 'cancelled');
         if (!cancellable.length) {
-            toast('Solo se pueden cancelar ventas que todavía no fueron entregadas.');
+            toast('Seleccioná al menos una venta que todavía no esté cancelada.');
             return;
         }
         const skipped = orders.length - cancellable.length;
         openModal(`
             <h2 id="modal-title">CANCELAR ${cancellable.length === 1 ? 'VENTA' : 'VENTAS'}</h2>
             <p class="empty-copy">Vas a cancelar ${cancellable.length} ${cancellable.length === 1 ? 'venta' : 'ventas'} seleccionada${cancellable.length === 1 ? '' : 's'}.</p>
-            ${skipped ? `<p class="notice">${skipped} venta${skipped === 1 ? '' : 's'} entregada${skipped === 1 ? '' : 's'} no se puede${skipped === 1 ? '' : 'n'} cancelar y quedará${skipped === 1 ? '' : 'n'} sin cambios.</p>` : ''}
+            ${skipped ? `<p class="notice">${skipped} venta${skipped === 1 ? '' : 's'} ya cancelada${skipped === 1 ? '' : 's'} quedará sin cambios.</p>` : ''}
             <label class="order-confirm-option">
                 <input id="cancel-notify-customer" type="checkbox" checked>
                 <span><strong>Abrir WhatsApp para avisar al cliente</strong><small>Se abrirá el mensaje de cancelación listo para revisar y enviar.</small></span>
             </label>
             <label class="order-confirm-option">
                 <input type="checkbox" checked disabled>
-                <span><strong>Actualizar stock</strong><small>Las unidades reservadas se liberan automáticamente para que vuelvan a estar disponibles.</small></span>
+                <span><strong>Actualizar stock</strong><small>Las unidades de la venta vuelven automáticamente a estar disponibles.</small></span>
             </label>
             <div class="modal-actions">
                 <button class="danger-button" type="button" data-confirm-cancel-orders="${cancellable.map(order => Number(order.id)).join(',')}">CONFIRMAR CANCELACI&Oacute;N</button>

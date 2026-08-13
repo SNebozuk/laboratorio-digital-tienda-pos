@@ -181,14 +181,18 @@ final class StockService
                 if ($order['status'] === 'cancelled') {
                     return;
                 }
-                if ($order['status'] === 'delivered') {
-                    throw new ConflictException(
-                        'Una venta entregada requiere una devolución, no una cancelación.'
+                if ($order['stock_reserved_at'] !== null) {
+                    $this->releaseWithinTransaction(
+                        $pdo,
+                        $orderId,
+                        (string) $order['public_number'],
+                        $actorUserId,
+                        $reason
                     );
                 }
 
-                if ($order['stock_reserved_at'] !== null) {
-                    $this->releaseWithinTransaction(
+                if ($order['status'] === 'delivered') {
+                    $this->restoreConsumedOrderWithinTransaction(
                         $pdo,
                         $orderId,
                         (string) $order['public_number'],
@@ -503,6 +507,41 @@ final class StockService
              WHERE id = :id'
         );
         $clear->execute(['id' => $orderId]);
+    }
+
+    private function restoreConsumedOrderWithinTransaction(
+        PDO $pdo,
+        int $orderId,
+        string $publicNumber,
+        ?int $actorUserId,
+        string $reason
+    ): void {
+        foreach ($this->orderItems($pdo, $orderId) as $item) {
+            $quantity = (int) $item['quantity'];
+            $restore = $pdo->prepare(
+                'UPDATE product_variants
+                 SET stock_on_hand = stock_on_hand + :quantity,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = :variant_id'
+            );
+            $restore->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+            $restore->bindValue(':variant_id', (int) $item['variant_id'], PDO::PARAM_INT);
+            $restore->execute();
+            if ($restore->rowCount() !== 1) {
+                throw new ConflictException('No se pudo restaurar el stock de una variante.');
+            }
+
+            $this->recordMovement(
+                $pdo,
+                (int) $item['variant_id'],
+                $orderId,
+                $actorUserId,
+                $quantity,
+                0,
+                $reason . '_restore_stock',
+                $publicNumber
+            );
+        }
     }
 
     private function cancelWithinTransaction(
