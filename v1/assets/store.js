@@ -1571,10 +1571,31 @@
         elements.categoryBackdrop.classList.toggle('menu-open', open);
         document.body.classList.toggle('category-menu-open', open);
         elements.categoryMenu.setAttribute('aria-expanded', String(open));
+        if (open) window.requestAnimationFrame(() => elements.categoryPanel.focus({ preventScroll: true }));
     }
 
     elements.categoryMenu.addEventListener('click', () => {
         setCategoryMenuOpen(!elements.categoryPanel.classList.contains('menu-open'));
+    });
+    elements.categoryPanel.addEventListener('wheel', event => {
+        if (!elements.categoryPanel.classList.contains('menu-open')) return;
+        if (elements.categoryPanel.scrollHeight <= elements.categoryPanel.clientHeight) return;
+        event.preventDefault();
+        elements.categoryPanel.scrollTop += event.deltaY;
+    }, { passive: false });
+    elements.categoryPanel.addEventListener('keydown', event => {
+        if (!elements.categoryPanel.classList.contains('menu-open')) return;
+        const amounts = { ArrowDown: 46, ArrowUp: -46, PageDown: 260, PageUp: -260 };
+        if (Object.hasOwn(amounts, event.key)) {
+            event.preventDefault();
+            elements.categoryPanel.scrollTop += amounts[event.key];
+        } else if (event.key === 'Home') {
+            event.preventDefault();
+            elements.categoryPanel.scrollTop = 0;
+        } else if (event.key === 'End') {
+            event.preventDefault();
+            elements.categoryPanel.scrollTop = elements.categoryPanel.scrollHeight;
+        }
     });
     elements.categoryBackdrop.addEventListener('click', () => {
         setCategoryMenuOpen(false);
