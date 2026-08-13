@@ -885,7 +885,6 @@
                                     ${variantDisplayName(product, variant)
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
                                         : ''}
-                                    <small>${escapeHtml(variant.sku)}</small>
                                 </span>
                                 <span class="pos-variant-stock">${remaining > 0 ? `${remaining} unidades disponibles` : '<span class="stock-zero">AGOTADO</span>'}</span>
                                 <span>${money(variant.price_cents)}</span>
