@@ -857,7 +857,6 @@
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
             ${products.map(product => {
                 const variants = product.variants.filter(variant => variant.active);
-                const availableVariants = variants.filter(variant => Number(variant.available_stock) > 0);
                 const hasVariants = variants.length > 1;
                 const expanded = Number(state.posProductId) === Number(product.id);
                 const single = variants[0];
@@ -874,7 +873,7 @@
                 ${hasVariants
                     ? `<button class="pos-result-action pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}">${expanded ? '‹' : '›'}</button>`
                     : `<button class="pos-result-action pos-add-one" type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity + 1}" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(product.name)}">+</button>`}
-                ${hasVariants ? `<div class="pos-result-variants">${availableVariants.map(variant => {
+                ${hasVariants ? `<div class="pos-result-variants">${variants.map(variant => {
                         const quantity = posQuantity(variant.id);
                         const remaining = Math.max(
                             0,
@@ -882,12 +881,13 @@
                         );
                         return `
                             <div class="pos-variant-row">
-                                <span>
+                                <span class="pos-variant-name">
                                     ${variantDisplayName(product, variant)
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
                                         : ''}
-                                    <small>${escapeHtml(variant.sku)} · ${remaining > 0 ? `${remaining} disponibles` : '<span class="stock-zero">AGOTADO</span>'}</small>
+                                    <small>${escapeHtml(variant.sku)}</small>
                                 </span>
+                                <span class="pos-variant-stock">${remaining > 0 ? `${remaining} unidades disponibles` : '<span class="stock-zero">AGOTADO</span>'}</span>
                                 <span>${money(variant.price_cents)}</span>
                                 <div class="quantity-control">
                                     <button type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity - 1}" ${quantity < 1 ? 'disabled' : ''}>−</button>
