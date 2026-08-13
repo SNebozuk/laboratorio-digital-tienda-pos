@@ -470,7 +470,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     border-bottom: 1px solid var(--line-soft);
 }
 
-.pos-variant-stock { color: #667087; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.pos-variant-stock { color: #667087; font-size: 14px; font-weight: 750; white-space: nowrap; }
+.pos-variant-price { color: #252a3a; font-size: 16px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pos-variant-quantity { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 7px; background: #edf2f7; color: #315fa9; font-size: 13px; font-weight: 800; }
 .pos-variant-quantity-placeholder { display: block; width: 30px; height: 30px; }
 .pos-variant-add { display: grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 1px solid #1769e0; border-radius: 9px; background: #fff; color: #1769e0; cursor: pointer; font-size: 24px; font-weight: 700; line-height: 1; }
@@ -2769,6 +2770,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-result-name { overflow: hidden; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; }
 .pos-result-name-toggle { padding: 0; border: 0; background: transparent; color: #252a3a; cursor: pointer; font: inherit; font-weight: 750; text-align: left; }
 .pos-result-meta { overflow: hidden; color: #667087; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.pos-result-meta-toggle { padding: 0; border: 0; background: transparent; cursor: pointer; font: inherit; text-align: left; }
 .pos-result-action { display: grid; width: 40px; height: 40px; place-items: center; margin: 0; padding: 0; border: 1px solid #1769e0; border-radius: 9px; background: transparent; color: #1769e0; font-size: 25px; font-weight: 700; }
 .pos-result-action:hover { background: #1769e0; color: #fff; }
 .pos-result-action:disabled { opacity: .35; }
