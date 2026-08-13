@@ -309,6 +309,7 @@ header('Referrer-Policy: same-origin');
                         </label>
                     </div>
                     <div id="order-actions-bar" class="order-actions-bar" hidden>
+                        <strong id="selected-orders-count" class="selected-orders-count">0 ventas seleccionadas</strong>
                         <label class="bulk-actions-control">
                             <span>ACCIONES SOBRE LAS VENTAS SELECCIONADAS</span>
                             <select id="bulk-order-action">

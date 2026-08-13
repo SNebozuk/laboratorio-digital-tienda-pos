@@ -1698,7 +1698,12 @@
             .filter(orderMatchesFilters)
             .sort((first, second) => String(second.created_at || '').localeCompare(String(first.created_at || '')));
         const actionsBar = document.getElementById('order-actions-bar');
-        if (actionsBar) actionsBar.hidden = selectedOrders().length === 0;
+        const selectedCount = selectedOrders().length;
+        if (actionsBar) actionsBar.hidden = selectedCount === 0;
+        const selectedCountLabel = document.getElementById('selected-orders-count');
+        if (selectedCountLabel) {
+            selectedCountLabel.textContent = `${selectedCount} ${selectedCount === 1 ? 'venta seleccionada' : 'ventas seleccionadas'}`;
+        }
 
         // Las acciones masivas se muestran junto a la selección total.
 
