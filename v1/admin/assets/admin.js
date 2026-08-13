@@ -890,11 +890,7 @@
                                 </span>
                                 <span class="pos-variant-stock">${remaining > 0 ? `${remaining} disponibles` : '<span class="stock-zero">AGOTADO</span>'}</span>
                                 <span>${money(variant.price_cents)}</span>
-                                <div class="quantity-control">
-                                    <button type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity - 1}" ${quantity < 1 ? 'disabled' : ''}>−</button>
-                                    <input type="number" min="0" max="${Number(variant.available_stock)}" value="${quantity}" data-pos-input="${Number(variant.id)}">
-                                    <button type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity + 1}" ${remaining < 1 ? 'disabled' : ''}>+</button>
-                                </div>
+                                <button class="pos-variant-add" type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity + 1}" ${remaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(variantDisplayName(product, variant) || product.name)}">+</button>
                             </div>
                         `;
                     }).join('')}</div>` : ''}
