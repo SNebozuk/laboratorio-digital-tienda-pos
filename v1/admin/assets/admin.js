@@ -886,7 +886,7 @@
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
                                         : ''}
                                 </span>
-                                <span class="pos-variant-stock">${remaining > 0 ? `${remaining} unidades disponibles` : '<span class="stock-zero">AGOTADO</span>'}</span>
+                                <span class="pos-variant-stock">${remaining > 0 ? `${remaining} disponibles` : '<span class="stock-zero">AGOTADO</span>'}</span>
                                 <span>${money(variant.price_cents)}</span>
                                 <div class="quantity-control">
                                     <button type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity - 1}" ${quantity < 1 ? 'disabled' : ''}>−</button>
