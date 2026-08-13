@@ -869,7 +869,7 @@
                     ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="${escapeHtml(product.name)}">`
                     : '<div class="pos-product-placeholder">SIN FOTO</div>'}
                 <strong class="pos-result-name">${escapeHtml(product.name)}</strong>
-                <span class="pos-result-meta">${hasVariants ? `${variants.length} variantes` : `${singleRemaining} unidades disponibles`}</span>
+                <span class="pos-result-meta">${hasVariants ? `${variants.length} variantes` : (singleRemaining > 0 ? `${singleRemaining} disponibles` : '<span class="stock-zero">AGOTADO</span>')}</span>
                 <span class="pos-product-price">${posProductPrice(product)}</span>
                 ${hasVariants
                     ? `<button class="pos-result-action pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}">${expanded ? '‹' : '›'}</button>`
@@ -886,7 +886,7 @@
                                     ${variantDisplayName(product, variant)
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
                                         : ''}
-                                    <small>${escapeHtml(variant.sku)} · ${remaining > 0 ? `${remaining} disponibles` : '<span class="stock-zero">SIN STOCK</span>'}</small>
+                                    <small>${escapeHtml(variant.sku)} · ${remaining > 0 ? `${remaining} disponibles` : '<span class="stock-zero">AGOTADO</span>'}</small>
                                 </span>
                                 <span>${money(variant.price_cents)}</span>
                                 <div class="quantity-control">
