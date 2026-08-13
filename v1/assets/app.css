@@ -508,6 +508,11 @@ button:disabled {
     right: 18px;
     width: min(330px, calc(100vw - 36px));
     max-height: calc(100vh - 92px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    touch-action: pan-y;
     padding: 20px;
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -549,6 +554,8 @@ button:disabled {
 .category-row .category-button {
     flex: 1 1 auto;
 }
+
+.category-node.has-children .category-button { cursor: pointer; }
 
 .category-expand {
     width: 38px;

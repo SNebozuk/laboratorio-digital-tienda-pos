@@ -498,7 +498,7 @@
                         <button
                             class="category-button category-depth-${Math.min(depth, 4)} ${state.category === node.slug ? 'active' : ''}"
                             type="button"
-                            data-category="${escapeHtml(node.slug)}"
+                            ${hasChildren ? `data-category-toggle="${escapeHtml(node.slug)}" aria-expanded="${isExpanded}"` : `data-category="${escapeHtml(node.slug)}"`}
                             aria-label="${depth > 0 ? 'Subcategoría' : 'Categoría'} ${escapeHtml(node.name)}"
                         ><span class="category-branch" aria-hidden="true">${depth > 0 ? '↳' : ''}</span>${escapeHtml(node.name)}</button>
                         ${hasChildren ? `<button class="category-expand" type="button" data-category-toggle="${escapeHtml(node.slug)}" aria-expanded="${isExpanded}" aria-label="${isExpanded ? 'Ocultar' : 'Mostrar'} subcategorías de ${escapeHtml(node.name)}">${isExpanded ? '−' : '+'}</button>` : ''}
