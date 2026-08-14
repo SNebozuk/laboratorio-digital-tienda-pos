@@ -733,7 +733,12 @@
         }
 
         if (isHome) {
-            const roots = (categoryTree.length ? categoryTree : []).filter(node => node.active !== false).slice(0, 4);
+            const rootCategories = (categoryTree.length ? categoryTree : [])
+                .filter(node => node.active !== false);
+            const quickCategorySlugs = ['sublimables', 'accesorios', 'remeras', 'papeles'];
+            const roots = quickCategorySlugs
+                .map(slug => rootCategories.find(category => category.slug === slug))
+                .filter(Boolean);
             elements.results.innerHTML = `
                 <section class="store-home" aria-label="Empezar a comprar">
                     <div class="home-search-prompt">
