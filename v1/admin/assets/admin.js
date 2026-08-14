@@ -3232,31 +3232,6 @@
             openModal(`<h2 id="modal-title">PREPARAR CATÁLOGO NUEVO</h2><p class="empty-copy">Se eliminarán todas las ventas y se retirarán todos los productos actuales. Las categorías, usuarios y configuración se conservan.</p><p class="notice">Esta acción no se puede deshacer.</p><div class="modal-actions"><button class="danger-button" type="button" data-confirm-catalog-import-clear>VACIAR AHORA</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>`);
             return;
         }
-        if (event.target.id === 'import-prepared-catalog') {
-            const button = event.target;
-            button.disabled = true;
-            let offset = 0;
-            let created = 0;
-            let skipped = 0;
-            try {
-                do {
-                    button.textContent = `IMPORTANDO ${offset}…`;
-                    const data = await apiPost({ action: 'catalog_import_prepared', offset, limit: 10 });
-                    offset = Number(data.offset || 0);
-                    created += Number(data.created || 0);
-                    skipped += Number(data.skipped || 0);
-                    if (data.done) break;
-                } while (true);
-                await Promise.all([loadProducts(), loadCategories()]);
-                toast(`Importación completa: ${created} productos creados${skipped ? ` · ${skipped} ya existentes` : ''}.`);
-            } catch (error) {
-                toast(`La importación se detuvo en ${offset}: ${error.message}`);
-            } finally {
-                button.disabled = false;
-                button.textContent = 'IMPORTAR CATÁLOGO';
-            }
-            return;
-        }
         if (event.target.closest('[data-confirm-catalog-import-clear]')) {
             try {
                 const data = await apiPost({ action: 'prepare_catalog_import' });

@@ -146,7 +146,7 @@ header('Referrer-Policy: same-origin');
                             <h1>PRODUCTOS</h1>
                             <p>Precio y stock se editan directamente por variante.</p>
                         </div>
-                        <div class="order-page-actions"><button class="secondary-button fit-button" id="import-prepared-catalog" type="button">IMPORTAR CATÁLOGO</button><button class="primary-button fit-button" id="new-product-button" type="button">NUEVO PRODUCTO</button></div>
+                        <div class="order-page-actions"><button class="primary-button fit-button" id="new-product-button" type="button">NUEVO PRODUCTO</button></div>
                     </div>
                     <div class="admin-search">
                         <input id="admin-product-search" type="search" placeholder="Buscar por título, variante, SKU o código">

@@ -511,15 +511,6 @@ final class ProductService
         return $created;
     }
 
-    public function productNameExists(string $name): bool
-    {
-        $query = $this->pdo->prepare(
-            'SELECT 1 FROM products WHERE name = :name COLLATE NOCASE AND deleted_at IS NULL LIMIT 1'
-        );
-        $query->execute(['name' => trim($name)]);
-        return $query->fetchColumn() !== false;
-    }
-
     /**
      * Asigna un código leído en el mostrador a una variante concreta.
      * La restricción UNIQUE de la base impide que el mismo código apunte a
