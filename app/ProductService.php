@@ -430,6 +430,35 @@ final class ProductService
         });
     }
 
+    /** @return array{kept:int, removed:int} */
+    public function resetDemoData(): array
+    {
+        return Database::immediate($this->pdo, function (PDO $pdo): array {
+            $keepQuery = $pdo->query(
+                'SELECT id FROM products WHERE deleted_at IS NULL ORDER BY CASE WHEN image_path IS NULL OR image_path = "" THEN 1 ELSE 0 END, id LIMIT 4'
+            );
+            $keepIds = array_map(static fn (array $row): int => (int) $row['id'], $keepQuery->fetchAll());
+            if (count($keepIds) < 1) {
+                throw new ValidationException('No hay productos disponibles para conservar como muestra.');
+            }
+            $count = (int) $pdo->query('SELECT COUNT(*) FROM products WHERE deleted_at IS NULL')->fetchColumn();
+            $placeholders = implode(',', array_fill(0, count($keepIds), '?'));
+            $pdo->exec('DELETE FROM payment_proofs');
+            $pdo->exec('DELETE FROM order_events');
+            $pdo->exec('UPDATE stock_movements SET order_id = NULL');
+            $pdo->exec('DELETE FROM orders');
+            $hideVariants = $pdo->prepare("UPDATE product_variants SET active = 0, stock_reserved = 0, updated_at = CURRENT_TIMESTAMP WHERE product_id NOT IN ($placeholders)");
+            $hideVariants->execute($keepIds);
+            $hideProducts = $pdo->prepare("UPDATE products SET active = 0, deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id NOT IN ($placeholders)");
+            $hideProducts->execute($keepIds);
+            $showVariants = $pdo->prepare("UPDATE product_variants SET active = 1, stock_reserved = 0, updated_at = CURRENT_TIMESTAMP WHERE product_id IN ($placeholders)");
+            $showVariants->execute($keepIds);
+            $showProducts = $pdo->prepare("UPDATE products SET active = 1, deleted_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id IN ($placeholders)");
+            $showProducts->execute($keepIds);
+            return ['kept' => count($keepIds), 'removed' => max(0, $count - count($keepIds))];
+        });
+    }
+
     /**
      * Asigna un código leído en el mostrador a una variante concreta.
      * La restricción UNIQUE de la base impide que el mismo código apunte a

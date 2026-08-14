@@ -393,6 +393,12 @@ header('Referrer-Policy: same-origin');
                                 GUARDAR CONFIGURACIÓN
                             </button>
                         </form>
+                        <section class="settings-card demo-reset-card">
+                            <p class="eyebrow">MODO PRUEBA</p>
+                            <h2>Limpiar datos de prueba</h2>
+                            <p>Vacía todas las ventas y conserva cuatro productos con fotos y variantes para realizar pruebas.</p>
+                            <button class="danger-button" id="reset-demo-data" type="button">VACIAR VENTAS Y DEJAR 4 PRODUCTOS</button>
+                        </section>
                     </section>
                 <?php endif ?>
             </main>

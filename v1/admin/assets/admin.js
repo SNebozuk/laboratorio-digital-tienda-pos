@@ -2833,6 +2833,19 @@
             loadMailDiagnostics();
             return;
         }
+        if (event.target.id === 'reset-demo-data') {
+            if (!window.confirm('Esto eliminará todas las ventas y conservará solo cuatro productos de prueba. ¿Continuar?')) return;
+            try {
+                const data = await apiPost({ action: 'reset_demo_data' });
+                state.selectedProductIds.clear();
+                state.selectedOrderIds.clear();
+                await Promise.all([loadProducts(), loadOrders()]);
+                toast(`Listo: ${data.result.kept} productos de prueba y lista de ventas vacía.`);
+            } catch (error) {
+                toast(error.message);
+            }
+            return;
+        }
         const passwordToggle = event.target.closest('.password-toggle');
         if (passwordToggle) {
             const field = passwordToggle.closest('.password-field')?.querySelector('input');

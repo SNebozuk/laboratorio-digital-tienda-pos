@@ -361,6 +361,13 @@ try {
                 'backup' => $app['backups']->create((int) $user['id']),
             ], 201);
 
+        case 'reset_demo_data':
+            $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'result' => $app['products']->resetDemoData(),
+            ]);
+
         case 'settings_update':
             $app['auth']->requireAdmin();
             Http::json([
