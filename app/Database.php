@@ -72,6 +72,7 @@ final class Database
         self::seedCategoryTree($pdo);
         self::importPilotAdhesivePaper($pdo);
         self::purgeDeletedCatalogAndRefreshPilot($pdo);
+        self::migrateProductVisibilityState($pdo);
     }
 
     /** Importación piloto controlada desde la tienda anterior. */
@@ -165,6 +166,34 @@ final class Database
                 $updateVariant = $pdo->prepare('UPDATE product_variants SET name = :name, sku = :sku, barcode = :barcode, image_path = :image_path, price_cents = 2120000, price_specified = 1, stock_on_hand = 29, stock_specified = 1, stock_reserved = 0, active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
                 $updateVariant->execute(['name' => 'Única', 'sku' => '115A4100', 'barcode' => '721450695454', 'image_path' => $image, 'id' => $variantId]);
             }
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    /** Repara productos visibles cuyas variantes quedaron ocultas por una versión anterior. */
+    private static function migrateProductVisibilityState(PDO $pdo): void
+    {
+        $version = 17;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        self::immediate($pdo, function (PDO $pdo) use ($version): void {
+            $pdo->exec(
+                'UPDATE product_variants
+                 SET active = 1, updated_at = CURRENT_TIMESTAMP
+                 WHERE product_id IN (
+                    SELECT p.id
+                    FROM products p
+                    WHERE p.active = 1
+                      AND p.deleted_at IS NULL
+                      AND NOT EXISTS (
+                        SELECT 1 FROM product_variants visible_variant
+                        WHERE visible_variant.product_id = p.id
+                          AND visible_variant.active = 1
+                      )
+                 )'
+            );
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

@@ -693,7 +693,7 @@
         if (!categoryId) throw new Error('No encontramos la categoría Filmilo.');
         const rows = [
             ['FILMILO ADHESIVO A4 BLANCO FRIO ARTJET','F05','721450716821',31,12000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-blanco-frio-068aa9d244e31656bf17582105619023-640-0.jpg'],
-            ['FILMILO ADHESIVO A4 BLANCO RELUCIENTE ARTJET','F08-20','',0,0,0,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-blanco-reluciente-62be0e3ce33bc8937c17582115737706-640-0.webp'],
+            ['FILMILO ADHESIVO A4 BLANCO RELUCIENTE ARTJET','F08-20','',19,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-blanco-reluciente-62be0e3ce33bc8937c17582115737706-640-0.webp'],
             ['FILMILO ACETATO BRUMA CLARA A4 ARTJET','F01-20','721450716562',3,8900,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/acetato-bruma-clara-84ffd0f6a72dbf256f17582117631810-640-0.webp'],
             ['FILMILO ACETATO COOL WHITE A4 ARTJET','F02-20','721450716555',5,8900,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/acetato-cool-white-ddfa3d0c018e65844f17582128599131-640-0.webp'],
             ['FILMILO ACETATO VIDRIO FINO A4 ARTJET','F03-20','721450716579',11,6600,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/acetato-vidrio-fino-4bd989c4292288b61517582129495126-640-0.webp'],

@@ -426,6 +426,8 @@ final class ProductService
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
             $statement = $pdo->prepare("UPDATE products SET active = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN ($placeholders)");
             $statement->execute([$active ? 1 : 0, ...$ids]);
+            $variants = $pdo->prepare("UPDATE product_variants SET active = ?, updated_at = CURRENT_TIMESTAMP WHERE product_id IN ($placeholders)");
+            $variants->execute([$active ? 1 : 0, ...$ids]);
         });
     }
 
