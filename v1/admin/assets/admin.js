@@ -656,6 +656,25 @@
         return true;
     }
 
+    function showProductFilters() {
+        openModal(`
+            <h2 id="modal-title">FILTRAR PRODUCTOS</h2>
+            <p class="checkout-lead">Podés combinar los filtros para encontrar exactamente lo que necesitás.</p>
+            <form id="product-filters-form" class="settings-card compact-filter-card">
+                <label>CATEGORÍA
+                    <select name="category"><option value="">Todas las categorías</option><option value="__unassigned__" ${state.productCategoryId === '__unassigned__' ? 'selected' : ''}>Sin categoría asignada</option>${flatCategories().map(category => `<option value="${Number(category.id)}" ${Number(state.productCategoryId) === Number(category.id) ? 'selected' : ''}>${'— '.repeat(category.depth)}${escapeHtml(category.name)}</option>`).join('')}</select>
+                </label>
+                <label>DISPONIBILIDAD
+                    <select name="availability"><option value="">Todos</option><option value="in_stock" ${state.productAvailability === 'in_stock' ? 'selected' : ''}>En stock</option><option value="out_of_stock" ${state.productAvailability === 'out_of_stock' ? 'selected' : ''}>Fuera de stock</option></select>
+                </label>
+                <label>VISIBILIDAD EN LA TIENDA
+                    <select name="visibility"><option value="">Todos</option><option value="visible" ${state.productVisibility === 'visible' ? 'selected' : ''}>Visibles</option><option value="hidden" ${state.productVisibility === 'hidden' ? 'selected' : ''}>Ocultos</option></select>
+                </label>
+                <div class="modal-actions"><button class="secondary-button" type="button" data-clear-product-filters>DESCARTAR FILTROS</button><button class="primary-button" type="submit">APLICAR</button></div>
+            </form>
+        `);
+    }
+
     function renderProducts() {
         if (!elements.productList) return;
         const query = fold(elements.productSearch?.value || '');
@@ -679,9 +698,7 @@
                 <select data-bulk-product-action ${selectedCount ? '' : 'disabled'} aria-label="Acciones sobre productos seleccionados">
                     <option value="">ACCIONES</option><option value="show">Mostrar Productos</option><option value="hide">Ocultar Productos</option><option value="delete">Eliminar Productos</option>
                 </select>
-                <select data-product-category-filter aria-label="Categoría"><option value="">Categoría: Todas</option><option value="__unassigned__" ${state.productCategoryId === '__unassigned__' ? 'selected' : ''}>Categoría: Sin asignar</option>${flatCategories().map(category => `<option value="${Number(category.id)}" ${Number(state.productCategoryId) === Number(category.id) ? 'selected' : ''}>Categoría: ${'— '.repeat(category.depth)}${escapeHtml(category.name)}</option>`).join('')}</select>
-                <select data-product-availability-filter aria-label="Disponibilidad"><option value="">Disponibilidad: Todas</option><option value="in_stock" ${state.productAvailability === 'in_stock' ? 'selected' : ''}>Disponibilidad: En stock</option><option value="out_of_stock" ${state.productAvailability === 'out_of_stock' ? 'selected' : ''}>Disponibilidad: Fuera de stock</option></select>
-                <select data-product-visibility-filter aria-label="Visibilidad en la tienda"><option value="">Visibilidad: Todas</option><option value="visible" ${state.productVisibility === 'visible' ? 'selected' : ''}>Visibilidad: Visibles</option><option value="hidden" ${state.productVisibility === 'hidden' ? 'selected' : ''}>Visibilidad: Ocultos</option></select>
+                <button class="secondary-button" type="button" data-open-product-filters>FILTRAR${state.productCategoryId || state.productAvailability || state.productVisibility ? ' · ACTIVO' : ''}</button>
             </div>
             <div class="product-list-table" role="table" aria-label="Listado de productos">
                 <div class="product-list-head" role="row"><span></span><span>Producto y variantes</span><span>Stock</span><span>Precio</span><span></span></div>
@@ -3123,9 +3140,30 @@
             event.preventDefault();
             saveUser(event.target);
         }
+        if (event.target.id === 'product-filters-form') {
+            event.preventDefault();
+            const data = new FormData(event.target);
+            state.productCategoryId = String(data.get('category') || '');
+            state.productAvailability = String(data.get('availability') || '');
+            state.productVisibility = String(data.get('visibility') || '');
+            closeModal();
+            renderProducts();
+        }
     });
 
     document.addEventListener('click', async event => {
+        if (event.target.closest('[data-open-product-filters]')) {
+            showProductFilters();
+            return;
+        }
+        if (event.target.closest('[data-clear-product-filters]')) {
+            state.productCategoryId = '';
+            state.productAvailability = '';
+            state.productVisibility = '';
+            closeModal();
+            renderProducts();
+            return;
+        }
         if (event.target.closest('[data-dismiss-pos-stock-warning]')) {
             state.posStockConflicts.clear();
             state.posChangedAvailability.clear();
