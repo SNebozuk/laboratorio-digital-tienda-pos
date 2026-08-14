@@ -550,11 +550,12 @@
     }
 
     async function deleteProducts(ids) {
-        if (!window.confirm(`¿Eliminar ${ids.length === 1 ? 'el producto seleccionado' : `los ${ids.length} productos seleccionados`}? Esta acción no se puede deshacer.`)) return;
+        if (!window.confirm(`¿Eliminar ${ids.length === 1 ? 'el producto seleccionado' : `los ${ids.length} productos seleccionados`}? Esta acción no se puede deshacer.`)) return false;
         await apiPost({ action: 'product_delete', product_ids: ids });
         ids.forEach(id => state.selectedProductIds.delete(Number(id)));
         await loadProducts();
-        toast('Productos eliminados.');
+        toast(ids.length === 1 ? 'Producto eliminado.' : 'Productos eliminados.');
+        return true;
     }
 
     function renderProducts() {
@@ -588,7 +589,7 @@
                         <strong class="product-table-stock ${stock > 0 ? '' : 'is-empty'}">${stock > 0 ? `${stock} disponibles` : 'Agotado'}</strong>
                         <strong>${adminProductPrice(product)}</strong>
                         <span class="product-visibility ${product.active ? 'is-visible' : 'is-hidden'}">${product.active ? 'Visible' : 'Oculto'}</span>
-                        <div class="product-table-actions"><button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace">&#128279;</button><button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button></div>
+                        <div class="product-table-actions"><button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace">&#128279;</button><button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button><button class="small-button product-delete-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}">&#128465;</button></div>
                     </div>`;
                 }).join('')}
             </div>` : '<p class="empty-copy">No encontramos productos.</p>';
@@ -2957,7 +2958,9 @@
         }
         const deleteProduct = event.target.closest('[data-delete-product]');
         if (deleteProduct) {
-            deleteProducts([Number(deleteProduct.dataset.deleteProduct)]).then(closeModal).catch(error => toast(error.message));
+            deleteProducts([Number(deleteProduct.dataset.deleteProduct)]).then(deleted => {
+                if (deleted && elements.modal.classList.contains('open')) closeModal();
+            }).catch(error => toast(error.message));
             return;
         }
         const duplicate = event.target.closest('[data-duplicate-product]');

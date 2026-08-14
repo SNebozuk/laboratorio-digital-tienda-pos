@@ -2550,6 +2550,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .product-visibility.is-visible { background: #e8f7ed; color: #19713a; }
 .product-visibility.is-hidden { background: #f0f1f5; color: #6e7482; }
 .product-table-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.product-delete-button { color: #bd3a3a !important; }
+.product-delete-button:hover { border-color: #e2a0a0 !important; background: #fff4f4 !important; color: #a42a2a !important; }
 .product-form-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 22px; padding-top: 16px; border-top: 1px solid #e2e6ef; }
 .product-form-actions button { padding: 0; border: 0; background: transparent; color: #5b4fc7; font: inherit; font-weight: 720; cursor: pointer; }
 .product-form-actions .danger-button { color: #bd3a3a; }
