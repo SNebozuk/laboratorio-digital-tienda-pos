@@ -551,7 +551,15 @@
 
     async function deleteProducts(ids) {
         if (!window.confirm(`¿Eliminar ${ids.length === 1 ? 'el producto seleccionado' : `los ${ids.length} productos seleccionados`}? Esta acción no se puede deshacer.`)) return false;
-        await apiPost({ action: 'product_delete', product_ids: ids });
+        try {
+            await apiPost({ action: 'product_delete', product_ids: ids });
+        } catch (error) {
+            if (String(error.message || '').includes('ventas activas:')) {
+                openModal(`<h2 id="modal-title">NO SE PUEDE ELIMINAR</h2><p class="empty-copy">Este producto todavía está incluido en ventas activas.</p><p class="notice"><strong>${escapeHtml(error.message)}</strong></p><p class="empty-copy">Archivá o cancelá esas ventas primero. Las ventas archivadas no impiden eliminarlo.</p><div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>ENTENDIDO</button></div>`);
+                return false;
+            }
+            throw error;
+        }
         ids.forEach(id => state.selectedProductIds.delete(Number(id)));
         await loadProducts();
         toast(ids.length === 1 ? 'Producto eliminado.' : 'Productos eliminados.');
