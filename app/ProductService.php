@@ -79,7 +79,7 @@ final class ProductService
              JOIN product_variants v ON v.product_id = p.id
              WHERE p.active = 1 AND p.deleted_at IS NULL
                AND v.active = 1
-               AND substr(v.sku, 1, 8) <> '__AUTO__'
+               AND substr(v.sku, 1, 8) <> \'__AUTO__\'
                AND (
                     v.sku LIKE :contains ESCAPE "\\"
                     OR COALESCE(v.barcode, "") LIKE :contains ESCAPE "\\"

@@ -917,7 +917,7 @@ final class OrderService
             'SELECT
                 v.id AS variant_id,
                 v.name AS variant_name,
-                CASE WHEN substr(v.sku, 1, 8) = '__AUTO__' THEN '' ELSE v.sku END AS sku,
+                CASE WHEN substr(v.sku, 1, 8) = \'__AUTO__\' THEN \'\' ELSE v.sku END AS sku,
                 v.price_cents,
                 v.stock_on_hand,
                 v.stock_reserved,
