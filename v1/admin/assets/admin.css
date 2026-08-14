@@ -2770,7 +2770,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-search-page .pos-products { width: 100%; }
 .pos-search-page .pos-product { width: 100%; border-radius: 0; border-width: 0 0 1px; box-shadow: none; }
 .pos-search-page .pos-products .pos-result-product,
-.pos-page .pos-products .pos-result-product { grid-template-columns: 62px minmax(280px, 2fr) minmax(150px, 1fr) minmax(160px, auto) 48px !important; align-items: center; min-height: 70px; padding: 7px 14px; gap: 12px; }
+.pos-page .pos-products .pos-result-product { grid-template-columns: 62px minmax(280px, 2fr) minmax(150px, 1fr) minmax(160px, auto) 112px !important; align-items: center; min-height: 70px; padding: 7px 14px; gap: 12px; }
 .pos-search-page .pos-product img, .pos-search-page .pos-product-placeholder { width: 54px; height: 54px; transition: transform .18s ease, box-shadow .18s ease; position: relative; z-index: 1; }
 .pos-search-page .pos-product img:hover { transform: scale(2.35); box-shadow: 0 12px 34px rgba(0,0,0,.35); z-index: 8; }
 .pos-result-name { overflow: hidden; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; }
@@ -2779,9 +2779,16 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-result-meta-toggle { padding: 0; border: 0; background: transparent; cursor: pointer; font: inherit; text-align: left; }
 .pos-result-action { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; margin: 0; padding: 0 0 3px; border: 1px solid #1769e0; border-radius: 9px; background: transparent; color: #1769e0; font-family: Arial, sans-serif; font-size: 31px; font-weight: 700; line-height: 1; }
 .pos-result-action > span { display: block; font-family: Arial, sans-serif; font-size: 31px; line-height: 1; transform: translateY(-2px); }
+.pos-result-action { justify-self: end; }
+.pos-result-action.pos-add-one > span { font-size: 27px; }
 .pos-result-action:hover { background: #1769e0; color: #fff; }
 .pos-result-action:disabled { opacity: .35; }
 .pos-result-action.pos-open-product-button > span { font-size: 32px; font-weight: 500; transform: translateY(-3px); }
+.pos-inline-quantity { display: grid; grid-template-columns: 34px 32px 34px; align-items: center; justify-self: end; gap: 3px; }
+.pos-inline-quantity button { display: grid; width: 34px; height: 34px; place-items: center; padding: 0 0 2px; border: 1px solid #1769e0; border-radius: 8px; background: transparent; color: #1769e0; font-family: Arial, sans-serif; font-size: 23px; line-height: 1; cursor: pointer; }
+.pos-inline-quantity button:hover { background: #1769e0; color: #fff; }
+.pos-inline-quantity button:disabled { opacity: .35; cursor: default; }
+.pos-inline-quantity strong { color: #252a3a; font-variant-numeric: tabular-nums; text-align: center; }
 .pos-page .quantity-control button, .pos-search-page .quantity-control button { display: grid; place-items: center; padding: 0 0 3px; font-family: Arial, sans-serif; font-size: 22px; line-height: 1; }
 .pos-result-variants { grid-column: 2 / -1; }
 .pos-search-page .pos-variant-row,
@@ -2823,7 +2830,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .pos-main-total { min-width: 0; justify-items: start; padding: 16px 0 0; border-top: 1px solid #e4e8f0; border-left: 0; }
     .pos-search-page .pos-products .pos-result-product, .pos-page .pos-products .pos-result-product { grid-template-columns: 64px minmax(0, 1fr) auto !important; }
     .pos-search-page .pos-result-meta, .pos-search-page .pos-product-price, .pos-page .pos-result-meta, .pos-page .pos-product-price { grid-column: 2; }
-    .pos-search-page .pos-result-action, .pos-page .pos-result-action { grid-column: 3; grid-row: 1 / 4; }
+    .pos-search-page .pos-result-action, .pos-page .pos-result-action, .pos-inline-quantity { grid-column: 3; grid-row: 1 / 4; }
     .pos-result-variants { grid-column: 1 / -1; }
     .pos-search-page .pos-variant-row, .pos-page .pos-variant-row { grid-template-columns: minmax(0, 1fr) 36px 30px 48px; }
     .pos-search-page .pos-variant-stock, .pos-page .pos-variant-stock { grid-column: 1; }

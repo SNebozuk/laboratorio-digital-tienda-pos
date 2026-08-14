@@ -876,7 +876,9 @@
                 <span class="pos-product-price">${posProductPrice(product)}</span>
                 ${hasVariants
                     ? `<button class="pos-result-action pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}"><span aria-hidden="true">${expanded ? '‹' : '›'}</span></button>`
-                    : `<button class="pos-result-action pos-add-one" type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity + 1}" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(product.name)}"><span aria-hidden="true">+</span></button>`}
+                    : singleQuantity > 0
+                        ? `<div class="pos-inline-quantity" aria-label="Cantidad de ${escapeHtml(product.name)}"><button type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity - 1}" aria-label="Quitar una unidad">−</button><strong>${singleQuantity}</strong><button type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity + 1}" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar una unidad">+</button></div>`
+                        : `<button class="pos-result-action pos-add-one" type="button" data-pos-quantity="${Number(single.id)}" data-value="1" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(product.name)}"><span aria-hidden="true">+</span></button>`}
                 ${hasVariants ? `<div class="pos-result-variants">${variants.map(variant => {
                         const quantity = posQuantity(variant.id);
                         const remaining = Math.max(
