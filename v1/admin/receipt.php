@@ -26,6 +26,11 @@ function receiptMoney(int $cents): string
     return '$ ' . number_format($cents / 100, 0, ',', '.');
 }
 $unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['quantity'], $order['items']));
+$receiptAssetVersion = substr(hash(
+    'sha256',
+    (string) @file_get_contents(__DIR__ . '/assets/receipt.css')
+        . (string) @file_get_contents(__DIR__ . '/assets/receipt.js')
+), 0, 12);
 ?>
 <!doctype html>
 <html lang="es">
@@ -33,7 +38,7 @@ $unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['qu
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= receiptText($order['public_number']) ?></title>
-    <link rel="stylesheet" href="assets/receipt.css">
+    <link rel="stylesheet" href="assets/receipt.css?v=<?= receiptText($receiptAssetVersion) ?>">
 </head>
 <body>
     <main class="receipt">
@@ -84,6 +89,6 @@ $unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['qu
             Comprobante interno no fiscal · Retiro en el local
         </p>
     </main>
-    <script src="assets/receipt.js"></script>
+    <script src="assets/receipt.js?v=<?= receiptText($receiptAssetVersion) ?>"></script>
 </body>
 </html>

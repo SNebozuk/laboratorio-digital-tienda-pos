@@ -1,20 +1,31 @@
+let returningToPos = false;
+
 function returnToPosMenu() {
+    if (returningToPos) {
+        return;
+    }
+    returningToPos = true;
+
     if (window.opener && !window.opener.closed) {
         window.opener.focus();
     }
+
     window.close();
+
     window.setTimeout(() => {
-        if (!window.closed && window.history.length > 1) {
-            window.history.back();
+        if (!window.closed) {
+            window.location.replace('pos.php');
         }
-    }, 100);
+    }, 150);
 }
 
 window.addEventListener('load', () => {
     window.print();
 });
 
-window.addEventListener('afterprint', returnToPosMenu);
+window.addEventListener('afterprint', () => {
+    window.setTimeout(returnToPosMenu, 0);
+});
 
 window.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
