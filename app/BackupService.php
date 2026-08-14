@@ -15,12 +15,13 @@ final class BackupService
     /** @param array<string, mixed> $config */
     public function __construct(
         private readonly PDO $pdo,
-        private readonly array $config
+        private readonly array $config,
+        private readonly string $projectRoot
     ) {
     }
 
     /** @return array<string, mixed> */
-    public function create(int $actorUserId): array
+    public function create(int $actorUserId, string $kind = 'manual'): array
     {
         $root = $this->backupRoot();
         if (!is_dir($root) && !mkdir($root, 0770, true) && !is_dir($root)) {
@@ -44,16 +45,23 @@ final class BackupService
                 $this->storageRoot() . DIRECTORY_SEPARATOR . 'proofs',
                 $directory . DIRECTORY_SEPARATOR . 'proofs'
             );
+            $productImageStats = $this->copyProofs(
+                $this->projectRoot . DIRECTORY_SEPARATOR . 'v1' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'products',
+                $directory . DIRECTORY_SEPARATOR . 'product-images'
+            );
             $createdAt = (new DateTimeImmutable())->format(DATE_ATOM);
             $manifest = [
                 'name' => $name,
                 'created_at' => $createdAt,
                 'created_by_user_id' => $actorUserId,
+                'kind' => $kind,
                 'database_file' => 'app.sqlite',
                 'database_bytes' => (int) filesize($databasePath),
                 'database_sha256' => hash_file('sha256', $databasePath),
                 'proof_file_count' => $proofStats['file_count'],
                 'proof_bytes' => $proofStats['bytes'],
+                'product_image_file_count' => $productImageStats['file_count'],
+                'product_image_bytes' => $productImageStats['bytes'],
             ];
             $encoded = json_encode(
                 $manifest,
@@ -74,6 +82,20 @@ final class BackupService
             $this->removeDirectory($directory);
             throw $exception;
         }
+    }
+
+    /** Crea una copia diaria como máximo una vez por fecha y conserva las últimas 30 automáticas. */
+    public function createDailyIfDue(): ?array
+    {
+        $today = (new DateTimeImmutable())->format('Y-m-d');
+        foreach ($this->recent(60) as $backup) {
+            if (($backup['kind'] ?? 'manual') === 'automatic' && str_starts_with((string) ($backup['created_at'] ?? ''), $today)) {
+                return null;
+            }
+        }
+        $backup = $this->create(0, 'automatic');
+        $this->pruneAutomaticBackups(30);
+        return $backup;
     }
 
     /** @return list<array<string, mixed>> */
@@ -182,6 +204,17 @@ final class BackupService
             }
         }
         @rmdir($directory);
+    }
+
+    private function pruneAutomaticBackups(int $keep): void
+    {
+        $automatic = array_values(array_filter($this->recent(200), static fn (array $backup): bool => ($backup['kind'] ?? 'manual') === 'automatic'));
+        foreach (array_slice($automatic, max(0, $keep)) as $backup) {
+            $name = basename((string) ($backup['name'] ?? ''));
+            if ($name !== '' && preg_match('/^[A-Za-z0-9-]+$/', $name)) {
+                $this->removeDirectory($this->backupRoot() . DIRECTORY_SEPARATOR . $name);
+            }
+        }
     }
 
     private function storageRoot(): string

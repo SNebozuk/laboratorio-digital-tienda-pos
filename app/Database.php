@@ -71,6 +71,7 @@ final class Database
         self::migrateCatalogImagesToLocal($pdo);
         self::seedCategoryTree($pdo);
         self::importPilotAdhesivePaper($pdo);
+        self::purgeDeletedCatalogAndRefreshPilot($pdo);
     }
 
     /** Importación piloto controlada desde la tienda anterior. */
@@ -117,6 +118,53 @@ final class Database
                 $updateVariant->execute(['name' => 'Única', 'sku' => $sku, 'image_path' => $image, 'id' => $variantId]);
             }
 
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    /** Borra definitivamente restos de catálogo sin historial de ventas y actualiza la importación piloto. */
+    private static function purgeDeletedCatalogAndRefreshPilot(PDO $pdo): void
+    {
+        $version = 16;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        self::immediate($pdo, function (PDO $pdo) use ($version): void {
+            $eligible = 'SELECT p.id FROM products p WHERE p.deleted_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM product_variants pv JOIN order_items oi ON oi.variant_id = pv.id WHERE pv.product_id = p.id)';
+            $pdo->exec("DELETE FROM stock_movements WHERE variant_id IN (SELECT id FROM product_variants WHERE product_id IN ($eligible))");
+            $pdo->exec("DELETE FROM products WHERE id IN ($eligible)");
+
+            $title = 'PAPEL FOTOGRAFICO ADHESIVO A4 115G ARTJET - 100 HOJAS';
+            $description = 'Papel fotográfico autoadhesivo brillante (Glossy) tamaño A4 de 115g ArtJet. Secado instantáneo y adhesivo de alta calidad. Ideal para etiquetas, stickers y personalización.';
+            $image = '/v1/assets/catalog/papel-fotografico-adhesivo-a4-115g-artjet-100-hojas.webp';
+            $category = $pdo->prepare("SELECT id FROM categories WHERE name = 'Fotográfico Brillante' COLLATE NOCASE LIMIT 1");
+            $category->execute();
+            $categoryId = (int) $category->fetchColumn();
+            if ($categoryId < 1) throw new \RuntimeException('No se encontró la categoría Fotográfico Brillante.');
+
+            $find = $pdo->prepare('SELECT id FROM products WHERE name = :name COLLATE NOCASE LIMIT 1');
+            $find->execute(['name' => $title]);
+            $productId = (int) $find->fetchColumn();
+            if ($productId < 1) {
+                $insert = $pdo->prepare('INSERT INTO products(category_id, name, description, image_path, active) VALUES(:category_id, :name, :description, :image_path, 1)');
+                $insert->execute(['category_id' => $categoryId, 'name' => $title, 'description' => $description, 'image_path' => $image]);
+                $productId = (int) $pdo->lastInsertId();
+            } else {
+                $update = $pdo->prepare('UPDATE products SET category_id = :category_id, description = :description, image_path = :image_path, active = 1, deleted_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+                $update->execute(['category_id' => $categoryId, 'description' => $description, 'image_path' => $image, 'id' => $productId]);
+            }
+
+            $variant = $pdo->prepare('SELECT id FROM product_variants WHERE product_id = :product_id ORDER BY id LIMIT 1');
+            $variant->execute(['product_id' => $productId]);
+            $variantId = (int) $variant->fetchColumn();
+            if ($variantId < 1) {
+                $insertVariant = $pdo->prepare('INSERT INTO product_variants(product_id, name, sku, barcode, image_path, price_cents, price_specified, stock_on_hand, stock_specified, stock_reserved, min_stock, active) VALUES(:product_id, :name, :sku, :barcode, :image_path, 2120000, 1, 29, 1, 0, 0, 1)');
+                $insertVariant->execute(['product_id' => $productId, 'name' => 'Única', 'sku' => '115A4100', 'barcode' => '721450695454', 'image_path' => $image]);
+            } else {
+                $updateVariant = $pdo->prepare('UPDATE product_variants SET name = :name, sku = :sku, barcode = :barcode, image_path = :image_path, price_cents = 2120000, price_specified = 1, stock_on_hand = 29, stock_specified = 1, stock_reserved = 0, active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+                $updateVariant->execute(['name' => 'Única', 'sku' => '115A4100', 'barcode' => '721450695454', 'image_path' => $image, 'id' => $variantId]);
+            }
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

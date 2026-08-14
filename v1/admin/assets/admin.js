@@ -3753,6 +3753,7 @@
     document.getElementById('new-user-button')?.addEventListener('click', () => {
         showUserForm();
     });
+    document.getElementById('create-backup')?.addEventListener('click', createBackup);
     document.getElementById('refresh-orders')?.addEventListener('click', loadOrders);
     elements.mobileView?.addEventListener('change', event => showView(event.target.value));
     document.getElementById('logout-button')?.addEventListener('click', async () => {

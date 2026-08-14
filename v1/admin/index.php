@@ -371,6 +371,12 @@ header('Referrer-Policy: same-origin');
                                 GUARDAR CONFIGURACIÓN
                             </button>
                         </form>
+                        <section class="settings-card backup-card">
+                            <p class="eyebrow">RESPALDOS</p>
+                            <h2>Copias seguras</h2>
+                            <p>Se genera una copia automática diaria de la base, comprobantes y fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
+                            <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
+                        </section>
                         <section class="settings-card demo-reset-card">
                             <p class="eyebrow">MODO PRUEBA</p>
                             <h2>Limpiar datos de prueba</h2>

@@ -46,7 +46,7 @@ $app['proofs'] = new PaymentProofService(
     $app['config'],
     $app['receipt_ai']
 );
-$app['backups'] = new BackupService($app['pdo'], $app['config']);
+$app['backups'] = new BackupService($app['pdo'], $app['config'], $app['root']);
 $app['settings'] = new SettingsService($app['pdo']);
 
 return $app;
