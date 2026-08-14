@@ -3368,6 +3368,24 @@ body.category-menu-open .category-panel {
 .opened-product-head { background: #edf7ef !important; }
 .order-panel { background: #fff !important; border-color: var(--line) !important; box-shadow: -10px 0 25px rgba(24,35,27,.06) !important; }
 .primary-button { background: var(--accent) !important; color: #fff !important; }
+.continue-shopping-button {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px 14px;
+    border: 1px solid #b9dbbf;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 800;
+    letter-spacing: .03em;
+    cursor: pointer;
+}
+.continue-shopping-button:hover { background: #edf7ef; }
+@media (max-width: 900px) {
+    .order-panel.mobile-open .continue-shopping-button { display: block; }
+}
 
 /* Encabezado compacto para teléfonos: evita que logo y acciones se superpongan. */
 @media (max-width: 760px) {

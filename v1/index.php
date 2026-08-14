@@ -133,6 +133,9 @@ header('Referrer-Policy: same-origin');
             <button class="primary-button" id="checkout-button" type="button" disabled>
                 CONTINUAR PEDIDO
             </button>
+            <button class="continue-shopping-button" id="continue-shopping-button" type="button">
+                SEGUIR AGREGANDO PRODUCTOS
+            </button>
             <p class="order-note">
                 Transferencia o efectivo · Retiro únicamente en el local
             </p>
