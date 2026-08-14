@@ -238,7 +238,16 @@
     }
 
     function showView(view) {
+        const availableViews = new Set(['orders', 'products', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings']);
+        if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
+            view = 'orders';
+        }
         state.view = view;
+        if (!document.querySelector('.pos-page')) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', view);
+            window.history.replaceState({ adminView: view }, '', url);
+        }
         document.querySelectorAll('.admin-view').forEach(section => {
             section.classList.toggle('active', section.id === `view-${view}`);
         });
@@ -3897,7 +3906,8 @@
         loadProducts();
         renderPosCart();
         if (document.getElementById('view-orders')) {
-            showView('orders');
+            const requestedView = new URL(window.location.href).searchParams.get('view') || 'orders';
+            showView(requestedView);
         }
         window.setInterval(refreshActiveAdminView, 2000);
         document.addEventListener('visibilitychange', () => {
