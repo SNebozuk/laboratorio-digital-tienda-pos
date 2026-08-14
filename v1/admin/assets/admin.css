@@ -2764,6 +2764,17 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-clear-cart:disabled { color: #a7adba; cursor: default; text-decoration: none; }
 .pos-remove-cart-line { display: grid; width: 34px; height: 34px; place-items: center; padding: 0; border: 1px solid #e7d7d7; border-radius: 8px; background: #fff; color: #c64242; cursor: pointer; font-size: 15px; }
 .pos-remove-cart-line:hover { border-color: #d85a5a; background: #fff4f4; }
+.pos-checkout-menu { display: grid; gap: 18px; }
+.pos-checkout-menu h2 { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin: 0; color: #667087; font-size: 14px; letter-spacing: .08em; }
+.pos-checkout-menu h2 strong { color: #252a3a; font-size: clamp(30px, 6vw, 48px); font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.pos-checkout-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pos-checkout-actions button { display: grid; min-height: 84px; align-content: center; gap: 5px; padding: 16px; border: 1px solid #dce2ed; border-radius: 12px; background: #fff; color: #252a3a; cursor: pointer; text-align: left; transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+.pos-checkout-actions button:hover { transform: translateY(-1px); border-color: #1769e0; background: #f6f9ff; }
+.pos-checkout-actions button:disabled { opacity: .55; cursor: wait; transform: none; }
+.pos-checkout-actions button strong { font-size: 13px; }
+.pos-checkout-actions button small { color: #667087; font-size: 11px; line-height: 1.35; }
+.pos-checkout-actions button[data-pos-checkout-action="cancel"], .pos-checkout-actions button[data-pos-sale-finish="cancel"] { border-color: #ecd7d7; color: #b63e3e; }
+@media (max-width: 560px) { .pos-checkout-actions { grid-template-columns: 1fr; } }
 .pos-search-close { justify-self: end; display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; color: #252a3a; font-size: 32px; line-height: 1; text-decoration: none; }
 .pos-search-close:hover { background: #eef1f7; }
 .pos-search-results { width: 100%; padding: 24px 30px 40px; }

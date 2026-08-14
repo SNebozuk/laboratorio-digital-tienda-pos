@@ -63,7 +63,7 @@ header('Referrer-Policy: same-origin');
                     <button class="pos-clear-cart" id="pos-clear-cart" type="button" disabled>VACIAR CARRITO</button>
                 </div>
                 <div id="pos-cart-lines" class="cart-lines"></div>
-                <button class="primary-button" id="complete-sale-button" type="button" disabled>REGISTRAR VENTA</button>
+                <button class="primary-button" id="complete-sale-button" type="button" disabled>FINALIZAR VENTA</button>
             </aside>
         </section>
     </main>

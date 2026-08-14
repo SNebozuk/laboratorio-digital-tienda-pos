@@ -1150,16 +1150,40 @@
         }
     }
 
-    async function completeSale() {
+    function posCartTotal() {
+        const index = variantIndex();
+        return Array.from(state.posCart, ([variantId, quantity]) => {
+            const indexed = index.get(Number(variantId));
+            return indexed ? Number(indexed.variant.price_cents) * quantity : 0;
+        }).reduce((sum, value) => sum + value, 0);
+    }
+
+    function showPosCheckoutMenu() {
+        if (!state.posCart.size) return;
+        openModal(`
+            <div class="pos-checkout-menu">
+                <p class="eyebrow">CIERRE DE VENTA</p>
+                <h2 id="modal-title">TOTAL <strong>${money(posCartTotal())}</strong></h2>
+                <div class="pos-checkout-actions">
+                    <button type="button" data-pos-checkout-action="register"><strong>REGISTRAR VENTA</strong><small>Guardar en el listado de ventas</small></button>
+                    <button type="button" data-pos-checkout-action="archive"><strong>ARCHIVAR VENTA</strong><small>Guardar directamente como archivada</small></button>
+                    <button type="button" data-pos-checkout-action="cancel"><strong>CANCELAR</strong><small>Descartar sin descontar stock</small></button>
+                    <button type="button" data-pos-checkout-action="print"><strong>IMPRIMIR COMPROBANTE</strong><small>Guardar la venta e imprimir</small></button>
+                </div>
+            </div>
+        `);
+    }
+
+    async function createPosSale() {
         const items = Array.from(state.posCart, ([variantId, quantity]) => ({
             variant_id: variantId,
             quantity,
         }));
         if (!items.length) {
-            return;
+            return null;
         }
         elements.completeSale.disabled = true;
-        elements.completeSale.textContent = 'COBRANDO…';
+        elements.completeSale.textContent = 'PROCESANDO…';
         try {
             const data = await apiPost({
                 action: 'pos_sale',
@@ -1172,20 +1196,21 @@
             persistPosCart();
             await loadProducts();
             renderPosCart();
-            showPosSaleFinished(sale);
-            toast(`Venta ${sale.public_number} registrada.`);
+            return sale;
         } catch (error) {
             toast(error.message);
+            return null;
         } finally {
             elements.completeSale.disabled = state.posCart.size === 0;
-            elements.completeSale.textContent = 'REGISTRAR VENTA';
+            elements.completeSale.textContent = 'FINALIZAR VENTA';
         }
     }
 
-    function printReceipt(order) {
+    function printReceipt(order, openedWindow = null) {
         const receiptUrl = new URL('receipt.php', window.location.href);
         receiptUrl.searchParams.set('id', String(order.id));
-        const receipt = window.open(receiptUrl, '_blank');
+        const receipt = openedWindow || window.open(receiptUrl, '_blank');
+        if (openedWindow) receipt.location.href = receiptUrl.href;
         if (!receipt) {
             toast('La venta se guardó, pero el navegador bloqueó la impresión.');
         }
@@ -1193,14 +1218,27 @@
 
     function showPosSaleFinished(sale) {
         openModal(`
-            <h2 id="modal-title">REGISTRAR VENTA</h2>
-            <p class="checkout-lead">${escapeHtml(sale.public_number)} quedó guardada en Ventas.</p>
-            <div class="button-row">
-                <button class="secondary-button" type="button" data-pos-sale-finish="archive" data-order-id="${Number(sale.id)}">ARCHIVAR</button>
-                <button class="primary-button" type="button" data-pos-sale-finish="print" data-order-id="${Number(sale.id)}">IMPRIMIR</button>
+            <div class="pos-checkout-menu">
+                <p class="eyebrow">VENTA REGISTRADA</p>
+                <h2 id="modal-title">${escapeHtml(sale.public_number)}</h2>
+                <div class="pos-checkout-actions">
+                    <button type="button" data-pos-sale-finish="archive" data-order-id="${Number(sale.id)}"><strong>ARCHIVAR VENTA</strong><small>Guardar con estado archivada</small></button>
+                    <button type="button" data-pos-sale-finish="cancel" data-order-id="${Number(sale.id)}"><strong>CANCELAR</strong><small>Anular y restaurar el stock</small></button>
+                    <button type="button" data-pos-sale-finish="print" data-order-id="${Number(sale.id)}"><strong>IMPRIMIR COMPROBANTE</strong><small>Volver a imprimir esta venta</small></button>
+                </div>
             </div>
-            <p class="checkout-footnote">La venta ya quedó registrada. Imprimir mantiene este menú abierto; archivarla lo cierra.</p>
         `);
+    }
+
+    async function cancelPosSale(orderId) {
+        try {
+            await apiPost({ action: 'order_cancel', order_id: Number(orderId), notify_customer: false });
+            await loadProducts();
+            closeModal();
+            toast('Venta cancelada y stock restaurado.');
+        } catch (error) {
+            toast(error.message);
+        }
     }
 
     async function archivePosSale(orderId) {
@@ -2705,7 +2743,7 @@
         }
     });
 
-    document.addEventListener('click', event => {
+    document.addEventListener('click', async event => {
         const whatsappOrder = event.target.closest('[data-whatsapp-order]');
         if (whatsappOrder) {
             openOrderWhatsapp(Number(whatsappOrder.dataset.whatsappOrder));
@@ -2910,8 +2948,40 @@
             const orderId = Number(posFinish.dataset.orderId);
             if (posFinish.dataset.posSaleFinish === 'print') {
                 printReceipt({ id: orderId });
+            } else if (posFinish.dataset.posSaleFinish === 'cancel') {
+                cancelPosSale(orderId);
             } else {
                 archivePosSale(orderId);
+            }
+            return;
+        }
+        const posCheckoutAction = event.target.closest('[data-pos-checkout-action]');
+        if (posCheckoutAction) {
+            const action = posCheckoutAction.dataset.posCheckoutAction;
+            if (action === 'cancel') {
+                state.posCart.clear();
+                persistPosCart();
+                renderPosCart();
+                closeModal();
+                toast('Venta cancelada sin modificar el stock.');
+                return;
+            }
+            posCheckoutAction.disabled = true;
+            const receiptWindow = action === 'print' ? window.open('about:blank', '_blank') : null;
+            const sale = await createPosSale();
+            if (!sale) {
+                if (receiptWindow) receiptWindow.close();
+                posCheckoutAction.disabled = false;
+                return;
+            }
+            if (action === 'archive') {
+                await archivePosSale(sale.id);
+            } else if (action === 'print') {
+                printReceipt(sale, receiptWindow);
+                showPosSaleFinished(sale);
+            } else {
+                closeModal();
+                toast(`Venta ${sale.public_number} registrada.`);
             }
             return;
         }
@@ -3184,7 +3254,7 @@
             closePosSuggestions();
         }
     });
-    elements.completeSale?.addEventListener('click', completeSale);
+    elements.completeSale?.addEventListener('click', showPosCheckoutMenu);
     elements.posClearCart?.addEventListener('click', () => {
         state.posCart.clear();
         persistPosCart();
