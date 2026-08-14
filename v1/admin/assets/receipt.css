@@ -52,32 +52,39 @@ dd {
 
 table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
 }
 
 th,
 td {
-    padding: 15px 10px;
-    border-bottom: 2px solid #b9b9b9;
+    overflow: hidden;
+    padding: 8px 7px;
+    border-bottom: 1px solid #b8bec4;
     text-align: left;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 th {
-    font-size: 10px;
+    background: #d9dde1;
+    font-size: 9px;
+    letter-spacing: .04em;
     text-transform: uppercase;
 }
-th:last-child { text-align: center; }
-
-.check-cell { width: 42px; text-align: center !important; }
-.check-box { display: inline-block; width: 25px; height: 25px; border: 2px solid #111; border-radius: 4px; }
-.receipt-product { min-width: 0; }
-.receipt-product strong { display: block; font-size: 19px; line-height: 1.18; text-transform: uppercase; }
-.receipt-product .receipt-variant { display: block; margin-top: 6px; font-size: 15px; font-weight: 800; }
-.receipt-product small { display: block; margin-top: 7px; font-size: 10px; font-weight: 600; }
-.quantity { width: 130px; text-align: center !important; }
-.quantity strong { display: block; font-size: 38px; font-weight: 900; line-height: 1; }
-.quantity small { display: block; margin-top: 5px; color: #111; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+tbody tr:nth-child(even) { background: #e9ecef; }
+tbody tr:nth-child(odd) { background: #fff; }
+th:nth-child(1), td:nth-child(1) { width: 10%; text-align: center; }
+th:nth-child(2), td:nth-child(2) { width: 16%; }
+th:nth-child(3), td:nth-child(3) { width: 46%; }
+th:nth-child(4), td:nth-child(4) { width: 15%; }
+th:nth-child(5), td:nth-child(5) { width: 13%; text-align: right; }
+.quantity { font-size: 20px; font-weight: 900; line-height: 1; }
+.receipt-variant { font-family: "Arial Narrow", Arial, sans-serif; font-size: 13px; font-weight: 850; text-transform: uppercase; text-overflow: ellipsis; }
+.receipt-product { font-family: "Arial Narrow", Arial, sans-serif; font-size: 13px; font-weight: 850; letter-spacing: -.01em; text-transform: uppercase; text-overflow: ellipsis; }
+.receipt-product-long { font-size: 10px; letter-spacing: -.025em; }
+.receipt-product-very-long { font-size: 8px; letter-spacing: -.035em; }
+.receipt-sku, .receipt-price { color: #4f555b; font-size: 9px; font-weight: 650; text-overflow: ellipsis; }
 
 small,
 .footer {
@@ -114,8 +121,10 @@ small,
     .receipt-logo-text strong { font-size: 11px; }
     .receipt-logo-text span { font-size: 8px; }
 
-    .receipt-product strong { font-size: 17px; }
-    .quantity { width: 96px; }
+    th, td { padding: 7px 5px; }
+    .receipt-product, .receipt-variant { font-size: 11px; }
+    .receipt-product-long { font-size: 9px; }
+    .receipt-product-very-long { font-size: 8px; }
 }
 
 @media print {
@@ -135,5 +144,8 @@ small,
         padding: 0;
     }
 
+    thead { display: table-header-group; }
     tr { break-inside: avoid; page-break-inside: avoid; }
+    tbody tr:nth-child(even) { background: #e9ecef !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    th { background: #d9dde1 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

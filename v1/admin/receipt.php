@@ -71,23 +71,22 @@ $receiptAssetVersion = substr(hash(
         <table>
             <thead>
                 <tr>
-                    <th>OK</th>
-                    <th>Producto a preparar</th>
                     <th>Cantidad</th>
+                    <th>Variante</th>
+                    <th>Producto</th>
+                    <th>SKU</th>
+                    <th>Precio</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($items as $item): ?>
                     <tr>
-                        <td class="check-cell"><span class="check-box"></span></td>
-                        <td class="receipt-product">
-                            <strong><?= receiptText($item['product_name']) ?></strong>
-                            <?php if (preg_match('/^única$/iu', trim((string) $item['variant_name'])) !== 1): ?>
-                                <span class="receipt-variant"><?= receiptText($item['variant_name']) ?></span>
-                            <?php endif ?>
-                            <small>SKU: <?= receiptText($item['sku']) ?> · <?= receiptMoney((int) $item['unit_price_cents']) ?> c/u</small>
-                        </td>
-                        <td class="quantity"><strong><?= (int) $item['quantity'] ?></strong><small><?= (int) $item['quantity'] === 1 ? 'UNIDAD' : 'UNIDADES' ?></small></td>
+                        <td class="quantity"><?= (int) $item['quantity'] ?></td>
+                        <td class="receipt-variant"><?= preg_match('/^única$/iu', trim((string) $item['variant_name'])) === 1 ? '—' : receiptText($item['variant_name']) ?></td>
+                        <?php $productLength = function_exists('mb_strlen') ? mb_strlen((string) $item['product_name'], 'UTF-8') : strlen((string) $item['product_name']); ?>
+                        <td class="receipt-product <?= $productLength > 70 ? 'receipt-product-very-long' : ($productLength > 52 ? 'receipt-product-long' : '') ?>"><?= receiptText($item['product_name']) ?></td>
+                        <td class="receipt-sku"><?= receiptText($item['sku']) ?></td>
+                        <td class="receipt-price"><?= receiptMoney((int) $item['unit_price_cents']) ?></td>
                     </tr>
                 <?php endforeach ?>
             </tbody>
