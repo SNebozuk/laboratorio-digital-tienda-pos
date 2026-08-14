@@ -1867,9 +1867,9 @@
                             <thead><tr><th>Venta</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Estado</th></tr></thead>
                             <tbody>${orders.map(order => `
                                 <tr>
-                                    <td><strong>${escapeHtml(order.public_number)}</strong></td>
+                                    <td><button class="customer-history-link" type="button" data-history-order="${Number(order.id)}" data-history-customer="${escapeHtml(name)}">${escapeHtml(order.public_number)}</button></td>
                                     <td>${escapeHtml(String(order.created_at || '').replace('T', ' '))}</td>
-                                    <td>${Number(order.unit_count)} unid.</td>
+                                    <td><button class="customer-history-link" type="button" data-history-products="${Number(order.id)}" data-history-customer="${escapeHtml(name)}">${Number(order.unit_count)} unid.</button></td>
                                     <td><strong>${money(order.total_cents)}</strong></td>
                                     <td>${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</td>
                                 </tr>
@@ -1883,7 +1883,7 @@
         }
     }
 
-    async function showOrderDetail(orderId) {
+    async function showOrderDetail(orderId, historyName = '') {
         try {
             const data = await apiGet('order', { id: orderId });
             const order = data.order;
@@ -1898,6 +1898,7 @@
                             <span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : order.status)}">${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</span>
                         </div>
                         <div class="order-detail-head-actions">
+                            ${historyName ? `<button class="small-button" type="button" data-customer-history="${escapeHtml(historyName)}">← Historial</button>` : ''}
                             <button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>
                             <button class="small-button" type="button" data-reopen-order="${Number(order.id)}">Reabrir</button>
                             <button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar Venta</button>
@@ -1944,7 +1945,7 @@
         }
     }
 
-    async function showOrderProducts(orderId) {
+    async function showOrderProducts(orderId, historyName = '') {
         try {
             const data = await apiGet('order', { id: orderId });
             const order = data.order;
@@ -1953,6 +1954,7 @@
                     <header>
                         <p class="eyebrow">PRODUCTOS DE LA VENTA</p>
                         <h2 id="modal-title">${escapeHtml(order.public_number)}</h2>
+                        ${historyName ? `<button class="customer-history-back" type="button" data-customer-history="${escapeHtml(historyName)}">← Volver al historial</button>` : ''}
                     </header>
                     <div class="order-detail-lines">
                         ${sortedOrderItems(order.items).map(item => `
@@ -2091,7 +2093,9 @@
                         <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia')}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
                         <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : order.status)}">${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</span></span>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
-                        <span class="order-list-chevron" aria-hidden="true">&rsaquo;</span>
+                        ${order.status !== 'cancelled'
+                            ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">🗑</button>`
+                            : '<span class="order-list-delete-placeholder" aria-hidden="true"></span>'}
                     </div>
                 `).join('')}
             `;
@@ -3327,6 +3331,26 @@
             event.preventDefault();
             event.stopPropagation();
             showOrderProducts(Number(previewOrder.dataset.previewOrder));
+            return;
+        }
+        const historyOrder = event.target.closest('[data-history-order]');
+        if (historyOrder) {
+            event.preventDefault();
+            event.stopPropagation();
+            showOrderDetail(
+                Number(historyOrder.dataset.historyOrder),
+                historyOrder.dataset.historyCustomer || ''
+            );
+            return;
+        }
+        const historyProducts = event.target.closest('[data-history-products]');
+        if (historyProducts) {
+            event.preventDefault();
+            event.stopPropagation();
+            showOrderProducts(
+                Number(historyProducts.dataset.historyProducts),
+                historyProducts.dataset.historyCustomer || ''
+            );
             return;
         }
         const customerHistory = event.target.closest('[data-customer-history]');

@@ -2835,6 +2835,39 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .customer-history-table td { padding: 12px 14px; border-bottom: 1px solid #edf0f5; text-align: left; }
 .customer-history-table th { color: #6b7484; background: #fafbfc; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
 .customer-history-table tbody tr:last-child td { border-bottom: 0; }
+.customer-history-link,
+.customer-history-back {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #315fa9;
+    font: inherit;
+    font-weight: 780;
+    text-decoration: none;
+    cursor: pointer;
+}
+.customer-history-link:hover,
+.customer-history-link:focus-visible,
+.customer-history-back:hover,
+.customer-history-back:focus-visible { color: #234a88; text-decoration: none; }
+.customer-history-back { margin-top: 8px; }
+
+#view-orders .order-list-delete {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #b83232;
+    font-size: 21px;
+    line-height: 1;
+    cursor: pointer;
+}
+#view-orders .order-list-delete:hover,
+#view-orders .order-list-delete:focus-visible { background: #fff0f0; color: #982626; }
 
 .pos-launch-card {
     display: grid;
