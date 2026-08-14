@@ -2777,7 +2777,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-result-name-toggle { padding: 0; border: 0; background: transparent; color: #252a3a; cursor: pointer; font: inherit; font-weight: 750; text-align: left; }
 .pos-result-meta { overflow: hidden; color: #667087; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .pos-result-meta-toggle { padding: 0; border: 0; background: transparent; cursor: pointer; font: inherit; text-align: left; }
-.pos-result-action { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; margin: 0; padding: 0; border: 1px solid #1769e0; border-radius: 9px; background: transparent; color: #1769e0; font-size: 0; font-weight: 700; }
+.pos-result-action { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; margin: 0; padding: 0 0 3px; border: 1px solid #1769e0; border-radius: 9px; background: transparent; color: #1769e0; font-family: Arial, sans-serif; font-size: 31px; font-weight: 700; line-height: 1; }
 .pos-result-action > span { display: block; font-family: Arial, sans-serif; font-size: 31px; line-height: 1; transform: translateY(-2px); }
 .pos-result-action:hover { background: #1769e0; color: #fff; }
 .pos-result-action:disabled { opacity: .35; }
