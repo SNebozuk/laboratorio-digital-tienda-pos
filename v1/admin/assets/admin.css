@@ -2560,6 +2560,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .compact-filter-card { display:grid; gap:15px; padding:0; border:0; box-shadow:none; background:transparent; }
 .compact-filter-card label { display:grid; gap:7px; color:#41485a; font-size:11px; font-weight:750; letter-spacing:.045em; }
 .compact-filter-card select { min-height:42px; border:1px solid #dfe3ea; border-radius:7px; background:#fff; color:#202536; padding:0 11px; font-size:14px; }
+.filter-button-group { display:grid; gap:8px; margin:0; padding:0; border:0; }
+.filter-button-group legend { color:#41485a; font-size:11px; font-weight:750; letter-spacing:.045em; }
+.filter-button-group > div { display:flex; gap:8px; flex-wrap:wrap; }
+.filter-button-group button { min-height:39px; padding:7px 13px; border:1px solid #dfe3ea; border-radius:7px; color:#596176; background:#fff; cursor:pointer; font:inherit; font-size:13px; }
+.filter-button-group button.is-selected { border-color:#5546d9; background:#eeecff; color:#3d31ad; font-weight:700; }
 .filter-modal-actions { display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:8px; padding-top:16px; border-top:1px solid #edf0f4; }
 .filter-modal-actions button { min-width:142px; }
 @media (max-width:560px) { .filter-modal-actions { flex-direction:column-reverse; align-items:stretch; } .filter-modal-actions button { width:100%; } }

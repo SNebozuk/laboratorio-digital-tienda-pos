@@ -673,12 +673,16 @@
                 <label>CATEGORÍA
                     <select name="category"><option value="">Todas las categorías</option><option value="__unassigned__" ${state.productCategoryId === '__unassigned__' ? 'selected' : ''}>Sin categoría asignada</option>${flatCategories().map(category => `<option value="${Number(category.id)}" ${Number(state.productCategoryId) === Number(category.id) ? 'selected' : ''}>${'— '.repeat(category.depth)}${escapeHtml(category.name)}</option>`).join('')}</select>
                 </label>
-                <label>DISPONIBILIDAD
-                    <select name="availability"><option value="">Todos</option><option value="in_stock" ${state.productAvailability === 'in_stock' ? 'selected' : ''}>En stock</option><option value="out_of_stock" ${state.productAvailability === 'out_of_stock' ? 'selected' : ''}>Fuera de stock</option></select>
-                </label>
-                <label>VISIBILIDAD EN LA TIENDA
-                    <select name="visibility"><option value="">Todos</option><option value="visible" ${state.productVisibility === 'visible' ? 'selected' : ''}>Visibles</option><option value="hidden" ${state.productVisibility === 'hidden' ? 'selected' : ''}>Ocultos</option></select>
-                </label>
+                <input type="hidden" name="availability" value="${escapeHtml(state.productAvailability)}">
+                <fieldset class="filter-button-group"><legend>DISPONIBILIDAD</legend><div>
+                    <button type="button" data-product-filter-button="availability:in_stock" class="${state.productAvailability === 'in_stock' ? 'is-selected' : ''}">En stock</button>
+                    <button type="button" data-product-filter-button="availability:out_of_stock" class="${state.productAvailability === 'out_of_stock' ? 'is-selected' : ''}">Fuera de stock</button>
+                </div></fieldset>
+                <input type="hidden" name="visibility" value="${escapeHtml(state.productVisibility)}">
+                <fieldset class="filter-button-group"><legend>VISIBILIDAD EN LA TIENDA</legend><div>
+                    <button type="button" data-product-filter-button="visibility:visible" class="${state.productVisibility === 'visible' ? 'is-selected' : ''}">Visibles</button>
+                    <button type="button" data-product-filter-button="visibility:hidden" class="${state.productVisibility === 'hidden' ? 'is-selected' : ''}">Ocultos</button>
+                </div></fieldset>
                 <div class="filter-modal-actions"><button class="secondary-button" type="button" data-clear-product-filters>LIMPIAR Y CERRAR</button><button class="primary-button" type="submit">APLICAR FILTROS</button></div>
             </form>
         `);
@@ -3162,6 +3166,17 @@
     });
 
     document.addEventListener('click', async event => {
+        const filterButton = event.target.closest('[data-product-filter-button]');
+        if (filterButton) {
+            const [field, value] = String(filterButton.dataset.productFilterButton).split(':');
+            const form = filterButton.closest('#product-filters-form');
+            const input = form?.elements.namedItem(field);
+            if (input) {
+                input.value = input.value === value ? '' : value;
+                form.querySelectorAll(`[data-product-filter-button^="${field}:"]`).forEach(button => button.classList.toggle('is-selected', button === filterButton && input.value === value));
+            }
+            return;
+        }
         if (event.target.closest('[data-open-product-filters]')) {
             showProductFilters();
             return;
