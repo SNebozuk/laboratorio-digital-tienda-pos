@@ -1488,8 +1488,15 @@
         }
 
         if (event.target.closest('[data-whatsapp-order-complete]')) {
-            // El enlace abre WhatsApp en otra pestaña. La pestaña de la tienda
-            // queda lista para una compra nueva, sin mantener un resumen vacío.
+            const whatsappLink = event.target.closest('[data-whatsapp-order-complete]');
+            if (isMobileStorefront()) {
+                event.preventDefault();
+                // Abrimos WhatsApp durante el gesto del usuario y dejamos la
+                // pestaña de la tienda ya ubicada en la portada para su regreso.
+                window.open(whatsappLink.href, '_blank', 'noopener');
+                finishOrder();
+                return;
+            }
             window.setTimeout(finishOrder, 0);
         }
     });
