@@ -80,7 +80,6 @@ $unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['qu
             <span><?= $unitCount ?> <?= $unitCount === 1 ? 'unidad' : 'unidades' ?> · Total</span>
             <strong><?= receiptMoney((int) $order['total_cents']) ?></strong>
         </p>
-        <section class="preparation-check"><strong>Control final</strong><span><i></i> Productos completos</span><span><i></i> Cliente identificado</span><span><i></i> Entrega verificada</span></section>
         <p class="footer">
             Comprobante interno no fiscal · Retiro en el local
         </p>
