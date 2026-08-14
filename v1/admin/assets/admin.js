@@ -2806,6 +2806,10 @@
             });
             const preview = document.getElementById('design-logo-preview');
             if (preview) preview.src = data.design.logo_path;
+            [1, 2, 3].forEach(number => {
+                const image = document.getElementById(`design-hero-${number}-preview`);
+                if (image) image.src = data.design[`hero_${number}_path`];
+            });
         } catch (error) { toast(error.message); }
     }
 
@@ -2818,11 +2822,22 @@
             if (logoFile) {
                 form.elements.namedItem('logo_path').value = await uploadProductImage(logoFile);
             }
+            for (const number of [1, 2, 3]) {
+                const file = form.elements.namedItem(`hero_${number}_file`)?.files?.[0];
+                if (file) form.elements.namedItem(`hero_${number}_path`).value = await uploadProductImage(file);
+            }
             const data = new FormData(form);
             data.delete('logo_file');
+            data.delete('hero_1_file');
+            data.delete('hero_2_file');
+            data.delete('hero_3_file');
             const response = await apiPost({ action: 'design_update', design: Object.fromEntries(data.entries()) });
             const preview = document.getElementById('design-logo-preview');
             if (preview) preview.src = response.design.logo_path;
+            [1, 2, 3].forEach(number => {
+                const image = document.getElementById(`design-hero-${number}-preview`);
+                if (image) image.src = response.design[`hero_${number}_path`];
+            });
             toast('Diseño guardado. Actualizá la tienda para verlo.');
         } catch (error) { toast(error.message); }
         finally { button.disabled = false; button.textContent = 'GUARDAR DISEÑO'; }

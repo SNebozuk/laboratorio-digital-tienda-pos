@@ -2555,6 +2555,14 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .product-bulk-toolbar select { min-width: 190px; }
 .settings-span-two { grid-column: 1 / -1; }
 #design-logo-preview { display:block; max-width:260px; max-height:100px; object-fit:contain; margin-top:10px; background:#fff; }
+.admin-greeting { display:block; margin-bottom:7px; color:#5546d9; font-size:13px; font-weight:700; }
+.admin-store-link { display:block; width:max-content; margin-top:12px; text-decoration:none; }
+.design-published-images { display:grid; gap:7px; margin-top:22px; padding-top:18px; border-top:1px solid #edf0f4; color:#41485a; font-size:11px; letter-spacing:.04em; }
+.design-published-images > small { color:#697386; font-size:12px; letter-spacing:0; }
+.design-image-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:5px; }
+.design-image-grid label { display:grid; gap:8px; font-size:11px; font-weight:750; }
+.design-image-grid img { width:100%; aspect-ratio:1.45; object-fit:cover; border:1px solid #dfe3ea; border-radius:8px; background:#f6f7f9; }
+@media (max-width:700px) { .design-image-grid { grid-template-columns:1fr; } .design-image-grid img { max-height:180px; } }
 .filter-modal-title { display:flex; align-items:center; gap:10px; }
 .filter-modal-title svg { width:23px; height:23px; stroke:#5546d9; stroke-width:1.8; stroke-linecap:round; fill:none; }
 .compact-filter-card { display:grid; gap:15px; padding:0; border:0; box-shadow:none; background:transparent; }

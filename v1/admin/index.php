@@ -113,8 +113,10 @@ header('Referrer-Policy: same-origin');
                     <?php endif ?>
                 </nav>
                 <div class="admin-user">
+                    <span class="admin-greeting">Hola, <?= htmlspecialchars(explode(' ', $user['name'])[0], ENT_QUOTES, 'UTF-8') ?> 👋</span>
                     <strong><?= htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') ?></strong>
                     <small><?= htmlspecialchars($user['role'], ENT_QUOTES, 'UTF-8') ?></small>
+                    <a class="secondary-button admin-store-link" href="<?= $escape($storeUrl) ?>" target="_blank" rel="noopener">VER TIENDA ↗</a>
                     <button class="secondary-button" id="logout-button" type="button">Salir</button>
                 </div>
             </aside>
@@ -224,6 +226,11 @@ header('Referrer-Policy: same-origin');
                                 <label>ENLACE DEL LOGO (OPCIONAL)<input name="logo_link" placeholder="https://... o /v1/"></label>
                                 <label class="settings-span-two">LOGO<input name="logo_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="logo_path" type="hidden"><img id="design-logo-preview" class="variant-image-preview" alt="Vista previa del logo"></label>
                             </div>
+                            <div class="design-published-images"><strong>FOTOS PUBLICADAS EN LA PORTADA</strong><small>Elegí una foto para reemplazarla. Se verá inmediatamente en la vista previa al guardar.</small><div class="design-image-grid">
+                                <label>FOTO 1<input name="hero_1_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_1_path" type="hidden"><img id="design-hero-1-preview" alt="Foto publicada 1"></label>
+                                <label>FOTO 2<input name="hero_2_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_2_path" type="hidden"><img id="design-hero-2-preview" alt="Foto publicada 2"></label>
+                                <label>FOTO 3<input name="hero_3_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_3_path" type="hidden"><img id="design-hero-3-preview" alt="Foto publicada 3"></label>
+                            </div></div>
                             <button class="primary-button fit-button" type="submit">GUARDAR DISEÑO</button>
                         </form>
                     </section>

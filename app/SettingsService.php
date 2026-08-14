@@ -83,6 +83,9 @@ final class SettingsService
             'hero_link' => '',
             'logo_path' => '/v1/assets/brand/logo.png',
             'logo_link' => '',
+            'hero_1_path' => '/v1/assets/brand/hero-1.webp',
+            'hero_2_path' => '/v1/assets/brand/hero-2.webp',
+            'hero_3_path' => '/v1/assets/brand/hero-3.webp',
         ];
         $query = $this->pdo->query("SELECT key, value FROM settings WHERE key LIKE 'design_%'");
         foreach ($query->fetchAll() as $row) {
@@ -107,9 +110,11 @@ final class SettingsService
             if ($value !== '' && !preg_match('#^(https?://|/)#i', $value)) throw new ValidationException('Los enlaces deben comenzar con https:// o /.');
             $values[$key] = $value;
         }
-        $logo = trim((string) ($data['logo_path'] ?? $current['logo_path']));
-        if ($logo === '' || !str_starts_with($logo, '/')) throw new ValidationException('Elegí una imagen de logo válida.');
-        $values['logo_path'] = $logo;
+        foreach (['logo_path', 'hero_1_path', 'hero_2_path', 'hero_3_path'] as $key) {
+            $image = trim((string) ($data[$key] ?? $current[$key]));
+            if ($image === '' || !str_starts_with($image, '/')) throw new ValidationException('Elegí una imagen válida.');
+            $values[$key] = $image;
+        }
         Database::immediate($this->pdo, static function (PDO $pdo) use ($values): void {
             $update = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
             foreach ($values as $key => $value) $update->execute(['key' => 'design_' . $key, 'value' => $value]);

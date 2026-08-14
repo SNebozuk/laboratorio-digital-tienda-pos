@@ -741,9 +741,9 @@
                         <span>Usá el buscador o elegí una categoría para empezar.</span>
                     </div>
                     <section class="home-people-gallery" aria-label="Inspiración para tus próximos productos">
-                        <img src="/v1/assets/brand/hero-1.webp" alt="Prenda personalizada en uso" loading="eager">
-                        <img src="/v1/assets/brand/hero-2.webp" alt="Indumentaria personalizada" loading="lazy">
-                        <img src="/v1/assets/brand/hero-3.webp" alt="Productos para personalizar" loading="lazy">
+                        <img src="${escapeHtml(safeImage(app.design?.hero_1_path) || '/v1/assets/brand/hero-1.webp')}" alt="Prenda personalizada en uso" loading="eager">
+                        <img src="${escapeHtml(safeImage(app.design?.hero_2_path) || '/v1/assets/brand/hero-2.webp')}" alt="Indumentaria personalizada" loading="lazy">
+                        <img src="${escapeHtml(safeImage(app.design?.hero_3_path) || '/v1/assets/brand/hero-3.webp')}" alt="Productos para personalizar" loading="lazy">
                     </section>
                     <div class="quick-categories">
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
