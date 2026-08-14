@@ -1748,11 +1748,13 @@
     } catch {
         sessionStorage.removeItem(ORDER_COMPLETE_STORAGE_KEY);
     }
+    // Una consulta frecuente mantiene el stock actualizado sin descargar el
+    // catálogo completo varias veces por segundo en cada navegador.
     window.setInterval(() => {
         if (document.visibilityState === 'visible') {
             refreshCatalog();
         }
-    }, 2000);
+    }, 15000);
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             refreshCatalog();
