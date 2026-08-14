@@ -96,6 +96,8 @@
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const quickUpdateTimers = new Map();
+    let automaticRefreshRunning = false;
+    let quickUpdateInFlight = 0;
 
     async function apiGet(action, parameters = {}) {
         const url = new URL(app.api_url, window.location.href);
@@ -103,8 +105,10 @@
         Object.entries(parameters).forEach(([key, value]) => {
             url.searchParams.set(key, String(value));
         });
+        url.searchParams.set('_sync', String(Date.now()));
         const response = await fetch(url, {
             headers: { Accept: 'application/json' },
+            cache: 'no-store',
         });
         const data = await response.json();
         if (!response.ok || !data.ok) {
@@ -842,6 +846,7 @@
         const priceInput = document.querySelector(`[data-quick-price="${variantId}"]`);
         const stockInput = document.querySelector(`[data-quick-stock="${variantId}"]`);
         input.disabled = true;
+        quickUpdateInFlight += 1;
         try {
             await apiPost({
                 action: 'variant_quick_update',
@@ -857,6 +862,8 @@
         } catch (error) {
             toast(error.message);
             await loadProducts();
+        } finally {
+            quickUpdateInFlight = Math.max(0, quickUpdateInFlight - 1);
         }
     }
 
@@ -1428,11 +1435,13 @@
         }
     }
 
-    async function loadOrders() {
+    async function loadOrders(silent = false) {
         if (!elements.orderList) {
             return;
         }
-        elements.orderList.innerHTML = '<p class="empty-copy">Cargando pedidos…</p>';
+        if (!silent) {
+            elements.orderList.innerHTML = '<p class="empty-copy">Cargando pedidos…</p>';
+        }
         try {
             const data = await apiGet('orders', {
                 limit: 150,
@@ -1446,6 +1455,46 @@
             renderOrders();
         } catch (error) {
             toast(error.message);
+        }
+    }
+
+    function adminHasUnsavedInteraction() {
+        if (elements.modal?.classList.contains('open') || quickUpdateTimers.size > 0 || quickUpdateInFlight > 0) {
+            return true;
+        }
+        const active = document.activeElement;
+        return Boolean(active?.closest(
+            '#admin-product-list input, #category-admin-tree input, #size-guide-rows input, form textarea, form input:not([type="search"]), form select'
+        ));
+    }
+
+    async function refreshActiveAdminView() {
+        if (automaticRefreshRunning || document.visibilityState !== 'visible' || adminHasUnsavedInteraction()) {
+            return;
+        }
+        automaticRefreshRunning = true;
+        try {
+            if (elements.posProducts || elements.posCartLines) {
+                await refreshPosAvailability();
+            } else if (state.view === 'orders') {
+                await loadOrders(true);
+            } else if (state.view === 'products') {
+                await loadProducts();
+            } else if (state.view === 'categories') {
+                await loadCategories();
+            } else if (state.view === 'users') {
+                await loadUsers();
+            } else if (state.view === 'settings') {
+                await loadSettings();
+            } else if (state.view === 'contact') {
+                await loadContact();
+            } else if (state.view === 'whatsapp') {
+                await loadEmailSettings();
+            } else if (state.view === 'size-guide') {
+                await loadSizeGuide();
+            }
+        } finally {
+            automaticRefreshRunning = false;
         }
     }
 
@@ -3575,11 +3624,13 @@
     if (app.user) {
         loadProducts();
         renderPosCart();
-        window.setInterval(refreshPosAvailability, 2000);
+        window.setInterval(refreshActiveAdminView, 2000);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                refreshPosAvailability();
+                refreshActiveAdminView();
             }
         });
+        window.addEventListener('focus', refreshActiveAdminView);
+        window.addEventListener('pageshow', refreshActiveAdminView);
     }
 })();

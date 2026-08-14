@@ -1743,6 +1743,8 @@
             refreshCatalog();
         }
     });
+    window.addEventListener('focus', refreshCatalog);
+    window.addEventListener('pageshow', refreshCatalog);
     window.addEventListener('storage', event => {
         if (event.key !== CART_STORAGE_KEY || state.order) {
             return;
