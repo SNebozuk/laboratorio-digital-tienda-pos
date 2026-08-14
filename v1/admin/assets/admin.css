@@ -2792,8 +2792,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-search-page .pos-products { width: 100%; }
 .pos-search-page .pos-product { width: 100%; border-radius: 0; border-width: 0 0 1px; box-shadow: none; }
 .pos-search-page .pos-products > .pos-product:nth-child(odd) { background: #fff; }
-.pos-search-page .pos-products > .pos-product:nth-child(even) { background: #eaf0f7; }
-.pos-search-page .pos-products > .pos-product:hover { background: #dfe9f5; }
+.pos-search-page .pos-products > .pos-product:nth-child(even) { background: #dce7f3; }
+.pos-search-page .pos-products > .pos-product:hover { background: #c9dbef; }
 .pos-search-page .pos-products .pos-result-product,
 .pos-page .pos-products .pos-result-product { grid-template-columns: 62px minmax(280px, 2fr) minmax(150px, 1fr) minmax(160px, auto) 112px !important; align-items: center; min-height: 70px; padding: 7px 14px; gap: 12px; }
 .pos-search-page .pos-product img, .pos-search-page .pos-product-placeholder { width: 54px; height: 54px; transition: transform .18s ease, box-shadow .18s ease; position: relative; z-index: 1; }
@@ -2819,11 +2819,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-search-page .pos-variant-row,
 .pos-page .pos-variant-row { grid-template-columns: minmax(280px, 2fr) minmax(150px, 1fr) minmax(160px, auto) 40px 32px 48px; padding: 11px 12px; transition: background-color .15s ease; }
 .pos-search-page .pos-result-variants .pos-variant-row:nth-child(even),
-.pos-page .pos-result-variants .pos-variant-row:nth-child(even) { background: #e4edf7; }
+.pos-page .pos-result-variants .pos-variant-row:nth-child(even) { background: #d1e0f0; }
 .pos-search-page .pos-result-variants .pos-variant-row:nth-child(odd),
-.pos-page .pos-result-variants .pos-variant-row:nth-child(odd) { background: #f8fbff; }
+.pos-page .pos-result-variants .pos-variant-row:nth-child(odd) { background: #f5f9fd; }
 .pos-search-page .pos-result-variants .pos-variant-row:hover,
-.pos-page .pos-result-variants .pos-variant-row:hover { background: #d5e4f5; }
+.pos-page .pos-result-variants .pos-variant-row:hover { background: #bcd3eb; }
 .pos-search-page .pos-variant-name strong,
 .pos-page .pos-variant-name strong { font-size: 16px; line-height: 1.25; }
 .pos-product-price { color: #252a3a; font-size: 15px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
