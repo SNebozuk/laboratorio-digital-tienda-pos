@@ -1447,8 +1447,30 @@
     async function finishPosSaleDirectly() {
         const sale = await createPosSale();
         if (sale) {
-            toast(`Venta ${sale.public_number} registrada en la lista de ventas.`);
+            returnToAdminOrders();
         }
+    }
+
+    function returnToAdminOrders() {
+        const ordersUrl = new URL('./', window.location.href);
+        ordersUrl.searchParams.set('view', 'orders');
+        if (window.opener && !window.opener.closed) {
+            try {
+                window.opener.postMessage(
+                    { type: 'laboratorio-pos-sale-completed' },
+                    window.location.origin
+                );
+                window.opener.focus();
+                window.close();
+                window.setTimeout(() => {
+                    window.location.href = ordersUrl.href;
+                }, 350);
+                return;
+            } catch {
+                // Si el navegador bloquea el cierre, continuamos en la lista.
+            }
+        }
+        window.location.href = ordersUrl.href;
     }
 
     async function cancelPosSale(orderId) {
@@ -3685,9 +3707,26 @@
         renderPosCart();
     });
 
+    window.addEventListener('message', event => {
+        if (event.origin !== window.location.origin
+            || event.data?.type !== 'laboratorio-pos-sale-completed'
+            || !document.getElementById('view-orders')) {
+            return;
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', 'orders');
+        window.history.replaceState({}, '', url);
+        showView('orders');
+        window.focus();
+    });
+
     if (app.user) {
         loadProducts();
         renderPosCart();
+        if (new URL(window.location.href).searchParams.get('view') === 'orders'
+            && document.getElementById('view-orders')) {
+            showView('orders');
+        }
         window.setInterval(refreshActiveAdminView, 2000);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {

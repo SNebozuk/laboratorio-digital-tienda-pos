@@ -263,7 +263,7 @@ header('Referrer-Policy: same-origin');
                             <strong>CAJA Y MOSTRADOR</strong>
                             <p>El Punto de Venta se abre en una página independiente, optimizada para trabajar con teclado, lector de código y pantalla completa.</p>
                         </div>
-                        <a class="primary-button" href="pos.php">ABRIR PUNTO DE VENTA</a>
+                        <a class="primary-button" href="pos.php" target="_blank" rel="opener">ABRIR PUNTO DE VENTA</a>
                     </section>
                 </section>
 
