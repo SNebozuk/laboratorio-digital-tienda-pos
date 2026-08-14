@@ -82,10 +82,10 @@ header('Referrer-Policy: same-origin');
                     </span>
                 </a>
                 <nav class="admin-nav">
-                    <button class="admin-nav-button" type="button" data-view="orders">
+                    <button class="admin-nav-button active" type="button" data-view="orders">
                         Lista de Ventas
                     </button>
-                    <button class="admin-nav-button active" type="button" data-view="products">
+                    <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
                     <?php if ($user['role'] === 'admin'): ?>
@@ -133,7 +133,7 @@ header('Referrer-Policy: same-origin');
                     </select>
                 </header>
 
-                <section class="admin-view active" id="view-products">
+                <section class="admin-view" id="view-products">
                     <div class="view-heading order-page-heading">
                         <div>
                             <p class="eyebrow">CATÁLOGO Y STOCK</p>
@@ -245,7 +245,7 @@ header('Referrer-Policy: same-origin');
                     </section>
                 <?php endif ?>
 
-                <section class="admin-view" id="view-orders">
+                <section class="admin-view active" id="view-orders">
                     <div class="view-heading">
                         <div>
                             <p class="eyebrow">OPERACIÓN DIARIA</p>

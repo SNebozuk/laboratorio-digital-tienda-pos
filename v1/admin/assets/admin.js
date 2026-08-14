@@ -31,7 +31,7 @@
         posChangedAvailability: new Set(),
         posStockConflicts: new Set(),
         editOrder: null,
-        view: 'products',
+        view: 'orders',
     };
 
     const money = cents => new Intl.NumberFormat('es-AR', {
@@ -3723,8 +3723,7 @@
     if (app.user) {
         loadProducts();
         renderPosCart();
-        if (new URL(window.location.href).searchParams.get('view') === 'orders'
-            && document.getElementById('view-orders')) {
+        if (document.getElementById('view-orders')) {
             showView('orders');
         }
         window.setInterval(refreshActiveAdminView, 2000);
