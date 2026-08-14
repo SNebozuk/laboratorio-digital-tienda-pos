@@ -688,9 +688,10 @@ final class OrderService
         int $orderId,
         int $actorUserId,
         string $reason = 'manual_cancellation',
-        bool $notifyCustomer = true
+        bool $notifyCustomer = true,
+        bool $restoreStock = true
     ): void {
-        $this->stock->cancelOrder($orderId, $reason, $actorUserId, $notifyCustomer);
+        $this->stock->cancelOrder($orderId, $reason, $actorUserId, $notifyCustomer, $restoreStock);
     }
 
     public function archive(int $orderId, int $actorUserId): void

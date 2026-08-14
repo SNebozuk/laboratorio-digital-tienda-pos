@@ -2510,7 +2510,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .product-bulk-toolbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 12px;
     margin: 0 0 10px;
     padding: 11px 14px;
@@ -2521,6 +2521,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     font-size: 13px;
 }
 .product-bulk-toolbar select { min-width: 190px; }
+.product-select-all { display: inline-flex; align-items: center; gap: 7px; color: #40485b; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.product-select-all input { width: 18px; height: 18px; margin: 0; accent-color: #5b4fc7; cursor: pointer; }
+.product-selection-count { min-width: 150px; color: #667085; font-weight: 650; white-space: nowrap; }
 .product-list-table { overflow: auto; border: 1px solid #e2e6ef; border-radius: 14px; background: #fff; }
 .product-list-head, .product-list-row {
     display: grid;

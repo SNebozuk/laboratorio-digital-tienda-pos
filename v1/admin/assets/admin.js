@@ -13,6 +13,7 @@
         orderDateRange: '',
         selectedOrderIds: new Set(),
         selectedProductIds: new Set(),
+        productCategoryId: '',
         showArchivedOrders: false,
         settings: null,
         sizeGuide: { intro: '', rows: [] },
@@ -559,18 +560,24 @@
     function renderProducts() {
         if (!elements.productList) return;
         const query = fold(elements.productSearch?.value || '');
-        const products = state.products.filter(product => productSearchText(product).includes(query));
-        const selectedCount = products.filter(product => state.selectedProductIds.has(Number(product.id))).length;
-        const allSelected = products.length > 0 && selectedCount === products.length;
+        const products = state.products.filter(product => (
+            productSearchText(product).includes(query)
+            && (!state.productCategoryId || Number(product.category?.id) === Number(state.productCategoryId))
+        ));
+        const selectedCount = state.selectedProductIds.size;
+        const visibleSelectedCount = products.filter(product => state.selectedProductIds.has(Number(product.id))).length;
+        const allSelected = products.length > 0 && visibleSelectedCount === products.length;
         elements.productList.innerHTML = products.length ? `
             <div class="product-bulk-toolbar">
-                <span>${selectedCount ? `${selectedCount} ${selectedCount === 1 ? 'producto seleccionado' : 'productos seleccionados'}` : 'Seleccioná productos para realizar una acción'}</span>
+                <label class="product-select-all"><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''}> <span>Seleccionar todo</span></label>
+                <span class="product-selection-count">${selectedCount ? `${selectedCount} ${selectedCount === 1 ? 'producto seleccionado' : 'productos seleccionados'}` : '0 productos seleccionados'}</span>
                 <select data-bulk-product-action ${selectedCount ? '' : 'disabled'} aria-label="Acciones sobre productos seleccionados">
                     <option value="">ACCIONES</option><option value="show">Mostrar Productos</option><option value="hide">Ocultar Productos</option><option value="delete">Eliminar Productos</option>
                 </select>
+                <select data-product-category-filter aria-label="Filtrar productos por categoría"><option value="">Todas las categorías</option>${flatCategories().map(category => `<option value="${Number(category.id)}" ${Number(state.productCategoryId) === Number(category.id) ? 'selected' : ''}>${'— '.repeat(category.depth)}${escapeHtml(category.name)}</option>`).join('')}</select>
             </div>
             <div class="product-list-table" role="table" aria-label="Listado de productos">
-                <div class="product-list-head" role="row"><span><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''} aria-label="Seleccionar todos los productos mostrados"></span><span>Producto</span><span>Categoría</span><span>Variantes</span><span>Stock</span><span>Precio</span><span>Estado</span><span></span></div>
+                <div class="product-list-head" role="row"><span></span><span>Producto</span><span>Categoría</span><span>Variantes</span><span>Stock</span><span>Precio</span><span>Estado</span><span></span></div>
                 ${products.map(product => {
                     const stock = product.variants.reduce((total, variant) => total + Number(variant.available_stock || 0), 0);
                     return `<div class="product-list-row ${product.active ? '' : 'is-hidden'}" role="row">
@@ -1458,8 +1465,8 @@
                 <span><strong>Abrir WhatsApp para avisar al cliente</strong><small>Se abrirá el mensaje de cancelación listo para revisar y enviar.</small></span>
             </label>
             <label class="order-confirm-option">
-                <input type="checkbox" checked disabled>
-                <span><strong>Actualizar stock</strong><small>Las unidades de la venta vuelven automáticamente a estar disponibles.</small></span>
+                <input id="cancel-restore-stock" type="checkbox" checked>
+                <span><strong>Reponer stock</strong><small>Marcado: las unidades vuelven a estar disponibles. Sin marcar: la venta se cancela sin devolverlas al inventario.</small></span>
             </label>
             <div class="modal-actions">
                 <button class="danger-button" type="button" data-confirm-cancel-orders="${cancellable.map(order => Number(order.id)).join(',')}">CONFIRMAR CANCELACI&Oacute;N</button>
@@ -1468,20 +1475,21 @@
         `);
     }
 
-    async function cancelOrders(orderIds, notifyCustomer) {
+    async function cancelOrders(orderIds, notifyCustomer, restoreStock = true) {
         try {
             for (const orderId of orderIds) {
                 await apiPost({
                     action: 'order_cancel',
                     order_id: Number(orderId),
                     notify_customer: false,
+                    restore_stock: restoreStock,
                 });
                 if (notifyCustomer) await openOrderWhatsapp(Number(orderId));
             }
             closeModal();
             state.selectedOrderIds.clear();
             await Promise.all([loadOrders(), loadProducts()]);
-            toast('Ventas canceladas y stock actualizado.');
+            toast(restoreStock ? 'Ventas canceladas y stock repuesto.' : 'Ventas canceladas sin reponer stock.');
         } catch (error) {
             toast(error.message);
         }
@@ -3001,7 +3009,7 @@
                 .split(',')
                 .map(Number)
                 .filter(Number.isFinite);
-            cancelOrders(ids, Boolean(document.getElementById('cancel-notify-customer')?.checked));
+            cancelOrders(ids, Boolean(document.getElementById('cancel-notify-customer')?.checked), Boolean(document.getElementById('cancel-restore-stock')?.checked));
             return;
         }
         const cancelOrder = event.target.closest('[data-cancel-order]');
@@ -3153,11 +3161,19 @@
         }
         if (event.target.id === 'select-all-products') {
             const query = fold(elements.productSearch?.value || '');
-            const matching = state.products.filter(product => productSearchText(product).includes(query));
+            const matching = state.products.filter(product => (
+                productSearchText(product).includes(query)
+                && (!state.productCategoryId || Number(product.category?.id) === Number(state.productCategoryId))
+            ));
             matching.forEach(product => {
                 if (event.target.checked) state.selectedProductIds.add(Number(product.id));
                 else state.selectedProductIds.delete(Number(product.id));
             });
+            renderProducts();
+            return;
+        }
+        if (event.target.matches('[data-product-category-filter]')) {
+            state.productCategoryId = event.target.value;
             renderProducts();
             return;
         }

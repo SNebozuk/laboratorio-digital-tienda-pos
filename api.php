@@ -341,7 +341,8 @@ try {
                 (int) ($input['order_id'] ?? 0),
                 (int) $user['id'],
                 'manual_cancellation',
-                false
+                false,
+                ($input['restore_stock'] ?? true) !== false
             );
             Http::json(['ok' => true]);
 

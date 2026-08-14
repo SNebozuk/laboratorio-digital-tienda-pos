@@ -172,26 +172,25 @@ final class StockService
         int $orderId,
         string $reason,
         ?int $actorUserId = null,
-        bool $notifyCustomer = true
+        bool $notifyCustomer = true,
+        bool $restoreStock = true
     ): void {
         Database::immediate(
             $this->pdo,
-            function (PDO $pdo) use ($orderId, $reason, $actorUserId, $notifyCustomer): void {
+            function (PDO $pdo) use ($orderId, $reason, $actorUserId, $notifyCustomer, $restoreStock): void {
                 $order = $this->lockedOrder($pdo, $orderId);
                 if ($order['status'] === 'cancelled') {
                     return;
                 }
                 if ($order['stock_reserved_at'] !== null) {
-                    $this->releaseWithinTransaction(
-                        $pdo,
-                        $orderId,
-                        (string) $order['public_number'],
-                        $actorUserId,
-                        $reason
-                    );
+                    if ($restoreStock) {
+                        $this->releaseWithinTransaction($pdo, $orderId, (string) $order['public_number'], $actorUserId, $reason);
+                    } else {
+                        $this->consumeReservationWithoutRestoring($pdo, $orderId, (string) $order['public_number'], $actorUserId, $reason);
+                    }
                 }
 
-                if ($order['status'] === 'delivered') {
+                if ($order['status'] === 'delivered' && $restoreStock) {
                     $this->restoreConsumedOrderWithinTransaction(
                         $pdo,
                         $orderId,
@@ -506,6 +505,33 @@ final class StockService
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
         );
+        $clear->execute(['id' => $orderId]);
+    }
+
+    /** Cancela una reserva y descuenta definitivamente las unidades cuando no deben volver al stock. */
+    private function consumeReservationWithoutRestoring(
+        PDO $pdo,
+        int $orderId,
+        string $publicNumber,
+        ?int $actorUserId,
+        string $reason
+    ): void {
+        foreach ($this->orderItems($pdo, $orderId) as $item) {
+            $quantity = (int) $item['quantity'];
+            $consume = $pdo->prepare(
+                'UPDATE product_variants
+                 SET stock_on_hand = stock_on_hand - :quantity,
+                     stock_reserved = stock_reserved - :quantity,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = :variant_id AND stock_reserved >= :quantity'
+            );
+            $consume->execute(['quantity' => $quantity, 'variant_id' => (int) $item['variant_id']]);
+            if ($consume->rowCount() !== 1) {
+                throw new ConflictException('No se pudo descontar la reserva de stock.');
+            }
+            $this->recordMovement($pdo, (int) $item['variant_id'], $orderId, $actorUserId, -$quantity, -$quantity, $reason . '_without_restock', $publicNumber);
+        }
+        $clear = $pdo->prepare('UPDATE orders SET stock_reserved_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
         $clear->execute(['id' => $orderId]);
     }
 
