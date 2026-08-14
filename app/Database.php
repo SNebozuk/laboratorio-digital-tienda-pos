@@ -73,6 +73,37 @@ final class Database
         self::importPilotAdhesivePaper($pdo);
         self::purgeDeletedCatalogAndRefreshPilot($pdo);
         self::migrateProductVisibilityState($pdo);
+        self::prepareRealSalesNumbering($pdo);
+    }
+
+    /**
+     * Retira una sola vez las ventas de prueba y deja preparada la numeracion
+     * elegida para el inicio de la operatoria real. No modifica el stock fisico.
+     */
+    private static function prepareRealSalesNumbering(PDO $pdo): void
+    {
+        $version = 18;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+
+        self::immediate($pdo, function (PDO $pdo) use ($version): void {
+            $pdo->exec('UPDATE stock_movements SET order_id = NULL WHERE order_id IS NOT NULL');
+            $pdo->exec('UPDATE cash_movements SET order_id = NULL WHERE order_id IS NOT NULL');
+            $pdo->exec('DELETE FROM orders');
+            $pdo->exec('UPDATE product_variants SET stock_reserved = 0, updated_at = CURRENT_TIMESTAMP WHERE stock_reserved <> 0');
+            $pdo->prepare(
+                'INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP)
+                 ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP'
+            )->execute([
+                'key' => 'order_number_floor',
+                'value' => '97759',
+            ]);
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')
+                ->execute(['version' => $version]);
+        });
     }
 
     /** Importación piloto controlada desde la tienda anterior. */

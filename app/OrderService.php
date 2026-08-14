@@ -1054,13 +1054,15 @@ final class OrderService
     private function newPublicNumber(PDO $pdo): string
     {
         $lastNumber = (int) $pdo->query(
-            "SELECT COALESCE(MAX(CAST(SUBSTR(public_number, 2) AS INTEGER)), 9999)
+            "SELECT COALESCE(MAX(CAST(SUBSTR(public_number, 2) AS INTEGER)), 0)
              FROM orders
              WHERE public_number GLOB '#[0-9]*'
                AND SUBSTR(public_number, 2) NOT GLOB '*[^0-9]*'"
         )->fetchColumn();
 
-        return '#' . (string) max(10000, $lastNumber + 1);
+        $numberFloor = $this->integerSetting('order_number_floor', 9999);
+
+        return '#' . (string) max(10000, $numberFloor + 1, $lastNumber + 1);
     }
 
     private function integerSetting(string $key, int $default): int
