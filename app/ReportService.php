@@ -62,7 +62,7 @@ final class ReportService
              JOIN products p ON p.id = v.product_id
              WHERE p.active = 1
                AND v.active = 1
-               AND v.stock_on_hand - v.stock_reserved <= v.min_stock'
+               AND v.stock_on_hand <= v.min_stock'
         )->fetchColumn();
 
         return [
@@ -136,13 +136,13 @@ final class ReportService
                 v.name AS variant_name,
                 v.stock_on_hand,
                 v.stock_reserved,
-                v.stock_on_hand - v.stock_reserved AS available_stock,
+                v.stock_on_hand AS available_stock,
                 v.min_stock
              FROM product_variants v
              JOIN products p ON p.id = v.product_id
              WHERE p.active = 1
                AND v.active = 1
-               AND v.stock_on_hand - v.stock_reserved <= v.min_stock
+               AND v.stock_on_hand <= v.min_stock
              ORDER BY available_stock, p.name, v.sort_order, v.name
              LIMIT 50'
         )->fetchAll();

@@ -259,7 +259,7 @@ final class OrderService
                          SET stock_on_hand = stock_on_hand - :quantity,
                              updated_at = CURRENT_TIMESTAMP
                          WHERE id = :variant_id
-                           AND stock_on_hand - stock_reserved >= :quantity'
+                           AND stock_on_hand >= :quantity'
                     );
                     $decrement->bindValue(':quantity', $quantity, PDO::PARAM_INT);
                     $decrement->bindValue(
@@ -409,11 +409,11 @@ final class OrderService
                         if ($delta > 0) {
                             $adjust = $pdo->prepare(
                                 'UPDATE product_variants
-                                 SET stock_reserved = stock_reserved + :delta,
+                                 SET stock_on_hand = stock_on_hand - :delta,
                                      updated_at = CURRENT_TIMESTAMP
                                  WHERE id = :variant_id
                                    AND active = 1
-                                   AND stock_on_hand - stock_reserved >= :delta'
+                                   AND stock_on_hand >= :delta'
                             );
                             $adjust->bindValue(':delta', $delta, PDO::PARAM_INT);
                             $adjust->bindValue(
@@ -426,10 +426,9 @@ final class OrderService
                             $release = abs($delta);
                             $adjust = $pdo->prepare(
                                 'UPDATE product_variants
-                                 SET stock_reserved = stock_reserved - :release,
+                                 SET stock_on_hand = stock_on_hand + :release,
                                      updated_at = CURRENT_TIMESTAMP
-                                 WHERE id = :variant_id
-                                   AND stock_reserved >= :release'
+                                 WHERE id = :variant_id'
                             );
                             $adjust->bindValue(
                                 ':release',
@@ -938,7 +937,6 @@ final class OrderService
                 throw new ValidationException('Uno de los productos ya no está disponible.');
             }
             $available = (int) $variant['stock_on_hand']
-                - (int) $variant['stock_reserved']
                 + (int) ($reservationCredit[$variantId] ?? 0);
             if ($available < $quantity) {
                 throw new ConflictException(
@@ -979,11 +977,12 @@ final class OrderService
             $quantity = (int) $item['quantity'];
             $reserve = $pdo->prepare(
                 'UPDATE product_variants
-                 SET stock_reserved = stock_reserved + :quantity,
+                 SET stock_on_hand = stock_on_hand - :quantity,
+                     stock_reserved = 0,
                      updated_at = CURRENT_TIMESTAMP
                  WHERE id = :variant_id
                    AND active = 1
-                   AND stock_on_hand - stock_reserved >= :quantity'
+                   AND stock_on_hand >= :quantity'
             );
             $reserve->bindValue(':quantity', $quantity, PDO::PARAM_INT);
             $reserve->bindValue(':variant_id', (int) $item['variant_id'], PDO::PARAM_INT);
@@ -1004,14 +1003,14 @@ final class OrderService
                     on_hand_delta, reserved_delta, reason, reference
                  ) VALUES(
                     :variant_id, :order_id, NULL,
-                    0, :reserved_delta, :reason, :reference
+                    :on_hand_delta, 0, :reason, :reference
                  )'
             );
             $movement->execute([
                 'variant_id' => (int) $item['variant_id'],
                 'order_id' => $orderId,
-                'reserved_delta' => $quantity,
-                'reason' => 'cash_order_reservation',
+                'on_hand_delta' => -$quantity,
+                'reason' => 'web_order_stock',
                 'reference' => $publicNumber,
             ]);
         }
@@ -1161,7 +1160,7 @@ final class OrderService
         int $variantId,
         int $orderId,
         int $actorUserId,
-        int $reservedDelta,
+        int $quantityDelta,
         string $reference
     ): void {
         $insert = $pdo->prepare(
@@ -1170,15 +1169,15 @@ final class OrderService
                 on_hand_delta, reserved_delta, reason, reference
              ) VALUES(
                 :variant_id, :order_id, :actor_user_id,
-                0, :reserved_delta, :reason, :reference
+                :on_hand_delta, 0, :reason, :reference
              )'
         );
         $insert->execute([
             'variant_id' => $variantId,
             'order_id' => $orderId,
             'actor_user_id' => $actorUserId,
-            'reserved_delta' => $reservedDelta,
-            'reason' => 'order_edit_reservation',
+            'on_hand_delta' => -$quantityDelta,
+            'reason' => 'order_edit_stock',
             'reference' => $reference,
         ]);
     }

@@ -62,12 +62,32 @@ final class Database
         self::migrateLegacyMailAddress($pdo);
         self::clearLegacyOrders($pdo);
         self::disableMailQueues($pdo);
+        self::migrateToSingleAvailableStock($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
         );
         self::migrateCatalogImagesToLocal($pdo);
         self::seedCategoryTree($pdo);
+    }
+
+    /**
+     * Unifica el inventario: stock_on_hand pasa a ser el único stock disponible.
+     * Las reservas anteriores dejan de modificar el número cargado manualmente.
+     */
+    private static function migrateToSingleAvailableStock(PDO $pdo): void
+    {
+        $version = 13;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+        self::immediate($pdo, function (PDO $pdo) use ($version): void {
+            $pdo->exec('UPDATE product_variants SET stock_reserved = 0, updated_at = CURRENT_TIMESTAMP');
+            $pdo->exec('UPDATE orders SET stock_reserved_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE stock_reserved_at IS NOT NULL');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
     }
 
     /** Elimina mensajes pendientes: la tienda se comunica con clientes por WhatsApp. */

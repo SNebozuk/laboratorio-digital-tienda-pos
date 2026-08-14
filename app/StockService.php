@@ -41,11 +41,12 @@ final class StockService
                         $quantity = (int) $item['quantity'];
                         $reserve = $pdo->prepare(
                             'UPDATE product_variants
-                             SET stock_reserved = stock_reserved + :quantity,
+                             SET stock_on_hand = stock_on_hand - :quantity,
+                                 stock_reserved = 0,
                                  updated_at = CURRENT_TIMESTAMP
                              WHERE id = :variant_id
                                AND active = 1
-                               AND stock_on_hand - stock_reserved >= :quantity'
+                               AND stock_on_hand >= :quantity'
                         );
                         $reserve->bindValue(':quantity', $quantity, PDO::PARAM_INT);
                         $reserve->bindValue(
@@ -69,9 +70,9 @@ final class StockService
                             (int) $item['variant_id'],
                             $orderId,
                             $actorUserId,
+                            -$quantity,
                             0,
-                            $quantity,
-                            'payment_proof_reservation',
+                            'payment_reported_stock',
                             (string) $order['public_number']
                         );
                     }
@@ -127,10 +128,10 @@ final class StockService
                     $quantity = (int) $item['quantity'];
                     $release = $pdo->prepare(
                         'UPDATE product_variants
-                         SET stock_reserved = stock_reserved - :quantity,
+                         SET stock_on_hand = stock_on_hand + :quantity,
+                             stock_reserved = 0,
                              updated_at = CURRENT_TIMESTAMP
-                         WHERE id = :variant_id
-                           AND stock_reserved >= :quantity'
+                         WHERE id = :variant_id'
                     );
                     $release->bindValue(':quantity', $quantity, PDO::PARAM_INT);
                     $release->bindValue(
@@ -150,8 +151,8 @@ final class StockService
                         (int) $item['variant_id'],
                         $orderId,
                         $actorUserId,
+                        $quantity,
                         0,
-                        -$quantity,
                         $reason,
                         (string) $order['public_number']
                     );
@@ -236,42 +237,6 @@ final class StockService
                 ) {
                     throw new ConflictException(
                         'La reserva de 2 horas para pago en efectivo ya venció.'
-                    );
-                }
-
-                foreach ($this->orderItems($pdo, $orderId) as $item) {
-                    $quantity = (int) $item['quantity'];
-                    $consume = $pdo->prepare(
-                        'UPDATE product_variants
-                         SET stock_on_hand = stock_on_hand - :quantity,
-                             stock_reserved = stock_reserved - :quantity,
-                             updated_at = CURRENT_TIMESTAMP
-                         WHERE id = :variant_id
-                           AND stock_on_hand >= :quantity
-                           AND stock_reserved >= :quantity'
-                    );
-                    $consume->bindValue(':quantity', $quantity, PDO::PARAM_INT);
-                    $consume->bindValue(
-                        ':variant_id',
-                        (int) $item['variant_id'],
-                        PDO::PARAM_INT
-                    );
-                    $consume->execute();
-                    if ($consume->rowCount() !== 1) {
-                        throw new ConflictException(
-                            'No se pudo entregar un pedido con stock inconsistente.'
-                        );
-                    }
-
-                    $this->recordMovement(
-                        $pdo,
-                        (int) $item['variant_id'],
-                        $orderId,
-                        $actorUserId,
-                        -$quantity,
-                        -$quantity,
-                        'order_delivered',
-                        (string) $order['public_number']
                     );
                 }
 
@@ -469,10 +434,10 @@ final class StockService
             $quantity = (int) $item['quantity'];
             $release = $pdo->prepare(
                 'UPDATE product_variants
-                 SET stock_reserved = stock_reserved - :quantity,
+                 SET stock_on_hand = stock_on_hand + :quantity,
+                     stock_reserved = 0,
                      updated_at = CURRENT_TIMESTAMP
-                 WHERE id = :variant_id
-                   AND stock_reserved >= :quantity'
+                 WHERE id = :variant_id'
             );
             $release->bindValue(':quantity', $quantity, PDO::PARAM_INT);
             $release->bindValue(
@@ -492,8 +457,8 @@ final class StockService
                 (int) $item['variant_id'],
                 $orderId,
                 $actorUserId,
+                $quantity,
                 0,
-                -$quantity,
                 $reason,
                 $publicNumber
             );
@@ -516,21 +481,6 @@ final class StockService
         ?int $actorUserId,
         string $reason
     ): void {
-        foreach ($this->orderItems($pdo, $orderId) as $item) {
-            $quantity = (int) $item['quantity'];
-            $consume = $pdo->prepare(
-                'UPDATE product_variants
-                 SET stock_on_hand = stock_on_hand - :quantity,
-                     stock_reserved = stock_reserved - :quantity,
-                     updated_at = CURRENT_TIMESTAMP
-                 WHERE id = :variant_id AND stock_reserved >= :quantity'
-            );
-            $consume->execute(['quantity' => $quantity, 'variant_id' => (int) $item['variant_id']]);
-            if ($consume->rowCount() !== 1) {
-                throw new ConflictException('No se pudo descontar la reserva de stock.');
-            }
-            $this->recordMovement($pdo, (int) $item['variant_id'], $orderId, $actorUserId, -$quantity, -$quantity, $reason . '_without_restock', $publicNumber);
-        }
         $clear = $pdo->prepare('UPDATE orders SET stock_reserved_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
         $clear->execute(['id' => $orderId]);
     }

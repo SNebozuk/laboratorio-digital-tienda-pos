@@ -2536,10 +2536,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .product-list-table { overflow: auto; border: 1px solid #e2e6ef; border-radius: 14px; background: #fff; }
 .product-list-head, .product-list-row, .product-variant-inline-row {
     display: grid;
-    grid-template-columns: 36px minmax(300px, 2fr) 145px 125px 130px minmax(120px, auto);
+    grid-template-columns: 36px minmax(300px, 2fr) 145px 145px minmax(120px, auto);
     align-items: center;
     column-gap: 14px;
-    min-width: 900px;
+    min-width: 780px;
 }
 .product-list-head { min-height: 48px; padding: 0 14px; border-bottom: 1px solid #e2e6ef; color: #667085; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .product-list-row { min-height: 78px; padding: 10px 14px; border-bottom: 1px solid #edf0f5; color: #303747; font-size: 13px; }

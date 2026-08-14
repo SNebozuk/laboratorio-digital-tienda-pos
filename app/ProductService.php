@@ -31,7 +31,7 @@ final class ProductService
                 v.name AS variant_name,
                 v.image_path AS variant_image_path,
                 v.price_cents,
-                (v.stock_on_hand - v.stock_reserved) AS available_stock
+                v.stock_on_hand AS available_stock
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
              JOIN product_variants v ON v.product_id = p.id
@@ -117,7 +117,7 @@ final class ProductService
                 v.price_cents,
                 v.stock_on_hand,
                 v.stock_reserved,
-                (v.stock_on_hand - v.stock_reserved) AS available_stock,
+                v.stock_on_hand AS available_stock,
                 v.min_stock,
                 v.active AS variant_active
              FROM products p
