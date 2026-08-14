@@ -377,6 +377,10 @@ try {
                 'result' => $app['products']->resetDemoData(),
             ]);
 
+        case 'prepare_catalog_import':
+            $app['auth']->requireAdmin();
+            Http::json(['ok' => true, 'result' => $app['products']->prepareCatalogImport()]);
+
         case 'settings_update':
             $app['auth']->requireAdmin();
             Http::json([

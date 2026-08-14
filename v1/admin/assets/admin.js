@@ -3220,18 +3220,18 @@
             loadMailDiagnostics();
             return;
         }
-        if (event.target.id === 'reset-demo-data') {
-            openModal(`<h2 id="modal-title">LIMPIAR DATOS DE PRUEBA</h2><p class="empty-copy">Se eliminarán todas las ventas y se conservarán únicamente cuatro productos con sus fotos y variantes.</p><p class="notice">Esta acción es para pruebas y no se puede deshacer.</p><div class="modal-actions"><button class="danger-button" type="button" data-confirm-reset-demo>VACIAR AHORA</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>`);
+        if (event.target.id === 'prepare-catalog-import') {
+            openModal(`<h2 id="modal-title">PREPARAR CATÁLOGO NUEVO</h2><p class="empty-copy">Se eliminarán todas las ventas y se retirarán todos los productos actuales. Las categorías, usuarios y configuración se conservan.</p><p class="notice">Esta acción no se puede deshacer.</p><div class="modal-actions"><button class="danger-button" type="button" data-confirm-catalog-import-clear>VACIAR AHORA</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>`);
             return;
         }
-        if (event.target.closest('[data-confirm-reset-demo]')) {
+        if (event.target.closest('[data-confirm-catalog-import-clear]')) {
             try {
-                const data = await apiPost({ action: 'reset_demo_data' });
+                const data = await apiPost({ action: 'prepare_catalog_import' });
                 state.selectedProductIds.clear();
                 state.selectedOrderIds.clear();
                 await Promise.all([loadProducts(), loadOrders()]);
                 closeModal();
-                toast(`Listo: ${data.result.kept} productos de prueba y lista de ventas vacía.`);
+                toast(`Listo: ${data.result.orders} ventas y ${data.result.products} productos retirados.`);
             } catch (error) {
                 toast(error.message);
             }

@@ -400,10 +400,10 @@ header('Referrer-Policy: same-origin');
                             <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
                         </section>
                         <section class="settings-card demo-reset-card">
-                            <p class="eyebrow">MODO PRUEBA</p>
-                            <h2>Limpiar datos de prueba</h2>
-                            <p>Vacía todas las ventas y conserva cuatro productos con fotos y variantes para realizar pruebas.</p>
-                            <button class="danger-button" id="reset-demo-data" type="button">VACIAR VENTAS Y DEJAR 4 PRODUCTOS</button>
+                            <p class="eyebrow">IMPORTACIÓN</p>
+                            <h2>Preparar catálogo nuevo</h2>
+                            <p>Vacía las ventas y retira todos los productos actuales, conservando categorías, usuarios y configuración.</p>
+                            <button class="danger-button" id="prepare-catalog-import" type="button">VACIAR PARA IMPORTAR</button>
                         </section>
                     </section>
                 <?php endif ?>

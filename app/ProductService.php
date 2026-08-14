@@ -480,6 +480,22 @@ final class ProductService
         });
     }
 
+    /** @return array{orders:int, products:int} */
+    public function prepareCatalogImport(): array
+    {
+        return Database::immediate($this->pdo, function (PDO $pdo): array {
+            $orders = (int) $pdo->query('SELECT COUNT(*) FROM orders')->fetchColumn();
+            $products = (int) $pdo->query('SELECT COUNT(*) FROM products WHERE deleted_at IS NULL')->fetchColumn();
+            $pdo->exec('DELETE FROM payment_proofs');
+            $pdo->exec('DELETE FROM order_events');
+            $pdo->exec('UPDATE stock_movements SET order_id = NULL');
+            $pdo->exec('DELETE FROM orders');
+            $pdo->exec('UPDATE product_variants SET active = 0, stock_reserved = 0, barcode = NULL, sku = "__BORRADO__" || id, updated_at = CURRENT_TIMESTAMP');
+            $pdo->exec('UPDATE products SET active = 0, deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE deleted_at IS NULL');
+            return ['orders' => $orders, 'products' => $products];
+        });
+    }
+
     /**
      * Asigna un código leído en el mostrador a una variante concreta.
      * La restricción UNIQUE de la base impide que el mismo código apunte a
