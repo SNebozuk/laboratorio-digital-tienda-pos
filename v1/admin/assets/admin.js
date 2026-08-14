@@ -688,28 +688,6 @@
         `);
     }
 
-    function filmiloImportRecords() {
-        const categoryId = flatCategories().find(category => fold(category.name) === 'filmilo')?.id;
-        if (!categoryId) throw new Error('No encontramos la categoría Filmilo.');
-        const rows = [
-            ['FILMILO ADHESIVO A4 BLANCO FRIO ARTJET','F05','721450716821',31,12000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-blanco-frio-068aa9d244e31656bf17582105619023-640-0.jpg'],
-            ['FILMILO ADHESIVO A4 BLANCO RELUCIENTE ARTJET','F08-20','',19,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-blanco-reluciente-62be0e3ce33bc8937c17582115737706-640-0.webp'],
-            ['FILMILO ACETATO BRUMA CLARA A4 ARTJET','F01-20','721450716562',3,8900,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/acetato-bruma-clara-84ffd0f6a72dbf256f17582117631810-640-0.webp'],
-            ['FILMILO ACETATO COOL WHITE A4 ARTJET','F02-20','721450716555',5,8900,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/acetato-cool-white-ddfa3d0c018e65844f17582128599131-640-0.webp'],
-            ['FILMILO ACETATO VIDRIO FINO A4 ARTJET','F03-20','721450716579',11,6600,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/acetato-vidrio-fino-4bd989c4292288b61517582129495126-640-0.webp'],
-            ['FILMILO ADHESIVO A4 ALUMINIO PERLADO ARTJET','F04-20','721450716494',1,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-aluminio-perlado-84c272128392629e7617582130364514-640-0.webp'],
-            ['FILMILO ADHESIVO A4 BLANCO MATE ARTJET','F06-20','',6,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-blanco-mate-5258b02724d2d834cf17582138426276-640-0.webp'],
-            ['FILMILO ADHESIVO A4 BLANCO PERLADO ARTJET','F07-20','721450717200',6,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-blanco-perlado-5bcd4ab45415b8f07317582138911656-640-0.webp'],
-            ['FILMILO ADHESIVO A4 GRIS ESPACIAL ARTJET','F09-20','721450716470',2,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-gris-espacial-cc1c96f37f6cdd025017582139754739-640-0.webp'],
-            ['FILMILO ADHESIVO A4 GRIS PLATINUM ARTJET','F10-20','721450716487',3,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-gris-platinum-414698a4eea78bf4fb17582138611510-640-0.webp'],
-            ['FILMILO ADHESIVO A4 NIEBLA TRANSLUCIDA ARTJET','F11-20','721450716531',2,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-niebla-traslucida-5913863fb20c0a43c317582139108026-640-0.webp'],
-            ['FILMILO ADHESIVO A4 ORO ANTIGUO ARTJET','F12-20','721450716517',7,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-oro-antiguo-9b2c9bf33c00e52d5117582139317341-640-0.webp'],
-            ['FILMILO ADHESIVO A4 ORO LUJOSO ARTJET','F13-20','721450716500',2,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-oro-lujoso-a4b9a3af9edc95323617582140022848-640-0.webp'],
-            ['FILMILO ADHESIVO A4 SUPER CRISTAL ARTJET','F14-20','721450716548',9,11000,1,'https://dcdn-us.mitiendanube.com/stores/049/818/products/filmilo-super-cristal-fc5226179f632dc36917582139549390-640-0.webp'],
-        ];
-        return rows.map(([name, sku, barcode, stock, price, active, image]) => ({ name, category_id: Number(categoryId), category: 'Filmilo', active: Boolean(active), tiendanube_image: image, variants: [{ name: '20 Hojas', sku, barcode, stock_on_hand: stock, price_cents: price * 100, min_stock: 0, active: Boolean(active) }] }));
-    }
-
     function renderProducts() {
         if (!elements.productList) return;
         const query = fold(elements.productSearch?.value || '');
@@ -3267,18 +3245,6 @@
             }
             return;
         }
-        if (event.target.closest('[data-confirm-filmilo-import]')) {
-            try {
-                const button = event.target.closest('[data-confirm-filmilo-import]');
-                button.disabled = true;
-                button.textContent = 'IMPORTANDO…';
-                const result = await apiPost({ action: 'catalog_import', products: filmiloImportRecords() });
-                await loadProducts();
-                closeModal();
-                toast(`Listo: ${result.created} productos Filmilo importados.`);
-            } catch (error) { toast(error.message); }
-            return;
-        }
         const passwordToggle = event.target.closest('.password-toggle');
         if (passwordToggle) {
             const field = passwordToggle.closest('.password-field')?.querySelector('input');
@@ -3933,9 +3899,6 @@
     });
     document.getElementById('new-product-button')?.addEventListener('click', () => {
         showProductForm();
-    });
-    document.getElementById('import-filmilo-button')?.addEventListener('click', () => {
-        openModal(`<h2 id="modal-title">IMPORTAR FILMILO</h2><p class="empty-copy">Se cargarán 14 productos en Filmilo con foto, precio, stock, SKU y códigos de barras disponibles en Tiendanube.</p><p class="notice">Las fotos se copiarán a este hosting para no depender de Tiendanube.</p><div class="modal-actions"><button class="primary-button" type="button" data-confirm-filmilo-import>IMPORTAR 14 PRODUCTOS</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>`);
     });
     document.getElementById('new-user-button')?.addEventListener('click', () => {
         showUserForm();
