@@ -68,6 +68,13 @@ final class CategoryService
     public function delete(int $id): void
     {
         Database::immediate($this->pdo, function (PDO $pdo) use ($id): void {
+            if ($id < 1 || !$this->exists($pdo, $id)) {
+                throw new ValidationException('La categoría no existe.');
+            }
+            $releaseProducts = $pdo->prepare('UPDATE products SET category_id = NULL WHERE category_id = :id');
+            $releaseProducts->execute(['id' => $id]);
+            $releaseChildren = $pdo->prepare('UPDATE categories SET parent_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE parent_id = :id');
+            $releaseChildren->execute(['id' => $id]);
             $delete = $pdo->prepare('DELETE FROM categories WHERE id = :id');
             $delete->execute(['id' => $id]);
             if ($delete->rowCount() !== 1) throw new ValidationException('La categoría no existe.');

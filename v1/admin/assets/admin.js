@@ -277,10 +277,44 @@
         const rows = flatCategories();
         const namesById = new Map(rows.map(item => [Number(item.id), item.name]));
         elements.categoryTree.innerHTML = rows.length ? rows.map(category => `
-            <article class="category-admin-row" style="--category-depth:${Number(category.depth)}">
+            <article class="category-admin-row" draggable="true" data-category-row="${Number(category.id)}" data-category-parent="${category.parent_id === null ? '' : Number(category.parent_id)}" style="--category-depth:${Number(category.depth)}">
+                <span class="category-drag-handle" aria-hidden="true" title="Arrastrar para ordenar">⋮⋮</span>
                 <div><strong>${Number(category.depth) > 0 ? '↳ ' : ''}${escapeHtml(category.name)}</strong><small>${category.parent_id ? `Subcategoría de ${escapeHtml(namesById.get(Number(category.parent_id)) || 'otra categoría')} · ` : ''}${Number(category.product_count)} productos · orden ${Number(category.sort_order)}${category.active ? '' : ' · inactiva'}</small></div>
                 <div class="category-admin-actions"><button class="small-button" type="button" data-edit-category="${Number(category.id)}">Editar</button><button class="small-button danger-button" type="button" data-delete-category="${Number(category.id)}">Borrar</button></div>
             </article>`).join('') : '<p class="empty-copy">Todavía no hay categorías.</p>';
+    }
+
+    async function moveCategory(draggedId, targetId, position = 'before') {
+        if (draggedId === targetId) return;
+        const rows = flatCategories();
+        const dragged = rows.find(item => Number(item.id) === Number(draggedId));
+        const target = rows.find(item => Number(item.id) === Number(targetId));
+        if (!dragged || !target) return;
+        const draggedParent = Number(dragged.parent_id || 0);
+        const targetParent = Number(target.parent_id || 0);
+        if (draggedParent !== targetParent) {
+            toast('Para cambiar de nivel usá Editar. El arrastre ordena categorías del mismo nivel.');
+            return;
+        }
+        const siblings = rows.filter(item => Number(item.parent_id || 0) === draggedParent);
+        const from = siblings.findIndex(item => Number(item.id) === Number(draggedId));
+        const [moved] = siblings.splice(from, 1);
+        const targetIndex = siblings.findIndex(item => Number(item.id) === Number(targetId));
+        siblings.splice(targetIndex + (position === 'after' ? 1 : 0), 0, moved);
+        for (const [index, category] of siblings.entries()) {
+            await apiPost({
+                action: 'category_update',
+                category_id: Number(category.id),
+                category: {
+                    name: category.name,
+                    parent_id: category.parent_id,
+                    sort_order: (index + 1) * 10,
+                    active: Boolean(category.active),
+                },
+            });
+        }
+        await loadProducts();
+        toast('Nuevo orden de categorías guardado.');
     }
 
     function showCategoryForm(category = null) {
@@ -3255,6 +3289,42 @@
         }
     });
     elements.completeSale?.addEventListener('click', showPosCheckoutMenu);
+    elements.categoryTree?.addEventListener('dragstart', event => {
+        const row = event.target.closest('[data-category-row]');
+        if (!row) return;
+        state.draggedCategoryId = Number(row.dataset.categoryRow);
+        row.classList.add('is-dragging');
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', String(state.draggedCategoryId));
+    });
+    elements.categoryTree?.addEventListener('dragover', event => {
+        const row = event.target.closest('[data-category-row]');
+        if (!row || !state.draggedCategoryId || Number(row.dataset.categoryRow) === Number(state.draggedCategoryId)) return;
+        event.preventDefault();
+        elements.categoryTree.querySelectorAll('.is-drop-target, .is-drop-after').forEach(item => item.classList.remove('is-drop-target', 'is-drop-after'));
+        row.classList.add('is-drop-target');
+        row.dataset.dropPosition = event.clientY > row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2 ? 'after' : 'before';
+        row.classList.toggle('is-drop-after', row.dataset.dropPosition === 'after');
+        event.dataTransfer.dropEffect = 'move';
+    });
+    elements.categoryTree?.addEventListener('drop', async event => {
+        const row = event.target.closest('[data-category-row]');
+        event.preventDefault();
+        elements.categoryTree.querySelectorAll('.is-drop-target, .is-drop-after').forEach(item => item.classList.remove('is-drop-target', 'is-drop-after'));
+        if (!row || !state.draggedCategoryId) return;
+        const draggedId = Number(state.draggedCategoryId);
+        const position = row.dataset.dropPosition || 'before';
+        state.draggedCategoryId = null;
+        try {
+            await moveCategory(draggedId, Number(row.dataset.categoryRow), position);
+        } catch (error) {
+            toast(error.message);
+        }
+    });
+    elements.categoryTree?.addEventListener('dragend', () => {
+        state.draggedCategoryId = null;
+        elements.categoryTree.querySelectorAll('.is-dragging, .is-drop-target, .is-drop-after').forEach(item => item.classList.remove('is-dragging', 'is-drop-target', 'is-drop-after'));
+    });
     elements.posClearCart?.addEventListener('click', () => {
         state.posCart.clear();
         persistPosCart();

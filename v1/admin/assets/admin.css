@@ -284,6 +284,12 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .category-admin-row strong, .category-admin-row small { display: block; }
 .category-admin-row small { margin-top: 4px; color: var(--muted); }
 .category-admin-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+.category-admin-row > div:first-of-type { flex: 1; min-width: 0; }
+.category-drag-handle { flex: 0 0 auto; color: #8b93a5; cursor: grab; font-size: 22px; line-height: 1; letter-spacing: -5px; user-select: none; }
+.category-admin-row:active .category-drag-handle { cursor: grabbing; }
+.category-admin-row.is-dragging { opacity: .42; }
+.category-admin-row.is-drop-target { border-top-color: #1769e0 !important; box-shadow: 0 -3px 0 #1769e0 !important; }
+.category-admin-row.is-drop-target.is-drop-after { border-top-color: #e2e6ef !important; border-bottom-color: #1769e0 !important; box-shadow: 0 3px 0 #1769e0 !important; }
 
 .small-button {
     padding: 8px 10px;
