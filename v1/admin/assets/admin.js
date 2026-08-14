@@ -920,24 +920,20 @@
         elements.completeSale.disabled = items.length === 0;
         elements.posClearCart.disabled = items.length === 0;
         elements.posCartLines.innerHTML = items.length ? items.map(item => `
-            <div class="cart-line">
-                <div class="cart-line-head">
-                    <div>
-                        <strong>${escapeHtml(item.product.name)}</strong><br>
-                        ${variantDisplayName(item.product, item.variant)
-                            ? `<small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
-                            : ''}
-                    </div>
-                    <strong>${money(Number(item.variant.price_cents) * item.quantity)}</strong>
+            <div class="cart-line pos-cart-detail-row">
+                <div class="pos-cart-product">
+                    <strong>${escapeHtml(item.product.name)}</strong>
+                    ${variantDisplayName(item.product, item.variant)
+                        ? `<small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
+                        : ''}
                 </div>
-                <div class="cart-line-bottom">
-                    <div class="quantity-control">
-                        <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity - 1}">−</button>
-                        <input type="number" value="${item.quantity}" min="0" max="${Number(item.variant.available_stock)}" data-pos-input="${item.variantId}">
-                        <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity + 1}" ${item.quantity >= Number(item.variant.available_stock) ? 'disabled' : ''}>+</button>
-                    </div>
-                    <button class="pos-remove-cart-line" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito">🗑</button>
+                <div class="quantity-control">
+                    <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity - 1}">−</button>
+                    <input type="number" value="${item.quantity}" min="0" max="${Number(item.variant.available_stock)}" data-pos-input="${item.variantId}">
+                    <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity + 1}" ${item.quantity >= Number(item.variant.available_stock) ? 'disabled' : ''}>+</button>
                 </div>
+                <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
+                <button class="pos-remove-cart-line" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito">🗑</button>
             </div>
         `).join('') : '<p class="empty-copy">Sin productos.</p>';
     }
