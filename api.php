@@ -393,6 +393,42 @@ try {
             unset($record);
             Http::json(['ok' => true, 'created' => $app['products']->importCatalog($records, (int) $user['id'])], 201);
 
+        case 'catalog_import_prepared':
+            $user = $app['auth']->requireAdmin();
+            $offset = max(0, (int) ($input['offset'] ?? 0));
+            $limit = max(1, min(10, (int) ($input['limit'] ?? 10)));
+            $catalogFile = __DIR__ . '/database/tiendanube-catalog-import.json';
+            if (!is_file($catalogFile)) {
+                throw new \RuntimeException('No se encontró el catálogo preparado.');
+            }
+            $catalog = json_decode((string) file_get_contents($catalogFile), true, 512, JSON_THROW_ON_ERROR);
+            $allRecords = is_array($catalog['products'] ?? null) ? $catalog['products'] : [];
+            $batch = array_slice($allRecords, $offset, $limit);
+            $created = 0;
+            $skipped = 0;
+            foreach ($batch as $record) {
+                if (!is_array($record)) continue;
+                if ($app['products']->productNameExists((string) ($record['name'] ?? ''))) {
+                    $skipped++;
+                    continue;
+                }
+                $sourceImage = trim((string) ($record['tiendanube_image'] ?? ''));
+                if ($sourceImage !== '') {
+                    $record['image_path'] = $app['product_images']->receiveTiendaNubeImage($sourceImage)['image_path'];
+                }
+                unset($record['tiendanube_image'], $record['source_handle']);
+                $created += $app['products']->importCatalog([$record], (int) $user['id']);
+            }
+            $nextOffset = $offset + count($batch);
+            Http::json([
+                'ok' => true,
+                'created' => $created,
+                'skipped' => $skipped,
+                'offset' => $nextOffset,
+                'total' => count($allRecords),
+                'done' => $nextOffset >= count($allRecords),
+            ], 201);
+
         case 'settings_update':
             $app['auth']->requireAdmin();
             Http::json([

@@ -148,14 +148,15 @@ final class ProductService
             function (PDO $pdo) use ($payload, $actorUserId): int {
                 $categoryId = $this->categoryId($pdo, $payload['category'], $payload['category_id']);
                 $insertProduct = $pdo->prepare(
-                    'INSERT INTO products(category_id, name, description, image_path)
-                     VALUES(:category_id, :name, :description, :image_path)'
+                    'INSERT INTO products(category_id, name, description, image_path, active)
+                     VALUES(:category_id, :name, :description, :image_path, :active)'
                 );
                 $insertProduct->execute([
                     'category_id' => $categoryId,
                     'name' => $payload['name'],
                     'description' => $payload['description'],
                     'image_path' => $payload['image_path'],
+                    'active' => $payload['active'] ? 1 : 0,
                 ]);
 
                 $productId = (int) $pdo->lastInsertId();
@@ -508,6 +509,15 @@ final class ProductService
             $created++;
         }
         return $created;
+    }
+
+    public function productNameExists(string $name): bool
+    {
+        $query = $this->pdo->prepare(
+            'SELECT 1 FROM products WHERE name = :name COLLATE NOCASE AND deleted_at IS NULL LIMIT 1'
+        );
+        $query->execute(['name' => trim($name)]);
+        return $query->fetchColumn() !== false;
     }
 
     /**
