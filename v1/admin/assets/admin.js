@@ -1143,11 +1143,10 @@
         const products = rankedProducts(
             query,
             state.products.filter(product => product && product.active !== false)
-        ).filter(product => (
-            query || product.variants.some(variant => (
-                variant.active && Number(variant.available_stock) > 0
-            ))
-        ));
+        ).filter(product => product.variants.some(variant => (
+            variant && variant.active !== false
+            && (query || Number(variant.available_stock) > 0)
+        )));
         elements.posProducts.innerHTML = products.length ? `
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
             ${products.map(product => {
