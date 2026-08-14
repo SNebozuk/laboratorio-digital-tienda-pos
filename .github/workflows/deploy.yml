@@ -69,7 +69,6 @@ jobs:
             config.mail.local.php
             storage/**
             uploads/**
-            v1/uploads/**
             data/**
             backups/**
             logs/**
