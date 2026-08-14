@@ -245,10 +245,8 @@ final class ProductService
                     if (!isset($existing[$variantId])) {
                         throw new ValidationException('Una variante no pertenece al producto.');
                     }
-                    if ($variant['stock_on_hand'] < (int) $existing[$variantId]['stock_reserved']) {
-                        throw new ConflictException(
-                            'El stock no puede ser menor que las unidades reservadas.'
-                        );
+                    if ($variant['reset_stock_reservations']) {
+                        $this->releasePriorReservationsForStockReset($pdo, $variantId);
                     }
 
                     $stockDelta = $variant['stock_on_hand']
@@ -340,6 +338,7 @@ final class ProductService
         if ($priceCents === false || $stockOnHand === false) {
             throw new ValidationException('Precio y stock deben ser números enteros positivos.');
         }
+        $resetReservations = (bool) ($changes['reset_stock_reservations'] ?? false);
 
         Database::immediate(
             $this->pdo,
@@ -347,7 +346,8 @@ final class ProductService
                 $variantId,
                 $priceCents,
                 $stockOnHand,
-                $actorUserId
+                $actorUserId,
+                $resetReservations
             ): void {
                 $query = $pdo->prepare(
                     'SELECT stock_on_hand, stock_reserved
@@ -359,10 +359,8 @@ final class ProductService
                 if (!$current) {
                     throw new ValidationException('La variante no existe.');
                 }
-                if ($stockOnHand < (int) $current['stock_reserved']) {
-                    throw new ConflictException(
-                        'No se puede bajar el stock por debajo de las unidades reservadas.'
-                    );
+                if ($resetReservations) {
+                    $this->releasePriorReservationsForStockReset($pdo, $variantId);
                 }
 
                 $update = $pdo->prepare(
@@ -719,6 +717,7 @@ final class ProductService
                 'stock_on_hand' => $stock,
                 'min_stock' => $minimum,
                 'active' => !isset($variant['active']) || (bool) $variant['active'],
+                'reset_stock_reservations' => !empty($variant['reset_stock_reservations']),
             ];
         }
 
@@ -743,6 +742,47 @@ final class ProductService
             'active' => !isset($data['active']) || (bool) $data['active'],
             'variants' => $validatedVariants,
         ];
+    }
+
+    /**
+     * Una carga manual de stock define el nuevo punto de partida. Las reservas
+     * anteriores dejan de restar disponibilidad y no podrán restaurarse luego.
+     */
+    private function releasePriorReservationsForStockReset(PDO $pdo, int $variantId): void
+    {
+        $orders = $pdo->prepare(
+            'SELECT DISTINCT o.id
+             FROM orders o
+             JOIN order_items oi ON oi.order_id = o.id
+             WHERE oi.variant_id = :variant_id
+               AND o.stock_reserved_at IS NOT NULL'
+        );
+        $orders->execute(['variant_id' => $variantId]);
+        foreach ($orders->fetchAll() as $order) {
+            $items = $pdo->prepare(
+                'SELECT variant_id, quantity FROM order_items WHERE order_id = :order_id'
+            );
+            $items->execute(['order_id' => (int) $order['id']]);
+            foreach ($items->fetchAll() as $item) {
+                $release = $pdo->prepare(
+                    'UPDATE product_variants
+                     SET stock_reserved = CASE
+                         WHEN stock_reserved > :quantity THEN stock_reserved - :quantity
+                         ELSE 0
+                     END,
+                     updated_at = CURRENT_TIMESTAMP
+                     WHERE id = :variant_id'
+                );
+                $release->execute([
+                    'quantity' => (int) $item['quantity'],
+                    'variant_id' => (int) $item['variant_id'],
+                ]);
+            }
+            $clear = $pdo->prepare(
+                'UPDATE orders SET stock_reserved_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id'
+            );
+            $clear->execute(['id' => (int) $order['id']]);
+        }
     }
 
     private function categoryId(PDO $pdo, string $categoryName, ?int $categoryId = null): int

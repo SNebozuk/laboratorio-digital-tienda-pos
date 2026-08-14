@@ -683,7 +683,7 @@
 
     function variantFormRow(variant = {}) {
         return `
-            <div class="variant-form-row" data-variant-row data-variant-id="${Number(variant.id || 0)}">
+            <div class="variant-form-row" data-variant-row data-variant-id="${Number(variant.id || 0)}" data-variant-stock-original="${Number(variant.stock_on_hand || 0)}">
                 <label>
                     VARIANTE
                     <input class="variant-name" value="${escapeHtml(variant.name || '')}" placeholder="Talle 1" required>
@@ -784,6 +784,8 @@
             image_path: row.querySelector('.variant-image-path').value.trim(),
             price_cents: Math.round(Number(row.querySelector('.variant-price').value) * 100),
             stock_on_hand: Number(row.querySelector('.variant-stock').value),
+            reset_stock_reservations: Number(row.querySelector('.variant-stock').value)
+                !== Number(row.dataset.variantStockOriginal || 0),
             min_stock: Number(row.querySelector('.variant-min').value),
             active: row.querySelector('.variant-active').value === '1',
         }));
@@ -854,6 +856,7 @@
                 changes: {
                     price_cents: Math.round(Number(priceInput.value) * 100),
                     stock_on_hand: Number(stockInput.value),
+                    reset_stock_reservations: Boolean(input.dataset.quickStock),
                 },
             });
             await loadProducts();
