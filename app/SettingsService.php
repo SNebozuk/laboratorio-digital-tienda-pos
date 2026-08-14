@@ -73,6 +73,50 @@ final class SettingsService
         return $values;
     }
 
+    /** @return array<string, string> */
+    public function design(): array
+    {
+        $defaults = [
+            'hero_badge' => 'STOCK DISPONIBLE EN TIEMPO REAL',
+            'hero_title' => 'TODO PARA CREAR, PERSONALIZAR Y VENDER',
+            'hero_text' => 'Buscá lo que necesitás, elegí variantes y armá tu pedido en pocos pasos.',
+            'hero_link' => '',
+            'logo_path' => '/v1/assets/brand/logo.png',
+            'logo_link' => '',
+        ];
+        $query = $this->pdo->query("SELECT key, value FROM settings WHERE key LIKE 'design_%'");
+        foreach ($query->fetchAll() as $row) {
+            $key = substr((string) $row['key'], 7);
+            if (array_key_exists($key, $defaults)) $defaults[$key] = (string) $row['value'];
+        }
+        return $defaults;
+    }
+
+    /** @param array<string, mixed> $data */
+    public function updateDesign(array $data): array
+    {
+        $current = $this->design();
+        $values = [];
+        foreach (['hero_badge' => 120, 'hero_title' => 160, 'hero_text' => 500] as $key => $limit) {
+            $value = trim((string) ($data[$key] ?? $current[$key]));
+            if ($value === '' || strlen($value) > $limit) throw new ValidationException('Revisá el texto de diseño: ' . $key . '.');
+            $values[$key] = $value;
+        }
+        foreach (['hero_link', 'logo_link'] as $key) {
+            $value = trim((string) ($data[$key] ?? $current[$key]));
+            if ($value !== '' && !preg_match('#^(https?://|/)#i', $value)) throw new ValidationException('Los enlaces deben comenzar con https:// o /.');
+            $values[$key] = $value;
+        }
+        $logo = trim((string) ($data['logo_path'] ?? $current['logo_path']));
+        if ($logo === '' || !str_starts_with($logo, '/')) throw new ValidationException('Elegí una imagen de logo válida.');
+        $values['logo_path'] = $logo;
+        Database::immediate($this->pdo, static function (PDO $pdo) use ($values): void {
+            $update = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
+            foreach ($values as $key => $value) $update->execute(['key' => 'design_' . $key, 'value' => $value]);
+        });
+        return $this->design();
+    }
+
     /** @param array<string, mixed> $data */
     public function update(array $data): array
     {
@@ -95,12 +139,9 @@ final class SettingsService
             15,
             10080
         );
-        $retryMinutes = $this->integer(
-            $data,
-            'rejected_retry_minutes',
-            15,
-            10080
-        );
+        $retryMinutes = isset($data['rejected_retry_minutes'])
+            ? $this->integer($data, 'rejected_retry_minutes', 15, 10080)
+            : (int) ($current['rejected_retry_minutes'] ?? 120);
         $proofMaxMb = $this->integer($data, 'proof_max_mb', 1, 20);
 
         $bankHolder = $this->text($data, 'bank_holder', 2, 120);

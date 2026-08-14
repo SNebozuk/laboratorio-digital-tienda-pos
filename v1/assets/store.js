@@ -6,7 +6,7 @@
     let categoryTree = Array.isArray(app.categories) ? app.categories : [];
     const linkedProductId = (() => {
         const value = Number(new URL(window.location.href).searchParams.get('producto'));
-        return products.some(product => Number(product.id) === value) ? value : null;
+        return Number.isFinite(value) && value > 0 ? value : null;
     })();
     const state = {
         category: '',
@@ -978,7 +978,6 @@
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
-            <p class="checkout-footnote" data-payment-footnote>Elegí la forma de pago que te resulte más cómoda.</p>
         `);
         const transferOption = elements.modalContent.querySelector('[value="bank_transfer"]')?.closest('.payment-option');
         const cashOption = elements.modalContent.querySelector('[value="cash"]')?.closest('.payment-option');
@@ -988,9 +987,6 @@
         if (reservationMessage) {
             reservationMessage.innerHTML = '<strong>Guardamos tu pedido por 6 horas</strong><span>Así tenés tiempo para acercarte con tranquilidad. Después liberaremos los productos para otras personas.</span>';
         }
-        elements.modalContent.querySelector('[data-payment-footnote]')?.replaceChildren(
-            document.createTextNode('Elegí la forma de pago que te resulte más cómoda.')
-        );
         const checkoutButton = elements.modalContent.querySelector('#checkout-form button[type="submit"]');
         if (checkoutButton) checkoutButton.textContent = 'CONFIRMAR PEDIDO';
     }
@@ -1023,23 +1019,33 @@
     }
 
     async function apiJson(payload, retried = false) {
-        const response = await fetch(app.api_url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': app.csrf_token,
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                ...payload,
-                csrf_token: app.csrf_token,
-            }),
-        });
+        let response;
+        try {
+            response = await fetch(app.api_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': app.csrf_token,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ ...payload, csrf_token: app.csrf_token }),
+            });
+        } catch {
+            if (!retried && payload.action === 'create_order') {
+                await new Promise(resolve => window.setTimeout(resolve, 450));
+                return apiJson(payload, true);
+            }
+            throw new Error('No pudimos comunicarnos con el servidor. Revisá tu conexión e intentá nuevamente.');
+        }
         const responseText = await response.text();
         let data;
         try {
             data = JSON.parse(responseText);
         } catch {
+            if (!retried && payload.action === 'create_order') {
+                await new Promise(resolve => window.setTimeout(resolve, 450));
+                return apiJson(payload, true);
+            }
             throw new Error('No pudimos comunicarnos con el servidor. Intentá nuevamente.');
         }
         const sessionExpired = response.status === 401
@@ -1077,6 +1083,7 @@
         try {
             const data = await apiJson({
                 action: 'create_order',
+                request_key: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
                 channel: 'web',
                 payment_method: paymentMethod,
                 customer: {
@@ -1729,6 +1736,7 @@
     renderCategories();
     renderCatalog();
     renderCart();
+    refreshCatalog();
     try {
         const completedOrder = JSON.parse(
             sessionStorage.getItem(ORDER_COMPLETE_STORAGE_KEY) || 'null'

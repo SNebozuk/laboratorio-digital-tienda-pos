@@ -14,6 +14,8 @@
         selectedOrderIds: new Set(),
         selectedProductIds: new Set(),
         productCategoryId: '',
+        productAvailability: '',
+        productVisibility: '',
         showArchivedOrders: false,
         settings: null,
         sizeGuide: { intro: '', rows: [] },
@@ -254,6 +256,9 @@
         }
         if (view === 'contact') {
             loadContact();
+        }
+        if (view === 'design') {
+            loadDesign();
         }
         if (view === 'whatsapp') {
             loadEmailSettings();
@@ -654,10 +659,16 @@
     function renderProducts() {
         if (!elements.productList) return;
         const query = fold(elements.productSearch?.value || '');
-        const products = state.products.filter(product => (
-            productSearchText(product).includes(query)
-            && (!state.productCategoryId || Number(product.category?.id) === Number(state.productCategoryId))
-        ));
+        const productMatchesFilters = product => {
+            const categoryMatch = state.productCategoryId === '__unassigned__'
+                ? !product.category?.id
+                : (!state.productCategoryId || Number(product.category?.id) === Number(state.productCategoryId));
+            const stock = (product.variants || []).some(variant => Number(variant.stock_on_hand || 0) > 0);
+            const availabilityMatch = !state.productAvailability || (state.productAvailability === 'in_stock' ? stock : !stock);
+            const visibilityMatch = !state.productVisibility || (state.productVisibility === 'visible' ? product.active : !product.active);
+            return productSearchText(product).includes(query) && categoryMatch && availabilityMatch && visibilityMatch;
+        };
+        const products = state.products.filter(productMatchesFilters);
         const selectedCount = state.selectedProductIds.size;
         const visibleSelectedCount = products.filter(product => state.selectedProductIds.has(Number(product.id))).length;
         const allSelected = products.length > 0 && visibleSelectedCount === products.length;
@@ -668,7 +679,9 @@
                 <select data-bulk-product-action ${selectedCount ? '' : 'disabled'} aria-label="Acciones sobre productos seleccionados">
                     <option value="">ACCIONES</option><option value="show">Mostrar Productos</option><option value="hide">Ocultar Productos</option><option value="delete">Eliminar Productos</option>
                 </select>
-                <select data-product-category-filter aria-label="Filtrar productos por categoría"><option value="">Todas las categorías</option>${flatCategories().map(category => `<option value="${Number(category.id)}" ${Number(state.productCategoryId) === Number(category.id) ? 'selected' : ''}>${'— '.repeat(category.depth)}${escapeHtml(category.name)}</option>`).join('')}</select>
+                <select data-product-category-filter aria-label="Categoría"><option value="">Categoría: Todas</option><option value="__unassigned__" ${state.productCategoryId === '__unassigned__' ? 'selected' : ''}>Categoría: Sin asignar</option>${flatCategories().map(category => `<option value="${Number(category.id)}" ${Number(state.productCategoryId) === Number(category.id) ? 'selected' : ''}>Categoría: ${'— '.repeat(category.depth)}${escapeHtml(category.name)}</option>`).join('')}</select>
+                <select data-product-availability-filter aria-label="Disponibilidad"><option value="">Disponibilidad: Todas</option><option value="in_stock" ${state.productAvailability === 'in_stock' ? 'selected' : ''}>Disponibilidad: En stock</option><option value="out_of_stock" ${state.productAvailability === 'out_of_stock' ? 'selected' : ''}>Disponibilidad: Fuera de stock</option></select>
+                <select data-product-visibility-filter aria-label="Visibilidad en la tienda"><option value="">Visibilidad: Todas</option><option value="visible" ${state.productVisibility === 'visible' ? 'selected' : ''}>Visibilidad: Visibles</option><option value="hidden" ${state.productVisibility === 'hidden' ? 'selected' : ''}>Visibilidad: Ocultos</option></select>
             </div>
             <div class="product-list-table" role="table" aria-label="Listado de productos">
                 <div class="product-list-head" role="row"><span></span><span>Producto y variantes</span><span>Stock</span><span>Precio</span><span></span></div>
@@ -2751,6 +2764,39 @@
         }
     }
 
+    async function loadDesign() {
+        const form = document.getElementById('design-form');
+        if (!form || app.user?.role !== 'admin') return;
+        try {
+            const data = await apiGet('design');
+            Object.entries(data.design).forEach(([key, value]) => {
+                const field = form.elements.namedItem(key);
+                if (field) field.value = value;
+            });
+            const preview = document.getElementById('design-logo-preview');
+            if (preview) preview.src = data.design.logo_path;
+        } catch (error) { toast(error.message); }
+    }
+
+    async function saveDesign(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'GUARDANDO…';
+        try {
+            const logoFile = form.elements.namedItem('logo_file')?.files?.[0];
+            if (logoFile) {
+                form.elements.namedItem('logo_path').value = await uploadProductImage(logoFile);
+            }
+            const data = new FormData(form);
+            data.delete('logo_file');
+            const response = await apiPost({ action: 'design_update', design: Object.fromEntries(data.entries()) });
+            const preview = document.getElementById('design-logo-preview');
+            if (preview) preview.src = response.design.logo_path;
+            toast('Diseño guardado. Actualizá la tienda para verlo.');
+        } catch (error) { toast(error.message); }
+        finally { button.disabled = false; button.textContent = 'GUARDAR DISEÑO'; }
+    }
+
     async function saveContact(form) {
         const data = new FormData(form);
         const button = form.querySelector('button[type="submit"]');
@@ -3064,6 +3110,10 @@
         if (event.target.id === 'contact-form') {
             event.preventDefault();
             saveContact(event.target);
+        }
+        if (event.target.id === 'design-form') {
+            event.preventDefault();
+            saveDesign(event.target);
         }
         if (event.target.id === 'size-guide-form') {
             event.preventDefault();
@@ -3472,7 +3522,9 @@
             const query = fold(elements.productSearch?.value || '');
             const matching = state.products.filter(product => (
                 productSearchText(product).includes(query)
-                && (!state.productCategoryId || Number(product.category?.id) === Number(state.productCategoryId))
+                && (state.productCategoryId === '__unassigned__' ? !product.category?.id : (!state.productCategoryId || Number(product.category?.id) === Number(state.productCategoryId)))
+                && (!state.productAvailability || (state.productAvailability === 'in_stock' ? product.variants.some(variant => Number(variant.stock_on_hand || 0) > 0) : !product.variants.some(variant => Number(variant.stock_on_hand || 0) > 0)))
+                && (!state.productVisibility || (state.productVisibility === 'visible' ? product.active : !product.active))
             ));
             matching.forEach(product => {
                 if (event.target.checked) state.selectedProductIds.add(Number(product.id));
@@ -3483,6 +3535,16 @@
         }
         if (event.target.matches('[data-product-category-filter]')) {
             state.productCategoryId = event.target.value;
+            renderProducts();
+            return;
+        }
+        if (event.target.matches('[data-product-availability-filter]')) {
+            state.productAvailability = event.target.value;
+            renderProducts();
+            return;
+        }
+        if (event.target.matches('[data-product-visibility-filter]')) {
+            state.productVisibility = event.target.value;
             renderProducts();
             return;
         }
@@ -3788,6 +3850,11 @@
     });
 
     if (app.user) {
+        // Las páginas independientes del PDV no usan la navegación del admin;
+        // marcarlas explícitamente permite capturar escaneos desde cualquier foco.
+        if (document.querySelector('.pos-page')) {
+            state.view = 'pos';
+        }
         restorePosCustomer();
         loadProducts();
         renderPosCart();

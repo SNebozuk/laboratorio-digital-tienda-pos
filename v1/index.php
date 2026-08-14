@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 $app = require dirname(__DIR__) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
-$catalog = $app['products']->publicCatalog();
+$catalog = []; // El catálogo se solicita luego de pintar la portada.
 $categoryTree = $app['categories']->tree();
 $publicSettings = $app['settings']->values();
+$design = $app['settings']->design();
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
 $assetPath = $storePath . '/assets';
@@ -40,8 +41,8 @@ header('Referrer-Policy: same-origin');
             <button class="catalog-menu-button" id="catalog-menu-button" type="button" aria-expanded="false" aria-controls="category-panel">
                 <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
-            <a class="brand" href="<?= $escape($storeUrl) ?>" aria-label="Laboratorio Digital, inicio">
-                <img class="brand-logo" src="<?= $escape($assetPath) ?>/brand/logo.png" alt="Laboratorio Digital">
+            <a class="brand" href="<?= $escape($design['logo_link'] ?: $storeUrl) ?>" aria-label="Laboratorio Digital, inicio">
+                <img class="brand-logo" src="<?= $escape($design['logo_path']) ?>" alt="Laboratorio Digital">
                 <span>
                     <strong>LABORATORIO DIGITAL</strong>
                     <small>CATÁLOGO MAYORISTA · RETIRO EN EL LOCAL</small>
@@ -73,11 +74,9 @@ header('Referrer-Policy: same-origin');
 
         <section class="catalog-column" aria-labelledby="catalog-title">
             <div class="catalog-intro">
-                <p class="eyebrow">STOCK DISPONIBLE EN TIEMPO REAL</p>
-                <h1 id="catalog-title">TODO PARA CREAR, PERSONALIZAR Y VENDER</h1>
-                <p>
-                    Buscá lo que necesitás, elegí variantes y armá tu pedido en pocos pasos.
-                </p>
+                <p class="eyebrow"><?= $escape($design['hero_badge']) ?></p>
+                <h1 id="catalog-title"><?php if ($design['hero_link']): ?><a href="<?= $escape($design['hero_link']) ?>"><?php endif ?><?= $escape($design['hero_title']) ?><?php if ($design['hero_link']): ?></a><?php endif ?></h1>
+                <p><?= $escape($design['hero_text']) ?></p>
             </div>
 
             <div class="trust-strip" aria-label="Información de compra">
@@ -189,6 +188,7 @@ header('Referrer-Policy: same-origin');
             'categories' => $categoryTree,
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
+            'design' => $design,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>

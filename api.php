@@ -90,6 +90,10 @@ try {
                     'settings' => $app['settings']->values(),
                 ]);
 
+            case 'design':
+                $app['auth']->requireAdmin();
+                Http::json(['ok' => true, 'design' => $app['settings']->design()]);
+
             case 'users':
                 $app['auth']->requireAdmin();
                 Http::json([
@@ -162,12 +166,17 @@ try {
             ]);
 
         case 'create_order':
-            $order = $app['orders']->createWebOrder(
+            $requestKey = trim((string) ($input['request_key'] ?? ''));
+            $cached = $requestKey !== '' ? ($_SESSION['web_order_requests'][$requestKey] ?? null) : null;
+            $order = is_array($cached) ? $cached : $app['orders']->createWebOrder(
                 is_array($input['customer'] ?? null) ? $input['customer'] : [],
                 is_array($input['items'] ?? null) ? $input['items'] : [],
                 (string) ($input['channel'] ?? 'web'),
                 (string) ($input['payment_method'] ?? 'bank_transfer')
             );
+            if ($requestKey !== '') {
+                $_SESSION['web_order_requests'] = array_slice((array) ($_SESSION['web_order_requests'] ?? []) + [$requestKey => $order], -10, null, true);
+            }
             // Intentamos entregar la confirmación al instante. La tarea programada
             // conserva los reintentos y procesa cualquier correo pendiente.
             Http::json(['ok' => true, 'order' => $order], 201);
@@ -378,6 +387,10 @@ try {
                         : []
                 ),
             ]);
+
+        case 'design_update':
+            $app['auth']->requireAdmin();
+            Http::json(['ok' => true, 'design' => $app['settings']->updateDesign(is_array($input['design'] ?? null) ? $input['design'] : [])]);
 
         case 'size_guide_update':
             $app['auth']->requireAdmin();

@@ -98,6 +98,9 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button" type="button" data-view="contact">
                             Contacto
                         </button>
+                        <button class="admin-nav-button" type="button" data-view="design">
+                            Diseño
+                        </button>
                         <button class="admin-nav-button" type="button" data-view="whatsapp">
                             WhatsApp
                         </button>
@@ -126,6 +129,7 @@ header('Referrer-Policy: same-origin');
                             <option value="categories">Categorías</option>
                             <option value="size-guide">Tabla de Talles</option>
                             <option value="contact">Contacto</option>
+                            <option value="design">Diseño</option>
                             <option value="whatsapp">WhatsApp</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
@@ -206,6 +210,21 @@ header('Referrer-Policy: same-origin');
                                 <label>HORARIOS DE ATENCIÓN<input name="business_hours" required></label>
                             </div>
                             <button class="primary-button fit-button" type="submit">GUARDAR CONTACTO</button>
+                        </form>
+                    </section>
+
+                    <section class="admin-view" id="view-design">
+                        <div class="view-heading"><div><p class="eyebrow">PORTADA DE LA TIENDA</p><h1>DISEÑO</h1><p>Modificá los textos, el logo y los enlaces visibles sin tocar el código.</p></div></div>
+                        <form id="design-form" class="settings-card">
+                            <div class="settings-grid">
+                                <label>ETIQUETA SUPERIOR<input name="hero_badge" maxlength="120" required></label>
+                                <label>TÍTULO PRINCIPAL<input name="hero_title" maxlength="160" required></label>
+                                <label class="settings-span-two">TEXTO PRINCIPAL<textarea name="hero_text" rows="3" maxlength="500" required></textarea></label>
+                                <label>ENLACE DEL TÍTULO (OPCIONAL)<input name="hero_link" placeholder="https://... o /v1/"></label>
+                                <label>ENLACE DEL LOGO (OPCIONAL)<input name="logo_link" placeholder="https://... o /v1/"></label>
+                                <label class="settings-span-two">LOGO<input name="logo_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="logo_path" type="hidden"><img id="design-logo-preview" class="variant-image-preview" alt="Vista previa del logo"></label>
+                            </div>
+                            <button class="primary-button fit-button" type="submit">GUARDAR DISEÑO</button>
                         </form>
                     </section>
 
@@ -361,10 +380,6 @@ header('Referrer-Policy: same-origin');
                                 <label>
                                     PLAZO PARA INFORMAR PAGO · MINUTOS
                                     <input name="payment_window_minutes" type="number" min="15" max="10080" step="15" required>
-                                </label>
-                                <label>
-                                    PLAZO TRAS RECHAZO · MINUTOS
-                                    <input name="rejected_retry_minutes" type="number" min="15" max="10080" step="15" required>
                                 </label>
                             </div>
                             <button class="primary-button fit-button" type="submit">

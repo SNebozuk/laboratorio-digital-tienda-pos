@@ -2553,6 +2553,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     font-size: 13px;
 }
 .product-bulk-toolbar select { min-width: 190px; }
+.settings-span-two { grid-column: 1 / -1; }
+#design-logo-preview { display:block; max-width:260px; max-height:100px; object-fit:contain; margin-top:10px; background:#fff; }
 .product-select-all { display: inline-flex; align-items: center; gap: 7px; color: #40485b; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .product-select-all input { width: 18px; height: 18px; margin: 0; accent-color: #5b4fc7; cursor: pointer; }
 .product-selection-count { min-width: 150px; color: #667085; font-weight: 650; white-space: nowrap; }
