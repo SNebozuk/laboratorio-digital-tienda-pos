@@ -17,6 +17,7 @@
         remoteSearchIds: new Set(),
         cart: new Map(),
         order: null,
+        changedAvailability: new Set(),
     };
 
     let codeSearchController = null;
@@ -178,6 +179,14 @@
             });
         });
     }
+
+    function availabilitySnapshot(catalog) {
+        const snapshot = new Map();
+        catalog.forEach(product => product.variants.forEach(variant => {
+            snapshot.set(Number(variant.id), Number(variant.available_stock || 0));
+        }));
+        return snapshot;
+    }
     rebuildVariantIndex();
     restoreCart();
 
@@ -196,7 +205,17 @@
             if (!response.ok || !data.ok || !Array.isArray(data.products)) {
                 return;
             }
+            const previousAvailability = availabilitySnapshot(products);
+            const changedVariantIds = new Set();
+            data.products.forEach(product => product.variants.forEach(variant => {
+                const id = Number(variant.id);
+                if (previousAvailability.has(id)
+                    && previousAvailability.get(id) !== Number(variant.available_stock || 0)) {
+                    changedVariantIds.add(id);
+                }
+            }));
             products = data.products;
+            state.changedAvailability = changedVariantIds;
             if (Array.isArray(data.categories)) {
                 categoryTree = data.categories;
             }
@@ -218,9 +237,13 @@
             renderCategories();
             renderCatalog();
             renderCart();
+            if (changedVariantIds.size) {
+                toast(adjusted
+                    ? 'Cambió la disponibilidad: ajustamos tu pedido.'
+                    : 'Cambió la disponibilidad de algunos productos.');
+            }
             if (adjusted) {
                 persistCart();
-                toast('Actualizamos el pedido porque cambió el stock disponible.');
             }
             return adjusted;
         } catch {
@@ -593,7 +616,7 @@
             ? `${product.variants.length} variantes`
             : exactAvailableLabel(visibleAvailable(singleVariant));
         return `
-            <article class="catalog-product-summary unified-product-row" role="listitem">
+            <article class="catalog-product-summary unified-product-row ${product.variants.some(variant => state.changedAvailability.has(Number(variant.id))) ? 'availability-changed' : ''}" role="listitem">
                 <div class="unified-product-media">${productImage(product, 'summary-product-image')}</div>
                 <button
                     class="summary-product-title"
@@ -661,7 +684,7 @@
                         const available = visibleAvailable(variant);
                         const name = variantDisplayName(product, variant);
                         return `
-                            <div class="opened-variant-row ${available ? '' : 'out-of-stock'}" role="listitem">
+                            <div class="opened-variant-row ${available ? '' : 'out-of-stock'} ${state.changedAvailability.has(Number(variant.id)) ? 'availability-changed' : ''}" role="listitem">
                                 <div>${productImage(product, 'opened-variant-image')}</div>
                                 ${name
                                     ? `<strong class="opened-variant-name">${escapeHtml(name)}</strong>`
@@ -1708,7 +1731,7 @@
         if (document.visibilityState === 'visible') {
             refreshCatalog();
         }
-    }, 30000);
+    }, 15000);
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             refreshCatalog();

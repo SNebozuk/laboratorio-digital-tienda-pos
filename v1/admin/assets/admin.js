@@ -28,6 +28,7 @@
         barcodeTarget: null,
         barcodeOriginalValue: '',
         posCartRestored: false,
+        posChangedAvailability: new Set(),
         editOrder: null,
         view: 'products',
     };
@@ -254,6 +255,45 @@
             }
         } catch (error) {
             toast(error.message);
+        }
+    }
+
+    function productAvailabilitySnapshot(catalog) {
+        const snapshot = new Map();
+        catalog.forEach(product => product.variants.forEach(variant => {
+            snapshot.set(Number(variant.id), Number(variant.available_stock || 0));
+        }));
+        return snapshot;
+    }
+
+    async function refreshPosAvailability() {
+        if ((!elements.posProducts && !elements.posCartLines)
+            || document.visibilityState !== 'visible') {
+            return;
+        }
+        try {
+            const previousAvailability = productAvailabilitySnapshot(state.products);
+            const data = await apiGet('admin_products');
+            const changed = new Set();
+            data.products.forEach(product => product.variants.forEach(variant => {
+                const id = Number(variant.id);
+                if (previousAvailability.has(id)
+                    && previousAvailability.get(id) !== Number(variant.available_stock || 0)) {
+                    changed.add(id);
+                }
+            }));
+            state.products = data.products;
+            state.posChangedAvailability = changed;
+            const adjusted = restoreOrReconcilePosCart();
+            renderPos();
+            renderPosCart();
+            if (changed.size) {
+                toast(adjusted
+                    ? 'Cambió la disponibilidad: revisá el carrito antes de cobrar.'
+                    : 'Cambió la disponibilidad de algunos productos.');
+            }
+        } catch {
+            // La próxima comprobación vuelve a intentar sin interrumpir la venta.
         }
     }
 
@@ -942,7 +982,7 @@
                 const singleQuantity = single ? posQuantity(single.id) : 0;
                 const singleRemaining = single ? Math.max(0, Number(single.available_stock) - singleQuantity) : 0;
                 return `
-            <article class="pos-product pos-result-product ${expanded ? 'pos-expanded' : ''}">
+            <article class="pos-product pos-result-product ${expanded ? 'pos-expanded' : ''} ${product.variants.some(variant => state.posChangedAvailability.has(Number(variant.id))) ? 'availability-changed' : ''}">
                 ${safeImage(product.image_path)
                     ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="${escapeHtml(product.name)}">`
                     : '<div class="pos-product-placeholder">SIN FOTO</div>'}
@@ -965,7 +1005,7 @@
                             Number(variant.available_stock) - quantity
                         );
                         return `
-                            <div class="pos-variant-row">
+                            <div class="pos-variant-row ${state.posChangedAvailability.has(Number(variant.id)) ? 'availability-changed' : ''}">
                                 <span class="pos-variant-name">
                                     ${variantDisplayName(product, variant)
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
@@ -3472,5 +3512,11 @@
     if (app.user) {
         loadProducts();
         renderPosCart();
+        window.setInterval(refreshPosAvailability, 15000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                refreshPosAvailability();
+            }
+        });
     }
 })();

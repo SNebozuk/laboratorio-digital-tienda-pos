@@ -2916,6 +2916,15 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-page .pos-product,
 .pos-page .pos-cart { border-color: #e2e6ef; background: #fff; box-shadow: 0 4px 18px rgba(30, 40, 70, .035); }
 .pos-page .pos-product { color: #252a3a; }
+.pos-page .pos-product.availability-changed,
+.pos-page .pos-variant-row.availability-changed,
+.pos-search-page .pos-product.availability-changed,
+.pos-search-page .pos-variant-row.availability-changed {
+    background: #fff7dc !important;
+    box-shadow: inset 4px 0 0 #d79a25, 0 0 0 2px rgba(215,154,37,.16);
+    animation: pos-availability-pulse 1.4s ease-in-out 3;
+}
+@keyframes pos-availability-pulse { 50% { box-shadow: inset 4px 0 0 #d79a25, 0 0 0 5px rgba(215,154,37,.10); } }
 .pos-page .pos-variant-row { border-color: #edf0f5; }
 .pos-page .pos-variant-row small,
 .pos-page .pos-product-head small { color: #667087; }
