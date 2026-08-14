@@ -1737,7 +1737,7 @@
         if (document.visibilityState === 'visible') {
             refreshCatalog();
         }
-    }, 15000);
+    }, 5000);
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             refreshCatalog();

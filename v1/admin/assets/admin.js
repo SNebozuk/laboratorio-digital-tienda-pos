@@ -95,6 +95,7 @@
         mobileView: document.getElementById('mobile-view'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
+    const quickUpdateTimers = new Map();
 
     async function apiGet(action, parameters = {}) {
         const url = new URL(app.api_url, window.location.href);
@@ -861,6 +862,18 @@
             toast(error.message);
             await loadProducts();
         }
+    }
+
+    function scheduleQuickUpdate(input) {
+        const variantId = Number(input.dataset.quickPrice || input.dataset.quickStock);
+        if (!Number.isFinite(variantId) || String(input.value).trim() === '') {
+            return;
+        }
+        window.clearTimeout(quickUpdateTimers.get(variantId));
+        quickUpdateTimers.set(variantId, window.setTimeout(() => {
+            quickUpdateTimers.delete(variantId);
+            quickUpdate(variantId, input);
+        }, 700));
     }
 
     async function duplicateProduct(productId) {
@@ -3320,6 +3333,8 @@
             const variantId = Number(
                 event.target.dataset.quickPrice || event.target.dataset.quickStock
             );
+            window.clearTimeout(quickUpdateTimers.get(variantId));
+            quickUpdateTimers.delete(variantId);
             quickUpdate(variantId, event.target);
         }
         if (event.target.matches('[data-pos-input]')) {
@@ -3337,6 +3352,9 @@
     });
 
     document.addEventListener('input', event => {
+        if (event.target.matches('[data-quick-price], [data-quick-stock]')) {
+            scheduleQuickUpdate(event.target);
+        }
         if (event.target.id === 'order-edit-search' && state.editOrder) {
             state.editOrder.query = event.target.value;
             showOrderEditSuggestions();
@@ -3561,7 +3579,7 @@
     if (app.user) {
         loadProducts();
         renderPosCart();
-        window.setInterval(refreshPosAvailability, 15000);
+        window.setInterval(refreshPosAvailability, 5000);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 refreshPosAvailability();
