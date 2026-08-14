@@ -110,6 +110,9 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button" type="button" data-view="settings">
                             Configuración
                         </button>
+                        <button class="admin-nav-button" type="button" data-view="maintenance">
+                            Mantenimiento
+                        </button>
                     <?php endif ?>
                 </nav>
                 <div class="admin-user">
@@ -135,6 +138,7 @@ header('Referrer-Policy: same-origin');
                             <option value="whatsapp">WhatsApp</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
+                            <option value="maintenance">Mantenimiento</option>
                         <?php endif ?>
                     </select>
                 </header>
@@ -403,6 +407,26 @@ header('Referrer-Policy: same-origin');
                             <p>Vacía las ventas y retira todos los productos actuales, conservando categorías, usuarios y configuración.</p>
                             <button class="danger-button" id="prepare-catalog-import" type="button">VACIAR PARA IMPORTAR</button>
                         </section>
+                    </section>
+
+                    <section class="admin-view" id="view-maintenance">
+                        <div class="view-heading">
+                            <div>
+                                <p class="eyebrow">OPERACIÓN DE LA TIENDA</p>
+                                <h1>MANTENIMIENTO</h1>
+                                <p>Podés pausar temporalmente el carrito sin cerrar el catálogo al público.</p>
+                            </div>
+                        </div>
+                        <form id="maintenance-form" class="settings-card">
+                            <label class="checkbox-setting">
+                                <input name="cart_maintenance_enabled" type="checkbox" value="1">
+                                <span>
+                                    <strong>Bloquear el carrito de compras</strong>
+                                    <small>La tienda seguirá disponible para navegar. Las personas no podrán agregar, modificar ni confirmar productos en el carrito.</small>
+                                </span>
+                            </label>
+                            <button class="primary-button fit-button" type="submit">GUARDAR MANTENIMIENTO</button>
+                        </form>
                     </section>
                 <?php endif ?>
             </main>

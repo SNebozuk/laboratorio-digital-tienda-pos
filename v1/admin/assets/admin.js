@@ -238,7 +238,7 @@
     }
 
     function showView(view) {
-        const availableViews = new Set(['orders', 'products', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings']);
+        const availableViews = new Set(['orders', 'products', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -262,6 +262,9 @@
         }
         if (view === 'settings') {
             loadSettings();
+        }
+        if (view === 'maintenance') {
+            loadMaintenance();
         }
         if (view === 'contact') {
             loadContact();
@@ -2788,6 +2791,41 @@
         }
     }
 
+    async function loadMaintenance() {
+        const form = document.getElementById('maintenance-form');
+        if (!form || app.user?.role !== 'admin') return;
+        try {
+            const data = await apiGet('settings');
+            state.settings = data.settings;
+            form.elements.cart_maintenance_enabled.checked = ['1', 'true', 'on'].includes(String(data.settings.cart_maintenance_enabled || '0'));
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    async function saveMaintenance(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'GUARDANDO…';
+        try {
+            if (!state.settings) state.settings = (await apiGet('settings')).settings;
+            const response = await apiPost({
+                action: 'settings_update',
+                settings: {
+                    ...state.settings,
+                    cart_maintenance_enabled: form.elements.cart_maintenance_enabled.checked ? '1' : '0',
+                },
+            });
+            state.settings = response.settings;
+            toast(form.elements.cart_maintenance_enabled.checked ? 'Carrito bloqueado para mantenimiento.' : 'Carrito habilitado nuevamente.');
+        } catch (error) {
+            toast(error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'GUARDAR MANTENIMIENTO';
+        }
+    }
+
     async function loadContact() {
         const form = document.getElementById('contact-form');
         if (!form || app.user?.role !== 'admin') return;
@@ -3156,6 +3194,10 @@
         if (event.target.id === 'settings-form') {
             event.preventDefault();
             saveSettings(event.target);
+        }
+        if (event.target.id === 'maintenance-form') {
+            event.preventDefault();
+            saveMaintenance(event.target);
         }
         if (event.target.id === 'whatsapp-settings-form') {
             event.preventDefault();

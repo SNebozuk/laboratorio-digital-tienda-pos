@@ -33,6 +33,11 @@ final class OrderService
                 'La nueva tienda todavía no está recibiendo pedidos.'
             );
         }
+        if ($this->cartMaintenanceEnabled()) {
+            throw new ConflictException(
+                'Estamos realizando trabajos de mantenimiento. Podés recorrer la tienda, pero el carrito está temporalmente pausado.'
+            );
+        }
         if (!in_array($channel, ['web', 'whatsapp'], true)) {
             throw new ValidationException('El canal del pedido no es válido.');
         }
@@ -1068,6 +1073,15 @@ final class OrderService
     private function integerSetting(string $key, int $default): int
     {
         return (int) $this->stringSetting($key, (string) $default);
+    }
+
+    private function cartMaintenanceEnabled(): bool
+    {
+        return in_array(
+            strtolower($this->stringSetting('cart_maintenance_enabled', '0')),
+            ['1', 'true', 'on'],
+            true
+        );
     }
 
     private function stringSetting(string $key, string $default): string

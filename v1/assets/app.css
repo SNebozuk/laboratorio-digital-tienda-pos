@@ -417,6 +417,27 @@ button:disabled {
     opacity: .45;
 }
 
+.cart-maintenance-notice {
+    display: grid;
+    gap: 4px;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    border: 1px solid #d6c7eb;
+    border-radius: 12px;
+    background: #faf7ff;
+    color: #3f3157;
+    box-shadow: 0 4px 14px rgba(77, 57, 112, .06);
+}
+
+.cart-maintenance-notice strong {
+    font-size: 14px;
+}
+
+.cart-maintenance-notice span {
+    font-size: 13px;
+    line-height: 1.45;
+}
+
 .store-header {
     position: sticky;
     top: 0;

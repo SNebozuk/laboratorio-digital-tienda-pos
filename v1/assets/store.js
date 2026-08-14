@@ -2,6 +2,7 @@
     'use strict';
 
     const app = JSON.parse(document.getElementById('app-data').textContent);
+    const cartMaintenanceEnabled = app.cart_maintenance_enabled === true || String(app.cart_maintenance_enabled) === '1';
     let products = Array.isArray(app.products) ? app.products : [];
     let categoryTree = Array.isArray(app.categories) ? app.categories : [];
     const linkedProductId = (() => {
@@ -461,6 +462,10 @@
     }
 
     function setQuantity(variantId, requestedQuantity) {
+        if (cartMaintenanceEnabled) {
+            toast('El carrito está pausado por mantenimiento. Podés seguir recorriendo el catálogo.');
+            return;
+        }
         const indexed = variantIndex.get(Number(variantId));
         if (!indexed) {
             return;
@@ -571,7 +576,7 @@
                     type="button"
                     data-quantity="${Number(variant.id)}"
                     data-value="${quantity - 1}"
-                    ${quantity < 1 ? 'disabled' : ''}
+                    ${cartMaintenanceEnabled || quantity < 1 ? 'disabled' : ''}
                     aria-label="Quitar una unidad"
                 >−</button>
                 <input
@@ -582,12 +587,13 @@
                     inputmode="numeric"
                     data-quantity-input="${Number(variant.id)}"
                     aria-label="${escapeHtml(quantityLabel(product, variant))}"
+                    ${cartMaintenanceEnabled ? 'disabled' : ''}
                 >
                 <button
                     type="button"
                     data-quantity="${Number(variant.id)}"
                     data-value="${quantity + 1}"
-                    ${available < 1 ? 'disabled' : ''}
+                    ${cartMaintenanceEnabled || available < 1 ? 'disabled' : ''}
                     aria-label="Agregar una unidad"
                 >+</button>
             </div>
@@ -798,8 +804,10 @@
 
         elements.mobileCartCount.textContent = String(units);
         elements.cartTotal.textContent = money(total);
-        elements.checkout.disabled = items.length === 0 || !app.orders_enabled;
-        elements.checkout.textContent = app.orders_enabled
+        elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
+        elements.checkout.textContent = cartMaintenanceEnabled
+            ? 'CARRITO EN MANTENIMIENTO'
+            : app.orders_enabled
             ? 'CONTINUAR PEDIDO'
             : 'PEDIDOS PRÓXIMAMENTE';
         const conflictNames = Array.from(state.reducedAvailability).map(variantId => {
@@ -925,6 +933,10 @@
     }
 
     async function showCheckout() {
+        if (cartMaintenanceEnabled) {
+            toast('Estamos realizando trabajos en la tienda. El carrito estará disponible nuevamente muy pronto.');
+            return;
+        }
         elements.checkout.disabled = true;
         elements.checkout.textContent = 'REVISANDO STOCK…';
         const previousUnits = Array.from(state.cart.values()).reduce(

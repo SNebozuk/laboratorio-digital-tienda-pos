@@ -18,6 +18,7 @@ final class SettingsService
         'bank_cbu',
         'pickup_address',
         'business_hours',
+        'cart_maintenance_enabled',
         'whatsapp_message_order_created',
         'whatsapp_message_cash_created',
         'whatsapp_message_ready_pickup',
@@ -45,6 +46,7 @@ final class SettingsService
                 'bank_cbu',
                 'pickup_address',
                 'business_hours',
+                'cart_maintenance_enabled',
                 'whatsapp_message_order_created', 'whatsapp_message_cash_created',
                 'whatsapp_message_ready_pickup', 'whatsapp_message_cancelled'
              )"
@@ -64,6 +66,7 @@ final class SettingsService
             1
         );
         $values += [
+            'cart_maintenance_enabled' => '0',
             'whatsapp_message_order_created' => 'Hola {{cliente}}! Recibimos tu pedido {{pedido}} por {{total}}. Cuando realices la transferencia, por favor respondé a este chat para que podamos prepararlo. Gracias por elegirnos.',
             'whatsapp_message_cash_created' => 'Hola {{cliente}}! Recibimos tu pedido {{pedido}} por {{total}}. Lo reservamos por 6 horas para que puedas retirarlo y abonarlo en efectivo. Te esperamos!',
             'whatsapp_message_ready_pickup' => 'Hola {{cliente}}! Tu pedido {{pedido}} ya está listo para retirar. Gracias por elegirnos!',
@@ -170,6 +173,11 @@ final class SettingsService
         if (strlen($businessHours) < 3 || strlen($businessHours) > 300) {
             throw new ValidationException('Revisá los horarios de atención.');
         }
+        $cartMaintenanceEnabled = in_array(
+            (string) ($data['cart_maintenance_enabled'] ?? $current['cart_maintenance_enabled'] ?? '0'),
+            ['1', 'true', 'on'],
+            true
+        ) ? '1' : '0';
 
         /*
         $mailReplyTo = trim((string) ($data['mail_reply_to'] ?? $current['mail_reply_to'] ?? $mailFrom));
@@ -218,6 +226,7 @@ final class SettingsService
             'bank_cbu' => (string) $bankCbu,
             'pickup_address' => $pickupAddress,
             'business_hours' => $businessHours,
+            'cart_maintenance_enabled' => $cartMaintenanceEnabled,
             ...$whatsappMessages,
         ];
 

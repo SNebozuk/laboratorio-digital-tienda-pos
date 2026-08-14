@@ -19,6 +19,7 @@ $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $apiUrl = $storePath . '/api.php';
 $whatsappNumber = preg_replace('/\D+/', '', (string) ($publicSettings['whatsapp_number'] ?? '5493415699338')) ?: '5493415699338';
+$cartMaintenanceEnabled = in_array((string) ($publicSettings['cart_maintenance_enabled'] ?? '0'), ['1', 'true', 'on'], true);
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
@@ -73,6 +74,12 @@ header('Referrer-Policy: same-origin');
         </aside>
 
         <section class="catalog-column" aria-labelledby="catalog-title">
+            <?php if ($cartMaintenanceEnabled): ?>
+                <section class="cart-maintenance-notice" role="status">
+                    <strong>Estamos realizando trabajos en la tienda</strong>
+                    <span>Podés recorrer el catálogo con normalidad; el carrito estará disponible nuevamente muy pronto.</span>
+                </section>
+            <?php endif; ?>
             <div class="catalog-intro">
                 <p class="eyebrow"><?= $escape($design['hero_badge']) ?></p>
                 <h1 id="catalog-title"><?php if ($design['hero_link']): ?><a href="<?= $escape($design['hero_link']) ?>"><?php endif ?><?= $escape($design['hero_title']) ?><?php if ($design['hero_link']): ?></a><?php endif ?></h1>
@@ -188,6 +195,7 @@ header('Referrer-Policy: same-origin');
             'categories' => $categoryTree,
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
+            'cart_maintenance_enabled' => $cartMaintenanceEnabled,
             'design' => $design,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
