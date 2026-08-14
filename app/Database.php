@@ -153,6 +153,14 @@ final class Database
     /** Replica la jerarquÃ­a de categorÃ­as exportada desde catálogo anterior. */
     private static function seedCategoryTree(PDO $pdo): void
     {
+        $version = 11;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+
+        self::immediate($pdo, function (PDO $pdo) use ($version): void {
         $tree = [
             'SUBLIMABLES' => ['Madera Cristal', 'PolÃ­mero', 'CerÃ¡mica', 'CartÃ³n', 'Botellas y Termos', 'Bolsas Friselina', 'Accesorios para sublimar'],
             'REMERAS' => ['de AlgodÃ³n', 'Remeras sublimables'],
@@ -203,6 +211,9 @@ final class Database
                 ]);
             }
         }
+        $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')
+            ->execute(['version' => $version]);
+        });
     }
 
     private static function categorySlug(string $value): string

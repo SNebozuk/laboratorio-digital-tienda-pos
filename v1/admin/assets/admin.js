@@ -276,12 +276,12 @@
         if (!elements.categoryTree) return;
         const rows = flatCategories();
         const namesById = new Map(rows.map(item => [Number(item.id), item.name]));
-        elements.categoryTree.innerHTML = rows.length ? rows.map(category => `
+        elements.categoryTree.innerHTML = rows.length ? `<p class="category-sort-help"><strong>ORDENAR CATEGORÍAS</strong><span>Arrastrá una fila y soltala sobre la línea azul. También podés moverla a otro grupo.</span></p>${rows.map(category => `
             <article class="category-admin-row" draggable="true" data-category-row="${Number(category.id)}" data-category-parent="${category.parent_id === null ? '' : Number(category.parent_id)}" style="--category-depth:${Number(category.depth)}">
                 <span class="category-drag-handle" aria-hidden="true" title="Arrastrar para ordenar">⋮⋮</span>
-                <div><strong>${Number(category.depth) > 0 ? '↳ ' : ''}${escapeHtml(category.name)}</strong><small>${category.parent_id ? `Subcategoría de ${escapeHtml(namesById.get(Number(category.parent_id)) || 'otra categoría')} · ` : ''}${Number(category.product_count)} productos · orden ${Number(category.sort_order)}${category.active ? '' : ' · inactiva'}</small></div>
+                <div><strong>${Number(category.depth) > 0 ? '↳ ' : ''}${escapeHtml(category.name)}</strong><small><span class="category-level-badge">${category.parent_id ? 'SUBCATEGORÍA' : 'PRINCIPAL'}</span>${category.parent_id ? ` de ${escapeHtml(namesById.get(Number(category.parent_id)) || 'otra categoría')} · ` : ' · '}${Number(category.product_count)} productos${category.active ? '' : ' · inactiva'}</small></div>
                 <div class="category-admin-actions"><button class="small-button" type="button" data-edit-category="${Number(category.id)}">Editar</button><button class="small-button danger-button" type="button" data-delete-category="${Number(category.id)}">Borrar</button></div>
-            </article>`).join('') : '<p class="empty-copy">Todavía no hay categorías.</p>';
+            </article>`).join('')}` : '<p class="empty-copy">Todavía no hay categorías.</p>';
     }
 
     async function moveCategory(draggedId, targetId, position = 'before') {
@@ -290,29 +290,7 @@
         const dragged = rows.find(item => Number(item.id) === Number(draggedId));
         const target = rows.find(item => Number(item.id) === Number(targetId));
         if (!dragged || !target) return;
-        const draggedParent = Number(dragged.parent_id || 0);
-        const targetParent = Number(target.parent_id || 0);
-        if (draggedParent !== targetParent) {
-            toast('Para cambiar de nivel usá Editar. El arrastre ordena categorías del mismo nivel.');
-            return;
-        }
-        const siblings = rows.filter(item => Number(item.parent_id || 0) === draggedParent);
-        const from = siblings.findIndex(item => Number(item.id) === Number(draggedId));
-        const [moved] = siblings.splice(from, 1);
-        const targetIndex = siblings.findIndex(item => Number(item.id) === Number(targetId));
-        siblings.splice(targetIndex + (position === 'after' ? 1 : 0), 0, moved);
-        for (const [index, category] of siblings.entries()) {
-            await apiPost({
-                action: 'category_update',
-                category_id: Number(category.id),
-                category: {
-                    name: category.name,
-                    parent_id: category.parent_id,
-                    sort_order: (index + 1) * 10,
-                    active: Boolean(category.active),
-                },
-            });
-        }
+        await apiPost({ action: 'category_move', category_id: draggedId, target_id: targetId, position });
         await loadProducts();
         toast('Nuevo orden de categorías guardado.');
     }

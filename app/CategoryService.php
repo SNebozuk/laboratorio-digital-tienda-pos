@@ -81,6 +81,62 @@ final class CategoryService
         });
     }
 
+    public function move(int $id, int $targetId, string $position): void
+    {
+        Database::immediate($this->pdo, function (PDO $pdo) use ($id, $targetId, $position): void {
+            if ($id < 1 || $targetId < 1 || $id === $targetId) {
+                throw new ValidationException('Elegí otra categoría como destino.');
+            }
+            $query = $pdo->prepare('SELECT id, parent_id FROM categories WHERE id IN (:id, :target_id)');
+            $query->execute(['id' => $id, 'target_id' => $targetId]);
+            $categories = [];
+            foreach ($query->fetchAll() as $row) {
+                $categories[(int) $row['id']] = $row['parent_id'] === null ? null : (int) $row['parent_id'];
+            }
+            if (!array_key_exists($id, $categories) || !array_key_exists($targetId, $categories)) {
+                throw new ValidationException('La categoría de origen o destino ya no existe.');
+            }
+
+            $oldParent = $categories[$id];
+            $newParent = $categories[$targetId];
+            if ($newParent !== null && $this->isDescendant($pdo, $newParent, $id)) {
+                throw new ValidationException('No se puede mover una categoría dentro de una subcategoría propia.');
+            }
+
+            $siblings = static function (PDO $pdo, ?int $parentId): array {
+                if ($parentId === null) {
+                    return array_map('intval', $pdo->query('SELECT id FROM categories WHERE parent_id IS NULL ORDER BY sort_order, name')->fetchAll(PDO::FETCH_COLUMN));
+                }
+                $statement = $pdo->prepare('SELECT id FROM categories WHERE parent_id = :parent_id ORDER BY sort_order, name');
+                $statement->execute(['parent_id' => $parentId]);
+                return array_map('intval', $statement->fetchAll(PDO::FETCH_COLUMN));
+            };
+            $saveOrder = static function (PDO $pdo, array $ids): void {
+                $update = $pdo->prepare('UPDATE categories SET sort_order = :sort_order, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+                foreach (array_values($ids) as $index => $categoryId) {
+                    $update->execute(['id' => $categoryId, 'sort_order' => ($index + 1) * 10]);
+                }
+            };
+
+            $oldSiblings = array_values(array_filter($siblings($pdo, $oldParent), static fn (int $categoryId): bool => $categoryId !== $id));
+            $newSiblings = $oldParent === $newParent
+                ? $oldSiblings
+                : array_values(array_filter($siblings($pdo, $newParent), static fn (int $categoryId): bool => $categoryId !== $id));
+            $targetIndex = array_search($targetId, $newSiblings, true);
+            if ($targetIndex === false) {
+                throw new ValidationException('No se encontró la posición de destino.');
+            }
+            array_splice($newSiblings, $targetIndex + ($position === 'after' ? 1 : 0), 0, [$id]);
+
+            $move = $pdo->prepare('UPDATE categories SET parent_id = :parent_id, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+            $move->execute(['id' => $id, 'parent_id' => $newParent]);
+            if ($oldParent !== $newParent) {
+                $saveOrder($pdo, $oldSiblings);
+            }
+            $saveOrder($pdo, $newSiblings);
+        });
+    }
+
     /** @return array{0:string,1:?int,2:int,3:bool} */
     private function validate(PDO $pdo, array $data, ?int $selfId = null): array
     {

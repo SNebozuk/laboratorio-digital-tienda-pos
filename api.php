@@ -212,6 +212,15 @@ try {
             $app['categories']->delete((int) ($input['category_id'] ?? 0));
             Http::json(['ok' => true]);
 
+        case 'category_move':
+            $app['auth']->requireAdmin();
+            $app['categories']->move(
+                (int) ($input['category_id'] ?? 0),
+                (int) ($input['target_id'] ?? 0),
+                ($input['position'] ?? '') === 'after' ? 'after' : 'before'
+            );
+            Http::json(['ok' => true]);
+
         case 'product_update':
             $user = $app['auth']->requireAdmin();
             $app['products']->update(

@@ -280,7 +280,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 }
 
 .category-admin-tree { display: grid; gap: 10px; }
-.category-admin-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px 14px calc(16px + var(--category-depth) * 28px); border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.category-sort-help { display: flex; align-items: center; gap: 14px; margin: 0 0 4px; padding: 12px 14px; border: 1px solid #cfe0f7; border-radius: 12px; background: #f4f8fd; color: #526176; font-size: 13px; }
+.category-sort-help strong { color: #1769e0; font-size: 12px; white-space: nowrap; }
+.category-admin-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px 14px calc(16px + var(--category-depth) * 28px); border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
 .category-admin-row strong, .category-admin-row small { display: block; }
 .category-admin-row small { margin-top: 4px; color: var(--muted); }
 .category-admin-actions { display: flex; gap: 7px; flex-wrap: wrap; }
@@ -288,8 +290,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .category-drag-handle { flex: 0 0 auto; color: #8b93a5; cursor: grab; font-size: 22px; line-height: 1; letter-spacing: -5px; user-select: none; }
 .category-admin-row:active .category-drag-handle { cursor: grabbing; }
 .category-admin-row.is-dragging { opacity: .42; }
-.category-admin-row.is-drop-target { border-top-color: #1769e0 !important; box-shadow: 0 -3px 0 #1769e0 !important; }
-.category-admin-row.is-drop-target.is-drop-after { border-top-color: #e2e6ef !important; border-bottom-color: #1769e0 !important; box-shadow: 0 3px 0 #1769e0 !important; }
+.category-level-badge { display: inline-block; margin-right: 4px; padding: 2px 6px; border-radius: 999px; background: #edf2f8; color: #526176; font-size: 9px; font-weight: 850; letter-spacing: .04em; }
+.category-admin-row.is-drop-target { border-top-color: #1769e0 !important; box-shadow: 0 -4px 0 #1769e0 !important; }
+.category-admin-row.is-drop-target::before { content: "SOLTAR AQUÍ"; position: absolute; top: -12px; left: 48px; z-index: 2; padding: 2px 7px; border-radius: 8px; background: #1769e0; color: #fff; font-size: 9px; font-weight: 850; letter-spacing: .05em; }
+.category-admin-row.is-drop-target.is-drop-after { border-top-color: #e2e6ef !important; border-bottom-color: #1769e0 !important; box-shadow: 0 4px 0 #1769e0 !important; }
+.category-admin-row.is-drop-target.is-drop-after::before { top: auto; bottom: -12px; }
 
 .small-button {
     padding: 8px 10px;
