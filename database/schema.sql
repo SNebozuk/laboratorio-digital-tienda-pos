@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS product_variants (
     image_path TEXT,
     price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
     stock_on_hand INTEGER NOT NULL DEFAULT 0 CHECK (stock_on_hand >= 0),
+    price_specified INTEGER NOT NULL DEFAULT 1 CHECK (price_specified IN (0, 1)),
+    stock_specified INTEGER NOT NULL DEFAULT 1 CHECK (stock_specified IN (0, 1)),
     stock_reserved INTEGER NOT NULL DEFAULT 0 CHECK (
         stock_reserved >= 0 AND stock_reserved <= stock_on_hand
     ),

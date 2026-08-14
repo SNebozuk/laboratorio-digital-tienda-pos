@@ -53,7 +53,6 @@ header('Referrer-Policy: same-origin');
                     <b>›</b>
                 </a>
                 <section class="pos-sale-details">
-                    <label class="pos-customer-field">CLIENTE<input id="pos-customer" value="Consumidor final" placeholder="Consumidor final"></label>
                     <div class="pos-main-total"><span>TOTAL</span><strong id="pos-total">$ 0</strong></div>
                 </section>
             </div>
@@ -63,6 +62,7 @@ header('Referrer-Policy: same-origin');
                     <button class="pos-clear-cart" id="pos-clear-cart" type="button" disabled>VACIAR CARRITO</button>
                 </div>
                 <div id="pos-cart-lines" class="cart-lines"></div>
+                <label class="pos-customer-field pos-customer-checkout">NOMBRE DEL CLIENTE · OPCIONAL<input id="pos-customer" value="" placeholder="Dejar vacío para Consumidor final" autocomplete="name"></label>
                 <button class="primary-button" id="complete-sale-button" type="button" disabled>FINALIZAR VENTA</button>
             </aside>
         </section>

@@ -63,12 +63,39 @@ final class Database
         self::clearLegacyOrders($pdo);
         self::disableMailQueues($pdo);
         self::migrateToSingleAvailableStock($pdo);
+        self::migrateOptionalProductFields($pdo);
         self::seedCatalog(
             $pdo,
             dirname($schemaPath) . '/catalog_seed.sql'
         );
         self::migrateCatalogImagesToLocal($pdo);
         self::seedCategoryTree($pdo);
+    }
+
+    /** Permite dejar SKU, precio y stock visualmente vacíos y libera identificadores de productos borrados. */
+    private static function migrateOptionalProductFields(PDO $pdo): void
+    {
+        $version = 14;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        self::immediate($pdo, function (PDO $pdo) use ($version): void {
+            $columns = [];
+            foreach ($pdo->query('PRAGMA table_info(product_variants)')->fetchAll() as $row) {
+                $columns[(string) $row['name']] = true;
+            }
+            if (!isset($columns['price_specified'])) {
+                $pdo->exec('ALTER TABLE product_variants ADD COLUMN price_specified INTEGER NOT NULL DEFAULT 1 CHECK (price_specified IN (0, 1))');
+            }
+            if (!isset($columns['stock_specified'])) {
+                $pdo->exec('ALTER TABLE product_variants ADD COLUMN stock_specified INTEGER NOT NULL DEFAULT 1 CHECK (stock_specified IN (0, 1))');
+            }
+            // Los productos borrados se conservan sólo para la integridad histórica,
+            // pero no deben seguir bloqueando identificadores reutilizables.
+            $pdo->exec("UPDATE product_variants SET sku = '__BORRADO__' || id, barcode = NULL, updated_at = CURRENT_TIMESTAMP WHERE product_id IN (SELECT id FROM products WHERE deleted_at IS NOT NULL)");
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
     }
 
     /**

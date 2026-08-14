@@ -31,6 +31,8 @@
         posChangedAvailability: new Set(),
         posStockConflicts: new Set(),
         editOrder: null,
+        customerHistoryName: '',
+        customerHistoryChildOpen: false,
         view: 'orders',
     };
 
@@ -95,6 +97,7 @@
         mobileView: document.getElementById('mobile-view'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
+    const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
     const quickUpdateTimers = new Map();
     let automaticRefreshRunning = false;
     let quickUpdateInFlight = 0;
@@ -199,10 +202,18 @@
     }
 
     function closeModal() {
+        if (state.customerHistoryChildOpen && state.customerHistoryName) {
+            const customerName = state.customerHistoryName;
+            state.customerHistoryChildOpen = false;
+            showCustomerHistory(customerName);
+            return;
+        }
         elements.modal.classList.remove('open');
         elements.modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
         state.editOrder = null;
+        state.customerHistoryName = '';
+        state.customerHistoryChildOpen = false;
     }
 
     async function authenticate(form, action) {
@@ -664,8 +675,8 @@
                 ${products.map(product => {
                     const hasVariants = product.variants.length > 1;
                     const single = product.variants[0];
-                    const inlineFields = single ? `<label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(single.stock_on_hand || 0)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
-                        <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(single.price_cents || 0) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
+                    const inlineFields = single ? `<label class="product-inline-field"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
+                        <label class="product-inline-field"><input type="number" min="0" step="1" value="${single.price_cents == null ? '' : Number(single.price_cents) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
                     return `<div class="product-list-row ${product.active ? '' : 'is-hidden'}" role="row">
                         <span><input type="checkbox" data-select-product="${Number(product.id)}" ${state.selectedProductIds.has(Number(product.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(product.name)}"></span>
                         <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong><small>${hasVariants ? `${product.variants.length} variantes · hacé clic para editar` : 'Hacé clic para editar el producto'}</small></span></button>
@@ -676,8 +687,8 @@
                         return `<div class="product-variant-inline-row ${product.active && variant.active ? '' : 'is-hidden'}" role="row">
                             <span></span>
                             <span class="product-inline-variant-name"><strong>${escapeHtml(name || 'Variante única')}</strong><small>${escapeHtml(variant.sku || '')}</small></span>
-                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(variant.stock_on_hand || 0)}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
-                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(variant.price_cents || 0) / 100}" data-quick-price="${Number(variant.id)}" aria-label="Precio de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
+                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${variant.stock_on_hand == null ? '' : Number(variant.stock_on_hand)}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
+                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${variant.price_cents == null ? '' : Number(variant.price_cents) / 100}" data-quick-price="${Number(variant.id)}" aria-label="Precio de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
                             <span></span>
                         </div>`;
                     }).join('') : ''}`;
@@ -694,15 +705,15 @@
                 </label>
                 <label class="variant-sku-field">
                     SKU
-                    <input class="variant-sku" value="${escapeHtml(variant.sku || '')}" placeholder="REM-VER-1" required>
+                    <input class="variant-sku" value="${escapeHtml(variant.sku || '')}" placeholder="Opcional">
                 </label>
                 <label class="variant-price-field">
                     PRECIO
-                    <input class="variant-price" type="number" min="0" value="${Number(variant.price_cents || 0) / 100}" required>
+                    <input class="variant-price" type="number" min="0" value="${variant.price_cents == null ? '' : Number(variant.price_cents) / 100}" placeholder="Opcional">
                 </label>
                 <label class="variant-stock-field">
                     STOCK
-                    <input class="variant-stock" type="number" min="0" value="${Number(variant.stock_on_hand || 0)}" required>
+                    <input class="variant-stock" type="number" min="0" value="${variant.stock_on_hand == null ? '' : Number(variant.stock_on_hand)}" placeholder="Opcional">
                 </label>
                 <button class="small-button danger-button" type="button" data-remove-variant>Quitar</button>
                 <label class="variant-image-field">
@@ -790,9 +801,9 @@
             sku: row.querySelector('.variant-sku').value.trim(),
             barcode: row.querySelector('.variant-barcode').value.trim(),
             image_path: row.querySelector('.variant-image-path').value.trim(),
-            price_cents: Math.round(Number(row.querySelector('.variant-price').value) * 100),
-            stock_on_hand: Number(row.querySelector('.variant-stock').value),
-            reset_stock_reservations: Number(row.querySelector('.variant-stock').value)
+            price_cents: row.querySelector('.variant-price').value.trim() === '' ? null : Math.round(Number(row.querySelector('.variant-price').value) * 100),
+            stock_on_hand: row.querySelector('.variant-stock').value.trim() === '' ? null : Number(row.querySelector('.variant-stock').value),
+            reset_stock_reservations: row.querySelector('.variant-stock').value.trim() !== '' && Number(row.querySelector('.variant-stock').value)
                 !== Number(row.dataset.variantStockOriginal || 0),
             min_stock: Number(row.querySelector('.variant-min').value),
             active: row.querySelector('.variant-active').value === '1',
@@ -876,8 +887,8 @@
                 action: 'variant_quick_update',
                 variant_id: variantId,
                 changes: {
-                    price_cents: Math.round(Number(priceInput.value) * 100),
-                    stock_on_hand: Number(stockInput.value),
+                    price_cents: priceInput.value.trim() === '' ? null : Math.round(Number(priceInput.value) * 100),
+                    stock_on_hand: stockInput.value.trim() === '' ? null : Number(stockInput.value),
                     reset_stock_reservations: Boolean(input.dataset.quickStock),
                 },
             });
@@ -893,7 +904,7 @@
 
     function scheduleQuickUpdate(input) {
         const variantId = Number(input.dataset.quickPrice || input.dataset.quickStock);
-        if (!Number.isFinite(variantId) || String(input.value).trim() === '') {
+        if (!Number.isFinite(variantId)) {
             return;
         }
         window.clearTimeout(quickUpdateTimers.get(variantId));
@@ -961,6 +972,25 @@
         } catch {
             // El POS sigue operativo aunque el navegador bloquee localStorage.
         }
+    }
+
+    function restorePosCustomer() {
+        const input = document.getElementById('pos-customer');
+        if (!input) return;
+        try {
+            input.value = localStorage.getItem(POS_CUSTOMER_STORAGE_KEY) || '';
+        } catch {
+            input.value = '';
+        }
+        input.addEventListener('input', () => {
+            try {
+                const value = input.value.trim();
+                if (value) localStorage.setItem(POS_CUSTOMER_STORAGE_KEY, input.value);
+                else localStorage.removeItem(POS_CUSTOMER_STORAGE_KEY);
+            } catch {
+                // El nombre sigue disponible durante esta pantalla.
+            }
+        });
     }
 
     function restoreOrReconcilePosCart(shouldPersist = true) {
@@ -1400,13 +1430,15 @@
             const data = await apiPost({
                 action: 'pos_sale',
                 items,
-                customer_name: document.getElementById('pos-customer').value,
+                customer_name: document.getElementById('pos-customer')?.value.trim() || 'Consumidor final',
                 payment_method: 'pos',
             });
             const sale = data.order;
             state.posStockConflicts.clear();
             state.posCart.clear();
             persistPosCart();
+            try { localStorage.removeItem(POS_CUSTOMER_STORAGE_KEY); } catch {}
+            if (document.getElementById('pos-customer')) document.getElementById('pos-customer').value = '';
             await loadProducts();
             renderPosCart();
             return sale;
@@ -1850,6 +1882,8 @@
 
     async function showCustomerHistory(customerName) {
         const name = String(customerName || '').trim();
+        state.customerHistoryName = name;
+        state.customerHistoryChildOpen = false;
         try {
             const data = await apiGet('orders', { limit: 150, include_archived: 1 });
             const orders = (data.orders || [])
@@ -1884,6 +1918,10 @@
     }
 
     async function showOrderDetail(orderId, historyName = '') {
+        if (historyName) {
+            state.customerHistoryName = historyName;
+            state.customerHistoryChildOpen = true;
+        }
         try {
             const data = await apiGet('order', { id: orderId });
             const order = data.order;
@@ -1946,6 +1984,10 @@
     }
 
     async function showOrderProducts(orderId, historyName = '') {
+        if (historyName) {
+            state.customerHistoryName = historyName;
+            state.customerHistoryChildOpen = true;
+        }
         try {
             const data = await apiGet('order', { id: orderId });
             const order = data.order;
@@ -3745,6 +3787,7 @@
     });
 
     if (app.user) {
+        restorePosCustomer();
         loadProducts();
         renderPosCart();
         if (document.getElementById('view-orders')) {

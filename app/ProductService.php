@@ -31,7 +31,9 @@ final class ProductService
                 v.name AS variant_name,
                 v.image_path AS variant_image_path,
                 v.price_cents,
-                v.stock_on_hand AS available_stock
+                v.price_specified,
+                v.stock_on_hand AS available_stock,
+                v.stock_specified
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
              JOIN product_variants v ON v.product_id = p.id
@@ -77,6 +79,7 @@ final class ProductService
              JOIN product_variants v ON v.product_id = p.id
              WHERE p.active = 1 AND p.deleted_at IS NULL
                AND v.active = 1
+               AND substr(v.sku, 1, 8) <> '__AUTO__'
                AND (
                     v.sku LIKE :contains ESCAPE "\\"
                     OR COALESCE(v.barcode, "") LIKE :contains ESCAPE "\\"
@@ -115,7 +118,9 @@ final class ProductService
                 v.sku,
                 v.barcode,
                 v.price_cents,
+                v.price_specified,
                 v.stock_on_hand,
+                v.stock_specified,
                 v.stock_reserved,
                 v.stock_on_hand AS available_stock,
                 v.min_stock,
@@ -260,7 +265,9 @@ final class ProductService
                              barcode = :barcode,
                              image_path = :image_path,
                              price_cents = :price_cents,
+                             price_specified = :price_specified,
                              stock_on_hand = :stock_on_hand,
+                             stock_specified = :stock_specified,
                              stock_reserved = CASE WHEN :reset_stock_reservations = 1 THEN 0 ELSE stock_reserved END,
                              min_stock = :min_stock,
                              sort_order = :sort_order,
@@ -274,7 +281,9 @@ final class ProductService
                         'barcode' => $variant['barcode'],
                         'image_path' => $variant['image_path'],
                         'price_cents' => $variant['price_cents'],
+                        'price_specified' => $variant['price_specified'] ? 1 : 0,
                         'stock_on_hand' => $variant['stock_on_hand'],
+                        'stock_specified' => $variant['stock_specified'] ? 1 : 0,
                         'reset_stock_reservations' => $variant['reset_stock_reservations'] ? 1 : 0,
                         'min_stock' => $variant['min_stock'],
                         'sort_order' => $sort,
@@ -328,13 +337,15 @@ final class ProductService
         array $changes,
         int $actorUserId
     ): void {
+        $priceSpecified = ($changes['price_cents'] ?? null) !== null && ($changes['price_cents'] ?? '') !== '';
+        $stockSpecified = ($changes['stock_on_hand'] ?? null) !== null && ($changes['stock_on_hand'] ?? '') !== '';
         $priceCents = filter_var(
-            $changes['price_cents'] ?? null,
+            $priceSpecified ? $changes['price_cents'] : 0,
             FILTER_VALIDATE_INT,
             ['options' => ['min_range' => 0]]
         );
         $stockOnHand = filter_var(
-            $changes['stock_on_hand'] ?? null,
+            $stockSpecified ? $changes['stock_on_hand'] : 0,
             FILTER_VALIDATE_INT,
             ['options' => ['min_range' => 0]]
         );
@@ -351,7 +362,9 @@ final class ProductService
                 $priceCents,
                 $stockOnHand,
                 $actorUserId,
-                $resetReservations
+                $resetReservations,
+                $priceSpecified,
+                $stockSpecified
             ): void {
                 $query = $pdo->prepare(
                     'SELECT stock_on_hand, stock_reserved
@@ -370,14 +383,18 @@ final class ProductService
                 $update = $pdo->prepare(
                     'UPDATE product_variants
                      SET price_cents = :price_cents,
+                         price_specified = :price_specified,
                          stock_on_hand = :stock_on_hand,
+                         stock_specified = :stock_specified,
                          stock_reserved = CASE WHEN :reset_stock_reservations = 1 THEN 0 ELSE stock_reserved END,
                          updated_at = CURRENT_TIMESTAMP
                      WHERE id = :id'
                 );
                 $update->execute([
                     'price_cents' => $priceCents,
+                    'price_specified' => $priceSpecified ? 1 : 0,
                     'stock_on_hand' => $stockOnHand,
+                    'stock_specified' => $stockSpecified ? 1 : 0,
                     'reset_stock_reservations' => $resetReservations ? 1 : 0,
                     'id' => $variantId,
                 ]);
@@ -427,7 +444,7 @@ final class ProductService
             if ($numbers !== []) {
                 throw new ConflictException('No se puede eliminar porque todavía participa de ventas activas: ' . implode(', ', $numbers) . '.');
             }
-            $hideVariants = $pdo->prepare("UPDATE product_variants SET active = 0, updated_at = CURRENT_TIMESTAMP WHERE product_id IN ($placeholders)");
+            $hideVariants = $pdo->prepare("UPDATE product_variants SET active = 0, sku = '__BORRADO__' || id, barcode = NULL, updated_at = CURRENT_TIMESTAMP WHERE product_id IN ($placeholders)");
             $hideVariants->execute($ids);
             $delete = $pdo->prepare("UPDATE products SET active = 0, deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id IN ($placeholders)");
             $delete->execute($ids);
@@ -571,7 +588,9 @@ final class ProductService
                 $suffix = '-COPIA-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
 
                 foreach ($variants->fetchAll() as $sort => $variant) {
-                    $newSku = substr((string) $variant['sku'], 0, 48) . $suffix;
+                    $newSku = str_starts_with((string) $variant['sku'], '__AUTO__')
+                        ? '__AUTO__' . bin2hex(random_bytes(12))
+                        : substr((string) $variant['sku'], 0, 48) . $suffix;
                     $newVariantId = $this->insertVariant(
                         $pdo,
                         $newProductId,
@@ -581,7 +600,9 @@ final class ProductService
                             'barcode' => null,
                             'image_path' => $copyImages ? $variant['image_path'] : null,
                             'price_cents' => (int) $variant['price_cents'],
+                            'price_specified' => (bool) ($variant['price_specified'] ?? true),
                             'stock_on_hand' => 0,
+                            'stock_specified' => (bool) ($variant['stock_specified'] ?? true),
                             'min_stock' => (int) $variant['min_stock'],
                             'active' => false,
                         ],
@@ -631,14 +652,14 @@ final class ProductService
                 'id' => (int) $row['variant_id'],
                 'name' => $row['variant_name'],
                 'image_path' => $row['variant_image_path'] ?? null,
-                'price_cents' => (int) $row['price_cents'],
-                'available_stock' => (int) $row['available_stock'],
+                'price_cents' => !empty($row['price_specified']) ? (int) $row['price_cents'] : null,
+                'available_stock' => !empty($row['stock_specified']) ? (int) $row['available_stock'] : null,
             ];
             if ($admin) {
                 $variant += [
-                    'sku' => $row['sku'],
+                    'sku' => str_starts_with((string) $row['sku'], '__AUTO__') ? '' : $row['sku'],
                     'barcode' => $row['barcode'],
-                    'stock_on_hand' => (int) $row['stock_on_hand'],
+                    'stock_on_hand' => !empty($row['stock_specified']) ? (int) $row['stock_on_hand'] : null,
                     'stock_reserved' => (int) $row['stock_reserved'],
                     'min_stock' => (int) $row['min_stock'],
                     'active' => (bool) $row['variant_active'],
@@ -681,13 +702,15 @@ final class ProductService
             $variantName = trim((string) ($variant['name'] ?? ''));
             $sku = strtoupper(trim((string) ($variant['sku'] ?? '')));
             $barcode = trim((string) ($variant['barcode'] ?? ''));
+            $priceSpecified = ($variant['price_cents'] ?? null) !== null && ($variant['price_cents'] ?? '') !== '';
+            $stockSpecified = ($variant['stock_on_hand'] ?? null) !== null && ($variant['stock_on_hand'] ?? '') !== '';
             $price = filter_var(
-                $variant['price_cents'] ?? null,
+                $priceSpecified ? $variant['price_cents'] : 0,
                 FILTER_VALIDATE_INT,
                 ['options' => ['min_range' => 0]]
             );
             $stock = filter_var(
-                $variant['stock_on_hand'] ?? null,
+                $stockSpecified ? $variant['stock_on_hand'] : 0,
                 FILTER_VALIDATE_INT,
                 ['options' => ['min_range' => 0]]
             );
@@ -697,16 +720,16 @@ final class ProductService
                 ['options' => ['min_range' => 0]]
             );
 
-            if ($variantName === '' || $sku === '') {
-                throw new ValidationException('Cada variante necesita nombre y SKU.');
+            if ($variantName === '') {
+                throw new ValidationException('Cada variante necesita un nombre.');
             }
             if ($price === false || $stock === false || $minimum === false) {
                 throw new ValidationException('Precio y stock deben ser números enteros positivos.');
             }
-            if (isset($seenSkus[$sku])) {
+            if ($sku !== '' && isset($seenSkus[$sku])) {
                 throw new ValidationException('No se puede repetir el SKU dentro del producto.');
             }
-            $seenSkus[$sku] = true;
+            if ($sku !== '') $seenSkus[$sku] = true;
             if ($barcode !== '') {
                 $barcodeKey = strtolower($barcode);
                 if (isset($seenBarcodes[$barcodeKey])) {
@@ -725,11 +748,13 @@ final class ProductService
             $validatedVariants[] = [
                 'id' => isset($variant['id']) ? (int) $variant['id'] : null,
                 'name' => $variantName,
-                'sku' => $sku,
+                'sku' => $sku !== '' ? $sku : '__AUTO__' . bin2hex(random_bytes(12)),
                 'barcode' => $barcode !== '' ? $barcode : null,
                 'image_path' => $variantImagePath ?: null,
                 'price_cents' => $price,
+                'price_specified' => $priceSpecified,
                 'stock_on_hand' => $stock,
+                'stock_specified' => $stockSpecified,
                 'min_stock' => $minimum,
                 'active' => !isset($variant['active']) || (bool) $variant['active'],
                 'reset_stock_reservations' => !empty($variant['reset_stock_reservations']),
@@ -860,11 +885,11 @@ final class ProductService
     ): int {
         $insert = $pdo->prepare(
             'INSERT INTO product_variants(
-                product_id, name, sku, barcode, image_path, price_cents,
-                stock_on_hand, min_stock, sort_order, active
+                product_id, name, sku, barcode, image_path, price_cents, price_specified,
+                stock_on_hand, stock_specified, min_stock, sort_order, active
              ) VALUES(
-                :product_id, :name, :sku, :barcode, :image_path, :price_cents,
-                :stock_on_hand, :min_stock, :sort_order, :active
+                :product_id, :name, :sku, :barcode, :image_path, :price_cents, :price_specified,
+                :stock_on_hand, :stock_specified, :min_stock, :sort_order, :active
              )'
         );
         $insert->execute([
@@ -874,7 +899,9 @@ final class ProductService
             'barcode' => $variant['barcode'],
             'image_path' => $variant['image_path'],
             'price_cents' => $variant['price_cents'],
+            'price_specified' => $variant['price_specified'] ? 1 : 0,
             'stock_on_hand' => $variant['stock_on_hand'],
+            'stock_specified' => $variant['stock_specified'] ? 1 : 0,
             'min_stock' => $variant['min_stock'],
             'sort_order' => $sortOrder,
             'active' => $variant['active'] ? 1 : 0,
