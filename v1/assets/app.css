@@ -3464,3 +3464,16 @@ body.category-menu-open .category-panel {
         z-index: 31;
     }
 }
+.stock-change-notice {
+    margin: 0 0 14px;
+    padding: 15px 16px;
+    border: 2px solid #c63c3c;
+    border-radius: 12px;
+    background: #fff2f2;
+    color: #681d1d;
+    box-shadow: 0 8px 24px rgba(133, 30, 30, .14);
+}
+.stock-change-notice strong { display: block; margin-bottom: 6px; font-size: 15px; }
+.stock-change-notice p { margin: 0 0 7px; color: #681d1d; }
+.stock-change-notice ul { margin: 0 0 10px; padding-left: 20px; font-weight: 750; }
+.stock-change-notice button { padding: 7px 0; border: 0; background: transparent; color: #8f2424; font: inherit; font-weight: 850; cursor: pointer; }

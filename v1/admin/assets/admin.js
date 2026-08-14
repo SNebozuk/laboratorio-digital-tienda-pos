@@ -161,12 +161,25 @@
         if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type)) {
             throw new Error('Elegí una imagen JPG, PNG o WebP.');
         }
-        const bitmap = await createImageBitmap(file);
-        const valid = bitmap.width === 800 && bitmap.height === 800;
-        bitmap.close();
-        if (!valid) {
-            throw new Error('Las fotos deben medir exactamente 800 × 800 píxeles.');
+        if (file.size > 8 * 1024 * 1024) {
+            throw new Error('La foto supera el límite de 8 MB.');
         }
+    }
+
+    function showSelectedImage(input, file) {
+        if (!input || !file) return;
+        const container = input.closest('label');
+        let preview = container?.querySelector('[data-image-preview]');
+        if (!preview) {
+            preview = document.createElement('img');
+            preview.dataset.imagePreview = '1';
+            preview.className = input.classList.contains('variant-image-file')
+                ? 'variant-image-preview'
+                : 'product-editor-image-preview';
+            container?.appendChild(preview);
+        }
+        preview.src = URL.createObjectURL(file);
+        preview.alt = 'Vista previa de la foto seleccionada';
     }
 
     function toast(message) {
@@ -278,26 +291,20 @@
             return;
         }
         try {
-            const previousAvailability = productAvailabilitySnapshot(state.products);
             const data = await apiGet('admin_products');
-            const changed = new Set();
-            data.products.forEach(product => product.variants.forEach(variant => {
-                const id = Number(variant.id);
-                if (previousAvailability.has(id)
-                    && previousAvailability.get(id) !== Number(variant.available_stock || 0)) {
-                    changed.add(id);
+            const nextAvailability = productAvailabilitySnapshot(data.products);
+            const conflicts = new Set(state.posStockConflicts);
+            state.posCart.forEach((quantity, variantId) => {
+                if (Number(quantity) > Number(nextAvailability.get(Number(variantId)) || 0)) {
+                    conflicts.add(Number(variantId));
                 }
-            }));
+            });
             state.products = data.products;
-            state.posChangedAvailability = changed;
-            const adjusted = restoreOrReconcilePosCart();
+            state.posStockConflicts = conflicts;
+            state.posChangedAvailability = new Set(conflicts);
+            restoreOrReconcilePosCart();
             renderPos();
             renderPosCart();
-            if (changed.size) {
-                toast(adjusted
-                    ? 'Cambió la disponibilidad: revisá el carrito antes de cobrar.'
-                    : 'Cambió la disponibilidad de algunos productos.');
-            }
         } catch {
             // La próxima comprobación vuelve a intentar sin interrumpir la venta.
         }
@@ -653,12 +660,12 @@
                 <select data-product-category-filter aria-label="Filtrar productos por categoría"><option value="">Todas las categorías</option>${flatCategories().map(category => `<option value="${Number(category.id)}" ${Number(state.productCategoryId) === Number(category.id) ? 'selected' : ''}>${'— '.repeat(category.depth)}${escapeHtml(category.name)}</option>`).join('')}</select>
             </div>
             <div class="product-list-table" role="table" aria-label="Listado de productos">
-                <div class="product-list-head" role="row"><span></span><span>Producto y variantes</span><span>Precio</span><span>Disponible</span><span></span></div>
+                <div class="product-list-head" role="row"><span></span><span>Producto y variantes</span><span>Stock</span><span>Precio</span><span></span></div>
                 ${products.map(product => {
                     const hasVariants = product.variants.length > 1;
                     const single = product.variants[0];
-                    const inlineFields = single ? `<label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(single.price_cents || 0) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>
-                        <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(single.stock_on_hand || 0)}" data-quick-stock="${Number(single.id)}" aria-label="Disponibles de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
+                    const inlineFields = single ? `<label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(single.stock_on_hand || 0)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
+                        <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(single.price_cents || 0) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
                     return `<div class="product-list-row ${product.active ? '' : 'is-hidden'}" role="row">
                         <span><input type="checkbox" data-select-product="${Number(product.id)}" ${state.selectedProductIds.has(Number(product.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(product.name)}"></span>
                         <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong><small>${hasVariants ? `${product.variants.length} variantes · hacé clic para editar` : 'Hacé clic para editar el producto'}</small></span></button>
@@ -669,8 +676,8 @@
                         return `<div class="product-variant-inline-row ${product.active && variant.active ? '' : 'is-hidden'}" role="row">
                             <span></span>
                             <span class="product-inline-variant-name"><strong>${escapeHtml(name || 'Variante única')}</strong><small>${escapeHtml(variant.sku || '')}</small></span>
+                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(variant.stock_on_hand || 0)}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
                             <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(variant.price_cents || 0) / 100}" data-quick-price="${Number(variant.id)}" aria-label="Precio de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
-                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(variant.stock_on_hand || 0)}" data-quick-stock="${Number(variant.id)}" aria-label="Disponibles de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
                             <span></span>
                         </div>`;
                     }).join('') : ''}`;
@@ -678,22 +685,22 @@
             </div>` : '<p class="empty-copy">No encontramos productos.</p>';
     }
 
-    function variantFormRow(variant = {}) {
+    function variantFormRow(variant = {}, single = false) {
         return `
-            <div class="variant-form-row" data-variant-row data-variant-id="${Number(variant.id || 0)}" data-variant-stock-original="${Number(variant.stock_on_hand || 0)}">
-                <label>
+            <div class="variant-form-row ${single ? 'single-variant-row' : ''}" data-variant-row data-variant-id="${Number(variant.id || 0)}" data-variant-stock-original="${Number(variant.stock_on_hand || 0)}">
+                <label class="variant-name-field">
                     VARIANTE
-                    <input class="variant-name" value="${escapeHtml(variant.name || '')}" placeholder="Talle 1" required>
+                    <input class="variant-name" value="${escapeHtml(single ? 'Única' : (variant.name || ''))}" placeholder="Talle 1" required>
                 </label>
-                <label>
+                <label class="variant-sku-field">
                     SKU
                     <input class="variant-sku" value="${escapeHtml(variant.sku || '')}" placeholder="REM-VER-1" required>
                 </label>
-                <label>
+                <label class="variant-price-field">
                     PRECIO
                     <input class="variant-price" type="number" min="0" value="${Number(variant.price_cents || 0) / 100}" required>
                 </label>
-                <label>
+                <label class="variant-stock-field">
                     STOCK
                     <input class="variant-stock" type="number" min="0" value="${Number(variant.stock_on_hand || 0)}" required>
                 </label>
@@ -702,17 +709,17 @@
                     FOTO DE ESTA VARIANTE
                     <input class="variant-image-file" type="file" accept="image/jpeg,image/png,image/webp">
                     <input class="variant-image-path" type="hidden" value="${escapeHtml(variant.image_path || '')}">
-                    ${variant.image_path ? `<img class="variant-image-preview" src="${escapeHtml(variant.image_path)}" alt="Foto actual de la variante">` : '<small>Opcional: si no cargás una, se usa la foto del producto.</small>'}
+                    ${variant.image_path ? `<img class="variant-image-preview" data-image-preview src="${escapeHtml(variant.image_path)}" alt="Foto actual de la variante">` : '<small>Opcional: si no cargás una, se usa la foto del producto.</small>'}
                 </label>
-                <label>
+                <label class="variant-barcode-field">
                     CÓDIGO DE BARRAS
                     <input class="variant-barcode" value="${escapeHtml(variant.barcode || '')}" placeholder="Opcional">
                 </label>
-                <label>
+                <label class="variant-min-field">
                     STOCK MÍNIMO
                     <input class="variant-min" type="number" min="0" value="${Number(variant.min_stock || 0)}">
                 </label>
-                <label>
+                <label class="variant-active-field">
                     <span>ACTIVA</span>
                     <select class="variant-active">
                         <option value="1" ${variant.active !== false ? 'selected' : ''}>Sí</option>
@@ -724,6 +731,10 @@
     }
 
     function showProductForm(product = null) {
+        const formVariants = product?.variants?.length
+            ? product.variants
+            : [{ name: 'Única', active: true }];
+        const singleVariant = formVariants.length === 1;
         openModal(`
             <h2 id="modal-title">${product ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}</h2>
             <form id="product-form" data-product-id="${Number(product?.id || 0)}">
@@ -740,11 +751,12 @@
                     DESCRIPCIÓN
                     <textarea name="description" rows="4" placeholder="Visible únicamente al abrir el producto">${escapeHtml(product?.description || '')}</textarea>
                 </label>
-                <label>
+                <label class="product-image-field">
                     FOTO DEL PRODUCTO
                     <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp">
-                    <span class="image-drop-zone" data-image-drop data-image-input="image_file">Arrastrá la foto aquí o hacé clic para elegirla<br><small>La imagen debe medir 800 × 800 px.</small></span>
+                    <span class="image-drop-zone" data-image-drop data-image-input="image_file">Arrastrá la foto aquí o hacé clic para elegirla</span>
                     <small>JPG, PNG o WebP · máximo 8 MB. Se sube automáticamente al alojamiento.</small>
+                    ${product?.image_path ? `<img class="product-editor-image-preview" data-image-preview src="${escapeHtml(product.image_path)}" alt="Foto actual del producto">` : ''}
                 </label>
                 <label>
                     URL DE IMAGEN · OPCIONAL
@@ -757,10 +769,9 @@
                         <option value="0" ${product?.active === false ? 'selected' : ''}>No</option>
                     </select>
                 </label>
-                <h3>VARIANTES</h3>
+                <h3 class="variant-section-title">${singleVariant ? 'PRECIO, STOCK E IDENTIFICACIÓN' : 'VARIANTES'}</h3>
                 <div class="variant-form-list" id="variant-form-list">
-                    ${(product?.variants?.length ? product.variants : [{ name: 'Talle 1', active: true }])
-                        .map(variantFormRow).join('')}
+                    ${formVariants.map(variant => variantFormRow(variant, singleVariant)).join('')}
                 </div>
                 <div class="button-row">
                     <button class="secondary-button" type="button" data-add-variant>+ VARIANTE</button>
@@ -804,10 +815,10 @@
     async function saveProduct(form) {
         const productId = Number(form.dataset.productId);
         const button = form.querySelector('button[type="submit"]');
-        const product = readProductForm(form);
-        const imageFile = form.querySelector('[name="image_file"]').files[0];
         button.disabled = true;
         try {
+            const product = readProductForm(form);
+            const imageFile = form.querySelector('[name="image_file"]').files[0];
             if (imageFile) {
                 button.textContent = 'SUBIENDO FOTO…';
                 product.image_path = await uploadProductImage(imageFile);
@@ -827,12 +838,25 @@
             });
             closeModal();
             await loadProducts();
-            toast(productId ? 'Producto actualizado.' : 'Producto creado.');
+            toast(productId ? 'Producto guardado correctamente.' : 'Producto creado correctamente.');
         } catch (error) {
             toast(error.message);
             button.disabled = false;
             button.textContent = 'GUARDAR PRODUCTO';
         }
+    }
+
+    function updateVariantEditorMode() {
+        const list = document.getElementById('variant-form-list');
+        if (!list) return;
+        const rows = Array.from(list.querySelectorAll('[data-variant-row]'));
+        const single = rows.length === 1;
+        rows.forEach(row => row.classList.toggle('single-variant-row', single));
+        if (single) {
+            rows[0].querySelector('.variant-name').value = 'Única';
+        }
+        const title = document.querySelector('.variant-section-title');
+        if (title) title.textContent = single ? 'PRECIO, STOCK E IDENTIFICACIÓN' : 'VARIANTES';
     }
 
     async function quickUpdate(variantId, input) {
@@ -1096,7 +1120,20 @@
         elements.posTotal.textContent = money(total);
         elements.completeSale.disabled = items.length === 0;
         elements.posClearCart.disabled = items.length === 0;
-        elements.posCartLines.innerHTML = items.length ? items.map(item => `
+        const conflictNames = Array.from(state.posStockConflicts).map(variantId => {
+            const indexed = index.get(Number(variantId));
+            if (!indexed) return null;
+            const name = variantDisplayName(indexed.product, indexed.variant);
+            return name ? `${indexed.product.name} · ${name}` : indexed.product.name;
+        }).filter(Boolean);
+        const conflictNotice = conflictNames.length ? `
+            <section class="pos-stock-change-notice" role="alert" aria-live="assertive">
+                <strong>CAMBIÓ EL STOCK DE ESTA VENTA</strong>
+                <p>Otra operación modificó la disponibilidad y ajustamos:</p>
+                <ul>${conflictNames.map(name => `<li>${escapeHtml(name)}</li>`).join('')}</ul>
+                <button type="button" data-dismiss-pos-stock-warning>ENTENDIDO</button>
+            </section>` : '';
+        elements.posCartLines.innerHTML = conflictNotice + (items.length ? items.map(item => `
             <div class="cart-line pos-cart-detail-row ${state.posStockConflicts.has(Number(item.variantId)) ? 'stock-conflict' : ''}">
                 <div class="pos-cart-product">
                     <strong>${escapeHtml(item.product.name)}</strong>
@@ -1112,7 +1149,7 @@
                 <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
                 <button class="pos-remove-cart-line" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito">🗑</button>
             </div>
-        `).join('') : '<p class="empty-copy">Sin productos.</p>';
+        `).join('') : '<p class="empty-copy">Sin productos.</p>');
     }
 
     function showPosSuggestions() {
@@ -2971,6 +3008,13 @@
     });
 
     document.addEventListener('click', async event => {
+        if (event.target.closest('[data-dismiss-pos-stock-warning]')) {
+            state.posStockConflicts.clear();
+            state.posChangedAvailability.clear();
+            renderPos();
+            renderPosCart();
+            return;
+        }
         const whatsappOrder = event.target.closest('[data-whatsapp-order]');
         if (whatsappOrder) {
             openOrderWhatsapp(Number(whatsappOrder.dataset.whatsappOrder));
@@ -3100,6 +3144,7 @@
         if (event.target.closest('[data-add-variant]')) {
             document.getElementById('variant-form-list')
                 .insertAdjacentHTML('beforeend', variantFormRow({ active: true }));
+            updateVariantEditorMode();
             return;
         }
         const removeVariant = event.target.closest('[data-remove-variant]');
@@ -3110,6 +3155,7 @@
                 return;
             }
             removeVariant.closest('[data-variant-row]').remove();
+            updateVariantEditorMode();
             return;
         }
         const editProduct = event.target.closest('[data-edit-product]');
@@ -3430,7 +3476,25 @@
             const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files;
             zone.textContent = `Foto lista: ${file.name}`;
             zone.classList.add('ready');
+            showSelectedImage(input, file);
         } catch (error) { toast(error.message); }
+    });
+    document.addEventListener('change', async event => {
+        if (!event.target.matches('[name="image_file"], .variant-image-file')) return;
+        const file = event.target.files?.[0];
+        if (!file) return;
+        try {
+            await validateProductImage(file);
+            showSelectedImage(event.target, file);
+            const zone = event.target.closest('label')?.querySelector('[data-image-drop]');
+            if (zone) {
+                zone.textContent = `Foto lista: ${file.name}`;
+                zone.classList.add('ready');
+            }
+        } catch (error) {
+            event.target.value = '';
+            toast(error.message);
+        }
     });
     elements.productSearch?.addEventListener('input', renderProducts);
     elements.orderSearch?.addEventListener('input', event => {

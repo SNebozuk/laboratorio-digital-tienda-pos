@@ -181,13 +181,6 @@
         });
     }
 
-    function availabilitySnapshot(catalog) {
-        const snapshot = new Map();
-        catalog.forEach(product => product.variants.forEach(variant => {
-            snapshot.set(Number(variant.id), Number(variant.available_stock || 0));
-        }));
-        return snapshot;
-    }
     rebuildVariantIndex();
     restoreCart();
 
@@ -206,48 +199,33 @@
             if (!response.ok || !data.ok || !Array.isArray(data.products)) {
                 return;
             }
-            const previousAvailability = availabilitySnapshot(products);
-            const changedVariantIds = new Set();
-            const reducedVariantIds = new Set();
-            data.products.forEach(product => product.variants.forEach(variant => {
-                const id = Number(variant.id);
-                if (previousAvailability.has(id)
-                    && previousAvailability.get(id) !== Number(variant.available_stock || 0)) {
-                    changedVariantIds.add(id);
-                    if (Number(variant.available_stock || 0) < previousAvailability.get(id)) {
-                        reducedVariantIds.add(id);
-                    }
-                }
-            }));
             products = data.products;
-            state.changedAvailability = changedVariantIds;
-            state.reducedAvailability = reducedVariantIds;
             if (Array.isArray(data.categories)) {
                 categoryTree = data.categories;
             }
             rebuildVariantIndex();
 
             let adjusted = false;
+            const harmfulChanges = new Set(state.reducedAvailability);
             Array.from(state.cart).forEach(([variantId, quantity]) => {
                 const indexed = variantIndex.get(Number(variantId));
                 const maximum = Number(indexed?.variant.available_stock || 0);
                 if (!indexed || maximum < 1) {
+                    harmfulChanges.add(Number(variantId));
                     state.cart.delete(Number(variantId));
                     adjusted = true;
                 } else if (quantity > maximum) {
+                    harmfulChanges.add(Number(variantId));
                     state.cart.set(Number(variantId), maximum);
                     adjusted = true;
                 }
             });
+            state.reducedAvailability = harmfulChanges;
+            state.changedAvailability = new Set(harmfulChanges);
 
             renderCategories();
             renderCatalog();
             renderCart();
-            if (changedVariantIds.size) {
-                toast(adjusted
-                    ? 'Cambió la disponibilidad: ajustamos tu pedido.'
-                    : 'Cambió la disponibilidad de algunos productos.');
-            }
             if (adjusted) {
                 persistCart();
             }
@@ -494,6 +472,7 @@
         } else {
             state.cart.delete(Number(variantId));
         }
+        state.reducedAvailability.delete(Number(variantId));
         persistCart();
         renderCatalog();
         renderCart();
@@ -818,7 +797,20 @@
         elements.checkout.textContent = app.orders_enabled
             ? 'CONTINUAR PEDIDO'
             : 'PEDIDOS PRÓXIMAMENTE';
-        elements.cartLines.innerHTML = items.length ? items.map(item => `
+        const conflictNames = Array.from(state.reducedAvailability).map(variantId => {
+            const indexed = variantIndex.get(Number(variantId));
+            if (!indexed) return null;
+            const variantName = variantDisplayName(indexed.product, indexed.variant);
+            return variantName ? `${indexed.product.name} · ${variantName}` : indexed.product.name;
+        }).filter(Boolean);
+        const conflictNotice = conflictNames.length ? `
+            <section class="stock-change-notice" role="alert" aria-live="assertive">
+                <strong>CAMBIÓ EL STOCK DE TU PEDIDO</strong>
+                <p>Otra compra modificó la disponibilidad y ajustamos estos productos:</p>
+                <ul>${conflictNames.map(name => `<li>${escapeHtml(name)}</li>`).join('')}</ul>
+                <button type="button" data-dismiss-stock-warning>ENTENDIDO</button>
+            </section>` : '';
+        elements.cartLines.innerHTML = conflictNotice + (items.length ? items.map(item => `
             <div class="cart-line ${state.reducedAvailability.has(Number(item.variant.id)) ? 'availability-conflict' : ''}">
                 <div class="cart-line-head">
                     <div class="cart-product-main">
@@ -866,7 +858,7 @@
                     <small>${money(Number(item.variant.price_cents))} c/u</small>
                 </div>
             </div>
-        `).join('') : '<p class="empty-copy">Todavía no agregaste productos.</p>';
+        `).join('') : '<p class="empty-copy">Todavía no agregaste productos.</p>');
     }
 
     function openModal(html) {
@@ -934,12 +926,16 @@
             (sum, quantity) => sum + Number(quantity),
             0
         );
-        await refreshCatalog();
+        const stockAdjusted = await refreshCatalog();
         const items = cartItems();
         if (!items.length) {
             if (previousUnits > 0) {
                 toast('Ese stock cambió. Actualizamos el carrito antes de confirmar.');
             }
+            renderCart();
+            return;
+        }
+        if (stockAdjusted) {
             renderCart();
             return;
         }
@@ -1104,8 +1100,13 @@
         } catch (error) {
             errorBox.hidden = false;
             errorBox.textContent = error.message;
-            toast(error.message);
-            await refreshCatalog();
+            const stockAdjusted = await refreshCatalog();
+            if (stockAdjusted) {
+                closeModal();
+                openMobileCart();
+            } else {
+                toast(error.message);
+            }
             button.disabled = false;
             button.textContent = 'CONFIRMAR PEDIDO';
         }
@@ -1399,6 +1400,12 @@
     }
 
     document.addEventListener('click', event => {
+        if (event.target.closest('[data-dismiss-stock-warning]')) {
+            state.reducedAvailability.clear();
+            renderCatalog();
+            renderCart();
+            return;
+        }
         const copyBank = event.target.closest('[data-copy-bank]');
         if (copyBank) {
             navigator.clipboard.writeText(copyBank.dataset.copyBank)

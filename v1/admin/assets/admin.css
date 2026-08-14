@@ -929,6 +929,28 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     border-radius: 8px;
 }
 
+.product-editor-image-preview {
+    display: block;
+    width: min(220px, 100%);
+    aspect-ratio: 1;
+    margin-top: 12px;
+    object-fit: contain;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.variant-form-row.single-variant-row {
+    grid-template-columns: minmax(130px, 1fr) minmax(150px, 1fr) minmax(110px, .8fr) minmax(100px, .7fr);
+}
+.variant-form-row.single-variant-row .variant-name-field,
+.variant-form-row.single-variant-row [data-remove-variant],
+.variant-form-row.single-variant-row .variant-image-field,
+.variant-form-row.single-variant-row .variant-min-field,
+.variant-form-row.single-variant-row .variant-active-field {
+    display: none;
+}
+
 .admin-modal-card {
     width: min(850px, 100%);
 }
@@ -2977,3 +2999,16 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .pos-launch-card { grid-template-columns: auto 1fr; }
     .pos-launch-card .primary-button { grid-column: 1 / -1; justify-self: start; }
 }
+.pos-stock-change-notice {
+    margin: 0 0 14px;
+    padding: 15px 16px;
+    border: 2px solid #c63c3c;
+    border-radius: 12px;
+    background: #fff2f2;
+    color: #681d1d;
+    box-shadow: 0 8px 24px rgba(133, 30, 30, .14);
+}
+.pos-stock-change-notice strong { display: block; margin-bottom: 6px; font-size: 15px; }
+.pos-stock-change-notice p { margin: 0 0 7px; color: #681d1d; }
+.pos-stock-change-notice ul { margin: 0 0 10px; padding-left: 20px; font-weight: 750; }
+.pos-stock-change-notice button { padding: 7px 0; border: 0; background: transparent; color: #8f2424; font: inherit; font-weight: 850; cursor: pointer; }

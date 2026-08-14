@@ -136,6 +136,7 @@ final class ProductService
     public function create(array $data, int $actorUserId): int
     {
         $payload = $this->validateProduct($data);
+        $this->assertBarcodesAvailable($payload);
 
         return Database::immediate(
             $this->pdo,
@@ -179,6 +180,7 @@ final class ProductService
     public function update(int $productId, array $data, int $actorUserId): void
     {
         $payload = $this->validateProduct($data);
+        $this->assertBarcodesAvailable($payload, $productId);
 
         Database::immediate(
             $this->pdo,
@@ -671,12 +673,14 @@ final class ProductService
 
         $validatedVariants = [];
         $seenSkus = [];
+        $seenBarcodes = [];
         foreach ($variants as $variant) {
             if (!is_array($variant)) {
                 throw new ValidationException('Hay una variante inválida.');
             }
             $variantName = trim((string) ($variant['name'] ?? ''));
             $sku = strtoupper(trim((string) ($variant['sku'] ?? '')));
+            $barcode = trim((string) ($variant['barcode'] ?? ''));
             $price = filter_var(
                 $variant['price_cents'] ?? null,
                 FILTER_VALIDATE_INT,
@@ -703,6 +707,13 @@ final class ProductService
                 throw new ValidationException('No se puede repetir el SKU dentro del producto.');
             }
             $seenSkus[$sku] = true;
+            if ($barcode !== '') {
+                $barcodeKey = strtolower($barcode);
+                if (isset($seenBarcodes[$barcodeKey])) {
+                    throw new ValidationException('No se puede repetir el código de barras dentro del producto.');
+                }
+                $seenBarcodes[$barcodeKey] = true;
+            }
             $variantImagePath = trim((string) ($variant['image_path'] ?? ''));
             if (
                 $variantImagePath !== ''
@@ -715,7 +726,7 @@ final class ProductService
                 'id' => isset($variant['id']) ? (int) $variant['id'] : null,
                 'name' => $variantName,
                 'sku' => $sku,
-                'barcode' => trim((string) ($variant['barcode'] ?? '')) ?: null,
+                'barcode' => $barcode !== '' ? $barcode : null,
                 'image_path' => $variantImagePath ?: null,
                 'price_cents' => $price,
                 'stock_on_hand' => $stock,
@@ -746,6 +757,33 @@ final class ProductService
             'active' => !isset($data['active']) || (bool) $data['active'],
             'variants' => $validatedVariants,
         ];
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function assertBarcodesAvailable(array $payload, ?int $productId = null): void
+    {
+        $query = $this->pdo->prepare(
+            'SELECT pv.id
+             FROM product_variants pv
+             WHERE pv.barcode = :barcode COLLATE NOCASE
+               AND (:product_id IS NULL OR pv.product_id <> :product_id)
+             LIMIT 1'
+        );
+        foreach ($payload['variants'] as $variant) {
+            if ($variant['barcode'] === null) {
+                continue;
+            }
+            $query->bindValue(':barcode', $variant['barcode']);
+            if ($productId === null) {
+                $query->bindValue(':product_id', null, PDO::PARAM_NULL);
+            } else {
+                $query->bindValue(':product_id', $productId, PDO::PARAM_INT);
+            }
+            $query->execute();
+            if ($query->fetchColumn() !== false) {
+                throw new ConflictException('Ese código de barras ya está asignado a otro producto.');
+            }
+        }
     }
 
     /**
