@@ -88,9 +88,6 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button active" type="button" data-view="products">
                         Productos
                     </button>
-                    <button class="admin-nav-button" type="button" data-view="pos">
-                        Punto de Venta
-                    </button>
                     <?php if ($user['role'] === 'admin'): ?>
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
@@ -125,7 +122,6 @@ header('Referrer-Policy: same-origin');
                     <select id="mobile-view">
                         <option value="orders">Lista de Ventas</option>
                         <option value="products">Productos</option>
-                        <option value="pos">Punto de Venta</option>
                         <?php if ($user['role'] === 'admin'): ?>
                             <option value="categories">Categorías</option>
                             <option value="size-guide">Tabla de Talles</option>
@@ -249,24 +245,6 @@ header('Referrer-Policy: same-origin');
                     </section>
                 <?php endif ?>
 
-                <section class="admin-view" id="view-pos">
-                    <div class="view-heading pos-launch-heading">
-                        <div>
-                            <p class="eyebrow">MOSTRADOR</p>
-                            <h1>PUNTO DE VENTA</h1>
-                            <p>Usá una pantalla completa para buscar o escanear productos y registrar la venta con comodidad.</p>
-                        </div>
-                    </div>
-                    <section class="pos-launch-card">
-                        <div class="pos-launch-icon" aria-hidden="true">⌁</div>
-                        <div>
-                            <strong>CAJA Y MOSTRADOR</strong>
-                            <p>El Punto de Venta se abre en una página independiente, optimizada para trabajar con teclado, lector de código y pantalla completa.</p>
-                        </div>
-                        <a class="primary-button" href="pos.php" target="_blank" rel="opener">ABRIR PUNTO DE VENTA</a>
-                    </section>
-                </section>
-
                 <section class="admin-view" id="view-orders">
                     <div class="view-heading">
                         <div>
@@ -277,7 +255,7 @@ header('Referrer-Policy: same-origin');
                         <div class="order-page-actions">
                             <button class="secondary-button" id="order-auto-cancel-info" type="button">⚙ Cancelación automática</button>
                             <button class="secondary-button" id="refresh-orders" type="button">⇩ Exportar lista</button>
-                            <button class="primary-button" type="button" data-view="pos">⊕ Agregar orden de compra</button>
+                            <a class="primary-button" href="pos.php" target="_blank" rel="opener">⊕ ABRIR PUNTO DE VENTA</a>
                         </div>
                     </div>
                     <div class="order-toolbar">
