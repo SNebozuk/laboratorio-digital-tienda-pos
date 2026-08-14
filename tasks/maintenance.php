@@ -29,6 +29,7 @@ if (PHP_SAPI !== 'cli') {
     $app = require $projectRoot . '/app/container.php';
     $app['stock']->expireOrders();
     $app['backups']->createDailyIfDue();
+    $app['mail']->process();
     http_response_code(204);
     exit;
 }
@@ -36,10 +37,12 @@ if (PHP_SAPI !== 'cli') {
 $app = require $projectRoot . '/app/container.php';
 $expired = $app['stock']->expireOrders();
 $backup = $app['backups']->createDailyIfDue();
+$mail = $app['mail']->process();
 
 echo json_encode([
     'ok' => true,
     'expired_orders' => $expired,
     'automatic_backup_created' => $backup !== null,
+    'mail' => $mail,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 echo PHP_EOL;

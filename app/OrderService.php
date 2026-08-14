@@ -163,17 +163,15 @@ final class OrderService
                     );
                 }
 
-                $salesEmail = $this->stringSetting(
-                    'sales_email',
-                    'ventas@artjet.com.ar'
-                );
+                $salesEmail = trim((string) ($this->config['sales_notification_email']
+                    ?? 'ventas@laboratorio-digital.com.ar'));
                 if (filter_var($salesEmail, FILTER_VALIDATE_EMAIL)) {
                     $mailPayload['audience'] = 'internal';
                     $this->queueOrderMail(
                         $pdo,
                         $orderId,
                         $salesEmail,
-                        $customerName . ' ha realizado la compra #' . $publicNumber,
+                        'Nueva venta ' . $publicNumber . ' · ' . $customerName,
                         'order_created',
                         $mailPayload
                     );
@@ -1121,9 +1119,6 @@ final class OrderService
         string $template,
         array $payload
     ): void {
-        // Los avisos por correo fueron reemplazados por WhatsApp.
-        return;
-
         $insert = $pdo->prepare(
             'INSERT INTO mail_queue(
                 order_id, recipient, subject, template, payload_json

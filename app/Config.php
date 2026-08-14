@@ -108,10 +108,13 @@ final class Config
                     FILTER_VALIDATE_BOOL
                 )
             ),
-            // La comunicación con clientes se realiza únicamente por WhatsApp.
-            // Esta bandera se fuerza a falso aun si quedó una configuración SMTP
-            // antigua en el hosting.
-            'mail_enabled' => false,
+            // Solo se utiliza para el aviso interno de una nueva venta. La
+            // comunicación con clientes continúa exclusivamente por WhatsApp.
+            'mail_enabled' => self::bool(
+                $local,
+                'mail_enabled',
+                filter_var(getenv('APP_MAIL_ENABLED') ?: false, FILTER_VALIDATE_BOOL)
+            ),
             'mail_transport' => self::string(
                 $local,
                 'mail_transport',
@@ -120,7 +123,7 @@ final class Config
             'mail_from' => self::string(
                 $local,
                 'mail_from',
-                getenv('APP_MAIL_FROM') ?: 'ventas@artjet.com.ar'
+                getenv('APP_MAIL_FROM') ?: 'pedidos@laboratoriodigital.com.ar'
             ),
             'mail_from_name' => self::string(
                 $local,
@@ -130,7 +133,12 @@ final class Config
             'mail_reply_to' => self::string(
                 $local,
                 'mail_reply_to',
-                getenv('APP_MAIL_REPLY_TO') ?: 'ventas@artjet.com.ar'
+                getenv('APP_MAIL_REPLY_TO') ?: 'ventas@laboratorio-digital.com.ar'
+            ),
+            'sales_notification_email' => self::string(
+                $local,
+                'sales_notification_email',
+                getenv('APP_SALES_NOTIFICATION_EMAIL') ?: 'ventas@laboratorio-digital.com.ar'
             ),
             'mail_smtp_host' => self::string($local, 'mail_smtp_host', getenv('APP_MAIL_SMTP_HOST') ?: ''),
             'mail_smtp_port' => self::integer($local, 'mail_smtp_port', (int) (getenv('APP_MAIL_SMTP_PORT') ?: 587)),
