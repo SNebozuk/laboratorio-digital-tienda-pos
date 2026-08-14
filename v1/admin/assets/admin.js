@@ -658,7 +658,7 @@
 
     function showProductFilters() {
         openModal(`
-            <h2 id="modal-title">FILTRAR PRODUCTOS</h2>
+            <h2 id="modal-title" class="filter-modal-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M10 7a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm10 10H10M6 17H4m6 0a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z"/></svg>FILTRAR PRODUCTOS</h2>
             <p class="checkout-lead">Podés combinar los filtros para encontrar exactamente lo que necesitás.</p>
             <form id="product-filters-form" class="settings-card compact-filter-card">
                 <label>CATEGORÍA
@@ -670,7 +670,7 @@
                 <label>VISIBILIDAD EN LA TIENDA
                     <select name="visibility"><option value="">Todos</option><option value="visible" ${state.productVisibility === 'visible' ? 'selected' : ''}>Visibles</option><option value="hidden" ${state.productVisibility === 'hidden' ? 'selected' : ''}>Ocultos</option></select>
                 </label>
-                <div class="modal-actions"><button class="secondary-button" type="button" data-clear-product-filters>DESCARTAR FILTROS</button><button class="primary-button" type="submit">APLICAR</button></div>
+                <div class="filter-modal-actions"><button class="secondary-button" type="button" data-clear-product-filters>LIMPIAR Y CERRAR</button><button class="primary-button" type="submit">APLICAR FILTROS</button></div>
             </form>
         `);
     }

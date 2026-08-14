@@ -2555,6 +2555,14 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .product-bulk-toolbar select { min-width: 190px; }
 .settings-span-two { grid-column: 1 / -1; }
 #design-logo-preview { display:block; max-width:260px; max-height:100px; object-fit:contain; margin-top:10px; background:#fff; }
+.filter-modal-title { display:flex; align-items:center; gap:10px; }
+.filter-modal-title svg { width:23px; height:23px; stroke:#5546d9; stroke-width:1.8; stroke-linecap:round; fill:none; }
+.compact-filter-card { display:grid; gap:15px; padding:0; border:0; box-shadow:none; background:transparent; }
+.compact-filter-card label { display:grid; gap:7px; color:#41485a; font-size:11px; font-weight:750; letter-spacing:.045em; }
+.compact-filter-card select { min-height:42px; border:1px solid #dfe3ea; border-radius:7px; background:#fff; color:#202536; padding:0 11px; font-size:14px; }
+.filter-modal-actions { display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:8px; padding-top:16px; border-top:1px solid #edf0f4; }
+.filter-modal-actions button { min-width:142px; }
+@media (max-width:560px) { .filter-modal-actions { flex-direction:column-reverse; align-items:stretch; } .filter-modal-actions button { width:100%; } }
 .product-select-all { display: inline-flex; align-items: center; gap: 7px; color: #40485b; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .product-select-all input { width: 18px; height: 18px; margin: 0; accent-color: #5b4fc7; cursor: pointer; }
 .product-selection-count { min-width: 150px; color: #667085; font-weight: 650; white-space: nowrap; }
