@@ -1000,7 +1000,7 @@
     function variantIndex() {
         const index = new Map();
         state.products.forEach(product => {
-            product.variants.filter(variant => variant.active).forEach(variant => {
+            product.variants.filter(variant => variant && variant.active !== false).forEach(variant => {
                 index.set(Number(variant.id), { product, variant });
             });
         });
@@ -1142,7 +1142,7 @@
         }
         const products = rankedProducts(
             query,
-            state.products.filter(product => product.active)
+            state.products.filter(product => product && product.active !== false)
         ).filter(product => (
             query || product.variants.some(variant => (
                 variant.active && Number(variant.available_stock) > 0
@@ -1151,7 +1151,10 @@
         elements.posProducts.innerHTML = products.length ? `
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
             ${products.map(product => {
-                const variants = product.variants.filter(variant => variant.active);
+                const variants = product.variants.filter(variant => variant && variant.active !== false);
+                if (!variants.length) {
+                    return '';
+                }
                 const hasVariants = variants.length > 1;
                 const expanded = Number(state.posProductId) === Number(product.id);
                 const single = variants[0];
