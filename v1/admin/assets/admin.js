@@ -3270,23 +3270,6 @@
             loadMailDiagnostics();
             return;
         }
-        if (event.target.id === 'prepare-catalog-import') {
-            openModal(`<h2 id="modal-title">PREPARAR CATÁLOGO NUEVO</h2><p class="empty-copy">Se eliminarán todas las ventas y se retirarán todos los productos actuales. Las categorías, usuarios y configuración se conservan.</p><p class="notice">Esta acción no se puede deshacer.</p><div class="modal-actions"><button class="danger-button" type="button" data-confirm-catalog-import-clear>VACIAR AHORA</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>`);
-            return;
-        }
-        if (event.target.closest('[data-confirm-catalog-import-clear]')) {
-            try {
-                const data = await apiPost({ action: 'prepare_catalog_import' });
-                state.selectedProductIds.clear();
-                state.selectedOrderIds.clear();
-                await Promise.all([loadProducts(), loadOrders()]);
-                closeModal();
-                toast(`Listo: ${data.result.orders} ventas y ${data.result.products} productos retirados.`);
-            } catch (error) {
-                toast(error.message);
-            }
-            return;
-        }
         const passwordToggle = event.target.closest('.password-toggle');
         if (passwordToggle) {
             const field = passwordToggle.closest('.password-field')?.querySelector('input');

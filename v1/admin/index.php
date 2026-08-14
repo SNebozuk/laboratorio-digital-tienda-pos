@@ -401,12 +401,6 @@ header('Referrer-Policy: same-origin');
                             <p>Se genera una copia automática diaria de la base, comprobantes y fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
                             <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
                         </section>
-                        <section class="settings-card demo-reset-card">
-                            <p class="eyebrow">IMPORTACIÓN</p>
-                            <h2>Preparar catálogo nuevo</h2>
-                            <p>Vacía las ventas y retira todos los productos actuales, conservando categorías, usuarios y configuración.</p>
-                            <button class="danger-button" id="prepare-catalog-import" type="button">VACIAR PARA IMPORTAR</button>
-                        </section>
                     </section>
 
                     <section class="admin-view" id="view-maintenance">
