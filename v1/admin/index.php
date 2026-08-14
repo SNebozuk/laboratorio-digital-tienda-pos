@@ -83,7 +83,7 @@ header('Referrer-Policy: same-origin');
                 </a>
                 <nav class="admin-nav">
                     <button class="admin-nav-button" type="button" data-view="orders">
-                        Ventas
+                        Lista de Ventas
                     </button>
                     <button class="admin-nav-button active" type="button" data-view="products">
                         Productos
@@ -123,7 +123,7 @@ header('Referrer-Policy: same-origin');
                 <header class="admin-mobile-header">
                     <strong>LABORATORIO DIGITAL</strong>
                     <select id="mobile-view">
-                        <option value="orders">Ventas</option>
+                        <option value="orders">Lista de Ventas</option>
                         <option value="products">Productos</option>
                         <option value="pos">Punto de Venta</option>
                         <?php if ($user['role'] === 'admin'): ?>

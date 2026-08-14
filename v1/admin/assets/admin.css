@@ -2390,6 +2390,15 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     padding: 28px 18px 18px;
 }
 
+/* Lateral más compacto y neutro para priorizar el área de trabajo. */
+.admin-shell { grid-template-columns: 210px minmax(0, 1fr); }
+.admin-sidebar { padding: 24px 12px 16px; background: #f1f3f5; border-right-color: #dde1e6; box-shadow: none; }
+.admin-brand { padding: 0 5px; }
+.admin-brand strong { font-size: 12px; }
+.admin-nav { margin-top: 26px; }
+.admin-nav-button { min-height: 38px; padding: 9px 10px; font-size: 13px; }
+.admin-user { padding: 14px 5px 2px; }
+
 .admin-brand {
     gap: 10px;
     padding: 0 8px;
@@ -2655,7 +2664,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-modal-card h2 { font-size: 23px; letter-spacing: -.035em; }
 
 @media (max-width: 1050px) {
-    .admin-shell { grid-template-columns: 212px minmax(0, 1fr); }
+    .admin-shell { grid-template-columns: 190px minmax(0, 1fr); }
     .admin-main { padding: 28px 24px 64px; }
     .product-admin-head { grid-template-columns: 56px minmax(200px, 1fr) auto; }
     .product-admin-variant-count, .product-admin-price { display: none; }
