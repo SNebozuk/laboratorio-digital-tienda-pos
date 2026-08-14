@@ -30,6 +30,7 @@
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
+    const isMobileStorefront = () => window.matchMedia('(max-width: 900px)').matches;
 
     const elements = {
         categories: document.getElementById('category-list'),
@@ -1309,7 +1310,7 @@
     }
 
     function rememberCompletedOrder() {
-        if (!state.order?.public_number) {
+        if (isMobileStorefront() || !state.order?.public_number) {
             return;
         }
         try {
@@ -1342,6 +1343,11 @@
         const homeUrl = new URL(window.location.href);
         homeUrl.search = '';
         homeUrl.hash = '';
+        if (isMobileStorefront()) {
+            sessionStorage.removeItem(ORDER_COMPLETE_STORAGE_KEY);
+            window.location.replace(homeUrl.href);
+            return;
+        }
         window.location.assign(homeUrl.href);
     }
 
@@ -1659,7 +1665,7 @@
             sessionStorage.getItem(ORDER_COMPLETE_STORAGE_KEY) || 'null'
         );
         sessionStorage.removeItem(ORDER_COMPLETE_STORAGE_KEY);
-        if (completedOrder?.public_number) {
+        if (completedOrder?.public_number && !isMobileStorefront()) {
             window.setTimeout(() => showCompletedOrderNotice(completedOrder), 120);
         }
     } catch {
