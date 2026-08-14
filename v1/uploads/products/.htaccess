@@ -1,4 +1,4 @@
-Options -Indexes -ExecCGI
+Options -Indexes
 
 <FilesMatch "\.(php|phtml|phar|cgi|pl|py|sh)$">
   <IfModule mod_authz_core.c>
