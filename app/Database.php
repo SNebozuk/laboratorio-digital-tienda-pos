@@ -58,6 +58,7 @@ final class Database
         self::migrateCategoryTree($pdo);
         self::migrateOrderArchive($pdo);
         self::migrateVariantImages($pdo);
+        self::migrateProductDeletion($pdo);
         self::migrateLegacyMailAddress($pdo);
         self::clearLegacyOrders($pdo);
         self::disableMailQueues($pdo);
@@ -264,6 +265,19 @@ final class Database
             $pdo->exec('ALTER TABLE product_variants ADD COLUMN image_path TEXT');
         }
         $pdo->exec('INSERT OR IGNORE INTO schema_migrations(version) VALUES(8)');
+    }
+
+    /** Permite retirar productos del catálogo sin perder el historial archivado. */
+    private static function migrateProductDeletion(PDO $pdo): void
+    {
+        $columns = [];
+        foreach ($pdo->query('PRAGMA table_info(products)')->fetchAll() as $row) {
+            $columns[(string) $row['name']] = true;
+        }
+        if (!isset($columns['deleted_at'])) {
+            $pdo->exec('ALTER TABLE products ADD COLUMN deleted_at TEXT');
+        }
+        $pdo->exec('INSERT OR IGNORE INTO schema_migrations(version) VALUES(12)');
     }
 
     /** Agrega campos a bases ya creadas antes de la prevalidación de pagos. */

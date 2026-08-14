@@ -119,14 +119,12 @@ final class OrderService
                 $orderId = (int) $pdo->lastInsertId();
                 $paymentUrl = $this->publicPaymentUrl($orderId, $uploadToken);
                 $this->insertOrderItems($pdo, $orderId, $resolvedItems);
-                if ($paymentMethod === 'cash') {
-                    $this->reserveCashItems(
-                        $pdo,
-                        $orderId,
-                        $publicNumber,
-                        $resolvedItems
-                    );
-                }
+                $this->reserveCashItems(
+                    $pdo,
+                    $orderId,
+                    $publicNumber,
+                    $resolvedItems
+                );
                 $this->recordEvent(
                     $pdo,
                     $orderId,
@@ -185,7 +183,7 @@ final class OrderService
                     'payment_method' => $paymentMethod,
                     'payment_deadline_at' => $deadline,
                     'payment_url' => $paymentUrl,
-                    'stock_reserved' => $paymentMethod === 'cash',
+                    'stock_reserved' => true,
                     'items' => $resolvedItems,
                 ];
             }

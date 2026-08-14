@@ -35,7 +35,7 @@ final class ProductService
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
              JOIN product_variants v ON v.product_id = p.id
-             WHERE p.active = 1 AND v.active = 1
+             WHERE p.active = 1 AND p.deleted_at IS NULL AND v.active = 1
              ORDER BY
                 COALESCE(c.sort_order, 9999),
                 COALESCE(c.name, "Sin categoría"),
@@ -75,7 +75,7 @@ final class ProductService
                 ) AS relevance
              FROM products p
              JOIN product_variants v ON v.product_id = p.id
-             WHERE p.active = 1
+             WHERE p.active = 1 AND p.deleted_at IS NULL
                AND v.active = 1
                AND (
                     v.sku LIKE :contains ESCAPE "\\"
@@ -123,6 +123,7 @@ final class ProductService
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
              JOIN product_variants v ON v.product_id = p.id
+             WHERE p.deleted_at IS NULL
              ORDER BY p.active DESC, p.name, v.active DESC, v.sort_order, v.name'
         )->fetchAll();
 
@@ -416,12 +417,15 @@ final class ProductService
         }
         Database::immediate($this->pdo, function (PDO $pdo) use ($ids): void {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
-            $used = $pdo->prepare("SELECT COUNT(*) FROM product_variants v WHERE v.product_id IN ($placeholders) AND (EXISTS (SELECT 1 FROM order_items oi WHERE oi.variant_id = v.id) OR EXISTS (SELECT 1 FROM stock_movements sm WHERE sm.variant_id = v.id))");
-            $used->execute($ids);
-            if ((int) $used->fetchColumn() > 0) {
-                throw new ConflictException('No se puede eliminar un producto con historial de ventas o movimientos de stock. Podés ocultarlo.');
+            $activeOrders = $pdo->prepare("SELECT DISTINCT o.public_number FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN product_variants v ON v.id = oi.variant_id WHERE v.product_id IN ($placeholders) AND o.archived_at IS NULL AND o.status <> 'cancelled' ORDER BY o.id DESC");
+            $activeOrders->execute($ids);
+            $numbers = array_map(static fn (array $row): string => (string) $row['public_number'], $activeOrders->fetchAll());
+            if ($numbers !== []) {
+                throw new ConflictException('No se puede eliminar porque todavía participa de ventas activas: ' . implode(', ', $numbers) . '.');
             }
-            $delete = $pdo->prepare("DELETE FROM products WHERE id IN ($placeholders)");
+            $hideVariants = $pdo->prepare("UPDATE product_variants SET active = 0, updated_at = CURRENT_TIMESTAMP WHERE product_id IN ($placeholders)");
+            $hideVariants->execute($ids);
+            $delete = $pdo->prepare("UPDATE products SET active = 0, deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id IN ($placeholders)");
             $delete->execute($ids);
         });
     }
