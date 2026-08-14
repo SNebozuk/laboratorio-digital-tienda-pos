@@ -230,6 +230,21 @@ try {
             );
             Http::json(['ok' => true]);
 
+        case 'product_visibility':
+            $app['auth']->requireAdmin();
+            $app['products']->setVisibility(
+                is_array($input['product_ids'] ?? null) ? $input['product_ids'] : [],
+                (bool) ($input['active'] ?? false)
+            );
+            Http::json(['ok' => true]);
+
+        case 'product_delete':
+            $app['auth']->requireAdmin();
+            $app['products']->delete(
+                is_array($input['product_ids'] ?? null) ? $input['product_ids'] : []
+            );
+            Http::json(['ok' => true]);
+
         case 'variant_quick_update':
             $user = $app['auth']->requireAdmin();
             $app['products']->quickUpdateVariant(

@@ -393,6 +393,39 @@ final class ProductService
         );
     }
 
+    /** @param list<int> $productIds */
+    public function setVisibility(array $productIds, bool $active): void
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $productIds), static fn (int $id): bool => $id > 0)));
+        if ($ids === []) {
+            throw new ValidationException('Seleccioná al menos un producto.');
+        }
+        Database::immediate($this->pdo, function (PDO $pdo) use ($ids, $active): void {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $statement = $pdo->prepare("UPDATE products SET active = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN ($placeholders)");
+            $statement->execute([$active ? 1 : 0, ...$ids]);
+        });
+    }
+
+    /** @param list<int> $productIds */
+    public function delete(array $productIds): void
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $productIds), static fn (int $id): bool => $id > 0)));
+        if ($ids === []) {
+            throw new ValidationException('Seleccioná al menos un producto.');
+        }
+        Database::immediate($this->pdo, function (PDO $pdo) use ($ids): void {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $used = $pdo->prepare("SELECT COUNT(*) FROM product_variants v WHERE v.product_id IN ($placeholders) AND (EXISTS (SELECT 1 FROM order_items oi WHERE oi.variant_id = v.id) OR EXISTS (SELECT 1 FROM stock_movements sm WHERE sm.variant_id = v.id))");
+            $used->execute($ids);
+            if ((int) $used->fetchColumn() > 0) {
+                throw new ConflictException('No se puede eliminar un producto con historial de ventas o movimientos de stock. Podés ocultarlo.');
+            }
+            $delete = $pdo->prepare("DELETE FROM products WHERE id IN ($placeholders)");
+            $delete->execute($ids);
+        });
+    }
+
     /**
      * Asigna un código leído en el mostrador a una variante concreta.
      * La restricción UNIQUE de la base impide que el mismo código apunte a

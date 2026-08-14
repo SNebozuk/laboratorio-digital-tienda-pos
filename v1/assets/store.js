@@ -339,8 +339,7 @@
             ? categoryAndDescendantSlugs(state.category)
             : null;
         return products.filter(product => (
-            (!visibleCategories || visibleCategories.has(product.category?.slug))
-            && productHasStock(product)
+            !visibleCategories || visibleCategories.has(product.category?.slug)
         ));
     }
 
@@ -350,7 +349,6 @@
             return [];
         }
         return products
-            .filter(productHasStock)
             .map(product => {
                 const localScore = localSearchScore(product, query);
                 const codeMatch = state.remoteSearchIds.has(Number(product.id));

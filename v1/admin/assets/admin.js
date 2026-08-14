@@ -12,6 +12,7 @@
         orderPayment: '',
         orderDateRange: '',
         selectedOrderIds: new Set(),
+        selectedProductIds: new Set(),
         showArchivedOrders: false,
         settings: null,
         sizeGuide: { intro: '', rows: [] },
@@ -537,6 +538,55 @@
         `).join('') : '<p class="empty-copy">No encontramos productos.</p>';
     }
 
+    function selectedProducts() {
+        return state.products.filter(product => state.selectedProductIds.has(Number(product.id)));
+    }
+
+    async function setProductsVisibility(ids, active) {
+        await apiPost({ action: 'product_visibility', product_ids: ids, active });
+        await loadProducts();
+        toast(active ? 'Productos visibles en tienda y PDV.' : 'Productos ocultos de tienda y PDV.');
+    }
+
+    async function deleteProducts(ids) {
+        if (!window.confirm(`¿Eliminar ${ids.length === 1 ? 'el producto seleccionado' : `los ${ids.length} productos seleccionados`}? Esta acción no se puede deshacer.`)) return;
+        await apiPost({ action: 'product_delete', product_ids: ids });
+        ids.forEach(id => state.selectedProductIds.delete(Number(id)));
+        await loadProducts();
+        toast('Productos eliminados.');
+    }
+
+    function renderProducts() {
+        if (!elements.productList) return;
+        const query = fold(elements.productSearch?.value || '');
+        const products = state.products.filter(product => productSearchText(product).includes(query));
+        const selectedCount = products.filter(product => state.selectedProductIds.has(Number(product.id))).length;
+        const allSelected = products.length > 0 && selectedCount === products.length;
+        elements.productList.innerHTML = products.length ? `
+            <div class="product-bulk-toolbar">
+                <span>${selectedCount ? `${selectedCount} ${selectedCount === 1 ? 'producto seleccionado' : 'productos seleccionados'}` : 'Seleccioná productos para realizar una acción'}</span>
+                <select data-bulk-product-action ${selectedCount ? '' : 'disabled'} aria-label="Acciones sobre productos seleccionados">
+                    <option value="">ACCIONES</option><option value="show">Mostrar Productos</option><option value="hide">Ocultar Productos</option><option value="delete">Eliminar Productos</option>
+                </select>
+            </div>
+            <div class="product-list-table" role="table" aria-label="Listado de productos">
+                <div class="product-list-head" role="row"><span><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''} aria-label="Seleccionar todos los productos mostrados"></span><span>Producto</span><span>Categoría</span><span>Variantes</span><span>Stock</span><span>Precio</span><span>Estado</span><span></span></div>
+                ${products.map(product => {
+                    const stock = product.variants.reduce((total, variant) => total + Number(variant.available_stock || 0), 0);
+                    return `<div class="product-list-row ${product.active ? '' : 'is-hidden'}" role="row">
+                        <span><input type="checkbox" data-select-product="${Number(product.id)}" ${state.selectedProductIds.has(Number(product.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(product.name)}"></span>
+                        <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong><small>${product.active ? 'Visible en tienda y PDV' : 'Oculto de tienda y PDV'}</small></span></button>
+                        <span class="product-table-category">${escapeHtml(product.category?.name || 'Sin categoría')}</span>
+                        <button class="product-table-link" type="button" data-edit-product="${Number(product.id)}">${product.variants.length} ${product.variants.length === 1 ? 'variante' : 'variantes'}</button>
+                        <strong class="product-table-stock ${stock > 0 ? '' : 'is-empty'}">${stock > 0 ? `${stock} disponibles` : 'Agotado'}</strong>
+                        <strong>${adminProductPrice(product)}</strong>
+                        <span class="product-visibility ${product.active ? 'is-visible' : 'is-hidden'}">${product.active ? 'Visible' : 'Oculto'}</span>
+                        <div class="product-table-actions"><button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace">&#128279;</button><button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button></div>
+                    </div>`;
+                }).join('')}
+            </div>` : '<p class="empty-copy">No encontramos productos.</p>';
+    }
+
     function variantFormRow(variant = {}) {
         return `
             <div class="variant-form-row" data-variant-row data-variant-id="${Number(variant.id || 0)}">
@@ -625,6 +675,7 @@
                     <button class="secondary-button" type="button" data-add-variant>+ VARIANTE</button>
                     <button class="primary-button fit-button" type="submit">GUARDAR PRODUCTO</button>
                 </div>
+                ${product ? `<div class="product-form-actions"><button type="button" data-product-visibility="show" data-product-id="${Number(product.id)}">Mostrar producto</button><button type="button" data-product-visibility="hide" data-product-id="${Number(product.id)}">Ocultar producto</button><button type="button" class="danger-button" data-delete-product="${Number(product.id)}">Eliminar producto</button></div>` : ''}
             </form>
         `);
     }
@@ -2888,6 +2939,19 @@
             showProductForm(product);
             return;
         }
+        const productVisibility = event.target.closest('[data-product-visibility]');
+        if (productVisibility) {
+            setProductsVisibility(
+                [Number(productVisibility.dataset.productId)],
+                productVisibility.dataset.productVisibility === 'show'
+            ).then(closeModal).catch(error => toast(error.message));
+            return;
+        }
+        const deleteProduct = event.target.closest('[data-delete-product]');
+        if (deleteProduct) {
+            deleteProducts([Number(deleteProduct.dataset.deleteProduct)]).then(closeModal).catch(error => toast(error.message));
+            return;
+        }
         const duplicate = event.target.closest('[data-duplicate-product]');
         if (duplicate) {
             duplicateProduct(Number(duplicate.dataset.duplicateProduct));
@@ -3080,6 +3144,33 @@
     });
 
     document.addEventListener('change', event => {
+        if (event.target.matches('[data-select-product]')) {
+            const id = Number(event.target.dataset.selectProduct);
+            if (event.target.checked) state.selectedProductIds.add(id);
+            else state.selectedProductIds.delete(id);
+            renderProducts();
+            return;
+        }
+        if (event.target.id === 'select-all-products') {
+            const query = fold(elements.productSearch?.value || '');
+            const matching = state.products.filter(product => productSearchText(product).includes(query));
+            matching.forEach(product => {
+                if (event.target.checked) state.selectedProductIds.add(Number(product.id));
+                else state.selectedProductIds.delete(Number(product.id));
+            });
+            renderProducts();
+            return;
+        }
+        if (event.target.matches('[data-bulk-product-action]') && event.target.value) {
+            const action = event.target.value;
+            const ids = selectedProducts().map(product => Number(product.id));
+            event.target.value = '';
+            if (!ids.length) return;
+            if (action === 'show') setProductsVisibility(ids, true).catch(error => toast(error.message));
+            if (action === 'hide') setProductsVisibility(ids, false).catch(error => toast(error.message));
+            if (action === 'delete') deleteProducts(ids).catch(error => toast(error.message));
+            return;
+        }
         if (event.target.matches('[data-select-order]')) {
             setOrderSelection(
                 Number(event.target.dataset.selectOrder),

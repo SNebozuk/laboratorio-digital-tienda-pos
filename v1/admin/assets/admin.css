@@ -2506,6 +2506,51 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 .product-admin-actions { gap: 6px; }
 
+/* Tabla operativa del catálogo, consistente con la lista de ventas. */
+.product-bulk-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 10px;
+    padding: 11px 14px;
+    border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    background: #fff;
+    color: #667085;
+    font-size: 13px;
+}
+.product-bulk-toolbar select { min-width: 190px; }
+.product-list-table { overflow: auto; border: 1px solid #e2e6ef; border-radius: 14px; background: #fff; }
+.product-list-head, .product-list-row {
+    display: grid;
+    grid-template-columns: 36px minmax(250px, 2fr) minmax(120px, .8fr) 100px 125px 145px 82px minmax(120px, auto);
+    align-items: center;
+    column-gap: 14px;
+    min-width: 1040px;
+}
+.product-list-head { min-height: 48px; padding: 0 14px; border-bottom: 1px solid #e2e6ef; color: #667085; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.product-list-row { min-height: 78px; padding: 10px 14px; border-bottom: 1px solid #edf0f5; color: #303747; font-size: 13px; }
+.product-list-row:last-child { border-bottom: 0; }
+.product-list-row.is-hidden { background: #fafafd; }
+.product-list-row input[type="checkbox"], .product-list-head input[type="checkbox"] { width: 18px; height: 18px; accent-color: #5b4fc7; cursor: pointer; }
+.product-table-name { display: flex; align-items: center; min-width: 0; gap: 11px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.product-table-name .product-admin-image, .product-table-name .product-admin-placeholder { flex: 0 0 46px; width: 46px; height: 46px; }
+.product-table-name span { min-width: 0; }
+.product-table-name strong { display: block; overflow: hidden; color: #303747; font-size: 13px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.product-table-name small { display: block; margin-top: 3px; color: #7a8293; font-size: 11px; }
+.product-table-link { border: 0; background: transparent; color: #5b4fc7; font: inherit; font-weight: 720; cursor: pointer; text-align: left; }
+.product-table-category { overflow: hidden; color: #667085; text-overflow: ellipsis; white-space: nowrap; }
+.product-table-stock { color: #20743d; white-space: nowrap; }
+.product-table-stock.is-empty { color: #bd3a3a; }
+.product-visibility { justify-self: start; padding: 4px 8px; border-radius: 99px; font-size: 11px; font-weight: 760; }
+.product-visibility.is-visible { background: #e8f7ed; color: #19713a; }
+.product-visibility.is-hidden { background: #f0f1f5; color: #6e7482; }
+.product-table-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.product-form-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 22px; padding-top: 16px; border-top: 1px solid #e2e6ef; }
+.product-form-actions button { padding: 0; border: 0; background: transparent; color: #5b4fc7; font: inherit; font-weight: 720; cursor: pointer; }
+.product-form-actions .danger-button { color: #bd3a3a; }
+
 .variant-admin-row {
     grid-template-columns: minmax(200px, 1fr) 150px 136px 124px;
     padding: 13px 16px;
@@ -2611,6 +2656,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .product-admin-variant-count, .product-admin-price { display: none; }
     .order-list-head, .order-list-row { grid-template-columns: 36px minmax(150px, 1fr) minmax(100px, .5fr) 26px; }
     .order-list-head > :nth-child(4), .order-list-head > :nth-child(5), .order-list-head > :nth-child(6), .order-list-row > :nth-child(4), .order-list-row > :nth-child(5), .order-list-row > :nth-child(6) { display: none; }
+}
+
+@media (max-width: 680px) {
+    .product-bulk-toolbar { align-items: stretch; flex-direction: column; }
+    .product-bulk-toolbar select { width: 100%; }
 }
 
 @media (max-width: 760px) {
