@@ -3582,7 +3582,7 @@
     if (app.user) {
         loadProducts();
         renderPosCart();
-        window.setInterval(refreshPosAvailability, 5000);
+        window.setInterval(refreshPosAvailability, 2000);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 refreshPosAvailability();

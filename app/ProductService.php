@@ -259,6 +259,7 @@ final class ProductService
                              image_path = :image_path,
                              price_cents = :price_cents,
                              stock_on_hand = :stock_on_hand,
+                             stock_reserved = CASE WHEN :reset_stock_reservations = 1 THEN 0 ELSE stock_reserved END,
                              min_stock = :min_stock,
                              sort_order = :sort_order,
                              active = :active,
@@ -272,6 +273,7 @@ final class ProductService
                         'image_path' => $variant['image_path'],
                         'price_cents' => $variant['price_cents'],
                         'stock_on_hand' => $variant['stock_on_hand'],
+                        'reset_stock_reservations' => $variant['reset_stock_reservations'] ? 1 : 0,
                         'min_stock' => $variant['min_stock'],
                         'sort_order' => $sort,
                         'active' => $variant['active'] ? 1 : 0,
@@ -367,12 +369,14 @@ final class ProductService
                     'UPDATE product_variants
                      SET price_cents = :price_cents,
                          stock_on_hand = :stock_on_hand,
+                         stock_reserved = CASE WHEN :reset_stock_reservations = 1 THEN 0 ELSE stock_reserved END,
                          updated_at = CURRENT_TIMESTAMP
                      WHERE id = :id'
                 );
                 $update->execute([
                     'price_cents' => $priceCents,
                     'stock_on_hand' => $stockOnHand,
+                    'reset_stock_reservations' => $resetReservations ? 1 : 0,
                     'id' => $variantId,
                 ]);
 
