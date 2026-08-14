@@ -381,6 +381,18 @@ try {
             $app['auth']->requireAdmin();
             Http::json(['ok' => true, 'result' => $app['products']->prepareCatalogImport()]);
 
+        case 'catalog_import':
+            $user = $app['auth']->requireAdmin();
+            $records = is_array($input['products'] ?? null) ? $input['products'] : [];
+            foreach ($records as &$record) {
+                if (!is_array($record)) continue;
+                $sourceImage = trim((string) ($record['tiendanube_image'] ?? ''));
+                if ($sourceImage !== '') $record['image_path'] = $app['product_images']->receiveTiendaNubeImage($sourceImage)['image_path'];
+                unset($record['tiendanube_image']);
+            }
+            unset($record);
+            Http::json(['ok' => true, 'created' => $app['products']->importCatalog($records, (int) $user['id'])], 201);
+
         case 'settings_update':
             $app['auth']->requireAdmin();
             Http::json([

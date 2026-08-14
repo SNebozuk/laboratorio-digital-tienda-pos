@@ -50,6 +50,38 @@ final class ProductImageService
         ];
     }
 
+    /** @return array{image_path: string, size_bytes: int, mime_type: string} */
+    public function receiveTiendaNubeImage(string $url): array
+    {
+        $parts = parse_url($url);
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        if (($parts['scheme'] ?? '') !== 'https' || !str_ends_with($host, '.mitiendanube.com')) {
+            throw new ValidationException('La foto de importación debe provenir de Tiendanube.');
+        }
+        $context = stream_context_create(['http' => ['timeout' => 15, 'follow_location' => 0], 'https' => ['timeout' => 15, 'follow_location' => 0]]);
+        $bytes = @file_get_contents($url, false, $context);
+        if ($bytes === false || strlen($bytes) < 1 || strlen($bytes) > 8 * 1024 * 1024) {
+            throw new ValidationException('No se pudo descargar una foto de Tiendanube.');
+        }
+        $temporary = tempnam(sys_get_temp_dir(), 'ld-image-');
+        if ($temporary === false || file_put_contents($temporary, $bytes) === false) throw new \RuntimeException('No se pudo preparar la foto importada.');
+        try {
+            $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->file($temporary);
+            $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+            if (!isset($extensions[$mime]) || @getimagesize($temporary) === false) throw new ValidationException('Una foto de Tiendanube no es válida.');
+            $relativeDirectory = date('Y/m');
+            $directory = $this->storageRoot() . '/' . $relativeDirectory;
+            if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) throw new \RuntimeException('No se pudo crear la carpeta de fotos.');
+            $filename = bin2hex(random_bytes(24)) . '.' . $extensions[$mime];
+            $destination = $directory . '/' . $filename;
+            if (!rename($temporary, $destination)) throw new \RuntimeException('No se pudo guardar la foto importada.');
+            @chmod($destination, 0644);
+            return ['image_path' => $this->publicRoot() . '/' . $relativeDirectory . '/' . $filename, 'size_bytes' => strlen($bytes), 'mime_type' => $mime];
+        } finally {
+            if (is_file($temporary)) @unlink($temporary);
+        }
+    }
+
     /**
      * @param array<string, mixed> $upload
      * @return array{tmp_name: string, mime_type: string, size_bytes: int, extension: string}

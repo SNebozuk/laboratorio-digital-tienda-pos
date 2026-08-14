@@ -496,6 +496,18 @@ final class ProductService
         });
     }
 
+    /** @param list<array<string, mixed>> $records */
+    public function importCatalog(array $records, int $actorUserId): int
+    {
+        if ($records === [] || count($records) > 100) throw new ValidationException('La importación no contiene productos válidos.');
+        $created = 0;
+        foreach ($records as $record) {
+            $this->create($record, $actorUserId);
+            $created++;
+        }
+        return $created;
+    }
+
     /**
      * Asigna un código leído en el mostrador a una variante concreta.
      * La restricción UNIQUE de la base impide que el mismo código apunte a
