@@ -26,6 +26,13 @@ function receiptMoney(int $cents): string
     return '$ ' . number_format($cents / 100, 0, ',', '.');
 }
 $unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['quantity'], $order['items']));
+$items = $order['items'];
+usort($items, static function (array $first, array $second): int {
+    $byProduct = strnatcasecmp((string) $first['product_name'], (string) $second['product_name']);
+    return $byProduct !== 0
+        ? $byProduct
+        : strnatcasecmp((string) $first['variant_name'], (string) $second['variant_name']);
+});
 $receiptAssetVersion = substr(hash(
     'sha256',
     (string) @file_get_contents(__DIR__ . '/assets/receipt.css')
@@ -64,18 +71,23 @@ $receiptAssetVersion = substr(hash(
         <table>
             <thead>
                 <tr>
-                    <th>OK</th><th>Producto</th>
-                    <th>Cant.</th>
-                    <th>Subtotal</th>
+                    <th>OK</th>
+                    <th>Producto a preparar</th>
+                    <th>Cantidad</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($order['items'] as $item): ?>
+                <?php foreach ($items as $item): ?>
                     <tr>
                         <td class="check-cell"><span class="check-box"></span></td>
-                        <td><div class="receipt-product"><?php if (!empty($item['image_path'])): ?><img src="<?= receiptText($item['image_path']) ?>" alt=""><?php endif ?><span><strong><?= receiptText($item['product_name']) ?></strong><small><?= receiptText($item['variant_name']) ?> · SKU: <?= receiptText($item['sku']) ?></small></span></div></td>
-                        <td class="quantity"><?= (int) $item['quantity'] ?></td>
-                        <td><?= receiptMoney((int) $item['line_total_cents']) ?></td>
+                        <td class="receipt-product">
+                            <strong><?= receiptText($item['product_name']) ?></strong>
+                            <?php if (preg_match('/^única$/iu', trim((string) $item['variant_name'])) !== 1): ?>
+                                <span class="receipt-variant"><?= receiptText($item['variant_name']) ?></span>
+                            <?php endif ?>
+                            <small>SKU: <?= receiptText($item['sku']) ?> · <?= receiptMoney((int) $item['unit_price_cents']) ?> c/u</small>
+                        </td>
+                        <td class="quantity"><strong><?= (int) $item['quantity'] ?></strong><small><?= (int) $item['quantity'] === 1 ? 'UNIDAD' : 'UNIDADES' ?></small></td>
                     </tr>
                 <?php endforeach ?>
             </tbody>

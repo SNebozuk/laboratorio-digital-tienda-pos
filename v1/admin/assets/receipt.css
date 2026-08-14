@@ -57,28 +57,27 @@ table {
 
 th,
 td {
-    padding: 10px 8px;
-    border-bottom: 1px solid #ddd;
+    padding: 15px 10px;
+    border-bottom: 2px solid #b9b9b9;
     text-align: left;
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 th {
     font-size: 10px;
     text-transform: uppercase;
 }
-
-th:not(:first-child),
-td:not(:first-child) {
-    text-align: right;
-}
+th:last-child { text-align: center; }
 
 .check-cell { width: 42px; text-align: center !important; }
-.check-box { display: inline-block; width: 21px; height: 21px; border: 2px solid #111; border-radius: 4px; }
-.receipt-product { display: flex; align-items: center; gap: 10px; }
-.receipt-product img { width: 48px; height: 48px; border: 1px solid #ddd; border-radius: 6px; object-fit: cover; }
-.receipt-product small { display: block; margin-top: 3px; }
-.quantity { font-size: 25px; font-weight: 800; text-align: center !important; }
+.check-box { display: inline-block; width: 25px; height: 25px; border: 2px solid #111; border-radius: 4px; }
+.receipt-product { min-width: 0; }
+.receipt-product strong { display: block; font-size: 19px; line-height: 1.18; text-transform: uppercase; }
+.receipt-product .receipt-variant { display: block; margin-top: 6px; font-size: 15px; font-weight: 800; }
+.receipt-product small { display: block; margin-top: 7px; font-size: 10px; font-weight: 600; }
+.quantity { width: 130px; text-align: center !important; }
+.quantity strong { display: block; font-size: 38px; font-weight: 900; line-height: 1; }
+.quantity small { display: block; margin-top: 5px; color: #111; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
 
 small,
 .footer {
@@ -115,10 +114,8 @@ small,
     .receipt-logo-text strong { font-size: 11px; }
     .receipt-logo-text span { font-size: 8px; }
 
-    th:nth-child(4),
-    td:nth-child(4) {
-        display: none;
-    }
+    .receipt-product strong { font-size: 17px; }
+    .quantity { width: 96px; }
 }
 
 @media print {
@@ -138,5 +135,5 @@ small,
         padding: 0;
     }
 
-    .receipt-product img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
 }

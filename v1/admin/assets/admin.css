@@ -1645,6 +1645,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 8px;
+    margin-right: 54px;
 }
 
 .order-detail-meta {
