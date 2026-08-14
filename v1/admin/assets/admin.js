@@ -875,8 +875,8 @@
                     : `<span class="pos-result-meta">${singleRemaining > 0 ? `${singleRemaining} disponibles` : '<span class="stock-zero">AGOTADO</span>'}</span>`}
                 <span class="pos-product-price">${posProductPrice(product)}</span>
                 ${hasVariants
-                    ? `<button class="pos-result-action pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}">${expanded ? '‹' : '›'}</button>`
-                    : `<button class="pos-result-action pos-add-one" type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity + 1}" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(product.name)}">+</button>`}
+                    ? `<button class="pos-result-action pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}"><span aria-hidden="true">${expanded ? '‹' : '›'}</span></button>`
+                    : `<button class="pos-result-action pos-add-one" type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity + 1}" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(product.name)}"><span aria-hidden="true">+</span></button>`}
                 ${hasVariants ? `<div class="pos-result-variants">${variants.map(variant => {
                         const quantity = posQuantity(variant.id);
                         const remaining = Math.max(
