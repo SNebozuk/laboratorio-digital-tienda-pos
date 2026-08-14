@@ -18,6 +18,7 @@
         cart: new Map(),
         order: null,
         changedAvailability: new Set(),
+        reducedAvailability: new Set(),
     };
 
     let codeSearchController = null;
@@ -207,15 +208,20 @@
             }
             const previousAvailability = availabilitySnapshot(products);
             const changedVariantIds = new Set();
+            const reducedVariantIds = new Set();
             data.products.forEach(product => product.variants.forEach(variant => {
                 const id = Number(variant.id);
                 if (previousAvailability.has(id)
                     && previousAvailability.get(id) !== Number(variant.available_stock || 0)) {
                     changedVariantIds.add(id);
+                    if (Number(variant.available_stock || 0) < previousAvailability.get(id)) {
+                        reducedVariantIds.add(id);
+                    }
                 }
             }));
             products = data.products;
             state.changedAvailability = changedVariantIds;
+            state.reducedAvailability = reducedVariantIds;
             if (Array.isArray(data.categories)) {
                 categoryTree = data.categories;
             }
@@ -616,7 +622,7 @@
             ? `${product.variants.length} variantes`
             : exactAvailableLabel(visibleAvailable(singleVariant));
         return `
-            <article class="catalog-product-summary unified-product-row ${product.variants.some(variant => state.changedAvailability.has(Number(variant.id))) ? 'availability-changed' : ''}" role="listitem">
+            <article class="catalog-product-summary unified-product-row ${product.variants.some(variant => state.changedAvailability.has(Number(variant.id))) ? 'availability-changed' : ''} ${product.variants.some(variant => state.reducedAvailability.has(Number(variant.id))) ? 'availability-conflict' : ''}" role="listitem">
                 <div class="unified-product-media">${productImage(product, 'summary-product-image')}</div>
                 <button
                     class="summary-product-title"
@@ -684,7 +690,7 @@
                         const available = visibleAvailable(variant);
                         const name = variantDisplayName(product, variant);
                         return `
-                            <div class="opened-variant-row ${available ? '' : 'out-of-stock'} ${state.changedAvailability.has(Number(variant.id)) ? 'availability-changed' : ''}" role="listitem">
+                            <div class="opened-variant-row ${available ? '' : 'out-of-stock'} ${state.changedAvailability.has(Number(variant.id)) ? 'availability-changed' : ''} ${state.reducedAvailability.has(Number(variant.id)) ? 'availability-conflict' : ''}" role="listitem">
                                 <div>${productImage(product, 'opened-variant-image')}</div>
                                 ${name
                                     ? `<strong class="opened-variant-name">${escapeHtml(name)}</strong>`
@@ -813,7 +819,7 @@
             ? 'CONTINUAR PEDIDO'
             : 'PEDIDOS PRÓXIMAMENTE';
         elements.cartLines.innerHTML = items.length ? items.map(item => `
-            <div class="cart-line">
+            <div class="cart-line ${state.reducedAvailability.has(Number(item.variant.id)) ? 'availability-conflict' : ''}">
                 <div class="cart-line-head">
                     <div class="cart-product-main">
                         ${productImage(item.product, 'cart-product-image')}

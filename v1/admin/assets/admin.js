@@ -29,6 +29,7 @@
         barcodeOriginalValue: '',
         posCartRestored: false,
         posChangedAvailability: new Set(),
+        posStockConflicts: new Set(),
         editOrder: null,
         view: 'products',
     };
@@ -294,6 +295,30 @@
             }
         } catch {
             // La próxima comprobación vuelve a intentar sin interrumpir la venta.
+        }
+    }
+
+    async function markPosStockConflicts() {
+        try {
+            const data = await apiGet('admin_products');
+            state.products = data.products;
+            const index = variantIndex();
+            const conflicts = new Set();
+            state.posCart.forEach((quantity, variantId) => {
+                const available = Number(index.get(Number(variantId))?.variant.available_stock || 0);
+                if (Number(quantity) > available) {
+                    conflicts.add(Number(variantId));
+                }
+            });
+            state.posStockConflicts = conflicts;
+            state.posChangedAvailability = conflicts;
+            renderPos();
+            renderPosCart();
+            if (conflicts.size) {
+                toast('Cambió la disponibilidad: los productos marcados en rojo ya no alcanzan para esta venta.');
+            }
+        } catch {
+            toast('No pudimos actualizar la disponibilidad. Intentá finalizar nuevamente.');
         }
     }
 
@@ -955,6 +980,9 @@
         } else {
             state.posCart.delete(Number(variantId));
         }
+        if (quantity <= max) {
+            state.posStockConflicts.delete(Number(variantId));
+        }
         persistPosCart();
         renderPos();
         renderPosCart();
@@ -994,7 +1022,7 @@
                 const singleQuantity = single ? posQuantity(single.id) : 0;
                 const singleRemaining = single ? Math.max(0, Number(single.available_stock) - singleQuantity) : 0;
                 return `
-            <article class="pos-product pos-result-product ${expanded ? 'pos-expanded' : ''} ${product.variants.some(variant => state.posChangedAvailability.has(Number(variant.id))) ? 'availability-changed' : ''}">
+            <article class="pos-product pos-result-product ${expanded ? 'pos-expanded' : ''} ${product.variants.some(variant => state.posChangedAvailability.has(Number(variant.id))) ? 'availability-changed' : ''} ${product.variants.some(variant => state.posStockConflicts.has(Number(variant.id))) ? 'stock-conflict' : ''}">
                 ${safeImage(product.image_path)
                     ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="${escapeHtml(product.name)}">`
                     : '<div class="pos-product-placeholder">SIN FOTO</div>'}
@@ -1017,7 +1045,7 @@
                             Number(variant.available_stock) - quantity
                         );
                         return `
-                            <div class="pos-variant-row ${state.posChangedAvailability.has(Number(variant.id)) ? 'availability-changed' : ''}">
+                            <div class="pos-variant-row ${state.posChangedAvailability.has(Number(variant.id)) ? 'availability-changed' : ''} ${state.posStockConflicts.has(Number(variant.id)) ? 'stock-conflict' : ''}">
                                 <span class="pos-variant-name">
                                     ${variantDisplayName(product, variant)
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
@@ -1053,7 +1081,7 @@
         elements.completeSale.disabled = items.length === 0;
         elements.posClearCart.disabled = items.length === 0;
         elements.posCartLines.innerHTML = items.length ? items.map(item => `
-            <div class="cart-line pos-cart-detail-row">
+            <div class="cart-line pos-cart-detail-row ${state.posStockConflicts.has(Number(item.variantId)) ? 'stock-conflict' : ''}">
                 <div class="pos-cart-product">
                     <strong>${escapeHtml(item.product.name)}</strong>
                     ${variantDisplayName(item.product, item.variant)
@@ -1323,6 +1351,7 @@
                 payment_method: 'pos',
             });
             const sale = data.order;
+            state.posStockConflicts.clear();
             state.posCart.clear();
             persistPosCart();
             await loadProducts();
@@ -1330,6 +1359,7 @@
             return sale;
         } catch (error) {
             toast(error.message);
+            await markPosStockConflicts();
             return null;
         } finally {
             elements.completeSale.disabled = state.posCart.size === 0;
@@ -1359,6 +1389,13 @@
                 </div>
             </div>
         `);
+    }
+
+    async function finishPosSaleDirectly() {
+        const sale = await createPosSale();
+        if (sale) {
+            toast(`Venta ${sale.public_number} registrada en la lista de ventas.`);
+        }
     }
 
     async function cancelPosSale(orderId) {
@@ -3453,7 +3490,7 @@
             closePosSuggestions();
         }
     });
-    elements.completeSale?.addEventListener('click', showPosCheckoutMenu);
+    elements.completeSale?.addEventListener('click', finishPosSaleDirectly);
     elements.categoryTree?.addEventListener('dragstart', event => {
         const row = event.target.closest('[data-category-row]');
         if (!row) return;

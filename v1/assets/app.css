@@ -3365,6 +3365,16 @@ body.category-menu-open .category-panel {
     box-shadow: 0 0 0 3px rgba(215,154,37,.18) !important;
     animation: availability-pulse 1.4s ease-in-out 3;
 }
+.catalog-product-summary.availability-conflict,
+.opened-variant-row.availability-conflict,
+.cart-line.availability-conflict {
+    border-color: #d74444 !important;
+    background: #fff1f1 !important;
+    box-shadow: 0 0 0 3px rgba(215,68,68,.15) !important;
+}
+.availability-conflict .summary-product-title strong,
+.availability-conflict .opened-variant-name,
+.availability-conflict .cart-product-main strong { color: #b62d2d !important; }
 @keyframes availability-pulse { 50% { box-shadow: 0 0 0 6px rgba(215,154,37,.10) !important; } }
 .summary-variant-count, .summary-product-chevron, .opened-product-back { color: var(--accent) !important; background: #e6f4e9 !important; border-color: #b9dbbf !important; }
 .summary-product-price, .opened-variant-price { color: var(--text) !important; }
