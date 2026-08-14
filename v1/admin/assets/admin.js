@@ -700,7 +700,7 @@
         const selectedCount = state.selectedProductIds.size;
         const visibleSelectedCount = products.filter(product => state.selectedProductIds.has(Number(product.id))).length;
         const allSelected = products.length > 0 && visibleSelectedCount === products.length;
-        elements.productList.innerHTML = products.length ? `
+        const toolbar = `
             <div class="product-bulk-toolbar">
                 <label class="product-select-all"><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''}> <span>Seleccionar todo</span></label>
                 <span class="product-selection-count">${selectedCount ? `${selectedCount} ${selectedCount === 1 ? 'producto seleccionado' : 'productos seleccionados'}` : '0 productos seleccionados'}</span>
@@ -708,7 +708,8 @@
                     <option value="">ACCIONES</option><option value="show">Mostrar Productos</option><option value="hide">Ocultar Productos</option><option value="delete">Eliminar Productos</option>
                 </select>
                 <button class="secondary-button" type="button" data-open-product-filters>FILTRAR${state.productCategoryId || state.productAvailability || state.productVisibility ? ' · ACTIVO' : ''}</button>
-            </div>
+            </div>`;
+        elements.productList.innerHTML = `${toolbar}${products.length ? `
             <div class="product-list-table" role="table" aria-label="Listado de productos">
                 <div class="product-list-head" role="row"><span></span><span>Producto y variantes</span><span>Stock</span><span>Precio</span><span></span></div>
                 ${products.map(product => {
@@ -732,7 +733,7 @@
                         </div>`;
                     }).join('') : ''}`;
                 }).join('')}
-            </div>` : '<p class="empty-copy">No encontramos productos.</p>';
+            </div>` : '<p class="empty-copy">No encontramos productos con esos filtros.</p>'}`;
     }
 
     function variantFormRow(variant = {}, single = false) {
