@@ -106,17 +106,7 @@ final class MailService
         }
         $from = (string) $this->config['mail_from'];
         if (($this->config['mail_transport'] ?? 'smtp') === 'native') {
-            $cleanSubject = trim(str_replace(["\r", "\n"], '', $subject));
-            $headers = [
-                'MIME-Version: 1.0',
-                'Content-Type: text/html; charset=UTF-8',
-                'From: Laboratorio Digital <' . $from . '>',
-                'Reply-To: ' . (string) ($this->config['mail_reply_to'] ?? $from),
-                'X-Mailer: Laboratorio Digital',
-            ];
-            if (!@mail($recipient, $cleanSubject, $html, implode("\r\n", $headers), '-f' . $from)) {
-                throw new \RuntimeException('El servidor no pudo entregar el aviso interno.');
-            }
+            $this->sendNative($recipient, $subject, $html);
             return;
         }
 
@@ -127,7 +117,12 @@ final class MailService
         $password = (string) $this->config['mail_smtp_password'];
         $target = ($encryption === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
         $socket = @stream_socket_client($target, $errno, $error, 20, STREAM_CLIENT_CONNECT);
-        if (!is_resource($socket)) throw new \RuntimeException('No se pudo conectar al SMTP: ' . $error);
+        if (!is_resource($socket)) {
+            // En algunos planes compartidos el servidor bloquea conexiones SMTP
+            // hacia sí mismo. El MTA local de Ferozo mantiene el mismo remitente.
+            $this->sendNative($recipient, $subject, $html);
+            return;
+        }
         stream_set_timeout($socket, 20);
 
         try {
@@ -166,6 +161,22 @@ final class MailService
             $this->command($socket, 'QUIT', [221]);
         } finally {
             fclose($socket);
+        }
+    }
+
+    private function sendNative(string $recipient, string $subject, string $html): void
+    {
+        $from = (string) $this->config['mail_from'];
+        $cleanSubject = trim(str_replace(["\r", "\n"], '', $subject));
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=UTF-8',
+            'From: Laboratorio Digital <' . $from . '>',
+            'Reply-To: ' . (string) ($this->config['mail_reply_to'] ?? $from),
+            'X-Mailer: Laboratorio Digital',
+        ];
+        if (!@mail($recipient, $cleanSubject, $html, implode("\r\n", $headers), '-f' . $from)) {
+            throw new \RuntimeException('El servidor no pudo entregar el aviso interno.');
         }
     }
 
