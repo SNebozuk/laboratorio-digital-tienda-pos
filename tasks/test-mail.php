@@ -21,10 +21,15 @@ $app = require $projectRoot . '/app/container.php';
 $app['pdo']->prepare("DELETE FROM mail_queue WHERE subject = 'Prueba de avisos · Laboratorio Digital'")->execute();
 $send = new ReflectionMethod($app['mail'], 'send');
 $send->setAccessible(true);
-$send->invoke(
-    $app['mail'],
-    (string) $config['sales_notification_email'],
-    'Prueba de avisos · Laboratorio Digital',
-    '<p>La configuración de avisos internos funciona correctamente.</p>'
-);
-echo json_encode(['sent' => true], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+try {
+    $send->invoke(
+        $app['mail'],
+        (string) $config['sales_notification_email'],
+        'Prueba de avisos · Laboratorio Digital',
+        '<p>La configuración de avisos internos funciona correctamente.</p>'
+    );
+    echo json_encode(['sent' => true], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+} catch (Throwable $exception) {
+    http_response_code(500);
+    echo json_encode(['sent' => false, 'error' => $exception->getMessage()], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+}
