@@ -46,7 +46,7 @@ final class OrderService
             throw new ValidationException('Elegí transferencia o efectivo como forma de pago.');
         }
 
-        $customerName = trim((string) ($customer['name'] ?? ''));
+        $customerName = $this->normalizeCustomerName((string) ($customer['name'] ?? ''));
         // Los pedidos se identifican por nombre y WhatsApp; no se conserva ni
         // utiliza correo del cliente para comunicaciones.
         $customerEmail = null;
@@ -206,7 +206,7 @@ final class OrderService
         int $actorUserId
     ): array {
         $quantities = $this->normalizeItems($items);
-        $customerName = trim($customerName) ?: 'Consumidor final';
+        $customerName = $this->normalizeCustomerName($customerName) ?: 'Consumidor final';
         $paymentMethod = trim($paymentMethod);
         if ($paymentMethod === '') {
             throw new ValidationException('Elegí un medio de pago.');
@@ -313,6 +313,22 @@ final class OrderService
                 ];
             }
         );
+    }
+
+    private function normalizeCustomerName(string $value): string
+    {
+        $name = preg_replace('/\s+/u', ' ', trim($value)) ?? '';
+        if ($name === '') {
+            return '';
+        }
+        if (function_exists('mb_convert_case') && function_exists('mb_strtolower')) {
+            return mb_convert_case(
+                mb_strtolower($name, 'UTF-8'),
+                MB_CASE_TITLE,
+                'UTF-8'
+            );
+        }
+        return ucwords(strtolower($name));
     }
 
     /**
