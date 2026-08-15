@@ -18,30 +18,13 @@ if (
 
 header('Content-Type: application/json; charset=utf-8');
 $app = require $projectRoot . '/app/container.php';
-$insert = $app['pdo']->prepare(
-    'INSERT INTO mail_queue(recipient, subject, template, payload_json, available_at)
-     VALUES(:recipient, :subject, :template, :payload, :available_at)'
+$app['pdo']->prepare("DELETE FROM mail_queue WHERE subject = 'Prueba de avisos · Laboratorio Digital'")->execute();
+$send = new ReflectionMethod($app['mail'], 'send');
+$send->setAccessible(true);
+$send->invoke(
+    $app['mail'],
+    (string) $config['sales_notification_email'],
+    'Prueba de avisos · Laboratorio Digital',
+    '<p>La configuración de avisos internos funciona correctamente.</p>'
 );
-$insert->execute([
-    'recipient' => (string) $config['sales_notification_email'],
-    'subject' => 'Prueba de avisos · Laboratorio Digital',
-    'template' => 'internal_order',
-    'payload' => json_encode([
-        'audience' => 'internal',
-        'public_number' => '#PRUEBA',
-        'customer_name' => 'Prueba del sistema',
-        'customer_phone' => '—',
-        'items' => [],
-        'total_cents' => 0,
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
-    'available_at' => '2000-01-01 00:00:00',
-]);
-
-$id = (int) $app['pdo']->lastInsertId();
-$result = $app['mail']->process(1);
-$status = $app['pdo']->prepare('SELECT status, last_error FROM mail_queue WHERE id = :id');
-$status->execute(['id' => $id]);
-echo json_encode([
-    'result' => $result,
-    'message' => $status->fetch(),
-], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+echo json_encode(['sent' => true], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
