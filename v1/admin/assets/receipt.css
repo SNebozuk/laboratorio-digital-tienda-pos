@@ -152,4 +152,6 @@ small,
     tr { break-inside: avoid; page-break-inside: avoid; }
     tbody tr:nth-child(even) { background: #e9ecef !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     th { background: #d9dde1 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .receipt-individual .receipt-order { break-before: page; page-break-before: always; }
+    .receipt-individual .receipt-order:first-of-type { break-before: auto; page-break-before: auto; }
 }

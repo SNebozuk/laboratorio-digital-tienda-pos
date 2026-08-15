@@ -21,11 +21,13 @@ $ids = array_values(array_unique(array_filter(array_map('intval', $rawIds), stat
 if (!$ids) { http_response_code(404); exit; }
 $orders = array_map(static fn (int $id): array => $app['orders']->orderDetail($id), array_slice($ids, 0, 30));
 $batch = count($orders) > 1;
+$individual = $batch && (string) ($_GET['layout'] ?? '') === 'individual';
+$title = $individual ? 'VENTAS INDIVIDUALES' : ($batch ? 'VENTAS SELECCIONADAS' : $orders[0]['public_number']);
 $assetVersion = substr(hash('sha256', (string) @file_get_contents(__DIR__ . '/assets/receipt.css') . (string) @file_get_contents(__DIR__ . '/assets/receipt.js')), 0, 12);
 ?>
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="../assets/favicon.svg" type="image/svg+xml"><title><?= receiptText($batch ? 'Ventas seleccionadas' : $orders[0]['public_number']) ?></title><link rel="stylesheet" href="assets/receipt.css?v=<?= receiptText($assetVersion) ?>"></head><body>
-<main class="receipt <?= $batch ? 'receipt-batch' : '' ?>">
-<header class="receipt-header"><div class="receipt-title-row"><div><h1><?= receiptText($batch ? 'VENTAS SELECCIONADAS' : $orders[0]['public_number']) ?></h1><p><?= $batch ? count($orders) . ' ventas incluidas en esta impresión.' : 'Controlá cada producto antes de entregarlo.' ?></p></div><div class="receipt-logo-text" aria-label="Laboratorio Digital"><strong>LABORATORIO</strong><span>DIGITAL</span></div></div></header>
+<main class="receipt <?= $batch ? 'receipt-batch' : '' ?> <?= $individual ? 'receipt-individual' : '' ?>">
+<header class="receipt-header"><div class="receipt-title-row"><div><h1><?= receiptText($title) ?></h1><p><?= $batch ? count($orders) . ($individual ? ' ventas, una por hoja.' : ' ventas incluidas en esta impresión.') : 'Controlá cada producto antes de entregarlo.' ?></p></div><div class="receipt-logo-text" aria-label="Laboratorio Digital"><strong>LABORATORIO</strong><span>DIGITAL</span></div></div></header>
 <?php foreach ($orders as $order):
     $items = $order['items'];
     usort($items, static fn (array $a, array $b): int => strnatcasecmp((string) $a['product_name'], (string) $b['product_name']) ?: strnatcasecmp((string) $a['variant_name'], (string) $b['variant_name']));

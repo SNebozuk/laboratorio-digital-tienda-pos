@@ -2157,8 +2157,14 @@
         if (selectedCountLabel) {
             selectedCountLabel.textContent = `${selectedCount} ${selectedCount === 1 ? 'venta seleccionada' : 'ventas seleccionadas'}`;
         }
-        const printOption = elements.bulkOrderAction?.querySelector('option[value="print"]');
-        if (printOption) printOption.textContent = selectedCount === 1 ? 'Imprimir venta' : 'Imprimir ventas';
+        const individualPrintOption = elements.bulkOrderAction?.querySelector('option[value="print_individual"]');
+        const groupedPrintOption = elements.bulkOrderAction?.querySelector('option[value="print_grouped"]');
+        if (individualPrintOption) individualPrintOption.textContent = selectedCount === 1
+            ? 'Imprimir 1 venta individual'
+            : `Imprimir ${selectedCount} ventas individuales`;
+        if (groupedPrintOption) groupedPrintOption.textContent = selectedCount === 1
+            ? 'Imprimir y agrupar 1 venta'
+            : `Imprimir y agrupar ${selectedCount} ventas`;
 
         // Las acciones masivas se muestran junto a la selección total.
 
@@ -2516,11 +2522,12 @@
         printReceipt({ id: orderId });
     }
 
-    function printStoredOrders(orderIds) {
+    function printStoredOrders(orderIds, layout = 'grouped') {
         const ids = Array.from(new Set(orderIds.map(Number).filter(id => id > 0)));
         if (!ids.length) return;
         const url = new URL('receipt.php', window.location.href);
         url.searchParams.set('ids', ids.join(','));
+        url.searchParams.set('layout', layout === 'individual' ? 'individual' : 'grouped');
         window.open(url.href, '_blank', 'noopener');
     }
 
@@ -3839,8 +3846,10 @@
             toast('Elegí una acción y al menos una venta.');
             return;
         }
-        if (action === 'print') {
-            printStoredOrders(ids);
+        if (action === 'print_individual') {
+            printStoredOrders(ids, 'individual');
+        } else if (action === 'print_grouped') {
+            printStoredOrders(ids, 'grouped');
         } else if (action === 'cancel') {
             showCancellationDialog(ids);
         } else if (action === 'archive') {
@@ -3860,8 +3869,10 @@
             toast('Elegí al menos una venta.');
             return;
         }
-        if (action === 'print') {
-            printStoredOrders(ids);
+        if (action === 'print_individual') {
+            printStoredOrders(ids, 'individual');
+        } else if (action === 'print_grouped') {
+            printStoredOrders(ids, 'grouped');
         } else if (action === 'cancel') {
             showCancellationDialog(ids);
         } else if (action === 'archive') {

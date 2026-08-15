@@ -306,7 +306,8 @@ header('Referrer-Policy: same-origin');
                             <span>ACCIONES SOBRE LAS VENTAS SELECCIONADAS</span>
                             <select id="bulk-order-action">
                                 <option value="">Acciones</option>
-                                <option value="print">Imprimir ventas</option>
+                                <option value="print_individual">Imprimir ventas individuales</option>
+                                <option value="print_grouped">Imprimir y agrupar ventas</option>
                                 <option value="archive">Archivar Ventas</option>
                                 <option value="cancel">Cancelar Ventas</option>
                                 <option value="reopen">Reabrir Ventas</option>
