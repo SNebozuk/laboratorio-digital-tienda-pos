@@ -24,6 +24,7 @@
 
     let codeSearchController = null;
     let codeSearchRequest = 0;
+    let codeSearchTimer = null;
     // El menú arranca compacto: cada rama se abre con el indicador ›.
     const collapsedCategories = new Set(
         categoryTree
@@ -237,11 +238,10 @@
         }
     }
 
-    const searchWords = value => fold(value)
-        .replace(/[^a-z0-9]+/g, ' ')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
+    // Conserva códigos técnicos como 20.1 o 24.1 en lugar de partirlos.
+    const searchWords = value => (
+        fold(value).match(/[a-z0-9]+(?:[.,][0-9]+)*/g) || []
+    );
 
     function limitedEditDistance(left, right, maximum) {
         if (Math.abs(left.length - right.length) > maximum) {
@@ -288,7 +288,10 @@
             return weight + 35;
         }
 
-        const tolerance = token.length >= 7 ? 2 : token.length >= 4 ? 1 : 0;
+        // Un código o una medida debe coincidir literalmente: 20.1 no es 24.1.
+        const tolerance = /\d/.test(token)
+            ? 0
+            : (token.length >= 7 ? 2 : token.length >= 4 ? 1 : 0);
         if (tolerance && words.some(word => (
             limitedEditDistance(token, word, tolerance) <= tolerance
         ))) {
@@ -381,7 +384,7 @@
         const controller = new AbortController();
         codeSearchController = controller;
         const request = ++codeSearchRequest;
-        if (query.trim().length < 2) {
+        if (query.trim().length < 3) {
             state.remoteSearchIds = new Set();
             renderCatalog();
             return;
@@ -418,12 +421,13 @@
 
     function scheduleCodeSearch(query) {
         codeSearchController?.abort();
+        window.clearTimeout(codeSearchTimer);
         codeSearchRequest += 1;
         state.remoteSearchIds = new Set();
-        if (query.trim().length < 2) {
+        if (query.trim().length < 3) {
             return;
         }
-        requestCodeMatches(query);
+        codeSearchTimer = window.setTimeout(() => requestCodeMatches(query), 250);
     }
 
     function productHasStock(product) {
@@ -446,19 +450,17 @@
     function availableLabel(available) {
         const units = Number(available);
         if (units < 1) {
-            return 'Sin stock';
+            return 'Agotado';
         }
         if (units === 1) {
             return 'Última unidad';
         }
-        return units <= 3 ? 'Últimas unidades' : 'Disponible';
+        return `${units} disponibles`;
     }
 
     function exactAvailableLabel(available) {
         const units = Number(available);
-        return units > 0
-            ? `${units} ${units === 1 ? 'disponible' : 'disponibles'}`
-            : 'Sin stock';
+        return availableLabel(units);
     }
 
     function setQuantity(variantId, requestedQuantity) {
@@ -618,7 +620,7 @@
                     <small>${escapeHtml(product.category?.name || 'Sin categoría')}</small>
                 </button>
                 <button
-                    class="summary-variant-count"
+                    class="summary-variant-count ${!hasVariants && Number(visibleAvailable(singleVariant)) < 1 ? 'none' : ''}"
                     type="button"
                     data-open-product="${Number(product.id)}"
                 >
@@ -710,8 +712,8 @@
         if (!matches.length) {
             elements.results.innerHTML = `
                 <div class="search-empty-state">
-                    <strong>NO ENCONTRAMOS COINCIDENCIAS</strong>
-                    <p>Probá con menos palabras o revisá el código ingresado.</p>
+                    <strong>NO ENCONTRAMOS PRODUCTOS PARA “${escapeHtml(query)}”</strong>
+                    <p>Probá con otro término o revisá el código ingresado.</p>
                 </div>
             `;
             return;
@@ -1590,11 +1592,8 @@
 
     elements.search.addEventListener('input', event => {
         state.query = event.target.value;
-        state.searchActive = Boolean(state.query.trim());
-        if (state.searchActive) {
-            state.category = '';
-            renderCategories();
-        }
+        // Con menos de tres caracteres se conserva la categoría actual.
+        state.searchActive = state.query.trim().length >= 3;
         state.openedProductId = null;
         syncProductUrl(null);
         scheduleCodeSearch(state.query);
