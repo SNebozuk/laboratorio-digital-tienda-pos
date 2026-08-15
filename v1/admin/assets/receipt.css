@@ -23,6 +23,10 @@ h1 {
 
 .receipt-title-row { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
 .receipt-title-row p { margin: 4px 0 0; color: #5e6875; }
+.receipt-order { margin-top: 24px; }
+.receipt-batch .receipt-order { padding-top: 18px; border-top: 2px solid #9da5ad; }
+.receipt-batch .receipt-order:first-of-type { border-top: 0; }
+.receipt-order h2 { margin: 0; font-size: 22px; letter-spacing: .02em; }
 .receipt-logo-text { display: grid; justify-items: end; align-content: center; min-width: 145px; color: #111; line-height: 1; text-align: right; }
 .receipt-logo-text strong { font-size: 15px; letter-spacing: .04em; }
 .receipt-logo-text span { margin-top: 4px; font-size: 10px; font-weight: 700; letter-spacing: .38em; }
@@ -58,12 +62,10 @@ table {
 
 th,
 td {
-    overflow: hidden;
     padding: 8px 7px;
     border-bottom: 1px solid #b8bec4;
     text-align: left;
     vertical-align: middle;
-    white-space: nowrap;
 }
 
 th {
@@ -80,11 +82,11 @@ th:nth-child(3), td:nth-child(3) { width: 46%; }
 th:nth-child(4), td:nth-child(4) { width: 15%; }
 th:nth-child(5), td:nth-child(5) { width: 13%; text-align: right; }
 .quantity { font-size: 20px; font-weight: 900; line-height: 1; }
-.receipt-variant { font-family: "Arial Narrow", Arial, sans-serif; font-size: 13px; font-weight: 850; text-transform: uppercase; text-overflow: ellipsis; }
-.receipt-product { font-family: "Arial Narrow", Arial, sans-serif; font-size: 13px; font-weight: 850; letter-spacing: -.01em; text-transform: uppercase; text-overflow: ellipsis; }
+.receipt-variant { font-family: "Arial Narrow", Arial, sans-serif; font-size: 13px; font-weight: 850; text-transform: uppercase; overflow-wrap: anywhere; }
+.receipt-product { font-family: "Arial Narrow", Arial, sans-serif; font-size: 13px; font-weight: 850; letter-spacing: -.01em; text-transform: uppercase; white-space: normal; overflow-wrap: anywhere; }
 .receipt-product-long { font-size: 10px; letter-spacing: -.025em; }
 .receipt-product-very-long { font-size: 8px; letter-spacing: -.035em; }
-.receipt-sku, .receipt-price { color: #4f555b; font-size: 9px; font-weight: 650; text-overflow: ellipsis; }
+.receipt-sku, .receipt-price { color: #4f555b; font-size: 9px; font-weight: 650; overflow-wrap: anywhere; }
 
 small,
 .footer {
@@ -111,6 +113,8 @@ small,
         margin: 0;
         padding: 18px;
     }
+
+    .receipt-batch .receipt-order { break-inside: avoid; page-break-inside: avoid; }
 
     dl {
         grid-template-columns: 1fr;
