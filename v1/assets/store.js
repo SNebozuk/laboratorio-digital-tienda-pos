@@ -50,6 +50,7 @@
         closeSearch: document.getElementById('search-close'),
         results: document.getElementById('catalog-results'),
         cartLines: document.getElementById('cart-lines'),
+        cartSummaryMeta: document.getElementById('cart-summary-meta'),
         cartTotal: document.getElementById('cart-total'),
         checkout: document.getElementById('checkout-button'),
         mobileCart: document.getElementById('cart-mobile'),
@@ -807,8 +808,11 @@
         const items = cartItems();
         const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
         const units = items.reduce((sum, item) => sum + item.quantity, 0);
+        const productLabel = items.length === 1 ? 'producto diferente' : 'productos diferentes';
+        const unitLabel = units === 1 ? 'unidad' : 'unidades';
 
         elements.mobileCartCount.textContent = String(units);
+        elements.cartSummaryMeta.textContent = `${items.length} ${productLabel} · ${units} ${unitLabel}`;
         elements.cartTotal.textContent = money(total);
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
         elements.checkout.textContent = cartMaintenanceEnabled

@@ -133,6 +133,7 @@ header('Referrer-Policy: same-origin');
             <div id="cart-lines" class="cart-lines">
                 <p class="empty-copy">Todavía no agregaste productos.</p>
             </div>
+            <p id="cart-summary-meta" class="cart-summary-meta" aria-live="polite">0 productos diferentes · 0 unidades</p>
             <div class="order-total">
                 <span>Total</span>
                 <strong id="cart-total">$ 0</strong>

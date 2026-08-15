@@ -1531,6 +1531,13 @@ body {
     margin: 22px 0;
 }
 
+.cart-summary-meta {
+    margin: -8px 0 10px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
 .empty-copy,
 .empty-state {
     color: var(--muted);
