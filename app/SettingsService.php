@@ -95,6 +95,11 @@ final class SettingsService
             $key = substr((string) $row['key'], 7);
             if (array_key_exists($key, $defaults)) $defaults[$key] = (string) $row['value'];
         }
+        foreach (['hero_link', 'logo_link'] as $key) {
+            if ($this->isLegacyStoreLink((string) $defaults[$key])) {
+                $defaults[$key] = '';
+            }
+        }
         return $defaults;
     }
 
@@ -111,6 +116,9 @@ final class SettingsService
         foreach (['hero_link', 'logo_link'] as $key) {
             $value = trim((string) ($data[$key] ?? $current[$key]));
             if ($value !== '' && !preg_match('#^(https?://|/)#i', $value)) throw new ValidationException('Los enlaces deben comenzar con https:// o /.');
+            if ($this->isLegacyStoreLink($value)) {
+                throw new ValidationException('Ese enlace corresponde a la tienda anterior. Usá un enlace propio o dejalo vacío.');
+            }
             $values[$key] = $value;
         }
         foreach (['logo_path', 'hero_1_path', 'hero_2_path', 'hero_3_path'] as $key) {
@@ -123,6 +131,15 @@ final class SettingsService
             foreach ($values as $key => $value) $update->execute(['key' => 'design_' . $key, 'value' => $value]);
         });
         return $this->design();
+    }
+
+    private function isLegacyStoreLink(string $value): bool
+    {
+        $host = strtolower((string) parse_url($value, PHP_URL_HOST));
+        return $host === 'temu.com'
+            || str_ends_with($host, '.temu.com')
+            || $host === 'mitiendanube.com'
+            || str_ends_with($host, '.mitiendanube.com');
     }
 
     /** @param array<string, mixed> $data */
