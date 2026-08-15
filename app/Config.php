@@ -114,7 +114,7 @@ final class Config
             // ignoran restos de configuraciones SMTP antiguas guardadas en el
             // panel para que no vuelvan a bloquear las ventas.
             'mail_enabled' => filter_var(
-                getenv('APP_MAIL_ENABLED') ?: true,
+                getenv('APP_MAIL_ENABLED') ?: false,
                 FILTER_VALIDATE_BOOL
             ),
             'mail_transport' => getenv('APP_MAIL_TRANSPORT') ?: 'native',
