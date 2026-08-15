@@ -49,3 +49,19 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 .modal-card .button-link:hover{background:#482b78 !important;border-color:#482b78 !important}
 .modal-card [data-finish-order]{background:#fff !important;color:#43286d !important;border:1px solid #a98bd3 !important;font-weight:850 !important}
 .modal-card [data-finish-order]:hover{background:#f1e9ff !important;color:#2e1a4e !important}
+
+/* Paleta final: elimina el verde heredado y unifica tienda, carrito y checkout. */
+:root { --bg:#fbf8ff; --panel:#fff; --panel-2:#f4effb; --line:#e3d8ef; --line-soft:#eee8f5; --text:#2a1d3c; --muted:#685d76; --accent:#7652b8; --success:#7652b8; }
+body { background:#fbf8ff !important; }
+.store-header { box-shadow:0 8px 25px rgba(62,38,91,.08) !important; }
+.header-link:hover { background:#f3edfb !important; }
+.category-panel { box-shadow:14px 0 34px rgba(62,38,91,.12) !important; }
+.category-button { color:#453750 !important; }
+.category-button:hover,.category-button.active,.catalog-intro .eyebrow,.summary-variant-count,.summary-product-chevron,.opened-product-back { background:#f0e9fa !important; border-color:#d4c1e8 !important; }
+.category-help,.store-contact,.modal-card .bank-details div { background:#f4effb !important; border-color:#ddcdea !important; }
+.catalog-intro { background:linear-gradient(135deg,#fff,#f4effb) !important; }
+.search-wrap { background:rgba(251,248,255,.96) !important; }
+.search-wrap .search-field input,.quantity-control,.quantity-control button,.quantity-control input,.modal-card input { border-color:#d8c8e8 !important; }
+.catalog-product-summary,.opened-variant-row,.cart-line,.order-panel,.home-search-prompt,.home-how-it-works,.quick-categories button,.product-row { box-shadow:0 6px 18px rgba(62,38,91,.06) !important; }
+.catalog-product-summary:hover,.opened-variant-row:hover,.quick-categories button:hover { background:#fdfaff !important; border-color:#cbb4e4 !important; }
+.modal-card label.payment-option:has(input:checked),.modal-card .cash-reservation-warning { background:#f3edfb !important; border-color:#d4c1e8 !important; color:#38234f !important; }

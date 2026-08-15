@@ -209,7 +209,6 @@ header('Referrer-Policy: same-origin');
                         <form id="contact-form" class="settings-card">
                             <div class="settings-grid">
                                 <label>NOMBRE DEL COMERCIO<input name="store_name" required></label>
-                                <label>EMAIL DE VENTAS<input name="sales_email" type="email" required></label>
                                 <label>WHATSAPP CON CÓDIGO DE PAÍS<input name="whatsapp_number" inputmode="numeric" required></label>
                                 <label>DIRECCIÓN DE RETIRO<input name="pickup_address"></label>
                                 <label>HORARIOS DE ATENCIÓN<input name="business_hours" required></label>
@@ -264,10 +263,9 @@ header('Referrer-Policy: same-origin');
                         <div>
                             <p class="eyebrow">OPERACIÓN DIARIA</p>
                             <h1>VENTAS <small id="open-orders-count"></small></h1>
-                            <p>Controlá pagos, preparación, retiros y ventas de mostrador.</p>
+                            <p>Consultá, imprimí, archivá o cancelá las ventas de la tienda y del mostrador.</p>
                         </div>
                         <div class="order-page-actions">
-                            <button class="secondary-button" id="order-auto-cancel-info" type="button">⚙ Cancelación automática</button>
                             <button class="secondary-button" id="refresh-orders" type="button">⇩ Exportar lista</button>
                             <a class="primary-button" href="pos.php" target="_blank" rel="opener">⊕ ABRIR PUNTO DE VENTA</a>
                         </div>
@@ -276,24 +274,6 @@ header('Referrer-Policy: same-origin');
                         <label class="order-filter-search">
                             <span>BUSCAR</span>
                             <input id="order-search" type="search" placeholder="N.º de venta, nombre o apellido">
-                        </label>
-                        <label>
-                            <span>ORIGEN</span>
-                            <select id="order-channel-filter">
-                                <option value="">Todos los orígenes</option>
-                                <option value="web">Tienda web</option>
-                                <option value="whatsapp">WhatsApp</option>
-                                <option value="pos">Mostrador</option>
-                            </select>
-                        </label>
-                        <label>
-                            <span>PERÍODO</span>
-                            <select id="order-date-filter">
-                                <option value="">Cualquier fecha</option>
-                                <option value="today">Hoy</option>
-                                <option value="week">Últimos 7 días</option>
-                                <option value="month">Este mes</option>
-                            </select>
                         </label>
                         <label class="archive-orders-toggle">
                             <input id="show-archived-orders" type="checkbox">
@@ -379,7 +359,7 @@ header('Referrer-Policy: same-origin');
                         <section class="settings-card backup-card">
                             <p class="eyebrow">RESPALDOS</p>
                             <h2>Copias seguras</h2>
-                            <p>Se genera una copia automática diaria de la base, comprobantes y fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
+                            <p>Se genera una copia automática diaria de la base y las fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
                             <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
                         </section>
                     </section>
