@@ -103,9 +103,11 @@ def main() -> None:
         name = (row.get("Nombre") or "").strip().upper()
         sku = (row.get("SKU") or "").strip().upper()
         description = clean_description(row.get("Descripción") or "")
-        if name and description and name not in descriptions:
+        # También conservamos una descripción vacía: significa que ese producto
+        # no la tiene en Tienda Nube y evita heredar un texto viejo o truncado.
+        if name and (name not in descriptions or (not descriptions[name] and description)):
             descriptions[name] = description
-        if sku and description and sku not in descriptions_by_sku:
+        if sku and (sku not in descriptions_by_sku or (not descriptions_by_sku[sku] and description)):
             descriptions_by_sku[sku] = description
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -119,8 +121,9 @@ def main() -> None:
         encoding="utf-8",
     )
     print(
-        f"Descripciones preparadas: {len(descriptions)} por producto | "
-        f"{len(descriptions_by_sku)} por SKU"
+        f"Productos revisados: {len(descriptions)} | "
+        f"con descripción: {sum(bool(value) for value in descriptions.values())} | "
+        f"SKU revisados: {len(descriptions_by_sku)}"
     )
 
 

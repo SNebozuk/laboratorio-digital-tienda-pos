@@ -149,7 +149,7 @@ final class Database
      */
     private static function migrateCatalogDescriptions(PDO $pdo, string $path): void
     {
-        $version = 20;
+        $version = 21;
         $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
         $check->execute(['version' => $version]);
         if ($check->fetchColumn() !== false) {
