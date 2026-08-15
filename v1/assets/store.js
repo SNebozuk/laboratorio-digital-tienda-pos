@@ -1050,7 +1050,15 @@
         app.csrf_token = data.csrf_token;
     }
 
-    async function apiJson(payload, retried = false) {
+    async function apiJson(payload, retryAttempt = 0) {
+        const canRetryOrder = payload.action === 'create_order' && retryAttempt < 2;
+        const retryOrderRequest = async () => {
+            // La misma request_key evita crear dos ventas si el servidor sí
+            // recibió el primer intento pero la respuesta se cortó.
+            const pause = retryAttempt === 0 ? 350 : 900;
+            await new Promise(resolve => window.setTimeout(resolve, pause));
+            return apiJson(payload, retryAttempt + 1);
+        };
         let response;
         try {
             response = await fetch(app.api_url, {
@@ -1063,9 +1071,8 @@
                 body: JSON.stringify({ ...payload, csrf_token: app.csrf_token }),
             });
         } catch {
-            if (!retried && payload.action === 'create_order') {
-                await new Promise(resolve => window.setTimeout(resolve, 450));
-                return apiJson(payload, true);
+            if (canRetryOrder) {
+                return retryOrderRequest();
             }
             throw new Error('No pudimos comunicarnos con el servidor. Revisá tu conexión e intentá nuevamente.');
         }
@@ -1074,17 +1081,16 @@
         try {
             data = JSON.parse(responseText);
         } catch {
-            if (!retried && payload.action === 'create_order') {
-                await new Promise(resolve => window.setTimeout(resolve, 450));
-                return apiJson(payload, true);
+            if (canRetryOrder) {
+                return retryOrderRequest();
             }
             throw new Error('No pudimos comunicarnos con el servidor. Intentá nuevamente.');
         }
         const sessionExpired = response.status === 401
             && /sesión venció|sesion vencio/i.test(String(data?.error || ''));
-        if (sessionExpired && !retried) {
+        if (sessionExpired && retryAttempt === 0) {
             await refreshCsrfToken();
-            return apiJson(payload, true);
+            return apiJson(payload, retryAttempt + 1);
         }
         if (!response.ok || !data.ok) {
             throw new Error(data.error || 'No pudimos completar la operación.');
