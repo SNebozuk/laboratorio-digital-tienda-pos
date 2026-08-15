@@ -44,6 +44,32 @@
         maximumFractionDigits: 0,
     }).format(Number(cents || 0) / 100);
 
+    // SQLite guarda los timestamps en UTC. Toda fecha visible se expresa en hora argentina.
+    const argentinaDateParts = value => {
+        const source = String(value || '').trim();
+        if (!source) return { date: '', time: '' };
+        const normalized = source.replace(' ', 'T');
+        const instant = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized)
+            ? normalized
+            : `${normalized}Z`;
+        const date = new Date(instant);
+        if (Number.isNaN(date.getTime())) return { date: source, time: '' };
+        const parts = new Intl.DateTimeFormat('es-AR', {
+            timeZone: 'America/Argentina/Buenos_Aires',
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+        }).formatToParts(date).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+        return {
+            date: `${parts.day} ${parts.month} ${parts.year}`,
+            time: `${parts.hour}:${parts.minute}`,
+        };
+    };
+
+    const argentinaDateLabel = value => {
+        const parts = argentinaDateParts(value);
+        return [parts.date, parts.time].filter(Boolean).join(' · ');
+    };
+
     const posProductPrice = product => {
         const prices = product.variants
             .filter(variant => variant.active)
@@ -425,11 +451,10 @@
         ].join(' '));
     }
 
-    const searchWords = value => fold(value)
-        .replace(/[^a-z0-9]+/g, ' ')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
+    // Conserva medidas y códigos técnicos: 20.1 y 24.1 son términos distintos.
+    const searchWords = value => (
+        fold(value).match(/[a-z0-9]+(?:[.,][0-9]+)*/g) || []
+    );
 
     function limitedEditDistance(left, right, maximum) {
         if (Math.abs(left.length - right.length) > maximum) {
@@ -475,7 +500,9 @@
         if (normalized.includes(token)) {
             return weight + 35;
         }
-        const tolerance = token.length >= 7 ? 2 : token.length >= 4 ? 1 : 0;
+        const tolerance = /\d/.test(token)
+            ? 0
+            : (token.length >= 7 ? 2 : token.length >= 4 ? 1 : 0);
         if (tolerance && words.some(word => (
             limitedEditDistance(token, word, tolerance) <= tolerance
         ))) {
@@ -577,7 +604,8 @@
         if (!elements.productList) {
             return;
         }
-        const query = fold(elements.productSearch?.value || '');
+        const typedQuery = String(elements.productSearch?.value || '').trim();
+        const query = typedQuery.length >= 3 ? typedQuery : '';
         const products = state.products.filter(product => (
             productSearchText(product).includes(query)
         ));
@@ -704,9 +732,15 @@
             const stock = (product.variants || []).some(variant => Number(variant.stock_on_hand || 0) > 0);
             const availabilityMatch = !state.productAvailability || (state.productAvailability === 'in_stock' ? stock : !stock);
             const visibilityMatch = !state.productVisibility || (state.productVisibility === 'visible' ? isProductVisible(product) : !isProductVisible(product));
-            return productSearchText(product).includes(query) && categoryMatch && availabilityMatch && visibilityMatch;
+            return (!query || productSearchScore(product, query) !== null)
+                && categoryMatch && availabilityMatch && visibilityMatch;
         };
-        const products = state.products.filter(productMatchesFilters);
+        const products = state.products
+            .filter(productMatchesFilters)
+            .sort((left, right) => query
+                ? (productSearchScore(right, query) - productSearchScore(left, query)
+                    || left.name.localeCompare(right.name, 'es'))
+                : left.name.localeCompare(right.name, 'es'));
         const selectedCount = state.selectedProductIds.size;
         const visibleSelectedCount = products.filter(product => state.selectedProductIds.has(Number(product.id))).length;
         const allSelected = products.length > 0 && visibleSelectedCount === products.length;
@@ -1114,6 +1148,13 @@
         }
     }
 
+    function stockLabel(available) {
+        const units = Math.max(0, Number(available) || 0);
+        if (units === 0) return '<span class="stock-zero">AGOTADO</span>';
+        if (units === 1) return 'Última unidad';
+        return `${units} disponibles`;
+    }
+
     function renderPos() {
         if (!elements.posProducts) {
             return;
@@ -1156,7 +1197,7 @@
                     : `<strong class="pos-result-name">${escapeHtml(product.name)}</strong>`}
                 ${hasVariants
                     ? `<button class="pos-result-meta pos-result-meta-toggle" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}">${variants.length} variantes</button>`
-                    : `<span class="pos-result-meta">${singleRemaining > 0 ? `${singleRemaining} disponibles` : '<span class="stock-zero">AGOTADO</span>'}</span>`}
+                    : `<span class="pos-result-meta">${stockLabel(singleRemaining)}</span>`}
                 <span class="pos-product-price">${posProductPrice(product)}</span>
                 ${hasVariants
                     ? `<button class="pos-result-action pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}"><span aria-hidden="true">${expanded ? '‹' : '›'}</span></button>`
@@ -1176,7 +1217,7 @@
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
                                         : ''}
                                 </span>
-                                <span class="pos-variant-stock">${remaining > 0 ? `${remaining} disponibles` : '<span class="stock-zero">AGOTADO</span>'}</span>
+                                <span class="pos-variant-stock">${stockLabel(remaining)}</span>
                                 <span class="pos-variant-price">${money(variant.price_cents)}</span>
                                 ${quantity > 0 ? `<button class="pos-variant-remove" type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity - 1}" aria-label="Restar ${escapeHtml(variantDisplayName(product, variant) || product.name)}">−</button>` : '<span class="pos-variant-remove-placeholder" aria-hidden="true"></span>'}
                                 ${quantity > 0 ? `<span class="pos-variant-quantity" aria-label="Cantidad agregada">${quantity}</span>` : '<span class="pos-variant-quantity-placeholder" aria-hidden="true"></span>'}
@@ -1957,7 +1998,7 @@
                             <tbody>${orders.map(order => `
                                 <tr>
                                     <td><button class="customer-history-link" type="button" data-history-order="${Number(order.id)}" data-history-customer="${escapeHtml(name)}">${escapeHtml(order.public_number)}</button></td>
-                                    <td>${escapeHtml(String(order.created_at || '').replace('T', ' '))}</td>
+                                    <td>${escapeHtml(argentinaDateLabel(order.created_at))}</td>
                                     <td><button class="customer-history-link" type="button" data-history-products="${Number(order.id)}" data-history-customer="${escapeHtml(name)}">${Number(order.unit_count)} unid.</button></td>
                                     <td><strong>${money(order.total_cents)}</strong></td>
                                     <td>${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</td>
@@ -1999,8 +2040,7 @@
                     </header>
                     <div class="order-detail-meta">
                         <div><span>CLIENTE</span><strong>${escapeHtml(order.customer_name)}</strong><small>${escapeHtml(order.customer_phone || order.customer_email || 'Sin contacto informado')}</small></div>
-                        <div><span>FECHA</span><strong>${escapeHtml(order.created_at)}</strong><small>${escapeHtml(order.archived_at ? 'Venta archivada' : (order.status === 'cancelled' ? 'Venta cancelada' : 'Venta activa'))}</small></div>
-                        <div><span>FORMA DE PAGO</span><strong>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</strong><small>${order.payment_method === 'cash' ? `Reserva hasta ${escapeHtml(order.payment_deadline_at || '')}` : 'El cliente avisa la transferencia por WhatsApp.'}</small></div>
+                        <div><span>FECHA</span><strong>${escapeHtml(argentinaDateLabel(order.created_at))}</strong><small>${escapeHtml(order.archived_at ? 'Venta archivada' : (order.status === 'cancelled' ? 'Venta cancelada' : 'Venta activa'))}</small></div>
                     </div>
                     <div class="order-detail-lines">
                         ${sortedOrderItems(order.items).map(item => `
@@ -2021,14 +2061,6 @@
                         `).join('')}
                     </div>
                     <div class="order-detail-total"><span>TOTAL</span><strong>${money(order.total_cents)}</strong></div>
-                    <section class="order-payment-detail">
-                        <div class="order-payment-head">
-                            <div><p class="eyebrow">PAGO</p><h3>${order.payment_method === 'cash' ? 'EFECTIVO AL RETIRAR' : 'TRANSFERENCIA'}</h3></div>
-                        </div>
-                        ${order.payment_method === 'cash'
-                            ? `<div class="notice"><strong>Reserva automática por 6 horas.</strong><br>Vence: ${escapeHtml(order.payment_deadline_at || '')}. Si no se entrega, la tarea programada cancela la venta y devuelve las unidades al stock.</div>`
-                            : `<p class="empty-copy">El cliente coordina la transferencia por WhatsApp.</p>`}
-                    </section>
                     <div class="order-actions order-detail-actions">${orderActions(actionOrder)}</div>
                     <p class="order-print-note">La impresión incluye la compra y el total.</p>
                 </section>
@@ -2125,6 +2157,8 @@
         if (selectedCountLabel) {
             selectedCountLabel.textContent = `${selectedCount} ${selectedCount === 1 ? 'venta seleccionada' : 'ventas seleccionadas'}`;
         }
+        const printOption = elements.bulkOrderAction?.querySelector('option[value="print"]');
+        if (printOption) printOption.textContent = selectedCount === 1 ? 'Imprimir venta' : 'Imprimir ventas';
 
         // Las acciones masivas se muestran junto a la selección total.
 
@@ -2177,17 +2211,16 @@
             ));
             elements.orderList.innerHTML = `
                 <div class="order-list-head" aria-hidden="true">
-                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''} aria-label="Seleccionar todas las ventas"></label><span>VENTA</span><span>FECHA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>PAGO</span><span>ENVÍO</span><span></span>
+                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''} aria-label="Seleccionar todas las ventas"></label><span>VENTA</span><span>FECHA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span>
                 </div>
                 ${matchingOrders.map(order => `
                     <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
                         <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : ''}</span>
-                        <span class="order-list-date">${escapeHtml(String(order.created_at || '').replace('T', ' ').split(' ')[0])}<small>${escapeHtml(String(order.created_at || '').replace('T', ' ').split(' ').slice(1).join(' '))}</small></span>
+                        <span class="order-list-date">${escapeHtml(argentinaDateParts(order.created_at).date)}<small>${escapeHtml(argentinaDateParts(order.created_at).time)}</small></span>
                         <button class="order-list-customer" type="button" data-customer-history="${escapeHtml(order.customer_name)}" aria-label="Ver historial de ${escapeHtml(order.customer_name)}"><strong>${escapeHtml(order.customer_name)}</strong></button>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
-                        <span><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia')}</span><small>${escapeHtml(paymentMethodLabels[order.payment_method] || order.payment_method)}</small></span>
                         <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : order.status)}">${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</span></span>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
                         ${order.status !== 'cancelled'
@@ -2210,7 +2243,7 @@
                 <p>
                     <strong>${escapeHtml(order.customer_name)}</strong><br>
                     ${Number(order.unit_count)} unidades<br>
-                    ${escapeHtml(order.created_at)}
+                    ${escapeHtml(argentinaDateLabel(order.created_at))}
                 </p>
                 <h3>${money(order.total_cents)}</h3>
                 ${paymentAiBadge(order)}
@@ -2481,6 +2514,14 @@
 
     function printStoredOrder(orderId) {
         printReceipt({ id: orderId });
+    }
+
+    function printStoredOrders(orderIds) {
+        const ids = Array.from(new Set(orderIds.map(Number).filter(id => id > 0)));
+        if (!ids.length) return;
+        const url = new URL('receipt.php', window.location.href);
+        url.searchParams.set('ids', ids.join(','));
+        window.open(url.href, '_blank', 'noopener');
     }
 
     async function loadReports() {
@@ -3798,7 +3839,9 @@
             toast('Elegí una acción y al menos una venta.');
             return;
         }
-        if (action === 'cancel') {
+        if (action === 'print') {
+            printStoredOrders(ids);
+        } else if (action === 'cancel') {
             showCancellationDialog(ids);
         } else if (action === 'archive') {
             archiveSelectedOrders(ids);
@@ -3817,7 +3860,9 @@
             toast('Elegí al menos una venta.');
             return;
         }
-        if (action === 'cancel') {
+        if (action === 'print') {
+            printStoredOrders(ids);
+        } else if (action === 'cancel') {
             showCancellationDialog(ids);
         } else if (action === 'archive') {
             archiveSelectedOrders(ids);
