@@ -2159,12 +2159,13 @@
         }
         const individualPrintOption = elements.bulkOrderAction?.querySelector('option[value="print_individual"]');
         const groupedPrintOption = elements.bulkOrderAction?.querySelector('option[value="print_grouped"]');
-        if (individualPrintOption) individualPrintOption.textContent = selectedCount === 1
-            ? 'Imprimir 1 venta individual'
-            : `Imprimir ${selectedCount} ventas individuales`;
-        if (groupedPrintOption) groupedPrintOption.textContent = selectedCount === 1
-            ? 'Imprimir y agrupar 1 venta'
-            : `Imprimir y agrupar ${selectedCount} ventas`;
+        if (individualPrintOption) individualPrintOption.textContent = `Imprimir ${selectedCount} ${selectedCount === 1 ? 'venta individual' : 'ventas individuales'}`;
+        if (groupedPrintOption) {
+            groupedPrintOption.textContent = selectedCount > 1
+                ? `Imprimir y agrupar ${selectedCount} ventas`
+                : 'Imprimir y agrupar ventas (elegí 2 o más)';
+            groupedPrintOption.disabled = selectedCount < 2;
+        }
 
         // Las acciones masivas se muestran junto a la selección total.
 
@@ -3849,6 +3850,10 @@
         if (action === 'print_individual') {
             printStoredOrders(ids, 'individual');
         } else if (action === 'print_grouped') {
+            if (ids.length < 2) {
+                toast('Elegí al menos 2 ventas para imprimirlas agrupadas.');
+                return;
+            }
             printStoredOrders(ids, 'grouped');
         } else if (action === 'cancel') {
             showCancellationDialog(ids);
@@ -3872,6 +3877,10 @@
         if (action === 'print_individual') {
             printStoredOrders(ids, 'individual');
         } else if (action === 'print_grouped') {
+            if (ids.length < 2) {
+                toast('Elegí al menos 2 ventas para imprimirlas agrupadas.');
+                return;
+            }
             printStoredOrders(ids, 'grouped');
         } else if (action === 'cancel') {
             showCancellationDialog(ids);
