@@ -3398,6 +3398,11 @@ body.category-menu-open .category-panel {
 .availability-conflict .cart-product-main strong { color: #b62d2d !important; }
 @keyframes availability-pulse { 50% { box-shadow: 0 0 0 6px rgba(215,154,37,.10) !important; } }
 .summary-variant-count, .summary-product-chevron, .opened-product-back { color: var(--accent) !important; background: #eee4fa !important; border-color: #cfb7e8 !important; }
+.summary-variant-count.none {
+    color: #c5303d !important;
+    background: #fff0f2 !important;
+    border-color: #efb3bc !important;
+}
 .summary-product-price, .opened-variant-price { color: var(--text) !important; }
 .summary-product-stock:not(.none), .opened-variant-stock:not(.none) { color: var(--accent) !important; }
 .quantity-control { background: #fff !important; border-color: #b9cdbd !important; box-shadow: none !important; }
