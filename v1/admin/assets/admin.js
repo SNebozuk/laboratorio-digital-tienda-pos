@@ -2159,7 +2159,9 @@
         }
         const individualPrintOption = elements.bulkOrderAction?.querySelector('option[value="print_individual"]');
         const groupedPrintOption = elements.bulkOrderAction?.querySelector('option[value="print_grouped"]');
-        if (individualPrintOption) individualPrintOption.textContent = `Imprimir ${selectedCount} ${selectedCount === 1 ? 'venta individual' : 'ventas individuales'}`;
+        if (individualPrintOption) individualPrintOption.textContent = selectedCount === 1
+            ? 'Imprimir venta'
+            : `Imprimir ${selectedCount} ventas individuales`;
         if (groupedPrintOption) {
             groupedPrintOption.textContent = selectedCount > 1
                 ? `Imprimir y agrupar ${selectedCount} ventas`
