@@ -243,33 +243,18 @@ header('Referrer-Policy: same-origin');
                             <div>
                                 <p class="eyebrow">AVISOS DE PEDIDOS</p>
                                 <h1>WHATSAPP</h1>
-                                <p>Configurá el remitente, servidor SMTP y los mensajes que recibe el cliente.</p>
+                                <p>Prepará mensajes claros para copiar y enviar al cliente según el estado de su venta.</p>
                             </div>
                         </div>
                         <form id="whatsapp-settings-form" class="settings-card">
-                            <div class="email-settings-section">
-                                <label class="checkbox-setting"><input name="mail_enabled" type="checkbox" value="1"><span><strong>ACTIVAR ENVÍO AUTOMÁTICO</strong><small>Solo activalo después de probar la casilla. La contraseña SMTP no se muestra ni se guarda en el navegador.</small></span></label>
-                            </div>
-                            <div class="settings-grid">
-                                <label>CASILLA REMITENTE<input name="mail_from" type="email" required></label>
-                                <label>NOMBRE DEL REMITENTE<input name="mail_from_name" required></label>
-                                <label>RESPONDER A<input name="mail_reply_to" type="email" required></label>
-                                <label>SERVIDOR SMTP<input name="mail_smtp_host" required placeholder="a0160161.ferozo.com"></label>
-                                <label>PUERTO SMTP<input name="mail_smtp_port" type="number" min="1" max="65535" required></label>
-                                <label>CIFRADO<select name="mail_smtp_encryption"><option value="ssl">SSL · recomendado para puerto 465</option><option value="tls">TLS / STARTTLS</option><option value="none">Sin cifrado</option></select></label>
-                                <label>USUARIO SMTP<input name="mail_smtp_username" type="email" required></label>
-                            </div>
-                            <p class="form-hint">Para proteger la casilla, la contraseña SMTP se conserva únicamente en la configuración privada del servidor, fuera de esta pantalla.</p>
-                            <div class="email-diagnostics" id="email-diagnostics" aria-live="polite"></div>
-                            <button class="secondary-button fit-button" id="refresh-mail-diagnostics" type="button">REVISAR ESTADO DEL ENVÃO</button>
                             <div class="email-template-grid">
-                                <label>PEDIDO POR TRANSFERENCIA<textarea name="whatsapp_message_order_created" rows="4"></textarea></label>
-                                <label>PEDIDO EN EFECTIVO<textarea name="whatsapp_message_cash_created" rows="4"></textarea></label>
+                                <label>PEDIDO INGRESADO<textarea name="whatsapp_message_order_created" rows="4"></textarea></label>
+                                <label>RECORDATORIO AMABLE<textarea name="whatsapp_message_cash_created" rows="4"></textarea></label>
                                 <label>PEDIDO LISTO PARA RETIRAR<textarea name="whatsapp_message_ready_pickup" rows="4"></textarea></label>
-                                <label>PEDIDO CANCELADO<textarea name="whatsapp_message_cancelled" rows="4"></textarea></label>
+                                <label>VENTA CANCELADA<textarea name="whatsapp_message_cancelled" rows="4"></textarea></label>
                             </div>
                             <p class="form-hint">Podés usar: <code>{{cliente}}</code>, <code>{{pedido}}</code>, <code>{{total}}</code> y <code>{{plazo}}</code>. Si dejás un texto vacío, se usa el mensaje estándar.</p>
-                            <button class="primary-button fit-button" type="submit">GUARDAR E-MAILS</button>
+                            <button class="primary-button fit-button" type="submit">GUARDAR MENSAJES</button>
                         </form>
                     </section>
                 <?php endif ?>
@@ -321,6 +306,7 @@ header('Referrer-Policy: same-origin');
                             <span>ACCIONES SOBRE LAS VENTAS SELECCIONADAS</span>
                             <select id="bulk-order-action">
                                 <option value="">Acciones</option>
+                                <option value="print">Imprimir ventas</option>
                                 <option value="archive">Archivar Ventas</option>
                                 <option value="cancel">Cancelar Ventas</option>
                                 <option value="reopen">Reabrir Ventas</option>
@@ -350,7 +336,7 @@ header('Referrer-Policy: same-origin');
                             <div>
                                 <p class="eyebrow">DATOS DEL COMERCIO</p>
                                 <h1>CONFIGURACIÓN</h1>
-                                <p>Transferencias, plazos, contacto y retiro en el local.</p>
+                                <p>Datos generales del comercio, contacto y retiro en el local.</p>
                             </div>
                         </div>
                         <form id="settings-form" class="settings-card">
@@ -358,10 +344,6 @@ header('Referrer-Policy: same-origin');
                                 <label>
                                     NOMBRE DEL COMERCIO
                                     <input name="store_name" required>
-                                </label>
-                                <label>
-                                    EMAIL DE VENTAS
-                                    <input name="sales_email" type="email" required>
                                 </label>
                                 <label>
                                     WHATSAPP CON CÓDIGO DE PAÍS
@@ -387,10 +369,7 @@ header('Referrer-Policy: same-origin');
                                     CBU / CVU
                                     <input name="bank_cbu" inputmode="numeric" maxlength="22">
                                 </label>
-                                <label>
-                                    PLAZO PARA INFORMAR PAGO · MINUTOS
-                                    <input name="payment_window_minutes" type="number" min="15" max="10080" step="15" required>
-                                </label>
+                                <input name="payment_window_minutes" type="hidden" value="360">
                             </div>
                             <button class="primary-button fit-button" type="submit">
                                 GUARDAR CONFIGURACIÓN
