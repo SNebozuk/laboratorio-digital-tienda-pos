@@ -812,6 +812,7 @@
         const unitLabel = units === 1 ? 'unidad' : 'unidades';
 
         elements.mobileCartCount.textContent = String(units);
+        elements.mobileCart.setAttribute('aria-label', `Abrir pedido: ${units} ${unitLabel}`);
         elements.cartSummaryMeta.textContent = `${items.length} ${productLabel} · ${units} ${unitLabel}`;
         elements.cartTotal.textContent = money(total);
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
@@ -1431,13 +1432,17 @@
     });
     function closeMobileCart({ returnToCatalog = false } = {}) {
         elements.orderPanel.classList.remove('mobile-open');
+        document.body.classList.remove('cart-open');
         if (returnToCatalog) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            elements.mobileCart.focus({ preventScroll: true });
         }
     }
 
     function openMobileCart() {
         elements.orderPanel.classList.add('mobile-open');
+        document.body.classList.add('cart-open');
+        window.requestAnimationFrame(() => elements.closeMobileCart.focus({ preventScroll: true }));
         if (isMobileStorefront() && !window.history.state?.[CART_HISTORY_KEY]) {
             window.history.pushState({
                 ...(window.history.state || {}),

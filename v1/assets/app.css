@@ -2680,6 +2680,10 @@ input:focus-visible {
 }
 
 @media (max-width: 1120px) {
+    body.cart-open {
+        overflow: hidden;
+    }
+
     .store-shell {
         grid-template-columns: 190px minmax(0, 1fr);
     }
