@@ -19,8 +19,8 @@ if (
 header('Content-Type: application/json; charset=utf-8');
 $app = require $projectRoot . '/app/container.php';
 $insert = $app['pdo']->prepare(
-    'INSERT INTO mail_queue(recipient, subject, template, payload_json)
-     VALUES(:recipient, :subject, :template, :payload)'
+    'INSERT INTO mail_queue(recipient, subject, template, payload_json, available_at)
+     VALUES(:recipient, :subject, :template, :payload, :available_at)'
 );
 $insert->execute([
     'recipient' => (string) $config['sales_notification_email'],
@@ -34,6 +34,14 @@ $insert->execute([
         'items' => [],
         'total_cents' => 0,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+    'available_at' => '2000-01-01 00:00:00',
 ]);
 
-echo json_encode($app['mail']->process(1), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+$id = (int) $app['pdo']->lastInsertId();
+$result = $app['mail']->process(1);
+$status = $app['pdo']->prepare('SELECT status, last_error FROM mail_queue WHERE id = :id');
+$status->execute(['id' => $id]);
+echo json_encode([
+    'result' => $result,
+    'message' => $status->fetch(),
+], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
