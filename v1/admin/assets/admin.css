@@ -2996,7 +2996,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-page .quantity-control button, .pos-search-page .quantity-control button { display: grid; place-items: center; padding: 0 0 3px; font-family: Arial, sans-serif; font-size: 22px; line-height: 1; }
 .pos-result-variants { grid-column: 2 / -1; }
 .pos-search-page .pos-variant-row,
-.pos-page .pos-variant-row { grid-template-columns: minmax(280px, 2fr) minmax(150px, 1fr) minmax(130px, .75fr) minmax(160px, auto) 40px 32px 48px; padding: 11px 12px; transition: background-color .15s ease; }
+.pos-page .pos-variant-row { grid-template-columns: minmax(280px, 2fr) minmax(150px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr) 40px 32px 48px; padding: 11px 12px; transition: background-color .15s ease; }
 .pos-search-page .pos-variant-name,
 .pos-page .pos-variant-name { grid-column: 2; }
 .pos-search-page .pos-variant-meta,
