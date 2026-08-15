@@ -3,6 +3,11 @@ declare(strict_types=1);
 
 use LaboratorioDigital\Config;
 
+set_exception_handler(static function (Throwable $exception): void {
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode(['fatal' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+});
+
 $projectRoot = dirname(__DIR__);
 require_once $projectRoot . '/app/Config.php';
 $config = Config::load($projectRoot);
