@@ -1026,7 +1026,7 @@
     function checkoutSteps(activeStep) {
         return `
             <ol class="checkout-steps" aria-label="Progreso del pedido">
-                ${['Tus datos', 'Forma de pago', 'Confirmación'].map((label, index) => {
+                ${['Tus datos', 'Transferencia', 'Confirmación'].map((label, index) => {
                     const step = index + 1;
                     const stateClass = step < activeStep ? 'done' : (step === activeStep ? 'active' : '');
                     return `<li class="${stateClass}"><span>${step}</span>${label}</li>`;
