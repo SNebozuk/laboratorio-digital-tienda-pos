@@ -44,6 +44,7 @@ $receiptAssetVersion = substr(hash(
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
     <title><?= receiptText($order['public_number']) ?></title>
     <link rel="stylesheet" href="assets/receipt.css?v=<?= receiptText($receiptAssetVersion) ?>">
 </head>
