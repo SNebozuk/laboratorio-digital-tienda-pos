@@ -2249,6 +2249,26 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     #view-orders .order-filter-search { width: 100%; }
     #view-orders .order-toolbar { margin-top: 0; }
     #view-orders .order-list-head { display: none; }
+    #view-orders .order-list { overflow: visible; border: 0; background: transparent; }
+    #view-orders .order-list-row {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        gap: 5px 10px;
+        margin-bottom: 10px;
+        padding: 12px;
+        border: 1px solid #2c363e;
+        border-radius: 10px;
+    }
+    #view-orders .order-list-row > :nth-child(1) { grid-column: 1; grid-row: 1 / span 2; }
+    #view-orders .order-list-row > :nth-child(2) { grid-column: 2; grid-row: 1; }
+    #view-orders .order-list-row > :nth-child(3) { grid-column: 3; grid-row: 1; text-align: right; }
+    #view-orders .order-list-row > :nth-child(4) { grid-column: 2; grid-row: 2; }
+    #view-orders .order-list-row > :nth-child(5) { grid-column: 3; grid-row: 2; text-align: right; white-space: nowrap; }
+    #view-orders .order-list-row > :nth-child(6) { grid-column: 2; grid-row: 3; justify-self: start; }
+    #view-orders .order-list-row > :nth-child(8) { grid-column: 3; grid-row: 3; justify-self: end; }
+    #view-orders .order-list-row > :nth-child(9) { grid-column: 2; grid-row: 4; justify-self: start; }
+    #view-orders .order-list-row > :nth-child(10) { grid-column: 3; grid-row: 4; justify-self: end; }
 }
 
 .size-guide-editor {
@@ -3071,3 +3091,29 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-stock-change-notice p { margin: 0 0 7px; color: #681d1d; }
 .pos-stock-change-notice ul { margin: 0 0 10px; padding-left: 20px; font-weight: 750; }
 .pos-stock-change-notice button { padding: 7px 0; border: 0; background: transparent; color: #8f2424; font: inherit; font-weight: 850; cursor: pointer; }
+
+/* Lista de ventas: sin datos de cobro o envío, sólo lo necesario para preparar pedidos. */
+#view-orders .order-list-head,
+#view-orders .order-list-row {
+    grid-template-columns: 34px minmax(88px, .46fr) minmax(96px, .52fr) minmax(180px, 1.2fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 34px;
+}
+#view-orders .order-list-row > :nth-child(7) { display: block; }
+#view-orders .order-list-row > :nth-child(8),
+#view-orders .order-list-row > :nth-child(9) { display: grid; }
+
+@media (max-width: 760px) {
+    #view-orders .order-list-row {
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        gap: 5px 10px;
+        min-width: 0;
+    }
+    #view-orders .order-list-row > :nth-child(1) { grid-column: 1; grid-row: 1 / span 2; }
+    #view-orders .order-list-row > :nth-child(2) { grid-column: 2; grid-row: 1; }
+    #view-orders .order-list-row > :nth-child(3) { grid-column: 3; grid-row: 1; text-align: right; }
+    #view-orders .order-list-row > :nth-child(4) { grid-column: 2; grid-row: 2; }
+    #view-orders .order-list-row > :nth-child(5) { grid-column: 3; grid-row: 2; text-align: right; white-space: nowrap; }
+    #view-orders .order-list-row > :nth-child(6) { grid-column: 2; grid-row: 3; justify-self: start; }
+    #view-orders .order-list-row > :nth-child(7) { grid-column: 3; grid-row: 3; justify-self: end; }
+    #view-orders .order-list-row > :nth-child(8) { grid-column: 2; grid-row: 4; justify-self: start; }
+    #view-orders .order-list-row > :nth-child(9) { grid-column: 3; grid-row: 4; justify-self: end; }
+}
