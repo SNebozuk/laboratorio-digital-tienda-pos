@@ -3079,6 +3079,11 @@ input:focus-visible {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+    /* Reserva una fila uniforme antes de pintar su contenido: el listado no
+       salta mientras el navegador decodifica imágenes de productos. */
+    contain: layout paint style;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 104px;
 }
 
 .catalog-product-summary.unified-product-row:hover {
@@ -3149,6 +3154,9 @@ input:focus-visible {
     border-bottom: 1px solid var(--line);
     border-radius: 0;
     background: transparent;
+    contain: layout paint style;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 104px;
 }
 
 .opened-variant-row:hover {

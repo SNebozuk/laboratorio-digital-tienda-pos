@@ -545,7 +545,13 @@
                     type="button"
                     data-image-preview="${Number(product.id)}"
                     aria-label="Ampliar imagen de ${escapeHtml(product.name)}"
-                ><img class="${className}" src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}"></button>`
+                ><img
+                    class="${className}"
+                    src="${escapeHtml(image)}"
+                    alt="${escapeHtml(product.name)}"
+                    loading="lazy"
+                    decoding="async"
+                ></button>`
             : `<div class="${className}-placeholder">SIN FOTO</div>`;
     }
 
