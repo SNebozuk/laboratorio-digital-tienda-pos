@@ -112,11 +112,9 @@ final class Config
             // comunicación con clientes continúa exclusivamente por WhatsApp.
             // Las credenciales se cargan exclusivamente en config.mail.local.php
             // del servidor. Ese archivo está excluido de Git.
-            'mail_enabled' => self::bool(
-                $local,
-                'mail_enabled',
-                filter_var(getenv('APP_MAIL_ENABLED') ?: false, FILTER_VALIDATE_BOOL)
-            ),
+            // Los avisos internos están pausados. Ningún envío de correo puede
+            // interferir con la creación o confirmación de una venta.
+            'mail_enabled' => false,
             'mail_transport' => self::string(
                 $local,
                 'mail_transport',

@@ -154,7 +154,10 @@ final class OrderService
                 ];
                 $salesEmail = trim((string) ($this->config['sales_notification_email']
                     ?? 'ventas@laboratorio-digital.com.ar'));
-                if (filter_var($salesEmail, FILTER_VALIDATE_EMAIL)) {
+                if (
+                    !empty($this->config['mail_enabled'])
+                    && filter_var($salesEmail, FILTER_VALIDATE_EMAIL)
+                ) {
                     $mailPayload['audience'] = 'internal';
                     $this->queueOrderMail(
                         $pdo,
