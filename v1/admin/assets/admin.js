@@ -1217,8 +1217,10 @@
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
                                         : ''}
                                 </span>
-                                <span class="pos-variant-stock">${stockLabel(remaining)}</span>
-                                <span class="pos-variant-price">${money(variant.price_cents)}</span>
+                                <span class="pos-variant-meta">
+                                    <span class="pos-variant-stock">${stockLabel(remaining)}</span>
+                                    <span class="pos-variant-price">${money(variant.price_cents)}</span>
+                                </span>
                                 ${quantity > 0 ? `<button class="pos-variant-remove" type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity - 1}" aria-label="Restar ${escapeHtml(variantDisplayName(product, variant) || product.name)}">−</button>` : '<span class="pos-variant-remove-placeholder" aria-hidden="true"></span>'}
                                 ${quantity > 0 ? `<span class="pos-variant-quantity" aria-label="Cantidad agregada">${quantity}</span>` : '<span class="pos-variant-quantity-placeholder" aria-hidden="true"></span>'}
                                 <button class="pos-variant-add" type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity + 1}" ${remaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(variantDisplayName(product, variant) || product.name)}">+</button>
