@@ -110,23 +110,38 @@ final class Config
             ),
             // Solo se utiliza para el aviso interno de una nueva venta. La
             // comunicación con clientes continúa exclusivamente por WhatsApp.
-            // El aviso interno usa el agente de correo del propio hosting. Se
-            // ignoran restos de configuraciones SMTP antiguas guardadas en el
-            // panel para que no vuelvan a bloquear las ventas.
-            'mail_enabled' => filter_var(
-                getenv('APP_MAIL_ENABLED') ?: false,
-                FILTER_VALIDATE_BOOL
+            // Las credenciales se cargan exclusivamente en config.mail.local.php
+            // del servidor. Ese archivo está excluido de Git.
+            'mail_enabled' => self::bool(
+                $local,
+                'mail_enabled',
+                filter_var(getenv('APP_MAIL_ENABLED') ?: false, FILTER_VALIDATE_BOOL)
             ),
-            'mail_transport' => getenv('APP_MAIL_TRANSPORT') ?: 'native',
-            'mail_from' => getenv('APP_MAIL_FROM') ?: 'pedidos@laboratoriodigital.com.ar',
+            'mail_transport' => self::string(
+                $local,
+                'mail_transport',
+                getenv('APP_MAIL_TRANSPORT') ?: 'smtp'
+            ),
+            'mail_from' => self::string(
+                $local,
+                'mail_from',
+                getenv('APP_MAIL_FROM') ?: 'pedidos@laboratoriodigital.com.ar'
+            ),
             'mail_from_name' => self::string(
                 $local,
                 'mail_from_name',
                 getenv('APP_MAIL_FROM_NAME') ?: 'Laboratorio Digital'
             ),
-            'mail_reply_to' => getenv('APP_MAIL_REPLY_TO') ?: 'ventas@laboratorio-digital.com.ar',
-            'sales_notification_email' => getenv('APP_SALES_NOTIFICATION_EMAIL')
-                ?: 'ventas@laboratorio-digital.com.ar',
+            'mail_reply_to' => self::string(
+                $local,
+                'mail_reply_to',
+                getenv('APP_MAIL_REPLY_TO') ?: 'ventas@laboratorio-digital.com.ar'
+            ),
+            'sales_notification_email' => self::string(
+                $local,
+                'sales_notification_email',
+                getenv('APP_SALES_NOTIFICATION_EMAIL') ?: 'ventas@laboratorio-digital.com.ar'
+            ),
             'mail_smtp_host' => self::string($local, 'mail_smtp_host', getenv('APP_MAIL_SMTP_HOST') ?: ''),
             'mail_smtp_port' => self::integer($local, 'mail_smtp_port', (int) (getenv('APP_MAIL_SMTP_PORT') ?: 587)),
             'mail_smtp_encryption' => self::string($local, 'mail_smtp_encryption', getenv('APP_MAIL_SMTP_ENCRYPTION') ?: 'tls'),
