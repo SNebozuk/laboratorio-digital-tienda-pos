@@ -25,6 +25,8 @@
     let codeSearchController = null;
     let codeSearchRequest = 0;
     let codeSearchTimer = null;
+    let catalogLoaded = products.length > 0;
+    let catalogLoading = null;
     // El menú arranca compacto: cada rama se abre con el indicador ›.
     const collapsedCategories = new Set(
         categoryTree
@@ -190,6 +192,12 @@
         if (state.order) {
             return false;
         }
+        // Varios eventos pueden solicitar la misma actualización (foco,
+        // visibilidad y el temporizador). Se reutiliza una única descarga.
+        if (catalogLoading) {
+            return catalogLoading;
+        }
+        catalogLoading = (async () => {
         try {
             const url = new URL(app.api_url, window.location.href);
             url.searchParams.set('action', 'catalog');
@@ -202,6 +210,7 @@
                 return;
             }
             products = data.products;
+            catalogLoaded = true;
             if (Array.isArray(data.categories)) {
                 categoryTree = data.categories;
             }
@@ -235,7 +244,11 @@
         } catch {
             // La próxima actualización vuelve a intentarlo sin interrumpir la compra.
             return false;
+        } finally {
+            catalogLoading = null;
         }
+        })();
+        return catalogLoading;
     }
 
     // Conserva códigos técnicos como 20.1 o 24.1 en lugar de partirlos.
@@ -1479,6 +1492,9 @@
             window.history.pushState({ catalog: true }, '', window.location.href);
             renderCategories();
             renderCatalog();
+            if (!catalogLoaded) {
+                refreshCatalog();
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
@@ -1489,6 +1505,9 @@
             window.history.pushState({ catalog: true }, '', window.location.href);
             renderCategories();
             renderCatalog();
+            if (!catalogLoaded) {
+                refreshCatalog();
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
@@ -1598,6 +1617,9 @@
         syncProductUrl(null);
         scheduleCodeSearch(state.query);
         renderCatalog();
+        if (state.searchActive && !catalogLoaded) {
+            refreshCatalog();
+        }
     });
     function closeMobileCart({ returnToCatalog = false } = {}) {
         elements.orderPanel.classList.remove('mobile-open');
@@ -1752,7 +1774,16 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    refreshCatalog();
+    // La portada puede mostrarse sin descargar productos. El catálogo se carga
+    // al primer gesto del usuario o durante el tiempo ocioso del navegador.
+    const loadCatalogWhenIdle = () => refreshCatalog();
+    if (linkedProductId) {
+        loadCatalogWhenIdle();
+    } else if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(loadCatalogWhenIdle, { timeout: 1200 });
+    } else {
+        window.setTimeout(loadCatalogWhenIdle, 700);
+    }
     try {
         const completedOrder = JSON.parse(
             sessionStorage.getItem(ORDER_COMPLETE_STORAGE_KEY) || 'null'
@@ -1767,17 +1798,21 @@
     // Una consulta frecuente mantiene el stock actualizado sin descargar el
     // catálogo completo varias veces por segundo en cada navegador.
     window.setInterval(() => {
-        if (document.visibilityState === 'visible') {
+        if (catalogLoaded && document.visibilityState === 'visible') {
             refreshCatalog();
         }
     }, 15000);
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
+        if (catalogLoaded && document.visibilityState === 'visible') {
             refreshCatalog();
         }
     });
-    window.addEventListener('focus', refreshCatalog);
-    window.addEventListener('pageshow', refreshCatalog);
+    window.addEventListener('focus', () => {
+        if (catalogLoaded) refreshCatalog();
+    });
+    window.addEventListener('pageshow', () => {
+        if (catalogLoaded) refreshCatalog();
+    });
     window.addEventListener('storage', event => {
         if (event.key !== CART_STORAGE_KEY || state.order) {
             return;
