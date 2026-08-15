@@ -32,6 +32,13 @@ $insert->execute([
     ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
 ]);
 
+$result = $app['mail']->process(1);
+$diagnostic = $app['pdo']->query(
+    "SELECT status, attempts, last_error FROM mail_queue ORDER BY id DESC LIMIT 1"
+)->fetch();
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');
-echo json_encode($app['mail']->process(1), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+echo json_encode([
+    'result' => $result,
+    'diagnostic' => $diagnostic,
+], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
