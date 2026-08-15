@@ -2996,7 +2996,25 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-page .quantity-control button, .pos-search-page .quantity-control button { display: grid; place-items: center; padding: 0 0 3px; font-family: Arial, sans-serif; font-size: 22px; line-height: 1; }
 .pos-result-variants { grid-column: 2 / -1; }
 .pos-search-page .pos-variant-row,
-.pos-page .pos-variant-row { grid-template-columns: minmax(280px, 1fr) max-content 40px 32px 48px; padding: 11px 12px; transition: background-color .15s ease; }
+.pos-page .pos-variant-row { grid-template-columns: minmax(280px, 2fr) minmax(150px, 1fr) minmax(130px, .75fr) minmax(160px, auto) 40px 32px 48px; padding: 11px 12px; transition: background-color .15s ease; }
+.pos-search-page .pos-variant-name,
+.pos-page .pos-variant-name { grid-column: 2; }
+.pos-search-page .pos-variant-meta,
+.pos-page .pos-variant-meta { display: contents; }
+.pos-search-page .pos-variant-stock,
+.pos-page .pos-variant-stock { grid-column: 3; justify-self: center; }
+.pos-search-page .pos-variant-price,
+.pos-page .pos-variant-price { grid-column: 4; }
+.pos-search-page .pos-variant-remove,
+.pos-page .pos-variant-remove,
+.pos-search-page .pos-variant-remove-placeholder,
+.pos-page .pos-variant-remove-placeholder { grid-column: 5; }
+.pos-search-page .pos-variant-quantity,
+.pos-page .pos-variant-quantity,
+.pos-search-page .pos-variant-quantity-placeholder,
+.pos-page .pos-variant-quantity-placeholder { grid-column: 6; }
+.pos-search-page .pos-variant-add,
+.pos-page .pos-variant-add { grid-column: 7; }
 .pos-search-page .pos-result-variants .pos-variant-row:nth-child(even),
 .pos-page .pos-result-variants .pos-variant-row:nth-child(even) { background: #d1e0f0; }
 .pos-search-page .pos-result-variants .pos-variant-row:nth-child(odd),
@@ -3067,7 +3085,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .pos-result-variants { grid-column: 1 / -1; }
     .pos-search-page .pos-variant-row, .pos-page .pos-variant-row { grid-template-columns: minmax(0, 1fr) 36px 30px 48px; grid-template-rows: auto auto; }
     .pos-search-page .pos-variant-name, .pos-page .pos-variant-name { grid-column: 1; grid-row: 1; }
-    .pos-search-page .pos-variant-meta, .pos-page .pos-variant-meta { grid-column: 1; grid-row: 2; gap: 7px; }
+    .pos-search-page .pos-variant-meta, .pos-page .pos-variant-meta { display: inline-flex; grid-column: 1; grid-row: 2; gap: 7px; }
     .pos-search-page .pos-variant-price, .pos-page .pos-variant-price { font-size: 15px; }
     .pos-search-page .pos-variant-row .pos-variant-remove, .pos-page .pos-variant-row .pos-variant-remove, .pos-search-page .pos-variant-row .pos-variant-remove-placeholder, .pos-page .pos-variant-row .pos-variant-remove-placeholder { grid-column: 2; grid-row: 1 / 3; align-self: center; }
     .pos-search-page .pos-variant-row .pos-variant-quantity, .pos-page .pos-variant-row .pos-variant-quantity, .pos-page .pos-variant-row .pos-variant-quantity-placeholder, .pos-search-page .pos-variant-row .pos-variant-quantity-placeholder { grid-column: 3; grid-row: 1 / 3; align-self: center; }
