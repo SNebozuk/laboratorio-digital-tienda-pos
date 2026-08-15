@@ -985,8 +985,9 @@
             <form id="checkout-form" novalidate>
                 <label>
                     Nombre y Apellido
-                    <input name="name" required autocomplete="name" value="${escapeHtml(customer.name || '')}">
+                    <input name="name" required autocomplete="name" value="${escapeHtml(customer.name || '')}" aria-describedby="checkout-name-help">
                 </label>
+                <small id="checkout-name-help" class="field-help">Por favor escribilo completo, tal como querés que figure en tu pedido.</small>
                 <label>
                     WhatsApp
                     <input
@@ -1081,6 +1082,11 @@
         return data;
     }
 
+    function hasValidCustomerFullName(value) {
+        const parts = String(value || '').trim().split(/\s+/).filter(Boolean);
+        return parts.length >= 2 && parts.every(part => /^\p{L}[\p{L}'’.-]{1,}$/u.test(part));
+    }
+
     async function createOrder(form) {
         const button = form.querySelector('button[type="submit"]');
         const errorBox = form.querySelector('#checkout-error');
@@ -1089,10 +1095,12 @@
         const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
         // La tienda opera con transferencia como único medio de pago web.
         const paymentMethod = 'bank_transfer';
-        if (customerName.trim().split(/\s+/).length < 2 || customerPhone.length < 8) {
+        if (!hasValidCustomerFullName(customerName) || customerPhone.length < 8) {
             errorBox.hidden = false;
-            errorBox.textContent = 'Completá Nombre y Apellido y un WhatsApp válido para crear el pedido.';
-            form.querySelector(customerName.length < 2
+            errorBox.textContent = !hasValidCustomerFullName(customerName)
+                ? 'Por favor, escribí tu nombre y apellido completos, tal como querés que figuren en el pedido.'
+                : 'Por favor, revisá tu WhatsApp para que podamos responderte sin errores.';
+            form.querySelector(!hasValidCustomerFullName(customerName)
                 ? '[name="name"]'
                 : '[name="phone"]')?.focus();
             return;

@@ -74,6 +74,7 @@ final class Database
         self::purgeDeletedCatalogAndRefreshPilot($pdo);
         self::migrateProductVisibilityState($pdo);
         self::prepareRealSalesNumbering($pdo);
+        self::normalizeHistoricalCustomerNames($pdo);
     }
 
     /**
@@ -101,6 +102,34 @@ final class Database
                 'key' => 'order_number_floor',
                 'value' => '97759',
             ]);
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')
+                ->execute(['version' => $version]);
+        });
+    }
+
+    /** Normaliza una sola vez los nombres ya registrados, sin tocar ventas ni stock. */
+    private static function normalizeHistoricalCustomerNames(PDO $pdo): void
+    {
+        $version = 19;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $rows = $pdo->query("SELECT id, customer_name FROM orders WHERE trim(customer_name) <> ''")->fetchAll();
+            $update = $pdo->prepare('UPDATE orders SET customer_name = :name, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+            foreach ($rows as $row) {
+                $original = (string) $row['customer_name'];
+                $spaced = preg_replace('/\\s+/u', ' ', trim($original)) ?? '';
+                $normalized = function_exists('mb_convert_case') && function_exists('mb_strtolower')
+                    ? mb_convert_case(mb_strtolower($spaced, 'UTF-8'), MB_CASE_TITLE, 'UTF-8')
+                    : ucwords(strtolower($spaced));
+                if ($normalized !== '' && $normalized !== $original) {
+                    $update->execute(['name' => $normalized, 'id' => (int) $row['id']]);
+                }
+            }
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')
                 ->execute(['version' => $version]);
         });

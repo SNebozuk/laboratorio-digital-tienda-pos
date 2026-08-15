@@ -56,8 +56,8 @@ final class OrderService
             (string) ($customer['phone'] ?? '')
         ) ?: null;
 
-        if ($customerName === '') {
-            throw new ValidationException('Ingresá tu nombre o el nombre del comercio.');
+        if (!$this->isValidCustomerFullName($customerName)) {
+            throw new ValidationException('Por favor, escribí tu nombre y apellido completos, tal como querés que figuren en el pedido.');
         }
         if ($customerPhone === null || strlen($customerPhone) < 8) {
             throw new ValidationException('Ingresá un WhatsApp válido.');
@@ -329,6 +329,20 @@ final class OrderService
             );
         }
         return ucwords(strtolower($name));
+    }
+
+    private function isValidCustomerFullName(string $name): bool
+    {
+        $parts = preg_split('/\s+/u', trim($name)) ?: [];
+        if (count($parts) < 2) {
+            return false;
+        }
+        foreach ($parts as $part) {
+            if (!preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $part)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
