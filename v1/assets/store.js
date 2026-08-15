@@ -88,15 +88,6 @@
         return '';
     };
 
-    const safePageUrl = value => {
-        try {
-            const url = new URL(String(value || ''), window.location.href);
-            return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
-        } catch {
-            return '';
-        }
-    };
-
     function syncProductUrl(productId) {
         const url = new URL(window.location.href);
         if (productId === null) {
@@ -1011,14 +1002,6 @@
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
         `);
-        const transferOption = elements.modalContent.querySelector('[value="bank_transfer"]')?.closest('.payment-option');
-        const cashOption = elements.modalContent.querySelector('[value="cash"]')?.closest('.payment-option');
-        transferOption?.querySelector('small') && (transferOption.querySelector('small').textContent = 'Te mostraremos los datos y lo enviás por WhatsApp.');
-        cashOption?.querySelector('small') && (cashOption.querySelector('small').textContent = 'Guardamos tu pedido durante 6 horas.');
-        const reservationMessage = elements.modalContent.querySelector('#cash-reservation-warning');
-        if (reservationMessage) {
-            reservationMessage.innerHTML = '<strong>Guardamos tu pedido por 6 horas</strong><span>Así tenés tiempo para acercarte con tranquilidad. Después liberaremos los productos para otras personas.</span>';
-        }
         const checkoutButton = elements.modalContent.querySelector('#checkout-form button[type="submit"]');
         if (checkoutButton) checkoutButton.textContent = 'CONFIRMAR PEDIDO';
     }
@@ -1157,11 +1140,6 @@
         }
     }
 
-    function formatLocalDeadline(value) {
-        const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
-        return match ? `${match[3]}/${match[2]} a las ${match[4]}:${match[5]}` : String(value || '');
-    }
-
     function showTransferConfirmation(order, whatsapp) {
         const alias = order.bank?.alias || 'Pendiente de configurar';
         const holder = order.bank?.holder || 'Laboratorio Digital';
@@ -1187,163 +1165,6 @@
         `);
     }
 
-    function showCashConfirmationSixHours(order) {
-        openModal(`
-            ${checkoutSteps(3)}
-            <h2 id="modal-title">¡Gracias por tu pedido!</h2>
-            <p class="checkout-lead">Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</p>
-            <div class="cash-confirmation">
-                <span>Elegiste pagar al retirar</span>
-                <strong>Guardamos estos productos para vos durante 6 horas</strong>
-                <span>Hasta el ${escapeHtml(formatLocalDeadline(order.payment_deadline_at))}</span>
-            </div>
-            <div class="cash-expiry-explanation">
-                <strong>Te esperamos con gusto dentro de ese plazo.</strong>
-                <p>Después de las 6 horas, liberaremos la mercadería para que otras personas también puedan aprovecharla.</p>
-            </div>
-            ${order.pickup_address ? `<p>Retiro en: <strong>${escapeHtml(order.pickup_address)}</strong></p>` : ''}
-            <button class="primary-button" type="button" data-finish-order>ENTENDIDO</button>
-        `);
-    }
-
-    function showCashConfirmation(order) {
-        openModal(`
-            <p class="checkout-lead"><strong>¡Gracias por tu compra!</strong> Tu pedido ya quedó registrado.</p>
-            ${checkoutSteps(3)}
-            <h2 id="modal-title">PAGO EN EFECTIVO</h2>
-            <div class="cash-confirmation">
-                <span>Tu pedido ${escapeHtml(order.public_number)} quedó reservado</span>
-                <strong>Disponible para retirar durante 2 horas</strong>
-                <span>Hasta el ${escapeHtml(formatLocalDeadline(order.payment_deadline_at))}</span>
-            </div>
-            <div class="cash-expiry-explanation">
-                <strong>Te esperamos para retirar y pagar en efectivo antes de ese horario.</strong>
-                <p>Al finalizar el plazo, liberaremos los productos nuevamente para que otras personas puedan pedirlos.</p>
-            </div>
-            ${order.pickup_address ? `<p>Retiro en: <strong>${escapeHtml(order.pickup_address)}</strong></p>` : ''}
-            <p class="checkout-footnote">Te esperamos en el local dentro del horario indicado.</p>
-            <button class="primary-button" type="button" data-finish-order>ENTENDIDO</button>
-        `);
-    }
-
-    function showPayment(order) {
-        const alias = order.bank?.alias || 'Pendiente de configurar';
-        const cbu = order.bank?.cbu || 'Pendiente de configurar';
-        const paymentUrl = safePageUrl(order.payment_url);
-        const maxMegabytes = Math.max(1, Math.round(Number(app.proof_max_bytes || 8388608) / 1048576));
-        const aiCopy = app.receipt_ai_enabled
-            ? 'La revisión automática comprobará que parezca una transferencia realizada y comparará importe y destinatario. La acreditación se confirma manualmente.'
-            : 'Comprobaremos el formato del archivo y revisaremos el pago manualmente antes de aprobarlo.';
-        openModal(`
-            ${checkoutSteps(2)}
-            <h2 id="modal-title">HACÉ LA TRANSFERENCIA</h2>
-            <div class="payment-focus">
-                <span>Transferí exactamente</span>
-                <strong class="payment-amount">${money(Number(order.total_cents))}</strong>
-                <span>a nombre de ${escapeHtml(order.bank?.holder || 'Laboratorio Digital')}</span>
-            </div>
-            <dl class="bank-details">
-                <div><dt>Alias</dt><dd>${escapeHtml(alias)} <button class="copy-button" type="button" data-copy-bank="${escapeHtml(alias)}" aria-label="Copiar alias" title="Copiar alias">⧉</button></dd></div>
-                <div><dt>CBU</dt><dd>${escapeHtml(cbu)} ${order.bank?.cbu ? `<button class="copy-button" type="button" data-copy-bank="${escapeHtml(cbu)}" aria-label="Copiar CBU" title="Copiar CBU">⧉</button>` : ''}</dd></div>
-            </dl>
-            <div class="payment-instructions">
-                <strong>Después de transferir:</strong>
-                <span>Descargá o capturá el comprobante del banco.</span>
-                <span>Adjuntalo abajo para reservar el stock.</span>
-            </div>
-            <form id="proof-form">
-                <div class="proof-section-head"><span>3</span><strong>Comprobante</strong></div>
-                <label class="proof-drop" for="proof-file">
-                    <strong>Adjuntá el comprobante</strong>
-                    <span>JPG, PNG o PDF · máximo ${maxMegabytes} MB</span>
-                    <input id="proof-file" name="proof" type="file" accept="image/jpeg,image/png,application/pdf" required>
-                </label>
-                <div class="proof-file-meta" id="proof-file-meta" aria-live="polite">Todavía no elegiste un archivo.</div>
-                <p class="proof-ai-note">${escapeHtml(aiCopy)}</p>
-                <p class="form-error" id="proof-error" role="alert" hidden></p>
-                <p class="proof-processing" id="proof-processing" role="status" hidden></p>
-                <button class="primary-button" type="submit" disabled>
-                    ENVIAR COMPROBANTE
-                </button>
-            </form>
-            ${paymentUrl ? `
-                <a class="checkout-later" href="${escapeHtml(paymentUrl)}">Guardar para continuar más tarde</a>
-            ` : ''}
-        `);
-    }
-
-    function proofFileSelected(input) {
-        const form = input.form;
-        const file = input.files[0];
-        const button = form?.querySelector('button[type="submit"]');
-        const meta = form?.querySelector('#proof-file-meta');
-        const errorBox = form?.querySelector('#proof-error');
-        const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
-        const maxBytes = Number(app.proof_max_bytes || 8388608);
-        if (!button || !meta || !errorBox) {
-            return;
-        }
-        errorBox.hidden = true;
-        button.disabled = true;
-        if (!file) {
-            meta.textContent = 'Todavía no elegiste un archivo.';
-            return;
-        }
-        if (!allowed.includes(file.type) || file.size > maxBytes) {
-            input.value = '';
-            meta.textContent = 'Archivo no seleccionado.';
-            errorBox.hidden = false;
-            errorBox.textContent = !allowed.includes(file.type)
-                ? 'Elegí una imagen JPG, PNG o un archivo PDF.'
-                : `El archivo supera el máximo de ${Math.max(1, Math.round(maxBytes / 1048576))} MB.`;
-            return;
-        }
-        meta.innerHTML = `<strong>${escapeHtml(file.name)}</strong><span>${(file.size / 1048576).toFixed(1)} MB · listo para enviar</span>`;
-        button.disabled = false;
-    }
-
-    async function uploadProof(form) {
-        const button = form.querySelector('button[type="submit"]');
-        const errorBox = form.querySelector('#proof-error');
-        const processing = form.querySelector('#proof-processing');
-        const file = form.querySelector('input[type="file"]').files[0];
-        if (!file || !state.order) {
-            return;
-        }
-        const payload = new FormData();
-        payload.append('action', 'upload_proof');
-        payload.append('csrf_token', app.csrf_token);
-        payload.append('order_id', String(state.order.id));
-        payload.append('upload_token', state.order.upload_token);
-        payload.append('proof', file);
-        button.disabled = true;
-        button.textContent = app.receipt_ai_enabled ? 'REVISANDO COMPROBANTE…' : 'ENVIANDO COMPROBANTE…';
-        errorBox.hidden = true;
-        processing.hidden = false;
-        processing.textContent = app.receipt_ai_enabled
-            ? 'Estamos comprobando el tipo de documento, el importe y el destinatario. Puede tardar unos segundos.'
-            : 'Estamos guardando el archivo de forma segura.';
-
-        try {
-            const response = await fetch(app.api_url, {
-                method: 'POST',
-                headers: { 'X-CSRF-Token': app.csrf_token },
-                body: payload,
-            });
-            const data = await response.json();
-            if (!response.ok || !data.ok) {
-                throw new Error(data.error || 'No pudimos subir el comprobante.');
-            }
-            showSuccess(data.result);
-        } catch (error) {
-            errorBox.hidden = false;
-            errorBox.textContent = error.message;
-            processing.hidden = true;
-            button.disabled = false;
-            button.textContent = 'ENVIAR COMPROBANTE';
-        }
-    }
-
     function whatsappUrl(order) {
         const lines = cartItems().map(item => (
             `- ${item.quantity} x ${item.product.name}${variantDisplayName(item.product, item.variant)
@@ -1362,25 +1183,6 @@
             `Total: ${money(Number(order.total_cents))}`,
         ].join('\n');
         return `https://wa.me/${app.whatsapp_number}?text=${encodeURIComponent(message)}`;
-    }
-
-    function showSuccess(result) {
-        const aiStatus = result.prevalidation_status === 'prevalidated'
-            ? 'El comprobante coincide de forma preliminar con el importe y el destinatario.'
-            : 'Recibimos el comprobante y revisaremos la acreditación.';
-        openModal(`
-            <p class="checkout-lead"><strong>¡Gracias por tu compra!</strong> Recibimos tu pedido y el comprobante.</p>
-            ${checkoutSteps(3)}
-            <h2 id="modal-title">¡LISTO!</h2>
-            <div class="success-box">
-                ${escapeHtml(aiStatus)} El stock quedó reservado.
-            </div>
-            <p>
-                Pedido <strong>${escapeHtml(result.public_number)}</strong><br>
-                Te avisaremos por WhatsApp cuando esté aprobado y listo para retirar.
-            </p>
-            <button class="primary-button" type="button" data-finish-order>LISTO</button>
-        `);
     }
 
     function rememberCompletedOrder() {
@@ -1593,18 +1395,6 @@
                 Number(event.target.dataset.quantityInput),
                 Number(event.target.value)
             );
-        }
-        if (event.target.matches('input[name="payment_method"]')) {
-            const warning = document.getElementById('cash-reservation-warning');
-            if (warning) {
-                warning.hidden = event.target.value !== 'cash';
-            }
-            const footnote = document.querySelector('[data-payment-footnote]');
-            if (footnote) {
-                footnote.textContent = event.target.value === 'cash'
-                    ? 'Al confirmar, guardamos el stock para vos durante 6 horas.'
-                    : 'Elegí la forma de pago que te resulte más cómoda.';
-            }
         }
     });
 
