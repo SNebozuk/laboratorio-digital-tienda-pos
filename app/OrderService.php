@@ -152,17 +152,6 @@ final class OrderService
                     'payment_url' => $paymentUrl,
                     'items' => $resolvedItems,
                 ];
-                if ($customerEmail !== null) {
-                    $this->queueOrderMail(
-                        $pdo,
-                        $orderId,
-                        $customerEmail,
-                        'Recibimos tu pedido ' . $publicNumber,
-                        'order_created',
-                        $mailPayload
-                    );
-                }
-
                 $salesEmail = trim((string) ($this->config['sales_notification_email']
                     ?? 'ventas@laboratorio-digital.com.ar'));
                 if (filter_var($salesEmail, FILTER_VALIDATE_EMAIL)) {
