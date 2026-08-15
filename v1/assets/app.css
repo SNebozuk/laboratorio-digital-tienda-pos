@@ -1445,6 +1445,12 @@ body {
     text-underline-offset: 3px;
 }
 
+.product-description-text {
+    white-space: normal;
+    color: var(--text);
+    line-height: 1.62;
+}
+
 .variant-list {
     display: grid;
     border-top: 1px solid var(--line-soft);

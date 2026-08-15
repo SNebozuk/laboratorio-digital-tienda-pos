@@ -81,6 +81,9 @@
         "'": '&#039;',
     }[char]));
 
+    const formatDescription = value => escapeHtml(value || '')
+        .replace(/\n/g, '<br>');
+
     const safeImage = value => {
         const url = String(value || '').trim();
         if (url.startsWith('/')) {
@@ -936,7 +939,7 @@
             ${safeImage(product.image_path)
                 ? `<img class="description-product-image" src="${escapeHtml(safeImage(product.image_path))}" alt="${escapeHtml(product.name)}" data-zoomable-image>`
                 : ''}
-            <p>${escapeHtml(product.description || 'Este producto todavía no tiene descripción.')}</p>
+            <p class="product-description-text">${formatDescription(product.description || 'Este producto todavía no tiene descripción.')}</p>
             <div class="notice">
                 <strong>${priceRange(product)}</strong><br>
                 ${product.variants.map(variant => {

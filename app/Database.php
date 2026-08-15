@@ -75,6 +75,10 @@ final class Database
         self::migrateProductVisibilityState($pdo);
         self::prepareRealSalesNumbering($pdo);
         self::normalizeHistoricalCustomerNames($pdo);
+        self::migrateCatalogDescriptions(
+            $pdo,
+            dirname($schemaPath) . '/catalog_descriptions.json'
+        );
     }
 
     /**
@@ -129,6 +133,82 @@ final class Database
                 if ($normalized !== '' && $normalized !== $original) {
                     $update->execute(['name' => $normalized, 'id' => (int) $row['id']]);
                 }
+            }
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')
+                ->execute(['version' => $version]);
+        });
+    }
+
+    /**
+     * Restaura las descripciones completas del catálogo anterior.
+     *
+     * La exportación original contiene HTML propio de Tienda Nube. El archivo
+     * de apoyo conserva solamente su contenido editorial como texto limpio con
+     * párrafos y viñetas, para que se vea bien tanto en la tienda como en el
+     * editor del administrador.
+     */
+    private static function migrateCatalogDescriptions(PDO $pdo, string $path): void
+    {
+        $version = 20;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+        if (!is_file($path)) {
+            throw new \RuntimeException('No se encontró el archivo de descripciones del catálogo.');
+        }
+
+        $contents = file_get_contents($path);
+        $descriptions = is_string($contents)
+            ? json_decode($contents, true, 512, JSON_THROW_ON_ERROR)
+            : null;
+        if (!is_array($descriptions)) {
+            throw new \RuntimeException('El archivo de descripciones del catálogo no es válido.');
+        }
+
+        $byName = $descriptions['by_name'] ?? $descriptions;
+        $bySku = $descriptions['by_sku'] ?? [];
+        if (!is_array($byName) || !is_array($bySku)) {
+            throw new \RuntimeException('La estructura de descripciones del catálogo no es válida.');
+        }
+
+        self::immediate($pdo, static function (PDO $pdo) use ($byName, $bySku, $version): void {
+            $update = $pdo->prepare(
+                'UPDATE products
+                 SET description = :description, updated_at = CURRENT_TIMESTAMP
+                 WHERE name = :name COLLATE NOCASE
+                   AND deleted_at IS NULL'
+            );
+            foreach ($byName as $name => $description) {
+                if (!is_string($name) || !is_string($description) || trim($name) === '') {
+                    continue;
+                }
+                $update->execute([
+                    'name' => trim($name),
+                    'description' => trim($description),
+                ]);
+            }
+            // Algunas denominaciones cambiaron entre exportaciones. El SKU es
+            // estable y permite restaurar igualmente la descripción correcta.
+            $updateBySku = $pdo->prepare(
+                'UPDATE products
+                 SET description = :description, updated_at = CURRENT_TIMESTAMP
+                 WHERE deleted_at IS NULL
+                   AND EXISTS (
+                       SELECT 1 FROM product_variants pv
+                       WHERE pv.product_id = products.id
+                         AND upper(pv.sku) = :sku
+                   )'
+            );
+            foreach ($bySku as $sku => $description) {
+                if (!is_string($sku) || !is_string($description) || trim($sku) === '') {
+                    continue;
+                }
+                $updateBySku->execute([
+                    'sku' => strtoupper(trim($sku)),
+                    'description' => trim($description),
+                ]);
             }
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')
                 ->execute(['version' => $version]);
