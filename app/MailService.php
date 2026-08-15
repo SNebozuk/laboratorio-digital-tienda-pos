@@ -85,6 +85,13 @@ final class MailService
 
     private function assertConfiguration(): void
     {
+        if (($this->config['mail_transport'] ?? 'smtp') === 'native') {
+            if (trim((string) ($this->config['mail_from'] ?? '')) === '') {
+                throw new \RuntimeException('Falta completar el remitente del correo.');
+            }
+            return;
+        }
+
         foreach (['mail_from', 'mail_smtp_host', 'mail_smtp_username', 'mail_smtp_password'] as $key) {
             if (trim((string) ($this->config[$key] ?? '')) === '') {
                 throw new \RuntimeException('Falta completar la configuración privada de correo.');
@@ -98,6 +105,21 @@ final class MailService
             throw new \RuntimeException('El destinatario interno no es válido.');
         }
         $from = (string) $this->config['mail_from'];
+        if (($this->config['mail_transport'] ?? 'smtp') === 'native') {
+            $cleanSubject = trim(str_replace(["\r", "\n"], '', $subject));
+            $headers = [
+                'MIME-Version: 1.0',
+                'Content-Type: text/html; charset=UTF-8',
+                'From: Laboratorio Digital <' . $from . '>',
+                'Reply-To: ' . (string) ($this->config['mail_reply_to'] ?? $from),
+                'X-Mailer: Laboratorio Digital',
+            ];
+            if (!@mail($recipient, $cleanSubject, $html, implode("\r\n", $headers), '-f' . $from)) {
+                throw new \RuntimeException('El servidor no pudo entregar el aviso interno.');
+            }
+            return;
+        }
+
         $host = trim((string) $this->config['mail_smtp_host']);
         $port = (int) ($this->config['mail_smtp_port'] ?? 465);
         $encryption = strtolower((string) ($this->config['mail_smtp_encryption'] ?? 'ssl'));

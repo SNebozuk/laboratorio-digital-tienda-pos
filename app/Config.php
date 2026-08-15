@@ -113,12 +113,12 @@ final class Config
             'mail_enabled' => self::bool(
                 $local,
                 'mail_enabled',
-                filter_var(getenv('APP_MAIL_ENABLED') ?: false, FILTER_VALIDATE_BOOL)
+                filter_var(getenv('APP_MAIL_ENABLED') ?: true, FILTER_VALIDATE_BOOL)
             ),
             'mail_transport' => self::string(
                 $local,
                 'mail_transport',
-                getenv('APP_MAIL_TRANSPORT') ?: 'smtp'
+                getenv('APP_MAIL_TRANSPORT') ?: 'native'
             ),
             'mail_from' => self::string(
                 $local,
