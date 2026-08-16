@@ -67,6 +67,10 @@ try {
                     ),
                 ]);
 
+            case 'delivery_slots':
+                $app['auth']->requireUser();
+                Http::json(['ok' => true, 'slots' => $app['deliveries']->slots()]);
+
             case 'order':
                 $app['auth']->requireUser();
                 Http::json([
@@ -354,6 +358,14 @@ try {
                 ($input['restore_stock'] ?? true) !== false
             );
             Http::json(['ok' => true]);
+
+        case 'delivery_slot_update':
+            $user = $app['auth']->requireUser();
+            Http::json(['ok' => true, 'slot' => $app['deliveries']->saveSlot((int) ($input['slot_number'] ?? 0), $input, (int) $user['id'])]);
+
+        case 'delivery_copy_order':
+            $user = $app['auth']->requireUser();
+            Http::json(['ok' => true, 'result' => $app['deliveries']->copyOrder((int) ($input['order_id'] ?? 0), (int) ($input['slot_number'] ?? 0), (int) $user['id'])]);
 
         case 'expire_orders':
             $user = $app['auth']->requireAdmin();

@@ -86,6 +86,9 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button active" type="button" data-view="orders">
                         Lista de Ventas
                     </button>
+                    <button class="admin-nav-button" type="button" data-view="deliveries">
+                        Entrega de Pedidos
+                    </button>
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
@@ -130,6 +133,7 @@ header('Referrer-Policy: same-origin');
                     <strong>LABORATORIO DIGITAL</strong>
                     <select id="mobile-view">
                         <option value="orders">Lista de Ventas</option>
+                        <option value="deliveries">Entrega de Pedidos</option>
                         <option value="products">Productos</option>
                         <?php if ($user['role'] === 'admin'): ?>
                             <option value="categories">Categorías</option>
@@ -295,6 +299,22 @@ header('Referrer-Policy: same-origin');
                         </label>
                     </div>
                     <div id="order-list" class="order-list"></div>
+                </section>
+
+                <section class="admin-view" id="view-deliveries">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">ARMADO FÍSICO</p>
+                            <h1>ENTREGA DE PEDIDOS</h1>
+                            <p>Las ubicaciones del 1 al 100 son fijas. Editá directamente cada casillero.</p>
+                        </div>
+                    </div>
+                    <div class="delivery-table-wrap">
+                        <table class="delivery-table">
+                            <thead><tr><th>N.º</th><th>Ubicación</th><th># Orden</th><th>Nombre y Apellido</th><th>Transferencias</th></tr></thead>
+                            <tbody id="delivery-slots"></tbody>
+                        </table>
+                    </div>
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>

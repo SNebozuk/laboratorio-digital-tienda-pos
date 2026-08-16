@@ -6,6 +6,7 @@
         products: [],
         categories: [],
         orders: [],
+        deliverySlots: [],
         orderQuery: '',
         orderStatus: '',
         orderChannel: '',
@@ -112,6 +113,7 @@
         posClearCart: document.getElementById('pos-clear-cart'),
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
+        deliverySlots: document.getElementById('delivery-slots'),
         openOrdersCount: document.getElementById('open-orders-count'),
         orderSearch: document.getElementById('order-search'),
         orderChannelFilter: document.getElementById('order-channel-filter'),
@@ -264,7 +266,7 @@
     }
 
     function showView(view) {
-        const availableViews = new Set(['orders', 'products', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'products', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -285,6 +287,9 @@
         }
         if (view === 'orders') {
             loadOrders();
+        }
+        if (view === 'deliveries') {
+            loadDeliverySlots();
         }
         if (view === 'settings') {
             loadSettings();
@@ -1645,6 +1650,82 @@
         }
     }
 
+    function slotTone(slot) {
+        const name = String(slot.customer_name || '');
+        if (/\bAGREGAR\b/i.test(name)) return 'delivery-slot-add';
+        if (/\bARMAR\b/i.test(name)) return 'delivery-slot-build';
+        return '';
+    }
+
+    function renderDeliverySlots() {
+        if (!elements.deliverySlots) return;
+        const byNumber = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
+        elements.deliverySlots.innerHTML = Array.from({ length: 100 }, (_, index) => {
+            const number = index + 1;
+            const slot = byNumber.get(number) || { slot_number: number, location: '', order_numbers: '', customer_name: '', transfers: '', revision: 0 };
+            const tone = slotTone(slot);
+            const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
+            return `<tr class="${tone}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${field('location', 'Ubicación')}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${field('transfers', 'Transferencias')}</td></tr>`;
+        }).join('');
+    }
+
+    async function loadDeliverySlots() {
+        if (!elements.deliverySlots) return;
+        try {
+            const data = await apiGet('delivery_slots');
+            state.deliverySlots = data.slots || [];
+            renderDeliverySlots();
+        } catch (error) { toast(error.message); }
+    }
+
+    async function saveDeliverySlot(slotNumber, source) {
+        const row = source.closest('[data-delivery-row]');
+        if (!row) return;
+        const field = key => row.querySelector(`[data-delivery-field="${key}"]`);
+        const revision = Number(source.dataset.deliveryRevision || 0);
+        try {
+            const data = await apiPost({
+                action: 'delivery_slot_update', slot_number: Number(slotNumber), revision,
+                location: field('location')?.value || '',
+                order_numbers: field('order_numbers')?.value || '',
+                customer_name: field('customer_name')?.value || '',
+                transfers: field('transfers')?.value || '',
+            });
+            const next = data.slot;
+            state.deliverySlots = state.deliverySlots.filter(slot => Number(slot.slot_number) !== Number(slotNumber));
+            if (Number(next.revision || 0) > 0) state.deliverySlots.push(next);
+            renderDeliverySlots();
+        } catch (error) {
+            toast(error.message);
+            await loadDeliverySlots();
+        }
+    }
+
+    function showCopyToDeliveries(orderId) {
+        const order = state.orders.find(item => Number(item.id) === Number(orderId));
+        if (!order) return;
+        if (order.delivery_slot_number) { toast('Esta venta ya fue copiada a Entregas.'); return; }
+        const slots = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
+        openModal(`
+            <p class="eyebrow">ENTREGA DE PEDIDOS</p>
+            <h2 id="modal-title">COPIAR ${escapeHtml(order.public_number)}</h2>
+            <p class="empty-copy">Elegí una ubicación. Una ubicación vacía queda marcada como ARMAR; si ya contiene una orden, se suma sin reemplazar datos y queda marcada como AGREGAR.</p>
+            <label>UBICACIÓN
+                <select id="copy-delivery-slot">${Array.from({ length: 100 }, (_, index) => { const n = index + 1; const slot = slots.get(n); const suffix = slot?.order_numbers ? ` · ${slot.order_numbers}` : ''; return `<option value="${n}">${n}${escapeHtml(suffix)}</option>`; }).join('')}</select>
+            </label>
+            <div class="modal-actions"><button class="primary-button" type="button" data-confirm-copy-delivery="${Number(orderId)}">COPIAR A ENTREGAS</button><button class="secondary-button" type="button" data-close-modal>CANCELAR</button></div>`);
+    }
+
+    async function copyOrderToDelivery(orderId) {
+        const slot = Number(document.getElementById('copy-delivery-slot')?.value || 0);
+        try {
+            await apiPost({ action: 'delivery_copy_order', order_id: Number(orderId), slot_number: slot });
+            closeModal();
+            await Promise.all([loadOrders(true), loadDeliverySlots()]);
+            toast('Venta copiada a Entregas.');
+        } catch (error) { toast(error.message); }
+    }
+
     function adminHasUnsavedInteraction() {
         if (elements.modal?.classList.contains('open') || quickUpdateTimers.size > 0 || quickUpdateInFlight > 0) {
             return true;
@@ -1665,6 +1746,8 @@
                 await refreshPosAvailability();
             } else if (state.view === 'orders') {
                 await loadOrders(true);
+            } else if (state.view === 'deliveries') {
+                await loadDeliverySlots();
             } else if (state.view === 'products') {
                 await loadProducts();
             } else if (state.view === 'categories') {
@@ -2220,7 +2303,7 @@
             ));
             elements.orderList.innerHTML = `
                 <div class="order-list-head" aria-hidden="true">
-                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''} aria-label="Seleccionar todas las ventas"></label><span>VENTA</span><span>FECHA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span>
+                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''} aria-label="Seleccionar todas las ventas"></label><span>VENTA</span><span>FECHA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span>
                 </div>
                 ${matchingOrders.map(order => `
                     <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
@@ -2230,7 +2313,8 @@
                         <button class="order-list-customer" type="button" data-customer-history="${escapeHtml(order.customer_name)}" aria-label="Ver historial de ${escapeHtml(order.customer_name)}"><strong>${escapeHtml(order.customer_name)}</strong></button>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
-                        <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : order.status)}">${escapeHtml(order.archived_at ? 'Archivada' : (statusLabels[order.status] || order.status))}</span></span>
+                        <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : (order.delivery_slot_number ? 'copied' : order.status))}">${escapeHtml(order.archived_at ? 'Archivada' : (order.delivery_slot_number ? 'COPIADA' : (statusLabels[order.status] || order.status)))}</span></span>
+                        <button class="order-list-copy" type="button" data-copy-order-delivery="${Number(order.id)}" ${order.delivery_slot_number ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="Copiar a Entregas">⇢</button>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
                         ${order.status !== 'cancelled'
                             ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">🗑</button>`
@@ -3518,6 +3602,18 @@
             showCancellationDialog([Number(cancelOrder.dataset.cancelOrder)]);
             return;
         }
+        const copyOrder = event.target.closest('[data-copy-order-delivery]');
+        if (copyOrder) {
+            event.preventDefault();
+            event.stopPropagation();
+            showCopyToDeliveries(Number(copyOrder.dataset.copyOrderDelivery));
+            return;
+        }
+        const confirmCopyDelivery = event.target.closest('[data-confirm-copy-delivery]');
+        if (confirmCopyDelivery) {
+            copyOrderToDelivery(Number(confirmCopyDelivery.dataset.confirmCopyDelivery));
+            return;
+        }
         const archiveOrder = event.target.closest('[data-archive-order]');
         if (archiveOrder) {
             archiveSelectedOrders([Number(archiveOrder.dataset.archiveOrder)]);
@@ -3673,6 +3769,10 @@
     });
 
     document.addEventListener('change', event => {
+        if (event.target.matches('[data-delivery-field]')) {
+            saveDeliverySlot(Number(event.target.dataset.deliverySlot), event.target);
+            return;
+        }
         if (event.target.matches('[data-select-product]')) {
             const id = Number(event.target.dataset.selectProduct);
             if (event.target.checked) state.selectedProductIds.add(id);

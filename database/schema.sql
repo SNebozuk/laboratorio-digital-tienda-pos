@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS orders (
     cancelled_at TEXT,
     archived_at TEXT,
     archived_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    delivery_slot_number INTEGER,
+    delivery_copied_at TEXT,
     created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -111,6 +113,17 @@ CREATE INDEX IF NOT EXISTS idx_orders_deadlines
 
 CREATE INDEX IF NOT EXISTS idx_orders_archived_created
     ON orders(archived_at, created_at);
+
+CREATE TABLE IF NOT EXISTS delivery_slots (
+    slot_number INTEGER PRIMARY KEY CHECK (slot_number BETWEEN 1 AND 100),
+    location TEXT NOT NULL DEFAULT '',
+    order_numbers TEXT NOT NULL DEFAULT '',
+    customer_name TEXT NOT NULL DEFAULT '',
+    transfers TEXT NOT NULL DEFAULT '',
+    revision INTEGER NOT NULL DEFAULT 1,
+    updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

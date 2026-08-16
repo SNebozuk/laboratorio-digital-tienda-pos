@@ -3118,7 +3118,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 /* Lista de ventas: sin datos de cobro o envío, sólo lo necesario para preparar pedidos. */
 #view-orders .order-list-head,
 #view-orders .order-list-row {
-    grid-template-columns: 34px minmax(88px, .46fr) minmax(96px, .52fr) minmax(180px, 1.2fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 34px;
+    grid-template-columns: 34px minmax(88px, .46fr) minmax(96px, .52fr) minmax(180px, 1.2fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 32px 34px;
 }
 #view-orders .order-list-row > :nth-child(7) { display: block; }
 #view-orders .order-list-row > :nth-child(8),
@@ -3139,4 +3139,22 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     #view-orders .order-list-row > :nth-child(7) { grid-column: 3; grid-row: 3; justify-self: end; }
     #view-orders .order-list-row > :nth-child(8) { grid-column: 2; grid-row: 4; justify-self: start; }
     #view-orders .order-list-row > :nth-child(9) { grid-column: 3; grid-row: 4; justify-self: end; }
+    #view-orders .order-list-row > :nth-child(10) { grid-column: 3; grid-row: 5; justify-self: end; }
 }
+
+/* Entrega de pedidos: cien ubicaciones físicas, sin reordenamientos. */
+#view-deliveries { padding-bottom: 36px; }
+.delivery-table-wrap { overflow: auto; border: 1px solid #ded5eb; border-radius: 14px; background: #fff; box-shadow: 0 10px 30px rgba(66,35,104,.08); }
+.delivery-table { width: 100%; min-width: 850px; border-collapse: collapse; color: #2a1d3c; }
+.delivery-table th,.delivery-table td { padding: 8px 10px; border-bottom: 1px solid #eee8f5; text-align: left; vertical-align: middle; }
+.delivery-table thead th { position: sticky; top: 0; z-index: 1; background: #f3edfb; color: #442467; font-size: 12px; letter-spacing: .03em; }
+.delivery-table tbody th { width: 52px; color: #6a5b78; font-variant-numeric: tabular-nums; }
+.delivery-table tbody tr:nth-child(even) { background: #fcfaff; }
+.delivery-table input { width: 100%; min-width: 110px; padding: 8px 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: inherit; font: inherit; }
+.delivery-table input:hover,.delivery-table input:focus { border-color: #bda4de; background: #fff; outline: none; }
+.delivery-table .delivery-slot-build { color: #275836; font-weight: 750; background: #f0f8f0; }
+.delivery-table .delivery-slot-add { color: #5d368a; font-weight: 750; background: #f7f0ff; }
+.order-list-copy { display: grid; width: 30px; height: 30px; place-items: center; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #7051a9; cursor: pointer; font-size: 20px; }
+.order-list-copy:hover:not(:disabled) { background: #eee5fa; }
+.order-list-copy:disabled { color: #a89db5; cursor: default; opacity: .65; }
+#view-orders .status-copied { border-color: #7e5bb0; background: #f1e9fb; color: #4c2574; }
