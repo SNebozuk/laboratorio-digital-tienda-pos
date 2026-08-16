@@ -19,6 +19,9 @@ $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $apiUrl = $storePath . '/api.php';
 $whatsappNumber = preg_replace('/\D+/', '', (string) ($publicSettings['whatsapp_number'] ?? '5493415699338')) ?: '5493415699338';
+$pickupAddress = trim((string) ($publicSettings['pickup_address'] ?? ''));
+$businessHours = trim((string) ($publicSettings['business_hours'] ?? ''));
+$mapUrl = $pickupAddress === '' ? '' : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($pickupAddress);
 $cartMaintenanceEnabled = in_array((string) ($publicSettings['cart_maintenance_enabled'] ?? '0'), ['1', 'true', 'on'], true);
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
@@ -150,21 +153,15 @@ header('Referrer-Policy: same-origin');
         </aside>
     </main>
 
-    <footer class="store-contact" id="contacto">
-        <div>
-            <p class="eyebrow">CONTACTO</p>
-            <strong><?= $escape((string) ($publicSettings['store_name'] ?? 'Laboratorio Digital')) ?></strong>
-        </div>
-        <a href="https://wa.me/<?= $escape($whatsappNumber) ?>" target="_blank" rel="noopener">
-            WhatsApp +<?= $escape($whatsappNumber) ?>
+    <footer class="store-footer" id="contacto">
+        <button class="footer-contact-button" id="contact-button" type="button">
+            <span>CONTACTO</span>
+            <small>Horario, WhatsApp y ubicación</small>
+        </button>
+        <a class="creator-credit" href="<?= $escape($storePath) ?>/sergio-nebozuk.php">
+            <span>¿NECESITÁS UNA TIENDA ONLINE?</span>
+            <strong>Diseño y desarrollo por Sergio Nebozuk <b aria-hidden="true">→</b></strong>
         </a>
-        <?php if (!empty($publicSettings['pickup_address'])): ?>
-            <span><?= $escape((string) $publicSettings['pickup_address']) ?></span>
-        <?php endif ?>
-        <?php if (!empty($publicSettings['business_hours'])): ?>
-            <span><?= $escape((string) $publicSettings['business_hours']) ?></span>
-        <?php endif ?>
-        <small class="creator-credit">Diseño y desarrollo: Sergio Nebozuk</small>
     </footer>
 
     <a
@@ -199,6 +196,13 @@ header('Referrer-Policy: same-origin');
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
+            'contact' => [
+                'store_name' => $publicSettings['store_name'] ?? 'Laboratorio Digital',
+                'whatsapp_number' => $whatsappNumber,
+                'pickup_address' => $pickupAddress,
+                'business_hours' => $businessHours,
+                'map_url' => $mapUrl,
+            ],
             'design' => $design,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>

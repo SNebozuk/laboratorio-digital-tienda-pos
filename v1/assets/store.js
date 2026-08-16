@@ -907,6 +907,31 @@
         document.body.style.overflow = '';
     }
 
+    function showStoreContact() {
+        const contact = app.contact || {};
+        const phone = String(contact.whatsapp_number || app.whatsapp_number || '').replace(/\D+/g, '');
+        const address = String(contact.pickup_address || '').trim();
+        const hours = String(contact.business_hours || '').trim();
+        openModal(`
+            <section class="store-contact-modal">
+                <p class="eyebrow">CONTACTO</p>
+                <h2 id="modal-title">${escapeHtml(contact.store_name || 'Laboratorio Digital')}</h2>
+                <p class="contact-modal-lead">Estamos para ayudarte a encontrar los productos que necesitás.</p>
+                <div class="contact-info-grid">
+                    <a class="contact-info-card contact-whatsapp-card" href="https://wa.me/${escapeHtml(phone)}" target="_blank" rel="noopener">
+                        <span>WHATSAPP</span><strong>Escribinos por WhatsApp</strong><small>+${escapeHtml(phone)}</small>
+                    </a>
+                    <div class="contact-info-card contact-hours-card">
+                        <span>HORARIOS DE ATENCIÓN</span><strong>Te esperamos en el local</strong><small>${escapeHtml(hours || 'Consultanos por WhatsApp para coordinar.')}</small>
+                    </div>
+                    ${address ? `<a class="contact-info-card contact-map-card" href="${escapeHtml(contact.map_url || '#')}" target="_blank" rel="noopener">
+                        <span>UBICACIÓN</span><strong>${escapeHtml(address)}</strong><small>Ver en Google Maps ↗</small>
+                    </a>` : ''}
+                </div>
+            </section>
+        `);
+    }
+
     function showImagePreview(productId) {
         const product = products.find(item => Number(item.id) === Number(productId));
         const image = safeImage(product?.image_path);
@@ -1439,6 +1464,7 @@
             refreshCatalog();
         }
     });
+    document.getElementById('contact-button')?.addEventListener('click', showStoreContact);
     function closeMobileCart({ returnToCatalog = false } = {}) {
         elements.orderPanel.classList.remove('mobile-open');
         document.body.classList.remove('cart-open');
