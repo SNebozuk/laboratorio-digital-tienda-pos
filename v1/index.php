@@ -23,6 +23,7 @@ $pickupAddress = trim((string) ($publicSettings['pickup_address'] ?? ''));
 $businessHours = trim((string) ($publicSettings['business_hours'] ?? ''));
 $mapUrl = $pickupAddress === '' ? '' : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($pickupAddress);
 $cartMaintenanceEnabled = in_array((string) ($publicSettings['cart_maintenance_enabled'] ?? '0'), ['1', 'true', 'on'], true);
+$featuredProductIds = $app['settings']->featuredProductIds();
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
@@ -196,6 +197,7 @@ header('Referrer-Policy: same-origin');
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
+            'featured_product_ids' => $featuredProductIds,
             'contact' => [
                 'store_name' => $publicSettings['store_name'] ?? 'Laboratorio Digital',
                 'whatsapp_number' => $whatsappNumber,

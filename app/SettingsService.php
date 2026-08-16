@@ -108,6 +108,56 @@ final class SettingsService
         return $defaults;
     }
 
+    /** @return list<int> */
+    public function featuredProductIds(): array
+    {
+        $query = $this->pdo->prepare('SELECT value FROM settings WHERE key = :key');
+        $query->execute(['key' => 'featured_product_ids']);
+        $decoded = json_decode((string) ($query->fetchColumn() ?: '[]'), true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $ids = [];
+        foreach ($decoded as $id) {
+            $id = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($id !== false && !in_array((int) $id, $ids, true)) {
+                $ids[] = (int) $id;
+            }
+        }
+        return array_slice($ids, 0, 8);
+    }
+
+    /** @param list<mixed> $ids @return list<int> */
+    public function updateFeaturedProductIds(array $ids): array
+    {
+        $normalized = [];
+        foreach ($ids as $id) {
+            $id = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($id !== false && !in_array((int) $id, $normalized, true)) {
+                $normalized[] = (int) $id;
+            }
+        }
+        if (count($normalized) > 8) {
+            throw new ValidationException('Podés destacar hasta 8 productos.');
+        }
+        Database::immediate($this->pdo, static function (PDO $pdo) use ($normalized): void {
+            if ($normalized !== []) {
+                $marks = implode(',', array_fill(0, count($normalized), '?'));
+                $check = $pdo->prepare("SELECT id FROM products WHERE id IN ($marks) AND active = 1 AND deleted_at IS NULL");
+                $check->execute($normalized);
+                if (count($check->fetchAll()) !== count($normalized)) {
+                    throw new ValidationException('Solo se pueden destacar productos visibles en la tienda.');
+                }
+            }
+            $save = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
+            $save->execute([
+                'key' => 'featured_product_ids',
+                'value' => json_encode($normalized, JSON_THROW_ON_ERROR),
+            ]);
+        });
+        return $normalized;
+    }
+
     /** @param array<string, mixed> $data */
     public function updateDesign(array $data): array
     {

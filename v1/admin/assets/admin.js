@@ -4,6 +4,7 @@
     const app = JSON.parse(document.getElementById('admin-app-data').textContent);
     const state = {
         products: [],
+        featuredProductIds: new Set(),
         categories: [],
         orders: [],
         deliverySlots: [],
@@ -326,6 +327,7 @@
         try {
             const data = await apiGet('admin_products');
             state.products = data.products;
+            state.featuredProductIds = new Set((data.featured_product_ids || []).map(Number));
             const categoryData = await apiGet('admin_categories');
             state.categories = categoryData.categories;
             renderCategories();
@@ -729,6 +731,18 @@
         `);
     }
 
+    function showFeaturedProducts() {
+        const visibleProducts = state.products.filter(product => product.active !== false);
+        openModal(`
+            <h2 id="modal-title">PRODUCTOS DESTACADOS</h2>
+            <p class="checkout-lead">Elegí hasta 8 productos visibles para mostrarlos primero en la portada de la tienda.</p>
+            <form id="featured-products-form" class="featured-products-form">
+                ${visibleProducts.length ? `<div class="featured-products-options">${visibleProducts.map(product => `<label><input type="checkbox" name="product_ids" value="${Number(product.id)}" ${state.featuredProductIds.has(Number(product.id)) ? 'checked' : ''}><span>${adminProductImage(product)}</span><strong>${escapeHtml(product.name)}</strong></label>`).join('')}</div>` : '<p class="empty-copy">Primero necesitás tener productos visibles en la tienda.</p>'}
+                <div class="filter-modal-actions"><button class="secondary-button" type="button" data-close-modal>CANCELAR</button><button class="primary-button" type="submit" ${visibleProducts.length ? '' : 'disabled'}>GUARDAR DESTACADOS</button></div>
+            </form>
+        `);
+    }
+
     function renderProducts() {
         if (!elements.productList) return;
         const query = fold(elements.productSearch?.value || '');
@@ -758,6 +772,7 @@
         const toolbar = `
             <div class="product-bulk-toolbar">
                 <label class="product-select-all"><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''}> <span>Seleccionar todo</span></label>
+                <button class="secondary-button" type="button" data-open-featured-products>DESTACADOS${state.featuredProductIds.size ? ` · ${state.featuredProductIds.size}` : ''}</button>
                 <button class="secondary-button" type="button" data-open-product-filters>FILTRAR${state.productCategoryId || state.productAvailability || state.productVisibility ? ' · ACTIVO' : ''}</button>
             </div>
             <div class="order-actions-bar product-actions-bar" ${selectedCount ? '' : 'hidden'}>
@@ -778,10 +793,11 @@
                     const inlineFields = single ? `<label class="product-inline-field"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
                         <label class="product-inline-field"><input type="number" min="0" step="1" value="${single.price_cents == null ? '' : Number(single.price_cents) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
                     const visible = isProductVisible(product);
+                    const featured = state.featuredProductIds.has(Number(product.id));
                     return `<div class="product-list-row ${visible ? '' : 'is-hidden'}" role="row">
                         <span><input type="checkbox" data-select-product="${Number(product.id)}" ${state.selectedProductIds.has(Number(product.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(product.name)}"></span>
                         <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong><small>${hasVariants ? `${product.variants.length} variantes · hacé clic para editar` : 'Hacé clic para editar el producto'}</small></span></button>
-                        <span class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}">${visible ? 'Visible' : 'Oculto'}</span>
+                        <span class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}">${visible ? 'Visible' : 'Oculto'}${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</span>
                         ${inlineFields}
                         <div class="product-table-actions"><button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace">&#128279;</button><button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button><button class="small-button product-delete-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}">&#128465;</button></div>
                     </div>${hasVariants ? product.variants.map(variant => {
@@ -3369,7 +3385,7 @@
         }
     }
 
-    document.addEventListener('submit', event => {
+    document.addEventListener('submit', async event => {
         if (event.target.id === 'login-form') {
             event.preventDefault();
             authenticate(event.target, 'login');
@@ -3427,6 +3443,23 @@
             closeModal();
             renderProducts();
         }
+        if (event.target.id === 'featured-products-form') {
+            event.preventDefault();
+            const ids = Array.from(new FormData(event.target).getAll('product_ids')).map(Number);
+            if (ids.length > 8) {
+                toast('Podés destacar hasta 8 productos.');
+                return;
+            }
+            try {
+                const response = await apiPost({ action: 'featured_products_update', product_ids: ids });
+                state.featuredProductIds = new Set((response.featured_product_ids || []).map(Number));
+                closeModal();
+                renderProducts();
+                toast(ids.length ? 'Productos destacados guardados.' : 'No hay productos destacados.');
+            } catch (error) {
+                toast(error.message);
+            }
+        }
     });
 
     document.addEventListener('click', async event => {
@@ -3443,6 +3476,10 @@
         }
         if (event.target.closest('[data-open-product-filters]')) {
             showProductFilters();
+            return;
+        }
+        if (event.target.closest('[data-open-featured-products]')) {
+            showFeaturedProducts();
             return;
         }
         if (event.target.closest('[data-clear-product-filters]')) {

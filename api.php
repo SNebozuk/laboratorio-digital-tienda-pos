@@ -23,6 +23,7 @@ try {
                     'ok' => true,
                     'products' => $app['products']->publicCatalog(),
                     'categories' => $app['categories']->tree(),
+                    'featured_product_ids' => $app['settings']->featuredProductIds(),
                 ]);
 
             case 'catalog_search':
@@ -51,6 +52,7 @@ try {
                 Http::json([
                     'ok' => true,
                     'products' => $app['products']->adminCatalog(),
+                    'featured_product_ids' => $app['settings']->featuredProductIds(),
                 ]);
 
             case 'admin_categories':
@@ -250,6 +252,15 @@ try {
                 (bool) ($input['active'] ?? false)
             );
             Http::json(['ok' => true]);
+
+        case 'featured_products_update':
+            $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'featured_product_ids' => $app['settings']->updateFeaturedProductIds(
+                    is_array($input['product_ids'] ?? null) ? $input['product_ids'] : []
+                ),
+            ]);
 
         case 'product_delete':
             $app['auth']->requireAdmin();

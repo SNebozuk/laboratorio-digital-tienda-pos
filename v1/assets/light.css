@@ -107,4 +107,12 @@ body { background:#fbf8ff !important; }
 .creator-services span { color:#685d76; font-size:14px; line-height:1.45; }
 .creator-cta { display:inline-flex; text-decoration:none; }
 .creator-signature { display:block; margin-top:38px; color:#857c91; font-size:12px; }
+.home-featured-products { display:grid; gap:12px; padding:20px; border:1px solid #d9c8eb; border-radius:16px; background:linear-gradient(135deg,#fff,#f5effc); box-shadow:0 10px 26px rgba(77,47,116,.08); }
+.home-featured-heading { display:flex; align-items:end; justify-content:space-between; gap:15px; }
+.home-featured-heading h2 { margin:3px 0 0; color:#2a1d3c; font-size:20px; }
+.home-featured-heading .eyebrow { margin:0; color:#7652b8 !important; background:transparent !important; border:0 !important; padding:0 !important; }
+.home-featured-heading > span { color:#7652b8; font-size:12px; font-weight:750; }
+.home-featured-products .catalog-summary-list { border:1px solid #e4d8ef; border-radius:11px; overflow:hidden; background:#fff; }
+.home-featured-products .catalog-product-summary { box-shadow:none !important; }
 @media (max-width:700px) { .store-footer { align-items:flex-start; flex-direction:column; padding:20px 16px 92px; } .contact-info-grid,.creator-services { grid-template-columns:1fr; } .contact-hours-card { grid-column:auto; } .creator-shell { padding:30px 22px; } .creator-back { margin-bottom:30px; } }
+@media (max-width:700px) { .home-featured-products { padding:15px; } .home-featured-heading { align-items:start; flex-direction:column; gap:4px; } }

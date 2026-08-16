@@ -5,6 +5,9 @@
     const cartMaintenanceEnabled = app.cart_maintenance_enabled === true || String(app.cart_maintenance_enabled) === '1';
     let products = Array.isArray(app.products) ? app.products : [];
     let categoryTree = Array.isArray(app.categories) ? app.categories : [];
+    let featuredProductIds = Array.isArray(app.featured_product_ids)
+        ? app.featured_product_ids.map(Number).filter(Number.isFinite)
+        : [];
     const linkedProductId = (() => {
         const value = Number(new URL(window.location.href).searchParams.get('producto'));
         return Number.isFinite(value) && value > 0 ? value : null;
@@ -208,6 +211,9 @@
             catalogLoaded = true;
             if (Array.isArray(data.categories)) {
                 categoryTree = data.categories;
+            }
+            if (Array.isArray(data.featured_product_ids)) {
+                featuredProductIds = data.featured_product_ids.map(Number).filter(Number.isFinite);
             }
             rebuildVariantIndex();
 
@@ -755,6 +761,9 @@
         }
 
         if (isHome) {
+            const featured = featuredProductIds
+                .map(id => products.find(product => Number(product.id) === Number(id)))
+                .filter(Boolean);
             const rootCategories = (categoryTree.length ? categoryTree : [])
                 .filter(node => node.active !== false);
             const quickCategorySlugs = ['sublimables', 'accesorios', 'remeras', 'papeles'];
@@ -772,6 +781,10 @@
                         <img src="${escapeHtml(safeImage(app.design?.hero_2_path) || '/v1/assets/brand/hero-2.webp')}" alt="Indumentaria personalizada" loading="lazy">
                         <img src="${escapeHtml(safeImage(app.design?.hero_3_path) || '/v1/assets/brand/hero-3.webp')}" alt="Productos para personalizar" loading="lazy">
                     </section>
+                    ${featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
+                        <div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2 id="featured-products-title">PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div>
+                        ${productSummaryList(featured)}
+                    </section>` : ''}
                     <div class="quick-categories">
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
                     </div>
