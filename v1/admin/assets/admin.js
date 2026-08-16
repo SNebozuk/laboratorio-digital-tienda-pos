@@ -1678,7 +1678,7 @@
             const slot = byNumber.get(number) || { slot_number: number, location: '', order_numbers: '', customer_name: '', transfers: '', revision: 0 };
             const tone = slotTone(slot);
             const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
-            return `<tr class="${tone}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${field('location', 'Ubicación')}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td></tr>`;
+            return `<tr class="${tone}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${field('location', 'Ubicación')}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
         }).join('');
     }
 
@@ -1736,6 +1736,14 @@
             closeModal();
             await Promise.all([loadOrders(true), loadDeliverySlots()]);
             toast('Venta copiada a Entregas.');
+        } catch (error) { toast(error.message); }
+    }
+
+    async function deleteDeliverySlot(slotNumber) {
+        try {
+            await apiPost({ action: 'delivery_slot_delete', slot_number: Number(slotNumber) });
+            await Promise.all([loadDeliverySlots(), loadOrders(true)]);
+            toast(`Fila ${slotNumber} vaciada.`);
         } catch (error) { toast(error.message); }
     }
 
@@ -3622,6 +3630,11 @@
             showCopyToDeliveries(Number(copyOrder.dataset.copyOrderDelivery));
             return;
         }
+        const deleteDelivery = event.target.closest('[data-delete-delivery-slot]');
+        if (deleteDelivery) {
+            deleteDeliverySlot(Number(deleteDelivery.dataset.deleteDeliverySlot));
+            return;
+        }
         const confirmCopyDelivery = event.target.closest('[data-confirm-copy-delivery]');
         if (confirmCopyDelivery) {
             copyOrderToDelivery(Number(confirmCopyDelivery.dataset.confirmCopyDelivery));
@@ -3884,6 +3897,13 @@
         if (event.target.id === 'barcode-assignment-search') {
             barcodeAssignmentResults(event.target.value);
         }
+    });
+
+    document.getElementById('delivery-fullscreen')?.addEventListener('click', async () => {
+        const section = document.getElementById('view-deliveries');
+        if (!section) return;
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await section.requestFullscreen();
     });
 
     document.addEventListener('keydown', event => {

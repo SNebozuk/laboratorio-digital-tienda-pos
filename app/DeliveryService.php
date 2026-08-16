@@ -77,6 +77,18 @@ final class DeliveryService
         });
     }
 
+    public function deleteSlot(int $slot): void
+    {
+        $this->assertSlot($slot);
+        Database::immediate($this->pdo, static function (PDO $pdo) use ($slot): void {
+            // Vaciar una ubicación también habilita nuevamente sus ventas para
+            // copiarlas a otro casillero. No se conserva actividad por pedido.
+            $pdo->prepare('UPDATE orders SET delivery_slot_number = NULL, delivery_copied_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE delivery_slot_number = :slot')
+                ->execute(['slot' => $slot]);
+            $pdo->prepare('DELETE FROM delivery_slots WHERE slot_number = :slot')->execute(['slot' => $slot]);
+        });
+    }
+
     private function assertSlot(int $slot): void { if ($slot < 1 || $slot > 100) throw new ValidationException('Elegí una ubicación entre 1 y 100.'); }
     private function clean(mixed $value): string { $text = trim(preg_replace('/\s+/u', ' ', (string) $value) ?? ''); return function_exists('mb_substr') ? mb_substr($text, 0, 500) : substr($text, 0, 500); }
     private function normalizeLocation(mixed $value): string

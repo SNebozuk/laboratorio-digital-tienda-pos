@@ -83,12 +83,11 @@ header('Referrer-Policy: same-origin');
                     </span>
                 </a>
                 <nav class="admin-nav">
-                    <button class="admin-nav-button active" type="button" data-view="orders">
-                        Lista de Ventas
-                    </button>
-                    <button class="admin-nav-button" type="button" data-view="deliveries">
-                        Entrega de Pedidos
-                    </button>
+                    <div class="admin-nav-sales">
+                        <span class="admin-nav-group-label">VENTAS</span>
+                        <button class="admin-nav-button active" type="button" data-view="orders">Lista de Ventas</button>
+                        <button class="admin-nav-button" type="button" data-view="deliveries">Entrega de Pedidos</button>
+                    </div>
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
@@ -308,10 +307,11 @@ header('Referrer-Policy: same-origin');
                             <h1>ENTREGA DE PEDIDOS</h1>
                             <p>Las ubicaciones del 1 al 100 son fijas. Editá directamente cada casillero.</p>
                         </div>
+                        <button class="secondary-button" id="delivery-fullscreen" type="button">↗ PANTALLA COMPLETA</button>
                     </div>
                     <div class="delivery-table-wrap">
                         <table class="delivery-table">
-                            <thead><tr><th>N.º</th><th>Ubicación</th><th># Orden</th><th>Nombre y Apellido</th><th>Transferencias</th></tr></thead>
+                            <thead><tr><th>N.º</th><th>Ubicación</th><th># Orden</th><th>Nombre y Apellido</th><th>Transferencias</th><th></th></tr></thead>
                             <tbody id="delivery-slots"></tbody>
                         </table>
                     </div>
