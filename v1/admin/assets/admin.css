@@ -2658,6 +2658,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .product-list-row input[type="checkbox"], .product-list-head input[type="checkbox"] { width: 18px; height: 18px; accent-color: #5b4fc7; cursor: pointer; }
 .product-table-name { display: flex; align-items: center; min-width: 0; gap: 11px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .product-table-name .product-admin-image, .product-table-name .product-admin-placeholder { flex: 0 0 46px; width: 46px; height: 46px; }
+.product-table-name .product-admin-image { position: relative; z-index: 1; cursor: zoom-in; transition: transform .18s ease, box-shadow .18s ease; }
+.product-table-name:hover .product-admin-image { z-index: 20; transform: scale(2.15); box-shadow: 0 8px 22px rgba(40, 35, 85, .28); }
 .product-table-name span { min-width: 0; }
 .product-table-name strong { display: block; overflow: hidden; color: #303747; font-size: 13px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 .product-table-name small { display: block; margin-top: 3px; color: #7a8293; font-size: 11px; }
