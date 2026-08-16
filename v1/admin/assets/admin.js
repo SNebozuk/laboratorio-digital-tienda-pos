@@ -3080,6 +3080,14 @@
         finally { button.disabled = false; button.textContent = 'GUARDAR DISEÑO'; }
     }
 
+    function previewDesignImage(input, preview) {
+        const file = input?.files?.[0];
+        if (!file || !preview) return;
+        const reader = new FileReader();
+        reader.addEventListener('load', () => { preview.src = String(reader.result || ''); });
+        reader.readAsDataURL(file);
+    }
+
     async function saveContact(form) {
         const data = new FormData(form);
         const button = form.querySelector('button[type="submit"]');
@@ -4207,6 +4215,25 @@
     });
     document.getElementById('create-backup')?.addEventListener('click', createBackup);
     document.getElementById('refresh-orders')?.addEventListener('click', loadOrders);
+    const designForm = document.getElementById('design-form');
+    designForm?.elements.namedItem('logo_file')?.addEventListener('change', event => {
+        previewDesignImage(event.target, document.getElementById('design-logo-preview'));
+    });
+    [1, 2, 3].forEach(number => {
+        designForm?.elements.namedItem(`hero_${number}_file`)?.addEventListener('change', event => {
+            previewDesignImage(event.target, document.getElementById(`design-hero-${number}-preview`));
+        });
+    });
+    document.getElementById('restore-default-logo')?.addEventListener('click', () => {
+        if (!designForm) return;
+        const path = '/v1/assets/brand/logo-laboratorio-digital.png';
+        designForm.elements.namedItem('logo_path').value = path;
+        const file = designForm.elements.namedItem('logo_file');
+        if (file) file.value = '';
+        const preview = document.getElementById('design-logo-preview');
+        if (preview) preview.src = path;
+        toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
+    });
     elements.mobileView?.addEventListener('change', event => showView(event.target.value));
     document.getElementById('logout-button')?.addEventListener('click', async () => {
         try {

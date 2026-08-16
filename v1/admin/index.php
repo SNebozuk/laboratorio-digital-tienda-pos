@@ -228,7 +228,12 @@ header('Referrer-Policy: same-origin');
                                 <label class="settings-span-two">TEXTO PRINCIPAL<textarea name="hero_text" rows="3" maxlength="500" required></textarea></label>
                                 <label>ENLACE DEL TÍTULO (OPCIONAL)<input name="hero_link" placeholder="https://... o /v1/"></label>
                                 <label>ENLACE DEL LOGO (OPCIONAL)<input name="logo_link" placeholder="https://... o /v1/"></label>
-                                <label class="settings-span-two">LOGO<input name="logo_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="logo_path" type="hidden"><img id="design-logo-preview" class="variant-image-preview" alt="Vista previa del logo"></label>
+                                <section class="settings-span-two design-branding" aria-labelledby="design-branding-title">
+                                    <div><strong id="design-branding-title">IDENTIDAD VISUAL · LOGO</strong><small>Este logo se muestra en la cabecera de la tienda. Podés elegir otra imagen cuando quieras.</small></div>
+                                    <label>REEMPLAZAR LOGO<input name="logo_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="logo_path" type="hidden"></label>
+                                    <div class="design-logo-actions"><button id="restore-default-logo" class="secondary-button" type="button">USAR LOGO LABORATORIO DIGITAL</button><span>Formatos: JPG, PNG o WebP.</span></div>
+                                    <img id="design-logo-preview" class="variant-image-preview" alt="Vista previa del logo">
+                                </section>
                             </div>
                             <div class="design-published-images"><strong>FOTOS PUBLICADAS EN LA PORTADA</strong><small>Elegí una foto para reemplazarla. Se verá inmediatamente en la vista previa al guardar.</small><div class="design-image-grid">
                                 <label>FOTO 1<input name="hero_1_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_1_path" type="hidden"><img id="design-hero-1-preview" alt="Foto publicada 1"></label>

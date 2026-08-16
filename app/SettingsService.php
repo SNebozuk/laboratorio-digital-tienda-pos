@@ -84,7 +84,7 @@ final class SettingsService
             'hero_title' => 'TODO PARA CREAR, PERSONALIZAR Y VENDER',
             'hero_text' => 'Buscá lo que necesitás, elegí variantes y armá tu pedido en pocos pasos.',
             'hero_link' => '',
-            'logo_path' => '/v1/assets/brand/logo.png',
+            'logo_path' => '/v1/assets/brand/logo-laboratorio-digital.png',
             'logo_link' => '',
             'hero_1_path' => '/v1/assets/brand/hero-1.webp',
             'hero_2_path' => '/v1/assets/brand/hero-2.webp',
@@ -94,6 +94,11 @@ final class SettingsService
         foreach ($query->fetchAll() as $row) {
             $key = substr((string) $row['key'], 7);
             if (array_key_exists($key, $defaults)) $defaults[$key] = (string) $row['value'];
+        }
+        // Conserva la configuración de logos personalizados, pero reemplaza el
+        // archivo genérico anterior por la nueva identidad visual del sitio.
+        if ($defaults['logo_path'] === '/v1/assets/brand/logo.png') {
+            $defaults['logo_path'] = '/v1/assets/brand/logo-laboratorio-digital.png';
         }
         foreach (['hero_link', 'logo_link'] as $key) {
             if ($this->isLegacyStoreLink((string) $defaults[$key])) {

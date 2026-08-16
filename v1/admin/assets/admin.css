@@ -2608,7 +2608,15 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     color: #252a3a;
 }
 .settings-span-two { grid-column: 1 / -1; }
-#design-logo-preview { display:block; max-width:260px; max-height:100px; object-fit:contain; margin-top:10px; background:#fff; }
+.design-branding { display:grid; gap:12px; padding:18px; border:1px solid #e4e2f4; border-radius:10px; background:linear-gradient(135deg,#fbfaff,#f6f5ff); }
+.design-branding > div:first-child { display:grid; gap:5px; }
+.design-branding strong { color:#39306f; font-size:12px; letter-spacing:.06em; }
+.design-branding small { color:#697386; font-size:12px; letter-spacing:0; }
+.design-branding label { display:grid; gap:7px; color:#41485a; font-size:11px; font-weight:750; letter-spacing:.045em; }
+.design-logo-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.design-logo-actions .secondary-button { min-height:auto; padding:8px 11px; font-size:11px; }
+.design-logo-actions span { color:#697386; font-size:12px; }
+#design-logo-preview { display:block; width:min(100%,320px); max-height:116px; object-fit:contain; object-position:left center; padding:10px; border:1px solid #ddd9f0; border-radius:8px; background:#fff; }
 .admin-greeting { display:block; margin-bottom:7px; color:#5546d9; font-size:13px; font-weight:700; }
 .admin-store-link { display:block; width:max-content; margin-top:12px; text-decoration:none; }
 .design-published-images { display:grid; gap:7px; margin-top:22px; padding-top:18px; border-top:1px solid #edf0f4; color:#41485a; font-size:11px; letter-spacing:.04em; }
@@ -2616,7 +2624,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .design-image-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:5px; }
 .design-image-grid label { display:grid; gap:8px; font-size:11px; font-weight:750; }
 .design-image-grid img { width:100%; aspect-ratio:1.45; object-fit:cover; border:1px solid #dfe3ea; border-radius:8px; background:#f6f7f9; }
-@media (max-width:700px) { .design-image-grid { grid-template-columns:1fr; } .design-image-grid img { max-height:180px; } }
+@media (max-width:700px) { .design-image-grid { grid-template-columns:1fr; } .design-image-grid img { max-height:180px; } .design-logo-actions { align-items:stretch; } }
 .filter-modal-title { display:flex; align-items:center; gap:10px; }
 .filter-modal-title svg { width:23px; height:23px; stroke:#5546d9; stroke-width:1.8; stroke-linecap:round; fill:none; }
 .compact-filter-card { display:grid; gap:15px; padding:0; border:0; box-shadow:none; background:transparent; }
