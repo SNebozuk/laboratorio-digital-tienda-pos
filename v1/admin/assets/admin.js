@@ -2275,6 +2275,21 @@
                 : 'Imprimir y agrupar ventas (elegí 2 o más)';
             groupedPrintOption.disabled = selectedCount < 2;
         }
+        const singularSelection = selectedCount === 1;
+        const bulkActionsLabel = document.getElementById('bulk-order-actions-label');
+        if (bulkActionsLabel) {
+            bulkActionsLabel.textContent = singularSelection
+                ? 'ACCIONES SOBRE LA VENTA SELECCIONADA'
+                : 'ACCIONES SOBRE LAS VENTAS SELECCIONADAS';
+        }
+        [
+            ['archive', 'Archivar'],
+            ['cancel', 'Cancelar'],
+            ['reopen', 'Reabrir'],
+        ].forEach(([action, label]) => {
+            const option = elements.bulkOrderAction?.querySelector(`option[value="${action}"]`);
+            if (option) option.textContent = `${label} ${singularSelection ? 'Venta' : 'Ventas'}`;
+        });
 
         // Las acciones masivas se muestran junto a la selección total.
 
