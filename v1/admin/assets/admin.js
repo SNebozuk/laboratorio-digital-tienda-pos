@@ -1673,7 +1673,7 @@
     }
 
     function deliveryLocations() {
-        return Array.from({ length: 26 }, (_, letterIndex) => Array.from({ length: 20 }, (_, numberIndex) => `${String.fromCharCode(65 + letterIndex)}${numberIndex + 1}`)).flat();
+        return ['A1', 'A2', 'B1', 'B2'];
     }
 
     function renderDeliverySlots() {

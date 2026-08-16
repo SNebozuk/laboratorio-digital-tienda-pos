@@ -3158,6 +3158,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-table tbody tr:hover { background: #eee7fa !important; box-shadow: inset 4px 0 0 #8d68bc; }
 .delivery-table tbody tr.delivery-placement-active:hover { background: #e8dbf7 !important; box-shadow: inset 5px 0 0 #6b3b9a; }
 .delivery-table input,.delivery-table select { width: 100%; min-width: 88px; padding: 10px 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: inherit; font: inherit; font-size: 15px; }
+.delivery-table select { border-color: #d8c8e8; background: #fbf8ff; color: #3d2858; font-weight: 750; cursor: pointer; }
+.delivery-table select:hover,.delivery-table select:focus { border-color: #a984cf; background: #f5effc; outline: none; }
 .delivery-table input:hover,.delivery-table input:focus { border-color: #bda4de; background: #fff; outline: none; }
 .delivery-transfer-total { display: block; min-height: 16px; padding: 2px 9px 0; color: #6b537f; font-size: 11px; font-weight: 750; }
 .delivery-table .delivery-slot-build { color: #275836; font-weight: 750; background: #f0f8f0; }
