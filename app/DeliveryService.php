@@ -21,7 +21,7 @@ final class DeliveryService
     {
         $this->assertSlot($slot);
         $expected = max(0, (int) ($input['revision'] ?? 0));
-        $location = $this->clean($input['location'] ?? '');
+        $location = $this->normalizeLocation($input['location'] ?? '');
         $orders = $this->clean($input['order_numbers'] ?? '');
         $customer = $this->clean($input['customer_name'] ?? '');
         $transfers = $this->clean($input['transfers'] ?? '');
@@ -79,6 +79,15 @@ final class DeliveryService
 
     private function assertSlot(int $slot): void { if ($slot < 1 || $slot > 100) throw new ValidationException('Elegí una ubicación entre 1 y 100.'); }
     private function clean(mixed $value): string { $text = trim(preg_replace('/\s+/u', ' ', (string) $value) ?? ''); return function_exists('mb_substr') ? mb_substr($text, 0, 500) : substr($text, 0, 500); }
+    private function normalizeLocation(mixed $value): string
+    {
+        $text = $this->clean($value);
+        if ($text === '') return '';
+        if (!preg_match('/^([a-z])\s*([0-9]{1,4})$/i', $text, $match)) {
+            throw new ValidationException('La ubicación debe llevar una letra y un número, por ejemplo A1 o B12.');
+        }
+        return strtoupper($match[1]) . $match[2];
+    }
     /** @return array<string, mixed>|false */
     private function findSlot(PDO $pdo, int $slot): array|false { $q = $pdo->prepare('SELECT * FROM delivery_slots WHERE slot_number = :slot'); $q->execute(['slot' => $slot]); return $q->fetch(); }
     private function setMarker(string $value, string $marker): string { $base = trim(preg_replace('/\s*·?\s*(ARMAR|AGREGAR)\s*$/iu', '', $value) ?? ''); return trim($base . ' · ' . $marker); }

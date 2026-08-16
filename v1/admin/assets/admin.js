@@ -1657,6 +1657,19 @@
         return '';
     }
 
+    function transferTotal(value) {
+        const values = String(value || '').split('+').map(part => {
+            const normalized = part.trim().replace(/\$/g, '').replace(/\./g, '').replace(',', '.');
+            return Number(normalized);
+        }).filter(Number.isFinite);
+        return values.length ? values.reduce((total, current) => total + current, 0) : null;
+    }
+
+    function transferTotalLabel(value) {
+        const total = transferTotal(value);
+        return total === null ? '' : `Total: ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(total)}`;
+    }
+
     function renderDeliverySlots() {
         if (!elements.deliverySlots) return;
         const byNumber = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
@@ -1665,7 +1678,7 @@
             const slot = byNumber.get(number) || { slot_number: number, location: '', order_numbers: '', customer_name: '', transfers: '', revision: 0 };
             const tone = slotTone(slot);
             const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
-            return `<tr class="${tone}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${field('location', 'Ubicación')}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${field('transfers', 'Transferencias')}</td></tr>`;
+            return `<tr class="${tone}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${field('location', 'Ubicación')}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td></tr>`;
         }).join('');
     }
 
@@ -3857,6 +3870,10 @@
     });
 
     document.addEventListener('input', event => {
+        if (event.target.matches('[data-delivery-field="transfers"]')) {
+            const total = event.target.closest('td')?.querySelector('.delivery-transfer-total');
+            if (total) total.textContent = transferTotalLabel(event.target.value);
+        }
         if (event.target.matches('[data-quick-price], [data-quick-stock]')) {
             scheduleQuickUpdate(event.target);
         }
