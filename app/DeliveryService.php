@@ -25,23 +25,24 @@ final class DeliveryService
         $orders = $this->clean($input['order_numbers'] ?? '');
         $customer = $this->clean($input['customer_name'] ?? '');
         $transfers = $this->clean($input['transfers'] ?? '');
+        $cashDue = $this->clean($input['cash_due'] ?? '');
 
-        return Database::immediate($this->pdo, function (PDO $pdo) use ($slot, $expected, $location, $orders, $customer, $transfers, $actorUserId): array {
+        return Database::immediate($this->pdo, function (PDO $pdo) use ($slot, $expected, $location, $orders, $customer, $transfers, $cashDue, $actorUserId): array {
             $existing = $this->findSlot($pdo, $slot);
             $revision = (int) ($existing['revision'] ?? 0);
             if ($revision !== $expected) {
                 throw new ConflictException('Esta ubicación fue actualizada por otra persona. Se recargó la información para evitar sobrescribirla.');
             }
-            if ($location === '' && $orders === '' && $customer === '' && $transfers === '') {
+            if ($location === '' && $orders === '' && $customer === '' && $transfers === '' && $cashDue === '') {
                 if ($existing) $pdo->prepare('DELETE FROM delivery_slots WHERE slot_number = :slot')->execute(['slot' => $slot]);
                 return ['slot_number' => $slot, 'revision' => 0, 'location' => '', 'order_numbers' => '', 'customer_name' => '', 'transfers' => ''];
             }
             if ($existing) {
-                $statement = $pdo->prepare('UPDATE delivery_slots SET location = :location, order_numbers = :orders, customer_name = :customer, transfers = :transfers, revision = revision + 1, updated_by = :user, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot AND revision = :revision');
-                $statement->execute(compact('location', 'orders', 'customer', 'transfers') + ['user' => $actorUserId, 'slot' => $slot, 'revision' => $revision]);
+                $statement = $pdo->prepare('UPDATE delivery_slots SET location = :location, order_numbers = :orders, customer_name = :customer, transfers = :transfers, cash_due = :cash_due, revision = revision + 1, updated_by = :user, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot AND revision = :revision');
+                $statement->execute(['location' => $location, 'orders' => $orders, 'customer' => $customer, 'transfers' => $transfers, 'cash_due' => $cashDue, 'user' => $actorUserId, 'slot' => $slot, 'revision' => $revision]);
             } else {
-                $statement = $pdo->prepare('INSERT INTO delivery_slots(slot_number, location, order_numbers, customer_name, transfers, revision, updated_by) VALUES(:slot, :location, :orders, :customer, :transfers, 1, :user)');
-                $statement->execute(compact('location', 'orders', 'customer', 'transfers') + ['slot' => $slot, 'user' => $actorUserId]);
+                $statement = $pdo->prepare('INSERT INTO delivery_slots(slot_number, location, order_numbers, customer_name, transfers, cash_due, revision, updated_by) VALUES(:slot, :location, :orders, :customer, :transfers, :cash_due, 1, :user)');
+                $statement->execute(['location' => $location, 'orders' => $orders, 'customer' => $customer, 'transfers' => $transfers, 'cash_due' => $cashDue, 'slot' => $slot, 'user' => $actorUserId]);
             }
             return $this->findSlot($pdo, $slot) ?: throw new \RuntimeException('No se pudo guardar la ubicación.');
         });
@@ -52,7 +53,7 @@ final class DeliveryService
     {
         $this->assertSlot($slot);
         return Database::immediate($this->pdo, function (PDO $pdo) use ($orderId, $slot, $actorUserId): array {
-            $orderQuery = $pdo->prepare('SELECT id, public_number, customer_name, delivery_slot_number FROM orders WHERE id = :id');
+            $orderQuery = $pdo->prepare('SELECT id, public_number, customer_name, total_cents, delivery_slot_number FROM orders WHERE id = :id');
             $orderQuery->execute(['id' => $orderId]);
             $order = $orderQuery->fetch();
             if (!$order) throw new ValidationException('La venta no existe.');
@@ -64,11 +65,11 @@ final class DeliveryService
                 ? $this->setMarker((string) ($existing['customer_name'] ?? ''), 'AGREGAR')
                 : trim((string) $order['customer_name']) . ' · ARMAR';
             if ($existing) {
-                $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, customer_name = :customer, revision = revision + 1, updated_by = :user, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
-                    ->execute(['orders' => $orderNumbers, 'customer' => $customer, 'user' => $actorUserId, 'slot' => $slot]);
+                $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, customer_name = :customer, order_total_cents = order_total_cents + :total, revision = revision + 1, updated_by = :user, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
+                    ->execute(['orders' => $orderNumbers, 'customer' => $customer, 'total' => (int) $order['total_cents'], 'user' => $actorUserId, 'slot' => $slot]);
             } else {
-                $pdo->prepare('INSERT INTO delivery_slots(slot_number, order_numbers, customer_name, revision, updated_by) VALUES(:slot, :orders, :customer, 1, :user)')
-                    ->execute(['slot' => $slot, 'orders' => $orderNumbers, 'customer' => $customer, 'user' => $actorUserId]);
+                $pdo->prepare('INSERT INTO delivery_slots(slot_number, order_numbers, customer_name, order_total_cents, revision, updated_by) VALUES(:slot, :orders, :customer, :total, 1, :user)')
+                    ->execute(['slot' => $slot, 'orders' => $orderNumbers, 'customer' => $customer, 'total' => (int) $order['total_cents'], 'user' => $actorUserId]);
             }
             $updated = $pdo->prepare('UPDATE orders SET delivery_slot_number = :slot, delivery_copied_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND delivery_slot_number IS NULL');
             $updated->execute(['slot' => $slot, 'id' => $orderId]);

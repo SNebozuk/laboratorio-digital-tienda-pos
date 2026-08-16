@@ -120,6 +120,8 @@ CREATE TABLE IF NOT EXISTS delivery_slots (
     order_numbers TEXT NOT NULL DEFAULT '',
     customer_name TEXT NOT NULL DEFAULT '',
     transfers TEXT NOT NULL DEFAULT '',
+    cash_due TEXT NOT NULL DEFAULT '',
+    order_total_cents INTEGER NOT NULL DEFAULT 0,
     revision INTEGER NOT NULL DEFAULT 1,
     updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

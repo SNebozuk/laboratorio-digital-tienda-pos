@@ -24,6 +24,7 @@ h1 {
 .receipt-title-row { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
 .receipt-title-row p { margin: 4px 0 0; color: #5e6875; }
 .receipt-order { margin-top: 24px; }
+.receipt-delivery-slot { margin: 12px 0 0; padding: 8px 12px; border: 2px solid #111; text-align: center; color: #111; font-size: 19px; font-weight: 900; letter-spacing: .06em; }
 .receipt-batch .receipt-order { padding-top: 18px; border-top: 2px solid #9da5ad; }
 .receipt-batch .receipt-order:first-of-type { border-top: 0; }
 .receipt-order h2 { margin: 0; font-size: 22px; letter-spacing: .02em; }

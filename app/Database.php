@@ -80,6 +80,7 @@ final class Database
             dirname($schemaPath) . '/catalog_descriptions.json'
         );
         self::migrateDeliverySlots($pdo);
+        self::migrateDeliverySlotAmounts($pdo);
     }
 
     private static function migrateDeliverySlots(PDO $pdo): void
@@ -94,6 +95,20 @@ final class Database
             if (!in_array('delivery_slot_number', $names, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN delivery_slot_number INTEGER');
             if (!in_array('delivery_copied_at', $names, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN delivery_copied_at TEXT');
             $pdo->exec("CREATE TABLE IF NOT EXISTS delivery_slots (slot_number INTEGER PRIMARY KEY CHECK (slot_number BETWEEN 1 AND 100), location TEXT NOT NULL DEFAULT '', order_numbers TEXT NOT NULL DEFAULT '', customer_name TEXT NOT NULL DEFAULT '', transfers TEXT NOT NULL DEFAULT '', revision INTEGER NOT NULL DEFAULT 1, updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateDeliverySlotAmounts(PDO $pdo): void
+    {
+        $version = 23;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $names = array_column($pdo->query('PRAGMA table_info(delivery_slots)')->fetchAll(), 'name');
+            if (!in_array('cash_due', $names, true)) $pdo->exec("ALTER TABLE delivery_slots ADD COLUMN cash_due TEXT NOT NULL DEFAULT ''");
+            if (!in_array('order_total_cents', $names, true)) $pdo->exec('ALTER TABLE delivery_slots ADD COLUMN order_total_cents INTEGER NOT NULL DEFAULT 0');
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

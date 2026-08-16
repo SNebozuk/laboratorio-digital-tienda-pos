@@ -3150,18 +3150,21 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-copy-guide strong { white-space: nowrap; }
 .delivery-copy-guide span { flex: 1; font-size: 13px; line-height: 1.4; }
 .delivery-table-wrap { overflow: auto; border: 1px solid #ded5eb; border-radius: 14px; background: #fff; box-shadow: 0 10px 30px rgba(66,35,104,.08); }
-.delivery-table { width: 100%; min-width: 850px; border-collapse: collapse; color: #2a1d3c; }
+.delivery-table { width: 100%; min-width: 1220px; border-collapse: collapse; color: #2a1d3c; }
 .delivery-table th,.delivery-table td { padding: 10px 12px; border-bottom: 1px solid #eee8f5; text-align: left; vertical-align: middle; }
 .delivery-table thead th { position: sticky; top: 0; z-index: 1; background: #f3edfb; color: #442467; font-size: 12px; letter-spacing: .03em; }
 .delivery-table tbody th { width: 64px; color: #4c2574; font-size: 20px; font-weight: 850; font-variant-numeric: tabular-nums; text-align: center; }
 .delivery-table tbody tr:nth-child(even) { background: #fcfaff; }
 .delivery-table tbody tr:hover { background: #eee7fa !important; box-shadow: inset 4px 0 0 #8d68bc; }
 .delivery-table tbody tr.delivery-placement-active:hover { background: #e8dbf7 !important; box-shadow: inset 5px 0 0 #6b3b9a; }
-.delivery-table input { width: 100%; min-width: 110px; padding: 10px 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: inherit; font: inherit; font-size: 15px; }
+.delivery-table input,.delivery-table select { width: 100%; min-width: 88px; padding: 10px 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: inherit; font: inherit; font-size: 15px; }
 .delivery-table input:hover,.delivery-table input:focus { border-color: #bda4de; background: #fff; outline: none; }
 .delivery-transfer-total { display: block; min-height: 16px; padding: 2px 9px 0; color: #6b537f; font-size: 11px; font-weight: 750; }
 .delivery-table .delivery-slot-build { color: #275836; font-weight: 750; background: #f0f8f0; }
 .delivery-table .delivery-slot-add { color: #5d368a; font-weight: 750; background: #f7f0ff; }
+.delivery-marker-clear { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #f0e9fa; color: #65428a; cursor: pointer; font-size: 18px; }
+.delivery-marker-clear:hover { background: #e2d4f3; }
+.delivery-order-total { color: #34214e; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .delivery-delete { display: grid; width: 34px; height: 34px; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #7c536c; cursor: pointer; font-size: 17px; }
 .delivery-delete:hover { background: #f5e3e9; color: #9a3152; }
 .delivery-place { min-height: 32px; padding: 5px 9px; border: 1px solid #8c67b9; border-radius: 7px; background: #fff; color: #513179; font: inherit; font-size: 11px; font-weight: 850; cursor: pointer; }
