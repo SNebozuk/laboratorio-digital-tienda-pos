@@ -32,7 +32,15 @@ $assetVersion = substr(hash('sha256', (string) @file_get_contents(__DIR__ . '/as
     $items = $order['items'];
     usort($items, static fn (array $a, array $b): int => strnatcasecmp((string) $a['product_name'], (string) $b['product_name']) ?: strnatcasecmp((string) $a['variant_name'], (string) $b['variant_name']));
     $unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['quantity'], $items)); ?>
-<section class="receipt-order"><?php if ($batch): ?><h2><?= receiptText($order['public_number']) ?></h2><?php endif; ?><?php if (!empty($order['delivery_slot_number'])): ?><p class="receipt-delivery-slot">UBICACIÓN · FILA <?= (int) $order['delivery_slot_number'] ?></p><?php endif; ?>
+<?php
+    $deliveryLocation = '';
+    if (!empty($order['delivery_slot_number'])) {
+        $locationQuery = $app['pdo']->prepare('SELECT location FROM delivery_slots WHERE slot_number = :slot');
+        $locationQuery->execute(['slot' => (int) $order['delivery_slot_number']]);
+        $deliveryLocation = trim((string) $locationQuery->fetchColumn());
+    }
+?>
+<section class="receipt-order"><?php if ($batch): ?><h2><?= receiptText($order['public_number']) ?></h2><?php endif; ?><?php if (!empty($order['delivery_slot_number'])): ?><div class="receipt-delivery-slot"><strong>FILA <?= (int) $order['delivery_slot_number'] ?></strong><?php if ($deliveryLocation !== ''): ?><span>UBICACIÓN <?= receiptText($deliveryLocation) ?></span><?php endif; ?></div><?php endif; ?>
 <dl><div><dt>Cliente</dt><dd><?= receiptText($order['customer_name']) ?></dd></div><div><dt>Contacto</dt><dd><?= receiptText($order['customer_phone'] ?: 'Sin teléfono informado') ?></dd></div><div><dt>Fecha</dt><dd><?= receiptText(receiptArgentinaDate($order['created_at'])) ?></dd></div></dl>
 <table><thead><tr><th>Cantidad</th><th>Variante</th><th>Producto</th><th>SKU</th><th>Precio</th></tr></thead><tbody><?php foreach ($items as $item): ?><tr><td class="quantity"><?= (int) $item['quantity'] ?></td><td class="receipt-variant"><?= preg_match('/^única$/iu', trim((string) $item['variant_name'])) === 1 ? '—' : receiptText($item['variant_name']) ?></td><td class="receipt-product"><?= receiptText($item['product_name']) ?></td><td class="receipt-sku"><?= receiptText($item['sku']) ?></td><td class="receipt-price"><?= receiptMoney((int) $item['unit_price_cents']) ?></td></tr><?php endforeach; ?></tbody></table>
 <p class="total"><span><?= $unitCount ?> <?= $unitCount === 1 ? 'unidad' : 'unidades' ?> · Total</span><strong><?= receiptMoney((int) $order['total_cents']) ?></strong></p></section>
