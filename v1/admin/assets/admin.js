@@ -1762,7 +1762,7 @@
         }
         const active = document.activeElement;
         return Boolean(active?.closest(
-            '#admin-product-list input, #category-admin-tree input, #size-guide-rows input, #delivery-slots input, [data-pos-input], form textarea, form input:not([type="search"]), form select'
+            '#admin-product-list input, #admin-product-list select, #category-admin-tree input, #size-guide-rows input, #delivery-slots input, [data-pos-input], form textarea, form input:not([type="search"]), form select'
         ));
     }
 
