@@ -2268,8 +2268,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     #view-orders .order-list-row > :nth-child(1) { grid-column: 1; grid-row: 1 / span 2; }
     #view-orders .order-list-row > :nth-child(2) { grid-column: 2; grid-row: 1; }
     #view-orders .order-list-row > :nth-child(3) { grid-column: 3; grid-row: 1; text-align: right; }
-    #view-orders .order-list-row > :nth-child(4) { grid-column: 2; grid-row: 2; }
-    #view-orders .order-list-row > :nth-child(5) { grid-column: 3; grid-row: 2; text-align: right; white-space: nowrap; }
+    #view-orders .order-list-row > :nth-child(4) { display: block; grid-column: 2; grid-row: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #view-orders .order-list-row > :nth-child(5) { display: block; grid-column: 3; grid-row: 2; text-align: right; white-space: nowrap; }
     #view-orders .order-list-row > :nth-child(6) { grid-column: 2; grid-row: 3; justify-self: start; }
     #view-orders .order-list-row > :nth-child(8) { grid-column: 3; grid-row: 3; justify-self: end; }
     #view-orders .order-list-row > :nth-child(9) { grid-column: 2; grid-row: 4; justify-self: start; }
