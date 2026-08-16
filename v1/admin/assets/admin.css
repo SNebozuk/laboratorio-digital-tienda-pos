@@ -3180,6 +3180,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-copy-guide { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; padding: 13px 16px; border: 1px solid #cdb8e7; border-radius: 12px; background: #f6f0ff; color: #452566; }
 .delivery-copy-guide strong { white-space: nowrap; }
 .delivery-copy-guide span { flex: 1; font-size: 13px; line-height: 1.4; }
+.delivery-search { display: grid; gap: 5px; width: min(100%, 360px); margin: 0 0 16px; }
+.delivery-search span { color: #667085; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+.delivery-search input { min-height: 42px; border: 1px solid #d9cce8; border-radius: 8px; background: #fff; color: #2a1d3c; padding: 0 12px; font: inherit; }
+.delivery-search input:focus { border-color: #8d68bc; box-shadow: 0 0 0 3px rgba(141, 104, 188, .13); outline: none; }
 .delivery-table-wrap { overflow: auto; border: 1px solid #ded5eb; border-radius: 14px; background: #fff; box-shadow: 0 10px 30px rgba(66,35,104,.08); }
 .delivery-table { width: 100%; min-width: 1220px; border-collapse: collapse; color: #2a1d3c; }
 .delivery-table th,.delivery-table td { padding: 10px 12px; border-bottom: 1px solid #eee8f5; text-align: left; vertical-align: middle; }
@@ -3188,6 +3192,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-table tbody tr:nth-child(even) { background: #fcfaff; }
 .delivery-table tbody tr:hover { background: #eee7fa !important; box-shadow: inset 4px 0 0 #8d68bc; }
 .delivery-table tbody tr.delivery-placement-active:hover { background: #e8dbf7 !important; box-shadow: inset 5px 0 0 #6b3b9a; }
+.delivery-no-results { padding: 26px !important; color: #667085; text-align: center !important; }
 .delivery-table input { width: 100%; min-width: 88px; padding: 10px 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: inherit; font: inherit; font-size: 15px; }
 .delivery-table input[data-delivery-field="location"] { border-color: #d8c8e8; background: #fbf8ff; color: #3d2858; font-weight: 750; cursor: text; }
 .delivery-table input[data-delivery-field="location"]:hover,.delivery-table input[data-delivery-field="location"]:focus { border-color: #a984cf; background: #f5effc; outline: none; }

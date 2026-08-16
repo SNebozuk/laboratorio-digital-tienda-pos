@@ -309,6 +309,10 @@ header('Referrer-Policy: same-origin');
                         <button class="secondary-button" id="delivery-fullscreen" type="button">↗ PANTALLA COMPLETA</button>
                     </div>
                     <div id="delivery-copy-guide" class="delivery-copy-guide" hidden></div>
+                    <label class="delivery-search" for="delivery-search">
+                        <span>BUSCAR EN ENTREGAS</span>
+                        <input id="delivery-search" type="search" placeholder="N.º de venta, nombre o apellido" autocomplete="off">
+                    </label>
                     <div class="delivery-table-wrap">
                         <table class="delivery-table">
                             <thead><tr><th>N.º</th><th></th><th>Ubicación</th><th># Orden</th><th>Nombre y Apellido</th><th></th><th>Transferencias</th><th>Efectivo</th><th>Importe</th><th></th></tr></thead>

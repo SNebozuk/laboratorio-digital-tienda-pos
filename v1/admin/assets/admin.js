@@ -8,6 +8,7 @@
         orders: [],
         deliverySlots: [],
         pendingDeliveryOrderId: 0,
+        deliveryQuery: '',
         orderQuery: '',
         orderStatus: '',
         orderChannel: '',
@@ -116,6 +117,7 @@
         orderList: document.getElementById('order-list'),
         deliverySlots: document.getElementById('delivery-slots'),
         deliveryCopyGuide: document.getElementById('delivery-copy-guide'),
+        deliverySearch: document.getElementById('delivery-search'),
         openOrdersCount: document.getElementById('open-orders-count'),
         orderSearch: document.getElementById('order-search'),
         orderChannelFilter: document.getElementById('order-channel-filter'),
@@ -1683,19 +1685,24 @@
         if (!elements.deliverySlots) return;
         const byNumber = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
         const pending = state.orders.find(order => Number(order.id) === Number(state.pendingDeliveryOrderId));
+        const query = fold(state.deliveryQuery);
         if (elements.deliveryCopyGuide) {
             elements.deliveryCopyGuide.hidden = !pending;
             elements.deliveryCopyGuide.innerHTML = pending ? `<strong>UBICAR ${escapeHtml(pending.public_number)}</strong><span>${escapeHtml(pending.customer_name)}. Elegí una fila: una vacía queda marcada <b>ARMAR</b>; si ya tiene pedidos, se suma como <b>AGREGAR</b>.</span><button class="small-button" type="button" data-cancel-delivery-placement>CANCELAR</button>` : '';
         }
-        elements.deliverySlots.innerHTML = Array.from({ length: 100 }, (_, index) => {
+        const rows = Array.from({ length: 100 }, (_, index) => {
             const number = index + 1;
             const slot = byNumber.get(number) || { slot_number: number, location: '', order_numbers: '', customer_name: '', transfers: '', cash_due: '', order_total_cents: 0, revision: 0 };
+            if (query && !fold(`${slot.order_numbers} ${slot.customer_name}`).includes(query)) return '';
             const tone = slotTone(slot);
             const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
             const location = `<input type="text" value="${escapeHtml(slot.location || '')}" placeholder="A1" data-delivery-field="location" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="Ubicación fila ${number}">`;
             const markerButton = /\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear" type="button" data-clear-delivery-marker="${number}" title="Quitar ARMAR / AGREGAR">⊘</button>` : '';
             return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-order="${Number(pending.id)}" data-place-delivery-slot="${number}">UBICAR</button>` : ''}</td><td>${location}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
-        }).join('');
+        }).filter(Boolean);
+        elements.deliverySlots.innerHTML = rows.length
+            ? rows.join('')
+            : '<tr><td class="delivery-no-results" colspan="10">No encontramos una fila que coincida con esa búsqueda.</td></tr>';
     }
 
     async function loadDeliverySlots() {
@@ -3937,6 +3944,11 @@
     });
 
     document.addEventListener('input', event => {
+        if (event.target === elements.deliverySearch) {
+            state.deliveryQuery = event.target.value;
+            renderDeliverySlots();
+            return;
+        }
         if (event.target.matches('[data-delivery-field="transfers"]')) {
             const total = event.target.closest('td')?.querySelector('.delivery-transfer-total');
             if (total) total.textContent = transferTotalLabel(event.target.value);
