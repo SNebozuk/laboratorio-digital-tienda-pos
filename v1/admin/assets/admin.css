@@ -3181,6 +3181,25 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-orders .order-list-head > :nth-child(9) { display:block; visibility:hidden; font-size:inherit; }
 #view-orders .order-list-head > :nth-child(8)::after { content:''; }
 
+/* Mantiene el volumen visual de la tabla al no haber coincidencias en el buscador. */
+#view-orders .order-list-empty {
+    min-height: 196px;
+    display: grid;
+    place-content: center;
+    gap: 7px;
+    padding: 22px;
+    box-sizing: border-box;
+    color: #4d5668;
+    text-align: center;
+    background: #fff;
+}
+#view-orders .order-list-empty strong {
+    color: #283046;
+    font-size: 13px;
+    letter-spacing: .035em;
+}
+#view-orders .order-list-empty span { font-size: 13px; }
+
 @media (max-width: 760px) {
     #view-orders .order-list-row {
         grid-template-columns: 28px minmax(0, 1fr) auto;

@@ -2397,29 +2397,17 @@
             return;
         }
 
-        elements.orderList.innerHTML = matchingOrders.length ? matchingOrders.map(order => `
-            <article class="order-card">
-                <div class="order-card-head">
-                    <h2>${escapeHtml(order.public_number)}</h2>
-                    <span class="status-pill status-${escapeHtml(order.status)}">
-                        ${escapeHtml(statusLabels[order.status] || order.status)}
-                    </span>
-                </div>
-                <p>
-                    <strong>${escapeHtml(order.customer_name)}</strong><br>
-                    ${Number(order.unit_count)} unidades<br>
-                    ${escapeHtml(argentinaDateLabel(order.created_at))}
-                </p>
-                <h3>${money(order.total_cents)}</h3>
-                ${paymentAiBadge(order)}
-                <div class="order-actions">${orderActions(order)}</div>
-            </article>
-        `).join('') : `
-            <div class="empty-admin-state">
+        // Conservamos la estructura de la tabla cuando no hay resultados: así la lista no
+        // "salta" ni cambia de tamaño mientras se escribe una búsqueda.
+        elements.orderList.innerHTML = `
+            <div class="order-list-head" aria-hidden="true">
+                <span></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
+            </div>
+            <div class="order-list-empty" role="status">
                 <strong>${state.orders.length ? 'NO HAY COINCIDENCIAS' : 'TODAVÍA NO HAY PEDIDOS'}</strong>
-                <p>${state.orders.length
-                    ? 'Probá cambiando los filtros o la búsqueda.'
-                    : 'Los pedidos web y las ventas de mostrador aparecerán aquí.'}</p>
+                <span>${state.orders.length
+                    ? 'Probá con otro número, nombre o apellido.'
+                    : 'Los pedidos web y las ventas de mostrador aparecerán aquí.'}</span>
             </div>
         `;
     }
