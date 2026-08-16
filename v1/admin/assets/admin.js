@@ -755,11 +755,16 @@
         const toolbar = `
             <div class="product-bulk-toolbar">
                 <label class="product-select-all"><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''}> <span>Seleccionar todo</span></label>
-                <span class="product-selection-count">${selectedCount ? `${selectedCount} ${selectedCount === 1 ? 'producto seleccionado' : 'productos seleccionados'}` : '0 productos seleccionados'}</span>
-                <select data-bulk-product-action ${selectedCount ? '' : 'disabled'} aria-label="Acciones sobre ${singularSelection ? 'el producto seleccionado' : 'los productos seleccionados'}">
-                    <option value="">ACCIONES</option><option value="show">Mostrar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="hide">Ocultar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="delete">Eliminar ${singularSelection ? 'Producto' : 'Productos'}</option>
-                </select>
                 <button class="secondary-button" type="button" data-open-product-filters>FILTRAR${state.productCategoryId || state.productAvailability || state.productVisibility ? ' · ACTIVO' : ''}</button>
+            </div>
+            <div class="order-actions-bar product-actions-bar" ${selectedCount ? '' : 'hidden'}>
+                <strong class="selected-orders-count product-selection-count">${selectedCount} ${singularSelection ? 'producto seleccionado' : 'productos seleccionados'}</strong>
+                <label class="bulk-actions-control product-bulk-actions-control">
+                    <span>ACCIONES SOBRE ${singularSelection ? 'EL PRODUCTO SELECCIONADO' : 'LOS PRODUCTOS SELECCIONADOS'}</span>
+                    <select data-bulk-product-action aria-label="Acciones sobre ${singularSelection ? 'el producto seleccionado' : 'los productos seleccionados'}">
+                        <option value="">Acciones</option><option value="show">Mostrar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="hide">Ocultar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="delete">Eliminar ${singularSelection ? 'Producto' : 'Productos'}</option>
+                    </select>
+                </label>
             </div>`;
         elements.productList.innerHTML = `${toolbar}${products.length ? `
             <div class="product-list-table" role="table" aria-label="Listado de productos">

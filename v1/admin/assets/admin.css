@@ -2578,6 +2578,35 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     font-size: 13px;
 }
 .product-bulk-toolbar select { min-width: 190px; }
+.product-actions-bar {
+    display: flex;
+    align-items: end;
+    justify-content: flex-start;
+    gap: 18px;
+    margin: 0 0 16px;
+    padding: 11px 14px;
+    border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    background: #fff;
+}
+.product-actions-bar[hidden] { display: none; }
+.product-bulk-actions-control {
+    display: grid;
+    gap: 5px;
+    width: min(100%, 285px);
+}
+.product-bulk-actions-control span {
+    color: #667085;
+    font-size: 10px;
+    font-weight: 800;
+}
+.product-bulk-actions-control select {
+    min-height: 40px;
+    border: 1px solid #dce1eb;
+    border-radius: 7px;
+    background: #fff;
+    color: #252a3a;
+}
 .settings-span-two { grid-column: 1 / -1; }
 #design-logo-preview { display:block; max-width:260px; max-height:100px; object-fit:contain; margin-top:10px; background:#fff; }
 .admin-greeting { display:block; margin-bottom:7px; color:#5546d9; font-size:13px; font-weight:700; }
