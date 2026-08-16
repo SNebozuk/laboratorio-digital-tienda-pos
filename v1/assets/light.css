@@ -107,12 +107,27 @@ body { background:#fbf8ff !important; }
 .creator-services span { color:#685d76; font-size:14px; line-height:1.45; }
 .creator-cta { display:inline-flex; text-decoration:none; }
 .creator-signature { display:block; margin-top:38px; color:#857c91; font-size:12px; }
-.home-featured-products { display:grid; gap:12px; padding:20px; border:1px solid #d9c8eb; border-radius:16px; background:linear-gradient(135deg,#fff,#f5effc); box-shadow:0 10px 26px rgba(77,47,116,.08); }
+.home-featured-products { display:grid; gap:16px; padding:22px; border:1px solid #cdb5e4; border-radius:18px; background:radial-gradient(circle at 100% 0,rgba(143,91,194,.16),transparent 35%),linear-gradient(135deg,#fff,#f4edfb); box-shadow:0 15px 35px rgba(77,47,116,.13); }
 .home-featured-heading { display:flex; align-items:end; justify-content:space-between; gap:15px; }
-.home-featured-heading h2 { margin:3px 0 0; color:#2a1d3c; font-size:20px; }
+.home-featured-heading h2 { margin:3px 0 0; color:#2a1d3c; font-size:23px; letter-spacing:-.03em; }
 .home-featured-heading .eyebrow { margin:0; color:#7652b8 !important; background:transparent !important; border:0 !important; padding:0 !important; }
 .home-featured-heading > span { color:#7652b8; font-size:12px; font-weight:750; }
-.home-featured-products .catalog-summary-list { border:1px solid #e4d8ef; border-radius:11px; overflow:hidden; background:#fff; }
-.home-featured-products .catalog-product-summary { box-shadow:none !important; }
+.featured-product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:13px; }
+.featured-product-card { display:grid; grid-template-rows:auto 1fr auto; overflow:hidden; border:1px solid #dfcfed; border-radius:13px; background:#fff; box-shadow:0 8px 20px rgba(67,37,103,.08); transition:transform .18s ease,box-shadow .18s ease; }
+.featured-product-card:hover { transform:translateY(-4px); box-shadow:0 15px 28px rgba(67,37,103,.16); }
+.featured-product-image,.featured-product-image .product-image-button { display:block; width:100%; border:0; background:#fbf8ff; }
+.featured-product-photo { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; }
+.featured-product-photo-placeholder { display:grid; width:100%; aspect-ratio:1/1; place-items:center; color:#7652b8; font-size:11px; font-weight:800; }
+.featured-product-copy { display:grid; align-content:start; gap:6px; padding:15px 15px 8px; }
+.featured-product-copy > span { color:#8d55bd; font-size:9px; font-weight:900; letter-spacing:.1em; }
+.featured-product-copy button { padding:0; border:0; background:transparent; color:#2a1d3c; text-align:left; cursor:pointer; }
+.featured-product-copy button strong { font-size:15px; line-height:1.25; }
+.featured-product-copy small { color:#685d76; font-size:11px; }
+.featured-product-bottom { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 15px 15px; border-top:1px solid #eee4f5; }
+.featured-product-bottom > strong { color:#4b2b76; font-size:15px; }
+.featured-product-options { border:0; background:transparent; color:#7652b8; font-size:10px; font-weight:850; cursor:pointer; }
+.featured-quantity-control { transform:scale(.9); transform-origin:right center; }
+.home-search-embedded { gap:14px; }
+.home-search-embedded .home-search-prompt { border-color:#d9c8eb; background:linear-gradient(135deg,#fff,#f5effc); }
 @media (max-width:700px) { .store-footer { align-items:flex-start; flex-direction:column; padding:20px 16px 92px; } .contact-info-grid,.creator-services { grid-template-columns:1fr; } .contact-hours-card { grid-column:auto; } .creator-shell { padding:30px 22px; } .creator-back { margin-bottom:30px; } }
-@media (max-width:700px) { .home-featured-products { padding:15px; } .home-featured-heading { align-items:start; flex-direction:column; gap:4px; } }
+@media (max-width:700px) { .home-featured-products { padding:15px; } .home-featured-heading { align-items:start; flex-direction:column; gap:4px; } .featured-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; } .featured-product-copy,.featured-product-bottom { padding-left:10px; padding-right:10px; } .featured-product-copy button strong { font-size:13px; } .featured-product-bottom { align-items:flex-start; flex-direction:column; } .featured-quantity-control { transform:scale(.82); transform-origin:left top; margin-bottom:-8px; } }

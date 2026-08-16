@@ -672,6 +672,27 @@
         `;
     }
 
+    function featuredProductCard(product) {
+        const hasVariants = product.variants.length > 1;
+        const singleVariant = product.variants[0];
+        return `
+            <article class="featured-product-card">
+                <div class="featured-product-image">${productImage(product, 'featured-product-photo')}</div>
+                <div class="featured-product-copy">
+                    <span>PRODUCTO DESTACADO</span>
+                    <button type="button" data-open-product="${Number(product.id)}"><strong>${escapeHtml(product.name)}</strong></button>
+                    <small>${escapeHtml(product.category?.name || 'Laboratorio Digital')}</small>
+                </div>
+                <div class="featured-product-bottom">
+                    <strong>${priceRange(product)}</strong>
+                    ${hasVariants
+                        ? `<button class="featured-product-options" type="button" data-open-product="${Number(product.id)}">VER ${product.variants.length} VARIANTES →</button>`
+                        : quantityControl(product, singleVariant, 'featured-quantity-control')}
+                </div>
+            </article>
+        `;
+    }
+
     function renderOpenedProduct(product) {
         elements.results.innerHTML = `
             <section class="opened-product" aria-labelledby="opened-product-title">
@@ -739,7 +760,15 @@
             return;
         }
 
-        elements.results.innerHTML = productSummaryList(matches, true);
+        elements.results.innerHTML = `
+            <section class="store-home home-search-embedded" aria-label="Resultados de búsqueda">
+                <div class="home-search-prompt">
+                    <strong>RESULTADOS PARA “${escapeHtml(query)}”</strong>
+                    <span>Encontramos productos en todo el catálogo, sin importar la categoría.</span>
+                </div>
+                ${productSummaryList(matches, true)}
+            </section>
+        `;
     }
 
     function renderCatalog() {
@@ -783,7 +812,7 @@
                     </section>
                     ${featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2 id="featured-products-title">PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div>
-                        ${productSummaryList(featured)}
+                        <div class="featured-product-grid">${featured.map(featuredProductCard).join('')}</div>
                     </section>` : ''}
                     <div class="quick-categories">
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}

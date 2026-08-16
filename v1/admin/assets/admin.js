@@ -2380,7 +2380,7 @@
                 ${matchingOrders.map(order => `
                     <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
-                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : ''}</span>
+                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : `<button class="order-list-archive" type="button" data-archive-order="${Number(order.id)}" aria-label="Archivar ${escapeHtml(order.public_number)}" title="Archivar venta">Archivar</button>`}</span>
                         <span class="order-list-date">${escapeHtml(argentinaDateParts(order.created_at).date)}<small>${escapeHtml(argentinaDateParts(order.created_at).time)}</small></span>
                         <button class="order-list-customer" type="button" data-customer-history="${escapeHtml(order.customer_name)}" aria-label="Ver historial de ${escapeHtml(order.customer_name)}"><strong>${escapeHtml(order.customer_name)}</strong></button>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>

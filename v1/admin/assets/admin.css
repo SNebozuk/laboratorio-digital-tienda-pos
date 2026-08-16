@@ -2038,6 +2038,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .order-list-row:last-child { border-bottom: 0; }
 .order-list-row:hover { background: #f8f8fd; }
 .order-list-number strong { color: #4436bf; }
+.order-list-number { display:flex; align-items:center; gap:7px; }
+.order-list-archive { padding:3px 6px; border:0; border-radius:5px; background:transparent; color:#66527b; font:inherit; font-size:10px; font-weight:750; cursor:pointer; }
+.order-list-archive:hover { background:#eee7f5; color:#4d2876; }
 .order-list-row small { margin-top: 2px; color: #778194; font-size: 11px; }
 .order-list-total { font-size: 13px; font-variant-numeric: tabular-nums; }
 
