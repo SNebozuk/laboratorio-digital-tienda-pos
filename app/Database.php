@@ -81,6 +81,7 @@ final class Database
         );
         self::migrateDeliverySlots($pdo);
         self::migrateDeliverySlotAmounts($pdo);
+        self::migrateDeliveryReopen($pdo);
     }
 
     private static function migrateDeliverySlots(PDO $pdo): void
@@ -109,6 +110,19 @@ final class Database
             $names = array_column($pdo->query('PRAGMA table_info(delivery_slots)')->fetchAll(), 'name');
             if (!in_array('cash_due', $names, true)) $pdo->exec("ALTER TABLE delivery_slots ADD COLUMN cash_due TEXT NOT NULL DEFAULT ''");
             if (!in_array('order_total_cents', $names, true)) $pdo->exec('ALTER TABLE delivery_slots ADD COLUMN order_total_cents INTEGER NOT NULL DEFAULT 0');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateDeliveryReopen(PDO $pdo): void
+    {
+        $version = 24;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $names = array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(), 'name');
+            if (!in_array('delivery_reopened_at', $names, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN delivery_reopened_at TEXT');
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

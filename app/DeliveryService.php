@@ -53,11 +53,11 @@ final class DeliveryService
     {
         $this->assertSlot($slot);
         return Database::immediate($this->pdo, function (PDO $pdo) use ($orderId, $slot, $actorUserId): array {
-            $orderQuery = $pdo->prepare('SELECT id, public_number, customer_name, total_cents, delivery_slot_number FROM orders WHERE id = :id');
+            $orderQuery = $pdo->prepare('SELECT id, public_number, customer_name, total_cents, delivery_slot_number, delivery_reopened_at FROM orders WHERE id = :id');
             $orderQuery->execute(['id' => $orderId]);
             $order = $orderQuery->fetch();
             if (!$order) throw new ValidationException('La venta no existe.');
-            if ($order['delivery_slot_number'] !== null) throw new ConflictException('Esta venta ya fue copiada a Entregas.');
+            if ($order['delivery_slot_number'] !== null && $order['delivery_reopened_at'] === null) throw new ConflictException('Esta venta ya fue copiada a Entregas.');
             $existing = $this->findSlot($pdo, $slot);
             $hasOrder = trim((string) ($existing['order_numbers'] ?? '')) !== '';
             $orderNumbers = $hasOrder ? trim((string) $existing['order_numbers']) . ' / ' . $order['public_number'] : (string) $order['public_number'];
@@ -71,7 +71,7 @@ final class DeliveryService
                 $pdo->prepare('INSERT INTO delivery_slots(slot_number, order_numbers, customer_name, order_total_cents, revision, updated_by) VALUES(:slot, :orders, :customer, :total, 1, :user)')
                     ->execute(['slot' => $slot, 'orders' => $orderNumbers, 'customer' => $customer, 'total' => (int) $order['total_cents'], 'user' => $actorUserId]);
             }
-            $updated = $pdo->prepare('UPDATE orders SET delivery_slot_number = :slot, delivery_copied_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND delivery_slot_number IS NULL');
+            $updated = $pdo->prepare('UPDATE orders SET delivery_slot_number = :slot, delivery_copied_at = CURRENT_TIMESTAMP, delivery_reopened_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND (delivery_slot_number IS NULL OR delivery_reopened_at IS NOT NULL)');
             $updated->execute(['slot' => $slot, 'id' => $orderId]);
             if ($updated->rowCount() !== 1) throw new ConflictException('Esta venta fue copiada por otra persona.');
             return ['slot' => $this->findSlot($pdo, $slot), 'order_id' => $orderId];
@@ -111,6 +111,13 @@ final class DeliveryService
             $pdo->prepare('UPDATE orders SET delivery_slot_number = NULL, delivery_copied_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
                 ->execute(['id' => $orderId]);
         });
+    }
+
+    /** Habilita una única nueva ubicación sin tocar la planilla existente. */
+    public function allowReopenedOrder(int $orderId): void
+    {
+        $this->pdo->prepare('UPDATE orders SET delivery_reopened_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND delivery_slot_number IS NOT NULL')
+            ->execute(['id' => $orderId]);
     }
 
     private function assertSlot(int $slot): void { if ($slot < 1 || $slot > 100) throw new ValidationException('Elegí una ubicación entre 1 y 100.'); }

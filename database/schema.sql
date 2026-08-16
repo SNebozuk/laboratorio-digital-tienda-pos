@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS orders (
     archived_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     delivery_slot_number INTEGER,
     delivery_copied_at TEXT,
+    delivery_reopened_at TEXT,
     created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

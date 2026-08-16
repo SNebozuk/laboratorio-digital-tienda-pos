@@ -1731,7 +1731,7 @@
     function showCopyToDeliveries(orderId) {
         const order = state.orders.find(item => Number(item.id) === Number(orderId));
         if (!order) return;
-        if (order.delivery_slot_number) { toast('Esta venta ya fue copiada a Entregas.'); return; }
+        if (order.delivery_slot_number && !order.delivery_reopened_at) { toast('Esta venta ya fue copiada a Entregas.'); return; }
         state.pendingDeliveryOrderId = Number(orderId);
         showView('deliveries');
         toast('Elegí la fila donde querés ubicar esta venta.');
@@ -2342,7 +2342,7 @@
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
                         <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : (order.delivery_slot_number ? 'copied' : order.status))}">${escapeHtml(order.archived_at ? 'Archivada' : (order.delivery_slot_number ? 'COPIADA' : (statusLabels[order.status] || order.status)))}</span></span>
-                        <button class="order-list-copy" type="button" data-copy-order-delivery="${Number(order.id)}" ${order.delivery_slot_number ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="Copiar a Entregas">⇠</button>
+                        <button class="order-list-copy" type="button" data-copy-order-delivery="${Number(order.id)}" ${order.delivery_slot_number && !order.delivery_reopened_at ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="Copiar a Entregas">⇠</button>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
                         ${order.status !== 'cancelled'
                             ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">🗑</button>`
