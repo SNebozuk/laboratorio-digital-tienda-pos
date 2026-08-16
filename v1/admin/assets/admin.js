@@ -749,14 +749,15 @@
                     || left.name.localeCompare(right.name, 'es'))
                 : left.name.localeCompare(right.name, 'es'));
         const selectedCount = state.selectedProductIds.size;
+        const singularSelection = selectedCount === 1;
         const visibleSelectedCount = products.filter(product => state.selectedProductIds.has(Number(product.id))).length;
         const allSelected = products.length > 0 && visibleSelectedCount === products.length;
         const toolbar = `
             <div class="product-bulk-toolbar">
                 <label class="product-select-all"><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''}> <span>Seleccionar todo</span></label>
                 <span class="product-selection-count">${selectedCount ? `${selectedCount} ${selectedCount === 1 ? 'producto seleccionado' : 'productos seleccionados'}` : '0 productos seleccionados'}</span>
-                <select data-bulk-product-action ${selectedCount ? '' : 'disabled'} aria-label="Acciones sobre productos seleccionados">
-                    <option value="">ACCIONES</option><option value="show">Mostrar Productos</option><option value="hide">Ocultar Productos</option><option value="delete">Eliminar Productos</option>
+                <select data-bulk-product-action ${selectedCount ? '' : 'disabled'} aria-label="Acciones sobre ${singularSelection ? 'el producto seleccionado' : 'los productos seleccionados'}">
+                    <option value="">ACCIONES</option><option value="show">Mostrar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="hide">Ocultar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="delete">Eliminar ${singularSelection ? 'Producto' : 'Productos'}</option>
                 </select>
                 <button class="secondary-button" type="button" data-open-product-filters>FILTRAR${state.productCategoryId || state.productAvailability || state.productVisibility ? ' · ACTIVO' : ''}</button>
             </div>`;
