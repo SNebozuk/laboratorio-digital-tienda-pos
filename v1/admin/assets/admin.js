@@ -133,6 +133,7 @@
     const quickUpdateTimers = new Map();
     let automaticRefreshRunning = false;
     let quickUpdateInFlight = 0;
+    let productActionsMenuPauseUntil = 0;
 
     async function apiGet(action, parameters = {}) {
         const url = new URL(app.api_url, window.location.href);
@@ -1757,6 +1758,9 @@
     }
 
     function adminHasUnsavedInteraction() {
+        if (Date.now() < productActionsMenuPauseUntil) {
+            return true;
+        }
         if (elements.modal?.classList.contains('open') || quickUpdateTimers.size > 0 || quickUpdateInFlight > 0) {
             return true;
         }
@@ -4221,6 +4225,20 @@
         window.history.replaceState({}, '', url);
         showView('orders');
         window.focus();
+    });
+
+    // Algunos navegadores no conservan document.activeElement mientras un <select>
+    // nativo está abierto. Pausamos la sincronización un momento para que el menú
+    // de acciones no sea reemplazado antes de poder elegir una opción.
+    document.addEventListener('pointerdown', event => {
+        if (event.target.closest('[data-bulk-product-action]')) {
+            productActionsMenuPauseUntil = Date.now() + 30000;
+        }
+    }, true);
+    document.addEventListener('focusin', event => {
+        if (event.target.closest('[data-bulk-product-action]')) {
+            productActionsMenuPauseUntil = Date.now() + 30000;
+        }
     });
 
     if (app.user) {
