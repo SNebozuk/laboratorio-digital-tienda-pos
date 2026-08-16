@@ -2375,13 +2375,12 @@
             ));
             elements.orderList.innerHTML = `
                 <div class="order-list-head" aria-hidden="true">
-                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''} aria-label="Seleccionar todas las ventas"></label><span>VENTA</span><span>FECHA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span>
+                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''} aria-label="Seleccionar todas las ventas"></label><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
                 </div>
                 ${matchingOrders.map(order => `
                     <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
-                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : `<button class="order-list-archive" type="button" data-archive-order="${Number(order.id)}" aria-label="Archivar ${escapeHtml(order.public_number)}" title="Archivar venta">Archivar</button>`}</span>
-                        <span class="order-list-date">${escapeHtml(argentinaDateParts(order.created_at).date)}<small>${escapeHtml(argentinaDateParts(order.created_at).time)}</small></span>
+                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : `<button class="order-list-archive" type="button" data-archive-order="${Number(order.id)}" aria-label="Archivar ${escapeHtml(order.public_number)}" title="Archivar venta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v12H4zM3 4h18v3.5H3zM9 12h6"/></svg></button>`}</span>
                         <button class="order-list-customer" type="button" data-customer-history="${escapeHtml(order.customer_name)}" aria-label="Ver historial de ${escapeHtml(order.customer_name)}"><strong>${escapeHtml(order.customer_name)}</strong></button>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
@@ -2391,6 +2390,7 @@
                         ${order.status !== 'cancelled'
                             ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">🗑</button>`
                             : '<span class="order-list-delete-placeholder" aria-hidden="true"></span>'}
+                        <span class="order-list-date">${escapeHtml(argentinaDateParts(order.created_at).date)}<small>${escapeHtml(argentinaDateParts(order.created_at).time)}</small></span>
                     </div>
                 `).join('')}
             `;
