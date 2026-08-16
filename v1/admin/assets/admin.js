@@ -7,6 +7,7 @@
         categories: [],
         orders: [],
         deliverySlots: [],
+        pendingDeliveryOrderId: 0,
         orderQuery: '',
         orderStatus: '',
         orderChannel: '',
@@ -114,6 +115,7 @@
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
         deliverySlots: document.getElementById('delivery-slots'),
+        deliveryCopyGuide: document.getElementById('delivery-copy-guide'),
         openOrdersCount: document.getElementById('open-orders-count'),
         orderSearch: document.getElementById('order-search'),
         orderChannelFilter: document.getElementById('order-channel-filter'),
@@ -1673,12 +1675,17 @@
     function renderDeliverySlots() {
         if (!elements.deliverySlots) return;
         const byNumber = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
+        const pending = state.orders.find(order => Number(order.id) === Number(state.pendingDeliveryOrderId));
+        if (elements.deliveryCopyGuide) {
+            elements.deliveryCopyGuide.hidden = !pending;
+            elements.deliveryCopyGuide.innerHTML = pending ? `<strong>UBICAR ${escapeHtml(pending.public_number)}</strong><span>${escapeHtml(pending.customer_name)}. Elegí una fila: una vacía queda marcada <b>ARMAR</b>; si ya tiene pedidos, se suma como <b>AGREGAR</b>.</span><button class="small-button" type="button" data-cancel-delivery-placement>CANCELAR</button>` : '';
+        }
         elements.deliverySlots.innerHTML = Array.from({ length: 100 }, (_, index) => {
             const number = index + 1;
             const slot = byNumber.get(number) || { slot_number: number, location: '', order_numbers: '', customer_name: '', transfers: '', revision: 0 };
             const tone = slotTone(slot);
             const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
-            return `<tr class="${tone}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${field('location', 'Ubicación')}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${field('location', 'Ubicación')}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-order="${Number(pending.id)}" data-place-delivery-slot="${number}">UBICAR</button>` : ''}<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
         }).join('');
     }
 
@@ -1718,22 +1725,15 @@
         const order = state.orders.find(item => Number(item.id) === Number(orderId));
         if (!order) return;
         if (order.delivery_slot_number) { toast('Esta venta ya fue copiada a Entregas.'); return; }
-        const slots = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
-        openModal(`
-            <p class="eyebrow">ENTREGA DE PEDIDOS</p>
-            <h2 id="modal-title">COPIAR ${escapeHtml(order.public_number)}</h2>
-            <p class="empty-copy">Elegí una ubicación. Una ubicación vacía queda marcada como ARMAR; si ya contiene una orden, se suma sin reemplazar datos y queda marcada como AGREGAR.</p>
-            <label>UBICACIÓN
-                <select id="copy-delivery-slot">${Array.from({ length: 100 }, (_, index) => { const n = index + 1; const slot = slots.get(n); const suffix = slot?.order_numbers ? ` · ${slot.order_numbers}` : ''; return `<option value="${n}">${n}${escapeHtml(suffix)}</option>`; }).join('')}</select>
-            </label>
-            <div class="modal-actions"><button class="primary-button" type="button" data-confirm-copy-delivery="${Number(orderId)}">COPIAR A ENTREGAS</button><button class="secondary-button" type="button" data-close-modal>CANCELAR</button></div>`);
+        state.pendingDeliveryOrderId = Number(orderId);
+        showView('deliveries');
+        toast('Elegí la fila donde querés ubicar esta venta.');
     }
 
-    async function copyOrderToDelivery(orderId) {
-        const slot = Number(document.getElementById('copy-delivery-slot')?.value || 0);
+    async function copyOrderToDelivery(orderId, slot) {
         try {
             await apiPost({ action: 'delivery_copy_order', order_id: Number(orderId), slot_number: slot });
-            closeModal();
+            state.pendingDeliveryOrderId = 0;
             await Promise.all([loadOrders(true), loadDeliverySlots()]);
             toast('Venta copiada a Entregas.');
         } catch (error) { toast(error.message); }
@@ -3635,9 +3635,19 @@
             deleteDeliverySlot(Number(deleteDelivery.dataset.deleteDeliverySlot));
             return;
         }
+        const placeDelivery = event.target.closest('[data-place-delivery-order]');
+        if (placeDelivery) {
+            copyOrderToDelivery(Number(placeDelivery.dataset.placeDeliveryOrder), Number(placeDelivery.dataset.placeDeliverySlot));
+            return;
+        }
+        if (event.target.closest('[data-cancel-delivery-placement]')) {
+            state.pendingDeliveryOrderId = 0;
+            renderDeliverySlots();
+            return;
+        }
         const confirmCopyDelivery = event.target.closest('[data-confirm-copy-delivery]');
         if (confirmCopyDelivery) {
-            copyOrderToDelivery(Number(confirmCopyDelivery.dataset.confirmCopyDelivery));
+            copyOrderToDelivery(Number(confirmCopyDelivery.dataset.confirmCopyDelivery), Number(document.getElementById('copy-delivery-slot')?.value || 0));
             return;
         }
         const archiveOrder = event.target.closest('[data-archive-order]');

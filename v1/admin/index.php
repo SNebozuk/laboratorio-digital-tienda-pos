@@ -84,7 +84,6 @@ header('Referrer-Policy: same-origin');
                 </a>
                 <nav class="admin-nav">
                     <div class="admin-nav-sales">
-                        <span class="admin-nav-group-label">VENTAS</span>
                         <button class="admin-nav-button active" type="button" data-view="orders">Lista de Ventas</button>
                         <button class="admin-nav-button" type="button" data-view="deliveries">Entrega de Pedidos</button>
                     </div>
@@ -309,6 +308,7 @@ header('Referrer-Policy: same-origin');
                         </div>
                         <button class="secondary-button" id="delivery-fullscreen" type="button">↗ PANTALLA COMPLETA</button>
                     </div>
+                    <div id="delivery-copy-guide" class="delivery-copy-guide" hidden></div>
                     <div class="delivery-table-wrap">
                         <table class="delivery-table">
                             <thead><tr><th>N.º</th><th>Ubicación</th><th># Orden</th><th>Nombre y Apellido</th><th>Transferencias</th><th></th></tr></thead>
