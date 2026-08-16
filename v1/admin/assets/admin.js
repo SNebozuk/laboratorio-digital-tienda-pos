@@ -1685,7 +1685,7 @@
             const slot = byNumber.get(number) || { slot_number: number, location: '', order_numbers: '', customer_name: '', transfers: '', cash_due: '', order_total_cents: 0, revision: 0 };
             const tone = slotTone(slot);
             const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
-            const location = `<input type="text" list="delivery-location-options" value="${escapeHtml(slot.location || '')}" placeholder="A1" data-delivery-field="location" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="Ubicación fila ${number}">`;
+            const location = `<input type="text" value="${escapeHtml(slot.location || '')}" placeholder="A1" data-delivery-field="location" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="Ubicación fila ${number}">`;
             const markerButton = /\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear" type="button" data-clear-delivery-marker="${number}" title="Quitar ARMAR / AGREGAR">⊘</button>` : '';
             return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-order="${Number(pending.id)}" data-place-delivery-slot="${number}">UBICAR</button>` : ''}</td><td>${location}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
         }).join('');
@@ -1756,7 +1756,7 @@
         }
         const active = document.activeElement;
         return Boolean(active?.closest(
-            '#admin-product-list input, #category-admin-tree input, #size-guide-rows input, form textarea, form input:not([type="search"]), form select'
+            '#admin-product-list input, #category-admin-tree input, #size-guide-rows input, #delivery-slots input, form textarea, form input:not([type="search"]), form select'
         ));
     }
 
