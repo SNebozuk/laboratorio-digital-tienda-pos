@@ -52,6 +52,8 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 
 /* Paleta final: elimina el verde heredado y unifica tienda, carrito y checkout. */
 :root { --bg:#fbf8ff; --panel:#fff; --panel-2:#f4effb; --line:#e3d8ef; --line-soft:#eee8f5; --text:#2a1d3c; --muted:#685d76; --accent:#7652b8; --success:#7652b8; }
+.description-button { color:#4a2a72 !important; font-weight:800; }
+.description-button:hover { color:#2d164b !important; }
 body { background:#fbf8ff !important; }
 .store-header { box-shadow:0 8px 25px rgba(62,38,91,.08) !important; }
 .header-link:hover { background:#f3edfb !important; }

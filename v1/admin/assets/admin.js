@@ -1201,9 +1201,7 @@
                 <span class="pos-product-price">${posProductPrice(product)}</span>
                 ${hasVariants
                     ? `<button class="pos-result-action pos-open-product-button" type="button" data-pos-open-product="${Number(product.id)}" aria-label="Mostrar variantes de ${escapeHtml(product.name)}"><span aria-hidden="true">${expanded ? '‹' : '›'}</span></button>`
-                    : singleQuantity > 0
-                        ? `<div class="pos-inline-quantity" aria-label="Cantidad de ${escapeHtml(product.name)}"><button type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity - 1}" aria-label="Quitar una unidad">−</button><strong>${singleQuantity}</strong><button type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity + 1}" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar una unidad">+</button></div>`
-                        : `<button class="pos-result-action pos-add-one" type="button" data-pos-quantity="${Number(single.id)}" data-value="1" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(product.name)}"><span aria-hidden="true">+</span></button>`}
+                    : `<div class="pos-inline-quantity" aria-label="Cantidad de ${escapeHtml(product.name)}"><button type="button" data-pos-quantity="${Number(single.id)}" data-value="${Math.max(0, singleQuantity - 1)}" ${singleQuantity < 1 ? 'disabled' : ''} aria-label="Quitar una unidad">−</button><input type="number" inputmode="numeric" value="${singleQuantity}" min="0" max="${Number(single.available_stock)}" data-pos-input="${Number(single.id)}" aria-label="Cantidad de ${escapeHtml(product.name)}"><button type="button" data-pos-quantity="${Number(single.id)}" data-value="${singleQuantity + 1}" ${singleRemaining < 1 ? 'disabled' : ''} aria-label="Agregar una unidad">+</button></div>`}
                 ${hasVariants ? `<div class="pos-result-variants">${variants.map(variant => {
                         const quantity = posQuantity(variant.id);
                         const remaining = Math.max(
@@ -1221,8 +1219,8 @@
                                     <span class="pos-variant-stock">${stockLabel(remaining)}</span>
                                     <span class="pos-variant-price">${money(variant.price_cents)}</span>
                                 </span>
-                                ${quantity > 0 ? `<button class="pos-variant-remove" type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity - 1}" aria-label="Restar ${escapeHtml(variantDisplayName(product, variant) || product.name)}">−</button>` : '<span class="pos-variant-remove-placeholder" aria-hidden="true"></span>'}
-                                ${quantity > 0 ? `<span class="pos-variant-quantity" aria-label="Cantidad agregada">${quantity}</span>` : '<span class="pos-variant-quantity-placeholder" aria-hidden="true"></span>'}
+                                <button class="pos-variant-remove" type="button" data-pos-quantity="${Number(variant.id)}" data-value="${Math.max(0, quantity - 1)}" ${quantity < 1 ? 'disabled' : ''} aria-label="Restar ${escapeHtml(variantDisplayName(product, variant) || product.name)}">−</button>
+                                <input class="pos-variant-quantity" type="number" inputmode="numeric" value="${quantity}" min="0" max="${Number(variant.available_stock)}" data-pos-input="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(variantDisplayName(product, variant) || product.name)}">
                                 <button class="pos-variant-add" type="button" data-pos-quantity="${Number(variant.id)}" data-value="${quantity + 1}" ${remaining < 1 ? 'disabled' : ''} aria-label="Agregar ${escapeHtml(variantDisplayName(product, variant) || product.name)}">+</button>
                             </div>
                         `;
@@ -3769,6 +3767,13 @@
         if (event.target.id === 'barcode-assignment-search') {
             barcodeAssignmentResults(event.target.value);
         }
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
+        event.preventDefault();
+        setPosQuantity(Number(event.target.dataset.posInput), Number(event.target.value));
+        event.target.blur();
     });
 
     document.addEventListener('click', event => {

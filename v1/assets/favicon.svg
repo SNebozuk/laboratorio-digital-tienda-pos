@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Laboratorio Digital">
-  <rect width="64" height="64" rx="16" fill="#5e4b8b"/>
-  <path d="M18 16h7v25h14v7H18V16Zm25 0h7v32H36v-7h7V16Z" fill="#fff"/>
-  <circle cx="32" cy="50" r="3" fill="#d9c9f4"/>
+  <rect width="64" height="64" rx="16" fill="#4b2578"/>
+  <rect x="5" y="5" width="54" height="54" rx="13" fill="none" stroke="#cdb5ef" stroke-width="2"/>
+  <path d="M17 15h8v26h14v8H17V15Zm25 0h8v34H36v-8h6V15Z" fill="#fff"/>
+  <circle cx="32" cy="51" r="3" fill="#f3d5fb"/>
 </svg>

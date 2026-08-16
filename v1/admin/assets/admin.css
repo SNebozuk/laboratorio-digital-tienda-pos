@@ -484,7 +484,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-variant-stock { color: #667087; font-size: 14px; font-weight: 750; white-space: nowrap; }
 .pos-variant-price { color: #252a3a; font-size: 16px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pos-variant-meta { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
-.pos-variant-quantity { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 7px; background: #edf2f7; color: #315fa9; font-size: 13px; font-weight: 800; }
+.pos-variant-quantity { display: block; width: 54px; height: 34px; padding: 0 3px; border: 1px solid #c9d3e0; border-radius: 7px; background: #fff; color: #315fa9; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 32px; text-align: center; }
+.pos-variant-quantity::-webkit-inner-spin-button, .pos-variant-quantity::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
+.pos-variant-quantity { appearance: textfield; -moz-appearance: textfield; }
 .pos-variant-quantity-placeholder { display: block; width: 30px; height: 30px; }
 .pos-variant-remove, .pos-variant-remove-placeholder { display: block; width: 30px; height: 30px; }
 .pos-variant-remove { padding: 0; border: 1px solid #d7dde6; border-radius: 7px; background: #fff; color: #596b80; cursor: pointer; font-size: 22px; line-height: 1; }
@@ -2988,15 +2990,16 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-result-action:hover { background: #1769e0; color: #fff; }
 .pos-result-action:disabled { opacity: .35; }
 .pos-result-action.pos-open-product-button > span { font-size: 32px; font-weight: 500; transform: translateY(-3px); }
-.pos-inline-quantity { display: grid; grid-template-columns: 34px 32px 34px; align-items: center; justify-self: end; gap: 3px; }
+.pos-inline-quantity { display: grid; grid-template-columns: 34px 54px 34px; align-items: center; justify-self: end; gap: 3px; }
 .pos-inline-quantity button { display: grid; width: 34px; height: 34px; place-items: center; padding: 0 0 2px; border: 1px solid #1769e0; border-radius: 8px; background: transparent; color: #1769e0; font-family: Arial, sans-serif; font-size: 23px; line-height: 1; cursor: pointer; }
 .pos-inline-quantity button:hover { background: #1769e0; color: #fff; }
 .pos-inline-quantity button:disabled { opacity: .35; cursor: default; }
-.pos-inline-quantity strong { color: #252a3a; font-variant-numeric: tabular-nums; text-align: center; }
+.pos-inline-quantity input { width: 54px; height: 34px; padding: 0 3px; border: 1px solid #c9d3e0; border-radius: 8px; background: #fff; color: #252a3a; font: inherit; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; appearance: textfield; -moz-appearance: textfield; }
+.pos-inline-quantity input::-webkit-inner-spin-button, .pos-inline-quantity input::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
 .pos-page .quantity-control button, .pos-search-page .quantity-control button { display: grid; place-items: center; padding: 0 0 3px; font-family: Arial, sans-serif; font-size: 22px; line-height: 1; }
 .pos-result-variants { grid-column: 2 / -1; }
 .pos-search-page .pos-variant-row,
-.pos-page .pos-variant-row { grid-template-columns: minmax(280px, 2fr) minmax(150px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr) 40px 32px 48px; padding: 11px 12px; transition: background-color .15s ease; }
+.pos-page .pos-variant-row { grid-template-columns: minmax(280px, 2fr) minmax(150px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr) 40px 54px 48px; padding: 11px 12px; transition: background-color .15s ease; }
 .pos-search-page .pos-variant-name,
 .pos-page .pos-variant-name { grid-column: 2; }
 .pos-search-page .pos-variant-meta,
@@ -3083,7 +3086,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .pos-search-page .pos-result-meta, .pos-search-page .pos-product-price, .pos-page .pos-result-meta, .pos-page .pos-product-price { grid-column: 2; }
     .pos-search-page .pos-result-action, .pos-page .pos-result-action, .pos-inline-quantity { grid-column: 3; grid-row: 1 / 4; }
     .pos-result-variants { grid-column: 1 / -1; }
-    .pos-search-page .pos-variant-row, .pos-page .pos-variant-row { grid-template-columns: minmax(0, 1fr) 36px 30px 48px; grid-template-rows: auto auto; }
+    .pos-search-page .pos-variant-row, .pos-page .pos-variant-row { grid-template-columns: minmax(0, 1fr) 36px 54px 48px; grid-template-rows: auto auto; }
     .pos-search-page .pos-variant-name, .pos-page .pos-variant-name { grid-column: 1; grid-row: 1; }
     .pos-search-page .pos-variant-meta, .pos-page .pos-variant-meta { display: inline-flex; grid-column: 1; grid-row: 2; gap: 7px; }
     .pos-search-page .pos-variant-price, .pos-page .pos-variant-price { font-size: 15px; }
