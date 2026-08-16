@@ -224,6 +224,13 @@
     color: #fff;
 }
 
+.creator-credit {
+    flex-basis: 100%;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: right;
+}
+
 .floating-whatsapp {
     position: fixed;
     z-index: 60;
@@ -256,6 +263,8 @@
         display: grid;
         padding: 22px 16px 92px;
     }
+
+    .creator-credit { text-align: left; }
 
     .floating-whatsapp {
         right: 16px;

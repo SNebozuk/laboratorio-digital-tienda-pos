@@ -164,6 +164,7 @@ header('Referrer-Policy: same-origin');
         <?php if (!empty($publicSettings['business_hours'])): ?>
             <span><?= $escape((string) $publicSettings['business_hours']) ?></span>
         <?php endif ?>
+        <small class="creator-credit">Diseño y desarrollo: Sergio Nebozuk</small>
     </footer>
 
     <a
