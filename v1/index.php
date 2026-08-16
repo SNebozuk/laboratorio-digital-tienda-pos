@@ -159,8 +159,8 @@ header('Referrer-Policy: same-origin');
             <small>Horario, WhatsApp y ubicación</small>
         </button>
         <a class="creator-credit" href="<?= $escape($storePath) ?>/sergio-nebozuk.php">
-            <span>¿NECESITÁS UNA TIENDA ONLINE?</span>
-            <strong>Diseño y desarrollo por Sergio Nebozuk <b aria-hidden="true">→</b></strong>
+            <span>¿QUERÉS VENDER MÁS ONLINE?</span>
+            <strong>Creemos una tienda que trabaje para tu negocio <b aria-hidden="true">→</b></strong>
         </a>
     </footer>
 

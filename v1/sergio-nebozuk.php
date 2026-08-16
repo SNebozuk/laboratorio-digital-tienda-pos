@@ -25,7 +25,7 @@ $assetPath = $storePath . '/assets';
             <article><strong>ADMINISTRACIÓN</strong><span>Productos, stock, ventas, impresión y procesos adaptados a tu forma de trabajar.</span></article>
             <article><strong>IDENTIDAD DIGITAL</strong><span>Diseño sobrio, imágenes, contenido y una marca coherente para tu negocio.</span></article>
         </div>
-        <a class="primary-button creator-cta" href="mailto:sergionebozuk@gmail.com?subject=Consulta%20sobre%20tienda%20online">CONTÁME SOBRE TU PROYECTO</a>
+        <a class="primary-button creator-cta" href="https://wa.me/5493416900449?text=Hola%20Sergio%2C%20quiero%20consultarte%20por%20una%20tienda%20online." target="_blank" rel="noopener">CONTACTAME POR WHATSAPP</a>
         <small class="creator-signature">Sergio Nebozuk · Diseño y desarrollo de ecommerce</small>
     </main>
 </body>
