@@ -90,6 +90,29 @@ final class DeliveryService
         });
     }
 
+    /** Libera una venta reabierta para que pueda ubicarse nuevamente. */
+    public function unassignOrder(int $orderId): void
+    {
+        Database::immediate($this->pdo, function (PDO $pdo) use ($orderId): void {
+            $query = $pdo->prepare('SELECT public_number, total_cents, delivery_slot_number FROM orders WHERE id = :id');
+            $query->execute(['id' => $orderId]);
+            $order = $query->fetch();
+            if (!$order || $order['delivery_slot_number'] === null) return;
+            $slot = (int) $order['delivery_slot_number'];
+            $existing = $this->findSlot($pdo, $slot);
+            if ($existing) {
+                $numbers = array_values(array_filter(array_map('trim', explode('/', (string) $existing['order_numbers'])), static fn (string $number): bool => $number !== '' && $number !== (string) $order['public_number']));
+                $remaining = implode(' / ', $numbers);
+                $total = max(0, (int) $existing['order_total_cents'] - (int) $order['total_cents']);
+                $customer = $remaining === '' ? preg_replace('/\s*·?\s*(ARMAR|AGREGAR)\s*$/iu', '', (string) $existing['customer_name']) : (string) $existing['customer_name'];
+                $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, customer_name = :customer, order_total_cents = :total, revision = revision + 1, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
+                    ->execute(['orders' => $remaining, 'customer' => trim((string) $customer), 'total' => $total, 'slot' => $slot]);
+            }
+            $pdo->prepare('UPDATE orders SET delivery_slot_number = NULL, delivery_copied_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
+                ->execute(['id' => $orderId]);
+        });
+    }
+
     private function assertSlot(int $slot): void { if ($slot < 1 || $slot > 100) throw new ValidationException('Elegí una ubicación entre 1 y 100.'); }
     private function clean(mixed $value): string { $text = trim(preg_replace('/\s+/u', ' ', (string) $value) ?? ''); return function_exists('mb_substr') ? mb_substr($text, 0, 500) : substr($text, 0, 500); }
     private function normalizeLocation(mixed $value): string

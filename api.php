@@ -338,6 +338,7 @@ try {
                 (int) ($input['order_id'] ?? 0),
                 (int) $user['id']
             );
+            $app['deliveries']->unassignOrder((int) ($input['order_id'] ?? 0));
             Http::json(['ok' => true]);
 
         case 'order_deliver':
