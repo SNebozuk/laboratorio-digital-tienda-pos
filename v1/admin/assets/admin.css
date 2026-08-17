@@ -3275,8 +3275,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-table input[data-delivery-field="location"]:hover,.delivery-table input[data-delivery-field="location"]:focus { border-color: #a984cf; background: #f5effc; outline: none; }
 .delivery-table input:hover,.delivery-table input:focus { border-color: #bda4de; background: #fff; outline: none; }
 .delivery-transfer-total { display: block; min-height: 16px; padding: 2px 9px 0; color: #6b537f; font-size: 11px; font-weight: 750; }
-.delivery-table .delivery-slot-build { color: #275836; font-weight: 750; background: #f0f8f0; }
-.delivery-table .delivery-slot-add { color: #5d368a; font-weight: 750; background: #f7f0ff; }
+.delivery-table tbody tr.delivery-slot-build > th,.delivery-table tbody tr.delivery-slot-build > td { background:#dcefe2 !important; color:#1e5630; font-weight:800; border-bottom-color:#bedcc7; }
+.delivery-table tbody tr.delivery-slot-add > th,.delivery-table tbody tr.delivery-slot-add > td { background:#eadcf8 !important; color:#592a83; font-weight:800; border-bottom-color:#d8c2ed; }
+.delivery-table tbody tr.delivery-slot-build input,.delivery-table tbody tr.delivery-slot-add input { background:transparent !important; color:inherit !important; font-weight:800; }
+.delivery-table tbody tr.delivery-slot-build .delivery-transfer-total { color:#347044; }
+.delivery-table tbody tr.delivery-slot-add .delivery-transfer-total { color:#74409b; }
 .delivery-marker-clear { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #f0e9fa; color: #65428a; cursor: pointer; font-size: 18px; }
 .delivery-marker-clear:hover { background: #e2d4f3; }
 .delivery-order-total { color: #34214e; font-variant-numeric: tabular-nums; white-space: nowrap; }
