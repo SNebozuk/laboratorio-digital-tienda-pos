@@ -28,7 +28,6 @@
         posCart: new Map(),
         posQuery: '',
         posProductId: null,
-        posShortcutVariantId: 0,
         pendingBarcode: '',
         barcodeBuffer: '',
         barcodeStartedAt: 0,
@@ -4349,22 +4348,6 @@
             closePosSuggestions();
         }
     });
-    document.addEventListener('pointerover', event => {
-        const button = event.target.closest?.('button[data-pos-quantity]');
-        if (!button || button.disabled) return;
-        const variantId = Number(button.dataset.posQuantity);
-        if (Number(button.dataset.value) > posQuantity(variantId)) {
-            state.posShortcutVariantId = variantId;
-        }
-    });
-    document.addEventListener('focusin', event => {
-        const button = event.target.closest?.('button[data-pos-quantity]');
-        if (!button || button.disabled) return;
-        const variantId = Number(button.dataset.posQuantity);
-        if (Number(button.dataset.value) > posQuantity(variantId)) {
-            state.posShortcutVariantId = variantId;
-        }
-    });
     document.addEventListener('keydown', event => {
         const isPos = state.view === 'pos' || Boolean(document.querySelector('.pos-page'));
         const target = event.target instanceof Element ? event.target : null;
@@ -4382,23 +4365,13 @@
             return;
         }
 
-        // Con foco en un botón +, Espacio suma una sola unidad sin requerir mouse.
-        // Se evita el clic nativo posterior para que no duplique la cantidad.
+        // Espacio siempre lleva a la búsqueda de productos. No modifica cantidades.
         if (event.key === ' ' || event.key === 'Spacebar') {
-            let addButton = document.activeElement instanceof Element
-                ? document.activeElement.closest('button[data-pos-quantity]')
-                : null;
-            if (!addButton && state.posShortcutVariantId) {
-                addButton = Array.from(document.querySelectorAll('button[data-pos-quantity]')).find(button => (
-                    Number(button.dataset.posQuantity) === Number(state.posShortcutVariantId)
-                    && Number(button.dataset.value) > posQuantity(Number(button.dataset.posQuantity))
-                )) || null;
-            }
-            const variantId = Number(addButton?.dataset.posQuantity);
-            const nextValue = Number(addButton?.dataset.value);
-            if (addButton && !addButton.disabled && nextValue > posQuantity(variantId)) {
-                event.preventDefault();
-                addButton.click();
+            event.preventDefault();
+            if (elements.posSearch) {
+                elements.posSearch.focus();
+            } else {
+                window.location.href = 'pos-products.php';
             }
             return;
         }
