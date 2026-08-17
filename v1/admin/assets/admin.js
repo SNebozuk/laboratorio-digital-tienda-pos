@@ -2396,7 +2396,7 @@
         if (kind === 'question') {
             return 'Te quería hacer una consulta sobre tu compra.';
         }
-        return `Ya recibimos tu compra. ¡Muchas gracias!\n\nTe compartimos el detalle de tu compra ${order.public_number}:\n\n${detail}\n\n*Total: ${money(order.total_cents)}*\n\nTe paso también los datos para realizar la transferencia:\n\n${bankDetails}\n\nCuando puedas realizarla, ¿me enviás el comprobante por acá? Así dejamos tu pedido confirmado. \u2764\uFE0F`;
+        return `Ya recibimos tu compra. ¡Muchas gracias!\n\nTe compartimos el detalle de tu compra *${order.public_number}*:\n\n${detail}\n\n*TOTAL: ${money(order.total_cents)}*\n\nTe paso también los datos para realizar la transferencia:\n\n${bankDetails}\n\nCuando puedas realizarla, ¿me enviás el comprobante por acá? Así dejamos tu pedido confirmado.`;
     }
 
     function openDirectWhatsapp(phoneValue) {
