@@ -15,7 +15,7 @@ final class DeliveryService
     {
         $slots = $this->pdo->query('SELECT * FROM delivery_slots ORDER BY slot_number')->fetchAll();
         $orders = $this->pdo->query(
-            'SELECT id, public_number, customer_name, total_cents, delivery_slot_number
+            'SELECT id, public_number, customer_name, customer_phone, total_cents, delivery_slot_number
              FROM orders
              WHERE delivery_slot_number IS NOT NULL AND delivery_reopened_at IS NULL
              ORDER BY id ASC'

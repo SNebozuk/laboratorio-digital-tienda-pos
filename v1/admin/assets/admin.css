@@ -3186,11 +3186,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 /* Lista de ventas: sin datos de cobro o envío, sólo lo necesario para preparar pedidos. */
 #view-orders .order-list-head,
 #view-orders .order-list-row {
-    grid-template-columns: 34px minmax(88px, .46fr) minmax(180px, 1.2fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 32px 34px minmax(96px, .52fr);
+    grid-template-columns: 34px minmax(88px, .46fr) minmax(180px, 1.2fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 32px 32px 34px minmax(96px, .52fr);
 }
 #view-orders .order-list.hide-status-column .order-list-head,
 #view-orders .order-list.hide-status-column .order-list-row {
-    grid-template-columns: 34px minmax(88px, .5fr) minmax(180px, 1.3fr) minmax(110px, .65fr) minmax(96px, .55fr) 32px 32px 34px minmax(96px, .58fr);
+    grid-template-columns: 34px minmax(88px, .5fr) minmax(180px, 1.3fr) minmax(110px, .65fr) minmax(96px, .55fr) 32px 32px 32px 34px minmax(96px, .58fr);
 }
 #view-orders .order-list.hide-status-column .order-list-head > :nth-child(6),
 #view-orders .order-list.hide-status-column .order-list-row > :nth-child(6) { display:none; }
@@ -3199,7 +3199,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-orders .order-list-row > :nth-child(9) { display: grid; }
 #view-orders .order-list-head > :nth-child(7),
 #view-orders .order-list-head > :nth-child(8),
-#view-orders .order-list-head > :nth-child(9) { display:block; visibility:hidden; font-size:inherit; }
+#view-orders .order-list-head > :nth-child(9),
+#view-orders .order-list-head > :nth-child(10) { display:block; visibility:hidden; font-size:inherit; }
 #view-orders .order-list-head > :nth-child(8)::after { content:''; }
 
 /* Mantiene el volumen visual de la tabla al no haber coincidencias en el buscador. */
@@ -3236,7 +3237,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     #view-orders .order-list-row > :nth-child(7) { grid-column: 3; grid-row: 3; justify-self: end; }
     #view-orders .order-list-row > :nth-child(8) { grid-column: 2; grid-row: 4; justify-self: start; }
     #view-orders .order-list-row > :nth-child(9) { grid-column: 3; grid-row: 4; justify-self: end; }
-    #view-orders .order-list-row > :nth-child(10) { grid-column: 3; grid-row: 5; justify-self: end; }
+    #view-orders .order-list-row > :nth-child(10) { grid-column: 2; grid-row: 5; justify-self: start; }
+    #view-orders .order-list-row > :nth-child(11) { grid-column: 3; grid-row: 5; justify-self: end; }
 }
 
 /* Entrega de pedidos: cien ubicaciones físicas, sin reordenamientos. */
@@ -3322,11 +3324,16 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-order-total { color: #34214e; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .delivery-delete { display: grid; width: 34px; height: 34px; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #7c536c; cursor: pointer; font-size: 17px; }
 .delivery-delete:hover { background: #f5e3e9; color: #9a3152; }
-.delivery-flow-actions { display:flex; align-items:center; justify-content:center; gap:6px; min-width:104px; }
-.delivery-print,.delivery-return { display:grid; width:44px; height:44px; place-items:center; padding:0; border:1px solid #c9b9de; border-radius:9px; background:#faf7ff; color:#4c2574; cursor:pointer; font-size:26px; line-height:1; }
+.delivery-flow-actions { display:flex; align-items:center; justify-content:center; gap:6px; min-width:154px; }
+.delivery-print,.delivery-return,.delivery-whatsapp { display:grid; width:44px; height:44px; place-items:center; padding:0; border:1px solid #c9b9de; border-radius:9px; background:#faf7ff; color:#4c2574; cursor:pointer; font-size:26px; line-height:1; }
 .delivery-print:hover { background:#694093; border-color:#694093; color:#fff; }
 .delivery-return { border-color:#a8c7df; background:#f3f9ff; color:#20598a; font-size:29px; }
 .delivery-return:hover { background:#2b6a9e; border-color:#2b6a9e; color:#fff; }
+.delivery-whatsapp,.order-list-whatsapp { color:#167544; }
+.delivery-whatsapp { border-color:#9dcfb1; background:#f2fbf5; font-size:27px; }
+.delivery-whatsapp:hover { background:#17864b; border-color:#17864b; color:#fff; }
+.order-list-whatsapp { display:grid; width:30px; height:30px; place-items:center; padding:0; border:0; border-radius:7px; background:transparent; cursor:pointer; font-size:21px; line-height:1; }
+.order-list-whatsapp:hover { background:#e7f6ed; color:#08743b; }
 .delivery-slot-print-choice { display:grid; gap:8px; margin:16px 0 20px; }
 .delivery-slot-print-choice label { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #ddd8e5; border-radius:8px; background:#fff; cursor:pointer; }
 .delivery-slot-print-choice label:hover { border-color:#9c7ac3; background:#fbf8ff; }

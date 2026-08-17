@@ -1945,8 +1945,14 @@
                 ? '<span class="delivery-status-attention delivery-add-attention" role="img" aria-label="Atención: pedido agregado a una fila existente" title="Atención: este pedido se agregó a una fila existente">!</span>'
                 : (tone === 'delivery-slot-build' ? '<span class="delivery-status-attention delivery-build-attention" role="img" aria-label="Atención: pedido pendiente de armar" title="Atención: este pedido está pendiente de armar">!</span>' : '');
             const printButton = linkedOrders.length ? `<button class="delivery-print" type="button" data-print-delivery-slot="${number}" aria-label="Imprimir ventas de fila ${number}" title="Imprimir ventas de esta fila">⎙</button>` : '';
+            const whatsappOrders = linkedOrders.filter(order => String(order.customer_phone || '').replace(/\D+/g, '').length >= 8);
+            const whatsappButton = whatsappOrders.length === 1
+                ? `<button class="delivery-whatsapp" type="button" data-whatsapp-order="${Number(whatsappOrders[0].id)}" aria-label="Abrir WhatsApp de ${escapeHtml(whatsappOrders[0].customer_name || 'cliente')}" title="Abrir WhatsApp">☏</button>`
+                : (whatsappOrders.length > 1
+                    ? `<button class="delivery-whatsapp" type="button" data-open-delivery-whatsapp="${number}" aria-label="Elegir WhatsApp de fila ${number}" title="Elegir WhatsApp">☏</button>`
+                    : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">→</button>` : '';
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}${statusAttention}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${returnButton}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}${statusAttention}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${whatsappButton}${returnButton}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
@@ -2162,6 +2168,29 @@
         `);
     }
 
+    function openDeliverySlotWhatsapp(slotNumber) {
+        const slot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slotNumber));
+        const orders = (Array.isArray(slot?.orders) ? slot.orders : []).filter(order => (
+            String(order.customer_phone || '').replace(/\D+/g, '').length >= 8
+        ));
+        if (!orders.length) {
+            toast('No hay WhatsApps válidos en esta fila.');
+            return;
+        }
+        if (orders.length === 1) {
+            openOrderWhatsapp(Number(orders[0].id));
+            return;
+        }
+        openModal(`
+            <p class="eyebrow">WHATSAPP DE CLIENTE</p>
+            <h2 id="modal-title">FILA ${Number(slotNumber)}</h2>
+            <p class="empty-copy">Elegí a qué comprador querés escribirle.</p>
+            <div class="delivery-slot-print-choice">
+                ${orders.map(order => `<button class="secondary-button" type="button" data-whatsapp-order="${Number(order.id)}"><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.customer_name || '')} · ${escapeHtml(order.customer_phone || '')}</small></button>`).join('')}
+            </div>
+        `);
+    }
+
     function deliveryOrderSummary(order) {
         const items = sortedOrderItems(order.items || []).map(item => {
             const variant = fold(item.variant_name) === 'unica' ? '' : ` · ${item.variant_name || ''}`;
@@ -2343,6 +2372,10 @@
                 .replaceAll('{{total}}', money(order.total_cents))
                 .replaceAll('{{plazo}}', String(order.payment_deadline_at || ''));
             const phone = String(order.customer_phone || '').replace(/\D+/g, '');
+            if (phone.length < 8) {
+                toast('Esta venta no tiene un WhatsApp válido cargado.');
+                return;
+            }
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
         } catch (error) { toast(error.message); }
     }
@@ -2842,7 +2875,7 @@
                     </div>
                 ` : ''}
                 <div class="order-list-head" aria-hidden="true">
-                    <span class="order-select-control"></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
+                    <span class="order-select-control"></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span></span><span>FECHA</span>
                 </div>
                 ${matchingOrders.map(order => {
                     const inDeliveries = orderIsInDeliveries(order);
@@ -2857,6 +2890,7 @@
                         <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : (inDeliveries ? 'copied' : order.status))}">${escapeHtml(order.archived_at ? 'Archivada' : (inDeliveries ? `EN ENTREGAS · ${deliverySlot}` : (statusLabels[order.status] || order.status)))}</span></span>
                         <button class="order-list-copy ${order.delivery_reopened_at ? 'order-list-copy-reopened' : ''}" type="button" data-copy-order-delivery="${Number(order.id)}" ${inDeliveries ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="${order.delivery_reopened_at ? 'Volvió desde EDP: mover otra vez a Entregas' : 'Copiar a Entregas'}">${order.delivery_reopened_at ? '↰' : '⇠'}</button>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
+                        ${String(order.customer_phone || '').replace(/\D+/g, '').length >= 8 ? `<button class="order-list-whatsapp" type="button" data-whatsapp-order="${Number(order.id)}" aria-label="Abrir WhatsApp de ${escapeHtml(order.customer_name)}" title="Abrir WhatsApp">☏</button>` : '<span class="order-list-whatsapp-placeholder" aria-hidden="true"></span>'}
                         ${order.status !== 'cancelled' && !order.archived_at
                             ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">🗑</button>`
                             : '<span class="order-list-delete-placeholder" aria-hidden="true"></span>'}
@@ -2871,7 +2905,7 @@
         // "salta" ni cambia de tamaño mientras se escribe una búsqueda.
         elements.orderList.innerHTML = `
             <div class="order-list-head" aria-hidden="true">
-                <span></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
+                <span></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span></span><span>FECHA</span>
             </div>
             <div class="order-list-empty" role="status">
                 <strong>${state.orders.length ? 'NO HAY COINCIDENCIAS' : 'TODAVÍA NO HAY PEDIDOS'}</strong>
@@ -4229,6 +4263,11 @@
         const printDeliverySlot = event.target.closest('[data-print-delivery-slot]');
         if (printDeliverySlot) {
             openDeliverySlotPrint(Number(printDeliverySlot.dataset.printDeliverySlot));
+            return;
+        }
+        const openDeliveryWhatsapp = event.target.closest('[data-open-delivery-whatsapp]');
+        if (openDeliveryWhatsapp) {
+            openDeliverySlotWhatsapp(Number(openDeliveryWhatsapp.dataset.openDeliveryWhatsapp));
             return;
         }
         if (event.target.closest('[data-confirm-delivery-slot-print]')) {
