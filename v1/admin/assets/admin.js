@@ -1914,13 +1914,13 @@
             const statusAttention = tone === 'delivery-slot-add'
                 ? '<span class="delivery-status-attention delivery-add-attention" role="img" aria-label="Atención: pedido agregado a una fila existente" title="Atención: este pedido se agregó a una fila existente">!</span>'
                 : (tone === 'delivery-slot-build' ? '<span class="delivery-status-attention delivery-build-attention" role="img" aria-label="Atención: pedido pendiente de armar" title="Atención: este pedido está pendiente de armar">!</span>' : '');
-            const returnControls = linkedOrders.length ? `<div class="delivery-return-orders">${linkedOrders.map(order => `<button class="delivery-return-order" type="button" data-return-delivery-order="${Number(order.id)}" title="Devolver ${escapeHtml(order.public_number)} a Lista de Ventas" aria-label="Devolver ${escapeHtml(order.public_number)} a Lista de Ventas">← ${escapeHtml(order.public_number)}</button>`).join('')}</div>` : '';
             const printButton = linkedOrders.length ? `<button class="delivery-print" type="button" data-print-delivery-slot="${number}" aria-label="Imprimir ventas de fila ${number}" title="Imprimir ventas de esta fila">⎙</button>` : '';
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}${statusAttention}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td>${field('order_numbers', 'Órdenes')}${returnControls}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td class="delivery-row-actions">${printButton}<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
+            const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Devolver ventas de fila ${number} a Lista de Ventas" title="Devolver ventas a Lista de Ventas">←</button>` : '';
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}${statusAttention}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${returnButton}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
-            : '<tr><td class="delivery-no-results" colspan="10">No encontramos una fila que coincida con esa búsqueda.</td></tr>';
+            : '<tr><td class="delivery-no-results" colspan="11">No encontramos una fila que coincida con esa búsqueda.</td></tr>';
     }
 
     async function loadDeliverySlots() {
@@ -2039,6 +2039,41 @@
             await apiPost({ action: 'delivery_return_order', order_id: Number(orderId) });
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
             toast('Venta devuelta a Lista de Ventas.');
+        } catch (error) { toast(error.message); }
+    }
+
+    async function openDeliverySlotReturn(slotNumber) {
+        const slot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slotNumber));
+        const orders = Array.isArray(slot?.orders) ? slot.orders : [];
+        if (!orders.length) return;
+        try {
+            const details = await Promise.all(orders.map(async order => {
+                try { return (await apiGet('order', { id: Number(order.id) })).order; }
+                catch { return order; }
+            }));
+            openModal(`
+                <p class="eyebrow">DEVOLVER A LISTA DE VENTAS</p>
+                <h2 id="modal-title">FILA ${Number(slotNumber)}</h2>
+                <p class="empty-copy">Elegí las ventas que querés devolver. Se reabrirán en LDV y se quitarán de esta fila.</p>
+                <div id="delivery-slot-return-choice" class="delivery-slot-print-choice">
+                    ${details.map(order => {
+                        const products = Array.isArray(order.items) ? sortedOrderItems(order.items).map(item => `${Number(item.quantity)} × ${item.product_name}${fold(item.variant_name) === 'unica' ? '' : ` · ${item.variant_name || ''}`}`).join(' · ') : '';
+                        return `<label><input type="checkbox" value="${Number(order.id)}" checked><span><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.customer_name || '')} · ${money(order.total_cents)}${products ? `<br>${escapeHtml(products)}` : ''}</small></span></label>`;
+                    }).join('')}
+                </div>
+                <div class="modal-actions"><button class="primary-button" type="button" data-confirm-delivery-slot-return>DEVOLVER A LDV</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
+            `);
+        } catch (error) { toast(error.message); }
+    }
+
+    async function continueDeliverySlotReturn() {
+        const ids = Array.from(document.querySelectorAll('#delivery-slot-return-choice input:checked')).map(input => Number(input.value)).filter(Number.isFinite);
+        if (!ids.length) { toast('Elegí al menos una venta para devolver.'); return; }
+        try {
+            for (const orderId of ids) await apiPost({ action: 'delivery_return_order', order_id: orderId });
+            closeModal();
+            await Promise.all([loadDeliverySlots(), loadOrders(true)]);
+            toast(ids.length === 1 ? 'Venta devuelta a Lista de Ventas.' : `${ids.length} ventas devueltas a Lista de Ventas.`);
         } catch (error) { toast(error.message); }
     }
 
@@ -4136,9 +4171,9 @@
             deleteDeliverySlot(Number(deleteDelivery.dataset.deleteDeliverySlot));
             return;
         }
-        const returnDeliveryOrder = event.target.closest('[data-return-delivery-order]');
-        if (returnDeliveryOrder) {
-            returnOrderFromDeliveries(Number(returnDeliveryOrder.dataset.returnDeliveryOrder));
+        const openReturnDeliverySlot = event.target.closest('[data-open-return-delivery-slot]');
+        if (openReturnDeliverySlot) {
+            openDeliverySlotReturn(Number(openReturnDeliverySlot.dataset.openReturnDeliverySlot));
             return;
         }
         const printDeliverySlot = event.target.closest('[data-print-delivery-slot]');
@@ -4148,6 +4183,10 @@
         }
         if (event.target.closest('[data-confirm-delivery-slot-print]')) {
             continueDeliverySlotPrint();
+            return;
+        }
+        if (event.target.closest('[data-confirm-delivery-slot-return]')) {
+            continueDeliverySlotReturn();
             return;
         }
         const confirmDeleteDelivery = event.target.closest('[data-confirm-delete-delivery-slot]');
