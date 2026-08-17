@@ -801,10 +801,27 @@
                 .filter(Boolean);
             elements.results.innerHTML = `
                 <section class="store-home" aria-label="Empezar a comprar">
-                    <div class="home-search-prompt">
-                        <strong>¿QUÉ ESTÁS BUSCANDO HOY?</strong>
-                        <span>Usá el buscador o elegí una categoría para empezar.</span>
-                    </div>
+                    <section class="purchase-guide" aria-labelledby="purchase-guide-title">
+                        <header class="purchase-guide-head">
+                            <p class="eyebrow">COMPRÁ SIN VUELTAS</p>
+                            <h2 id="purchase-guide-title">ASÍ DE FÁCIL</h2>
+                            <span>Deslizá para ver los 3 pasos →</span>
+                        </header>
+                        <div class="purchase-guide-track">
+                            <article class="purchase-guide-card">
+                                <figure><img src="/v1/assets/guide/comprar-paso-1.webp" alt="Persona buscando un producto desde su teléfono" loading="eager"><b>1</b></figure>
+                                <div><strong>BUSCÁ</strong><span>Escribí lo que necesitás.</span></div>
+                            </article>
+                            <article class="purchase-guide-card">
+                                <figure><img src="/v1/assets/guide/comprar-paso-2.webp" alt="Persona eligiendo un producto y su cantidad" loading="lazy"><b>2</b></figure>
+                                <div><strong>ELEGÍ</strong><span>Marcá variante y cantidad.</span></div>
+                            </article>
+                            <article class="purchase-guide-card">
+                                <figure><img src="/v1/assets/guide/comprar-paso-3.webp" alt="Persona confirmando su pedido desde el teléfono" loading="lazy"><b>3</b></figure>
+                                <div><strong>CONFIRMÁ</strong><span>Completá tus datos y envialo por WhatsApp.</span></div>
+                            </article>
+                        </div>
+                    </section>
                     <section class="home-people-gallery" aria-label="Inspiración para tus próximos productos">
                         <img src="${escapeHtml(safeImage(app.design?.hero_1_path) || '/v1/assets/brand/hero-1.webp')}" alt="Prenda personalizada en uso" loading="eager">
                         <img src="${escapeHtml(safeImage(app.design?.hero_2_path) || '/v1/assets/brand/hero-2.webp')}" alt="Indumentaria personalizada" loading="lazy">
@@ -818,14 +835,6 @@
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
                     </div>
                     <button class="show-all-products" type="button" data-show-all-products>VER TODOS LOS PRODUCTOS <span>→</span></button>
-                    <section class="home-how-it-works" aria-labelledby="home-how-title">
-                        <div><p class="eyebrow">COMPRA SIMPLE</p><h2 id="home-how-title">ARMÁ TU PEDIDO EN TRES PASOS</h2></div>
-                        <ol>
-                            <li><span>1</span><div><strong>Buscá o elegí una categoría</strong><small>Encontrá el producto y la variante que necesitás.</small></div></li>
-                            <li><span>2</span><div><strong>Sumá cantidades al pedido</strong><small>El carrito se actualiza al instante.</small></div></li>
-                            <li><span>3</span><div><strong>Confirmá y elegí cómo pagar</strong><small>Transferencia o efectivo al retirar en el local.</small></div></li>
-                        </ol>
-                    </section>
                 </section>`;
             return;
         }

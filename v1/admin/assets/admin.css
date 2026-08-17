@@ -3281,6 +3281,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-sidebar { padding:22px 10px 15px; background:#c7c7c7; border-right-color:#b6b6b6; }
 .admin-nav-button { padding-left:10px; padding-right:10px; font-size:13px; }
 .admin-nav-sales .admin-nav-button { padding-left:16px; }
+.admin-nav-sales { margin-bottom:8px; padding-bottom:13px; border-bottom:2px solid #9fa0a4; }
 .admin-main { padding-left:clamp(22px,3.2vw,52px); padding-right:clamp(22px,3.2vw,52px); }
 #view-orders .order-list-row { font-size:14px; transition:transform .16s ease,box-shadow .16s ease,background .16s ease; }
 #view-orders .order-list-row:hover { transform:translateX(2px) scale(1.012); position:relative; z-index:2; box-shadow:0 8px 20px rgba(58,42,86,.12); }

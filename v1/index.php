@@ -92,7 +92,7 @@ header('Referrer-Policy: same-origin');
             </div>
 
             <div class="trust-strip" aria-label="Información de compra">
-                <span>Transferencia o efectivo</span>
+                <span>Pago por transferencia</span>
                 <span>Retiro en el local</span>
                 <span>Ayuda por WhatsApp</span>
             </div>
@@ -149,7 +149,7 @@ header('Referrer-Policy: same-origin');
                 SEGUIR AGREGANDO PRODUCTOS
             </button>
             <p class="order-note">
-                Transferencia o efectivo · Retiro únicamente en el local
+                Transferencia bancaria · Retiro únicamente en el local
             </p>
         </aside>
     </main>
