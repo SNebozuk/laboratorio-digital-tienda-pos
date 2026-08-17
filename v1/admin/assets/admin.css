@@ -2922,10 +2922,16 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-main .size-guide-edit-table td { border-bottom-color: #edf0f5; }
 .admin-main .size-guide-edit-table input:hover,
 .admin-main .size-guide-edit-table input:focus { background: #fff; border-color: #7668e8; }
-#view-orders button.order-list-customer { color: #252a3a !important; font: inherit; font-weight: 700; text-align: left; }
-/* El nombre del cliente usa la misma intensidad que venta e importe: no suma
-   la negrita propia de <strong> sobre el peso ya definido del botón. */
-#view-orders button.order-list-customer strong { font-weight: inherit; }
+/* Tipografía de sistema, clara y uniforme para lectura operativa. */
+#view-orders .order-list-number strong,
+#view-orders .order-list-total,
+#view-orders button.order-list-customer {
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: .015em;
+}
+#view-orders button.order-list-customer { color: #252a3a !important; text-align: left; }
 
 .modal:has(.customer-history) .admin-modal-card { width: min(900px, calc(100vw - 32px)); }
 .customer-history { color: #252a3a; }
