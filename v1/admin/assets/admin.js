@@ -4353,6 +4353,49 @@
         }
     });
     document.addEventListener('keydown', event => {
+        const isPos = state.view === 'pos' || Boolean(document.querySelector('.pos-page'));
+        const target = event.target instanceof Element ? event.target : null;
+        const isEditing = Boolean(target?.closest('input, textarea, select, [contenteditable="true"]'));
+        const isInteractive = Boolean(target?.closest('button, a'));
+        if (
+            !isPos
+            || elements.modal?.classList.contains('open')
+            || event.defaultPrevented
+            || event.ctrlKey
+            || event.altKey
+            || event.metaKey
+            || isEditing
+        ) {
+            return;
+        }
+
+        // Con foco en un botón +, Espacio suma una sola unidad sin requerir mouse.
+        // Se evita el clic nativo posterior para que no duplique la cantidad.
+        if (event.key === ' ' || event.key === 'Spacebar') {
+            const addButton = document.activeElement instanceof Element
+                ? document.activeElement.closest('button[data-pos-quantity]')
+                : null;
+            const variantId = Number(addButton?.dataset.posQuantity);
+            const nextValue = Number(addButton?.dataset.value);
+            if (addButton && !addButton.disabled && nextValue > posQuantity(variantId)) {
+                event.preventDefault();
+                addButton.click();
+            }
+            return;
+        }
+
+        // Enter cierra la venta desde cualquier zona libre del PDV.
+        // Los controles y campos conservan su comportamiento normal.
+        if (
+            event.key === 'Enter'
+            && !isInteractive
+            && !elements.completeSale?.disabled
+        ) {
+            event.preventDefault();
+            finishPosSaleDirectly();
+        }
+    });
+    document.addEventListener('keydown', event => {
         if (
             event.key === 'Escape'
             && !event.defaultPrevented
