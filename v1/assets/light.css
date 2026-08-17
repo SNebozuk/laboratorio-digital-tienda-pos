@@ -110,6 +110,13 @@ body { background:#fbf8ff !important; }
 .creator-gift strong { color:#503480; font-size:16px; }
 .creator-gift p { margin:6px 0 0; color:#574d65; font-size:15px; line-height:1.5; }
 .creator-gift b { color:#7652b8; }
+.creator-invitation-form { display:grid; gap:8px; margin-top:16px; }
+.creator-invitation-form label { color:#503480; font-size:12px; font-weight:850; letter-spacing:.04em; }
+.creator-invitation-fields { display:flex; gap:9px; }
+.creator-invitation-fields input { flex:1; min-width:0; padding:12px 13px; border:1px solid #cdbce2; border-radius:9px; background:#fff; color:#2a1d3c; font:inherit; }
+.creator-invitation-fields .primary-button { white-space:nowrap; }
+.creator-invitation-form small { color:#685d76; font-size:12px; line-height:1.4; }
+.creator-honeypot { position:absolute !important; left:-9999px !important; width:1px !important; height:1px !important; opacity:0 !important; pointer-events:none !important; }
 .creator-signature { display:block; margin-top:38px; color:#857c91; font-size:12px; }
 .home-featured-products { display:grid; gap:16px; padding:22px; border:1px solid #cdb5e4; border-radius:18px; background:radial-gradient(circle at 100% 0,rgba(143,91,194,.16),transparent 35%),linear-gradient(135deg,#fff,#f4edfb); box-shadow:0 15px 35px rgba(77,47,116,.13); }
 .home-featured-heading { display:flex; align-items:end; justify-content:space-between; gap:15px; }
@@ -140,6 +147,7 @@ body { background:#fbf8ff !important; }
 .search-wrap .search-field input { font-size:18px !important; }
 @media (max-width:700px) { .search-wrap .search-field input { font-size:16px !important; } }
 @media (max-width:700px) { .store-footer { align-items:flex-start; flex-direction:column; padding:20px 16px 92px; } .contact-info-grid,.creator-services { grid-template-columns:1fr; } .contact-hours-card { grid-column:auto; } .creator-shell { padding:30px 22px; } .creator-back { margin-bottom:30px; } }
+@media (max-width:700px) { .creator-invitation-fields { flex-direction:column; } .creator-invitation-fields .primary-button { width:100%; } }
 @media (max-width:700px) { .home-featured-products { padding:15px; } .home-featured-heading { align-items:start; flex-direction:column; gap:4px; } .featured-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; } .featured-product-copy,.featured-product-bottom { padding-left:10px; padding-right:10px; } .featured-product-copy button strong { font-size:13px; } .featured-product-bottom { align-items:flex-start; flex-direction:column; } .featured-quantity-control { transform:scale(.82); transform-origin:left top; margin-bottom:-8px; } }
 
 /* Apertura simple de la portada. */

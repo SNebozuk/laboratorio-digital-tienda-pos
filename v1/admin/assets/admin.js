@@ -25,6 +25,8 @@
         settings: null,
         sizeGuide: { intro: '', rows: [] },
         users: [],
+        invitations: [],
+        pendingInvitationCount: 0,
         posCart: new Map(),
         posQuery: '',
         posProductId: null,
@@ -132,6 +134,8 @@
         sizeGuideIntro: document.getElementById('size-guide-intro'),
         sizeGuideRows: document.getElementById('size-guide-rows'),
         mobileView: document.getElementById('mobile-view'),
+        invitationList: document.getElementById('invitation-list'),
+        invitationsBadge: document.getElementById('invitations-badge'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -139,6 +143,7 @@
     let automaticRefreshRunning = false;
     let quickUpdateInFlight = 0;
     let productActionsMenuPauseUntil = 0;
+    let invitationBadgeRefreshAt = 0;
 
     async function apiGet(action, parameters = {}) {
         const url = new URL(app.api_url, window.location.href);
@@ -274,7 +279,7 @@
     }
 
     function showView(view) {
-        const availableViews = new Set(['orders', 'deliveries', 'products', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'products', 'categories', 'size-guide', 'contact', 'design', 'invitations', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -312,6 +317,9 @@
         if (view === 'design') {
             loadDesign();
         }
+        if (view === 'invitations') {
+            loadInvitations();
+        }
         if (view === 'whatsapp') {
             loadEmailSettings();
         }
@@ -323,6 +331,66 @@
         }
         if (view === 'size-guide') {
             loadSizeGuide();
+        }
+    }
+
+    function invitationDate(value) {
+        const parts = argentinaDateParts(value);
+        return `<span>${escapeHtml(parts.date || '—')}</span>${parts.time ? `<small>${escapeHtml(parts.time)}</small>` : ''}`;
+    }
+
+    function renderInvitations() {
+        if (!elements.invitationList) return;
+        if (!state.invitations.length) {
+            elements.invitationList.innerHTML = '<tr><td colspan="4" class="empty-copy">Todavía no hay solicitudes de invitación.</td></tr>';
+            return;
+        }
+        elements.invitationList.innerHTML = state.invitations.map(invitation => {
+            const sent = invitation.status === 'sent';
+            return `<tr class="invitation-row ${sent ? 'is-sent' : 'is-pending'}">
+                <td><strong>${escapeHtml(invitation.email)}</strong></td>
+                <td class="invitation-date">${invitationDate(invitation.created_at)}</td>
+                <td><button type="button" class="invitation-status ${sent ? 'is-sent' : 'is-pending'}" data-invitation-status="${Number(invitation.id)}" data-invitation-sent="${sent ? '0' : '1'}">${sent ? 'ENVIADA' : 'PENDIENTE'}</button></td>
+                <td class="invitation-actions"><button type="button" class="invitation-copy" data-copy-invitation-email="${escapeHtml(invitation.email)}" title="Copiar email" aria-label="Copiar ${escapeHtml(invitation.email)}">⧉</button></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderInvitationBadge() {
+        if (!elements.invitationsBadge) return;
+        const count = Number(state.pendingInvitationCount || 0);
+        elements.invitationsBadge.hidden = count < 1;
+        elements.invitationsBadge.textContent = String(count);
+        elements.invitationsBadge.setAttribute('aria-label', `${count} solicitudes de invitación pendientes`);
+    }
+
+    async function loadInvitations() {
+        if (!elements.invitationList) return;
+        try {
+            const data = await apiGet('invitations');
+            state.invitations = data.requests || [];
+            state.pendingInvitationCount = Number(data.pending_count || 0);
+            renderInvitations();
+            renderInvitationBadge();
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    async function copyInvitationEmail(email) {
+        try {
+            await navigator.clipboard.writeText(email);
+            toast('Email copiado. Ya podés pegarlo en Codex > Invitar a un amigo.');
+        } catch (error) {
+            const textarea = document.createElement('textarea');
+            textarea.value = email;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+            toast('Email copiado.');
         }
     }
 
@@ -2006,6 +2074,10 @@
         }
         automaticRefreshRunning = true;
         try {
+            if (elements.invitationsBadge && state.view !== 'invitations' && Date.now() >= invitationBadgeRefreshAt) {
+                invitationBadgeRefreshAt = Date.now() + 10000;
+                await loadInvitations();
+            }
             if (elements.posProducts || elements.posCartLines) {
                 await refreshPosAvailability();
             } else if (state.view === 'orders') {
@@ -2026,6 +2098,8 @@
                 await loadEmailSettings();
             } else if (state.view === 'size-guide') {
                 await loadSizeGuide();
+            } else if (state.view === 'invitations') {
+                await loadInvitations();
             }
         } finally {
             automaticRefreshRunning = false;
@@ -3693,6 +3767,28 @@
     });
 
     document.addEventListener('click', async event => {
+        const copyInvitation = event.target.closest('[data-copy-invitation-email]');
+        if (copyInvitation) {
+            await copyInvitationEmail(String(copyInvitation.dataset.copyInvitationEmail || ''));
+            return;
+        }
+        const invitationStatus = event.target.closest('[data-invitation-status]');
+        if (invitationStatus) {
+            try {
+                await apiPost({
+                    action: 'invitation_mark_sent',
+                    invitation_id: Number(invitationStatus.dataset.invitationStatus),
+                    sent: invitationStatus.dataset.invitationSent === '1',
+                });
+                await loadInvitations();
+                toast(invitationStatus.dataset.invitationSent === '1'
+                    ? 'Invitación marcada como enviada.'
+                    : 'Invitación marcada nuevamente como pendiente.');
+            } catch (error) {
+                toast(error.message);
+            }
+            return;
+        }
         const filterButton = event.target.closest('[data-product-filter-button]');
         if (filterButton) {
             const [field, value] = String(filterButton.dataset.productFilterButton).split(':');
@@ -4645,6 +4741,7 @@
         }
         restorePosCustomer();
         loadProducts();
+        if (elements.invitationsBadge) loadInvitations();
         renderPosCart();
         if (document.getElementById('view-orders')) {
             const requestedView = new URL(window.location.href).searchParams.get('view') || 'orders';

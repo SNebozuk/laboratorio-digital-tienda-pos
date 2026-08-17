@@ -3361,3 +3361,26 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .order-list-copy:hover:not(:disabled) { background: #eee5fa; }
 .order-list-copy:disabled { color: #a89db5; cursor: default; opacity: .65; }
 #view-orders .status-copied { border-color: #7e5bb0; background: #f1e9fb; color: #4c2574; }
+
+/* Solicitudes de invitación a Codex: rápidas de revisar y listas para copiar. */
+.admin-nav-invitations { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.nav-notification-badge { display:inline-grid; min-width:20px; height:20px; place-items:center; padding:0 5px; border-radius:999px; background:#7b3f9e; color:#fff; font-size:11px; line-height:1; font-variant-numeric:tabular-nums; }
+.invitation-note { max-width:840px; margin:0 0 18px; padding:13px 15px; border:1px solid #d7c7e9; border-radius:10px; background:#faf7ff; color:#4b3c61; font-size:14px; line-height:1.45; }
+.invitation-table-wrap { overflow:auto; border:1px solid #dfe2e7; border-radius:12px; background:#fff; }
+.invitation-table { width:100%; min-width:620px; border-collapse:collapse; }
+.invitation-table th { padding:13px 15px; background:#f4f5f7; color:#596273; font-size:11px; letter-spacing:.06em; text-align:left; }
+.invitation-table td { padding:14px 15px; border-top:1px solid #e8eaed; color:#283142; font-size:14px; }
+.invitation-table tbody tr { transition:background .16s ease,transform .16s ease,box-shadow .16s ease; }
+.invitation-table tbody tr:hover { position:relative; z-index:1; background:#fbf8ff; transform:scale(1.004); box-shadow:0 5px 16px rgba(58,42,86,.08); }
+.invitation-row.is-pending td:first-child strong { color:#4f2670; }
+.invitation-row.is-sent { opacity:.72; }
+.invitation-date { display:grid; gap:2px; font-variant-numeric:tabular-nums; }
+.invitation-date small { color:#738092; font-size:12px; }
+.invitation-status,.invitation-copy { border:0; background:transparent; font:inherit; font-weight:850; cursor:pointer; }
+.invitation-status { padding:5px 8px; border-radius:999px; font-size:11px; letter-spacing:.04em; }
+.invitation-status.is-pending { background:#f2e9fb; color:#5b277d; }
+.invitation-status.is-sent { background:#edf2f5; color:#526271; }
+.invitation-status:hover { text-decoration:underline; text-underline-offset:3px; }
+.invitation-actions { width:54px; text-align:right; }
+.invitation-copy { display:inline-grid; width:34px; height:34px; place-items:center; border-radius:8px; color:#5a347c; font-size:22px; }
+.invitation-copy:hover { background:#f1e8f9; }

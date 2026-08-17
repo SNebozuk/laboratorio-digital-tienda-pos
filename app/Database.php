@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 26;
+    private const CURRENT_MIGRATION_VERSION = 27;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -67,14 +67,15 @@ final class Database
                 return;
             }
 
-            // Las bases ya actualizadas hasta la migración 25 no necesitan
-            // repetir reparaciones históricas. Sólo se les agrega esta marca
-            // de rendimiento, sin tocar catálogo, ventas ni configuración.
+            // Las bases ya actualizadas hasta la migración 26 sólo necesitan
+            // crear la tabla de solicitudes de invitación. Evitamos repetir
+            // todas las reparaciones históricas en cada visita pública.
             $previous = $pdo->prepare(
-                'SELECT 1 FROM schema_migrations WHERE version = 25 LIMIT 1'
+                'SELECT 1 FROM schema_migrations WHERE version = 26 LIMIT 1'
             );
             $previous->execute();
             if ($previous->fetchColumn() !== false) {
+                self::migrateInvitations($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -118,8 +119,33 @@ final class Database
         self::migrateDeliverySlotAmounts($pdo);
         self::migrateDeliveryReopen($pdo);
         self::uppercaseCustomerNames($pdo);
+        self::migrateInvitations($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    /** Solicitudes de invitación a Codex capturadas desde la página pública. */
+    private static function migrateInvitations(PDO $pdo): void
+    {
+        $version = 27;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS invitation_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'sent')),
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                sent_at TEXT,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )");
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_invitation_requests_status_created ON invitation_requests(status, created_at DESC)');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
     }
 
     private static function migrateDeliverySlots(PDO $pdo): void

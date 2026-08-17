@@ -5,6 +5,7 @@ use LaboratorioDigital\Auth;
 use LaboratorioDigital\BackupService;
 use LaboratorioDigital\CategoryService;
 use LaboratorioDigital\DeliveryService;
+use LaboratorioDigital\InvitationService;
 use LaboratorioDigital\MailService;
 use LaboratorioDigital\OrderService;
 use LaboratorioDigital\PaymentProofService;
@@ -21,6 +22,7 @@ require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/BackupService.php';
 require_once __DIR__ . '/CategoryService.php';
 require_once __DIR__ . '/DeliveryService.php';
+require_once __DIR__ . '/InvitationService.php';
 require_once __DIR__ . '/MailService.php';
 require_once __DIR__ . '/ProductService.php';
 require_once __DIR__ . '/ProductImageService.php';
@@ -34,6 +36,7 @@ $app['auth'] = new Auth($app['pdo']);
 $app['products'] = new ProductService($app['pdo']);
 $app['categories'] = new CategoryService($app['pdo']);
 $app['deliveries'] = new DeliveryService($app['pdo']);
+$app['invitations'] = new InvitationService($app['pdo']);
 $app['product_images'] = new ProductImageService(
     $app['root'],
     $app['config']

@@ -73,6 +73,10 @@ try {
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'slots' => $app['deliveries']->slots()]);
 
+            case 'invitations':
+                $app['auth']->requireAdmin();
+                Http::json(['ok' => true] + $app['invitations']->all());
+
             case 'order':
                 $app['auth']->requireUser();
                 Http::json([
@@ -141,6 +145,19 @@ try {
 
     $input = Http::input();
     $action = trim((string) ($input['action'] ?? $action));
+
+    // Página pública: no requiere una sesión de administración ni expone datos.
+    if ($action === 'invitation_request') {
+        if (trim((string) ($input['website'] ?? '')) !== '') {
+            Http::json(['ok' => true]);
+        }
+        $lastRequest = (int) ($_SESSION['invitation_request_at'] ?? 0);
+        if ($lastRequest > 0 && (time() - $lastRequest) < 12) {
+            throw new ValidationException('Esperá unos segundos antes de volver a enviarlo.');
+        }
+        $_SESSION['invitation_request_at'] = time();
+        Http::json(['ok' => true, 'request' => $app['invitations']->request((string) ($input['email'] ?? ''))], 201);
+    }
     Http::requireCsrf($input);
 
     switch ($action) {
@@ -387,6 +404,14 @@ try {
         case 'delivery_slot_delete':
             $app['auth']->requireUser();
             $app['deliveries']->deleteSlot((int) ($input['slot_number'] ?? 0));
+            Http::json(['ok' => true]);
+
+        case 'invitation_mark_sent':
+            $app['auth']->requireAdmin();
+            $app['invitations']->markSent(
+                (int) ($input['invitation_id'] ?? 0),
+                ($input['sent'] ?? true) !== false
+            );
             Http::json(['ok' => true]);
 
         case 'expire_orders':
