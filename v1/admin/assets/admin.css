@@ -3220,6 +3220,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 /* Entrega de pedidos: cien ubicaciones físicas, sin reordenamientos. */
 #view-deliveries { padding-bottom: 36px; }
+/* Entregas es una mesa de trabajo: ocupa el ancho completo del administrador. */
+.admin-shell.delivery-workspace { display: block; min-height: 100vh; }
+.admin-shell.delivery-workspace .admin-sidebar { display: none; }
+.admin-shell.delivery-workspace .admin-main { width: 100%; max-width: none; min-height: 100vh; padding: 24px 32px 40px; }
+.admin-shell.delivery-workspace #view-deliveries.active { width: 100%; }
 .delivery-copy-guide { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; padding: 13px 16px; border: 1px solid #cdb8e7; border-radius: 12px; background: #f6f0ff; color: #452566; }
 .delivery-copy-guide strong { white-space: nowrap; }
 .delivery-copy-guide span { flex: 1; font-size: 13px; line-height: 1.4; }
@@ -3260,8 +3265,6 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-delete:hover { background: #f5e3e9; color: #9a3152; }
 .delivery-place { min-height: 32px; padding: 5px 9px; border: 1px solid #8c67b9; border-radius: 7px; background: #fff; color: #513179; font: inherit; font-size: 11px; font-weight: 850; cursor: pointer; }
 .delivery-place:hover { background: #6b3e9b; color: #fff; }
-#view-deliveries:fullscreen { overflow: auto; padding: 28px 36px; background: #fbf8ff; }
-#view-deliveries:fullscreen .delivery-table-wrap { max-height: calc(100vh - 150px); }
 @media (max-width:760px) { .delivery-copy-guide { align-items: flex-start; flex-wrap: wrap; } .delivery-copy-guide .small-button { margin-left: auto; } }
 
 /* Área de trabajo más amplia y filas que responden claramente al recorrido. */

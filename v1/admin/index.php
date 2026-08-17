@@ -311,7 +311,6 @@ header('Referrer-Policy: same-origin');
                             <h1>ENTREGA DE PEDIDOS</h1>
                             <p>Las ubicaciones del 1 al 100 son fijas. Editá directamente cada casillero.</p>
                         </div>
-                        <button class="secondary-button" id="delivery-fullscreen" type="button">↗ PANTALLA COMPLETA</button>
                     </div>
                     <div id="delivery-copy-guide" class="delivery-copy-guide" hidden></div>
                     <label class="delivery-search" for="delivery-search">

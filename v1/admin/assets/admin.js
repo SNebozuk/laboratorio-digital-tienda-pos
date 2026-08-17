@@ -285,6 +285,7 @@
         document.querySelectorAll('.admin-view').forEach(section => {
             section.classList.toggle('active', section.id === `view-${view}`);
         });
+        document.querySelector('.admin-shell')?.classList.toggle('delivery-workspace', view === 'deliveries');
         document.querySelectorAll('[data-view]').forEach(button => {
             button.classList.toggle('active', button.dataset.view === view);
         });
@@ -1704,12 +1705,45 @@
             .trim());
     }
 
+    function deliveryNameSimilarity(first, second) {
+        if (!first || !second) return 0;
+        if (first === second) return 1;
+        const previous = Array.from({ length: second.length + 1 }, (_, index) => index);
+        for (let row = 1; row <= first.length; row += 1) {
+            let diagonal = previous[0];
+            previous[0] = row;
+            for (let column = 1; column <= second.length; column += 1) {
+                const old = previous[column];
+                previous[column] = Math.min(
+                    previous[column] + 1,
+                    previous[column - 1] + 1,
+                    diagonal + (first[row - 1] === second[column - 1] ? 0 : 1)
+                );
+                diagonal = old;
+            }
+        }
+        return 1 - previous[second.length] / Math.max(first.length, second.length);
+    }
+
+    function isLikelySameDeliveryCustomer(first, second) {
+        const left = deliveryCustomerKey(first);
+        const right = deliveryCustomerKey(second);
+        if (!left || !right) return false;
+        if (left === right) return true;
+        const leftWords = left.split(/[^a-z0-9]+/).filter(word => word.length >= 3);
+        const rightWords = right.split(/[^a-z0-9]+/).filter(word => word.length >= 3);
+        const equalWords = leftWords.filter(word => rightWords.includes(word)).length;
+        if (equalWords >= 2) return true;
+        return leftWords.some(leftWord => rightWords.some(rightWord => (
+            leftWord.length >= 4 && rightWord.length >= 4 && deliveryNameSimilarity(leftWord, rightWord) >= .78
+        )));
+    }
+
     function suggestedDeliverySlots(order) {
-        const customerKey = deliveryCustomerKey(order?.customer_name);
-        if (!customerKey) return [];
+        if (!deliveryCustomerKey(order?.customer_name)) return [];
         return state.deliverySlots.filter(slot => (
             String(slot.order_numbers || '').trim()
-            && deliveryCustomerKey(slot.customer_name) === customerKey
+            && isLikelySameDeliveryCustomer(slot.customer_name, order.customer_name)
         ));
     }
 
@@ -1723,7 +1757,7 @@
         if (elements.deliveryCopyGuide) {
             elements.deliveryCopyGuide.hidden = !pending;
             const suggestedHtml = suggestions.length
-                ? `<span class="delivery-suggestion-label">Ya hay una venta de este cliente en:</span><span class="delivery-suggestions">${suggestions.map(slot => `<button type="button" class="delivery-suggestion" data-place-delivery-order="${Number(pending.id)}" data-place-delivery-slot="${Number(slot.slot_number)}">FILA ${Number(slot.slot_number)}${slot.location ? ` · ${escapeHtml(slot.location)}` : ''}</button>`).join('')}</span>`
+                ? `<span class="delivery-suggestion-label">Posibles coincidencias de cliente:</span><span class="delivery-suggestions">${suggestions.map(slot => `<button type="button" class="delivery-suggestion" data-place-delivery-order="${Number(pending.id)}" data-place-delivery-slot="${Number(slot.slot_number)}">FILA ${Number(slot.slot_number)}${slot.location ? ` · ${escapeHtml(slot.location)}` : ''}</button>`).join('')}</span>`
                 : '<span>Elegí una fila: una vacía queda marcada <b>ARMAR</b>; si ya tiene pedidos, se suma como <b>AGREGAR</b>.</span>';
             elements.deliveryCopyGuide.innerHTML = pending ? `<strong><span class="delivery-guide-arrow" aria-hidden="true">→</span> ${escapeHtml(pending.public_number)}</strong><span class="delivery-guide-content"><span>${escapeHtml(pending.customer_name)}.</span>${suggestedHtml}</span><button class="small-button" type="button" data-cancel-delivery-placement>CANCELAR</button>` : '';
         }
@@ -4024,13 +4058,6 @@
         }
     });
 
-    document.getElementById('delivery-fullscreen')?.addEventListener('click', async () => {
-        const section = document.getElementById('view-deliveries');
-        if (!section) return;
-        if (document.fullscreenElement) await document.exitFullscreen();
-        else await section.requestFullscreen();
-    });
-
     document.addEventListener('keydown', event => {
         if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
         event.preventDefault();
@@ -4207,7 +4234,6 @@
             && state.view === 'deliveries'
         ) {
             event.preventDefault();
-            if (document.fullscreenElement) document.exitFullscreen();
             showView('orders');
         } else if (
             event.key === 'Escape'
