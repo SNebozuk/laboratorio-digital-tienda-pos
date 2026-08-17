@@ -28,9 +28,9 @@ $apiPath = $storePath . '/api.php';
         </div>
         <section class="creator-gift" aria-label="Invitación para comenzar">
             <strong>¿Querés probar Codex?</strong>
-            <p>Dejá tu email y Sergio podrá enviarte los pasos para solicitar una invitación oficial cuando haya una promoción disponible.</p>
+            <p>Mandame tu email por WhatsApp y recibí créditos gratis para hacer tu página.</p>
             <form class="creator-invitation-form" id="creator-invitation-form">
-                <label for="creator-email">Tu email</label>
+                <label for="creator-email">O dejalo acá para que Sergio pueda enviarte la invitación</label>
                 <div class="creator-invitation-fields">
                     <input id="creator-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="nombre@ejemplo.com" required>
                     <button class="primary-button" type="submit">SOLICITAR INVITACIÓN</button>
@@ -39,7 +39,7 @@ $apiPath = $storePath . '/api.php';
                 <small id="creator-invitation-status" role="status" aria-live="polite">Usaremos tu email sólo para gestionar esta solicitud.</small>
             </form>
         </section>
-        <a class="primary-button creator-cta" href="https://wa.me/5493415699338?text=Hola%20Sergio%2C%20quiero%20saber%20c%C3%B3mo%20crear%20mi%20web%20con%20Codex." target="_blank" rel="noopener">QUIERO CREAR MI WEB CON CODEX</a>
+        <a class="primary-button creator-cta" href="https://wa.me/5493415699338?text=Hola%20Sergio%2C%20quiero%20recibir%20cr%C3%A9ditos%20gratis%20para%20hacer%20mi%20p%C3%A1gina%20con%20Codex.%20Mi%20email%20es%3A%20" target="_blank" rel="noopener">MANDAR MI EMAIL POR WHATSAPP</a>
         <small class="creator-signature">Una invitación de Sergio Nebozuk · creador de experiencias digitales</small>
     </main>
     <script>
