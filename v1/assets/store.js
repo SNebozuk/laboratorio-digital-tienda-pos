@@ -801,11 +801,6 @@
                 .filter(Boolean);
             elements.results.innerHTML = `
                 <section class="store-home" aria-label="Empezar a comprar">
-                    <section class="home-manifesto" aria-label="Mensaje de Laboratorio Digital">
-                        <p>TODO EMPIEZA CON UNA IDEA</p>
-                        <h2>Tus ideas merecen<br>hacerse realidad.</h2>
-                        <span>Materiales, productos y soluciones para crear, personalizar y vender.</span>
-                    </section>
                     ${featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2 id="featured-products-title">PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div>
                         <div class="featured-product-grid">${featured.map(featuredProductCard).join('')}</div>

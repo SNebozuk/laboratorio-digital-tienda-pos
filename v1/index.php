@@ -86,9 +86,7 @@ header('Referrer-Policy: same-origin');
                 </section>
             <?php endif; ?>
             <div class="catalog-intro">
-                <p class="eyebrow"><?= $escape($design['hero_badge']) ?></p>
-                <h1 id="catalog-title"><?php if ($design['hero_link']): ?><a href="<?= $escape($design['hero_link']) ?>"><?php endif ?><?= $escape($design['hero_title']) ?><?php if ($design['hero_link']): ?></a><?php endif ?></h1>
-                <p><?= $escape($design['hero_text']) ?></p>
+                <h1 id="catalog-title">Tus ideas merecen hacerse realidad.</h1>
             </div>
 
             <div class="trust-strip" aria-label="Información de compra">

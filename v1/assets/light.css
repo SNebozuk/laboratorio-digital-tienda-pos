@@ -133,9 +133,6 @@ body { background:#fbf8ff !important; }
 @media (max-width:700px) { .home-featured-products { padding:15px; } .home-featured-heading { align-items:start; flex-direction:column; gap:4px; } .featured-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; } .featured-product-copy,.featured-product-bottom { padding-left:10px; padding-right:10px; } .featured-product-copy button strong { font-size:13px; } .featured-product-bottom { align-items:flex-start; flex-direction:column; } .featured-quantity-control { transform:scale(.82); transform-origin:left top; margin-bottom:-8px; } }
 
 /* Apertura simple de la portada. */
-body.home-mode .catalog-intro > p:last-child { display:none; }
-.home-manifesto { display:grid; gap:7px; padding:30px clamp(18px,4vw,48px); border:1px solid #dfd2eb; border-radius:18px; background:radial-gradient(circle at top right,#eee2f7 0,transparent 35%),linear-gradient(135deg,#fff,#faf7fd); box-shadow:0 12px 30px rgba(73,43,105,.08); text-align:center; }
-.home-manifesto p { margin:0; color:#8150a1; font-size:10px; font-weight:900; letter-spacing:.14em; }
-.home-manifesto h2 { margin:0; color:#30203c; font-size:clamp(27px,3.3vw,45px); line-height:1.04; letter-spacing:-.055em; }
-.home-manifesto span { color:#695a70; font-size:14px; font-weight:600; }
-@media (max-width:700px) { .home-manifesto { gap:8px; padding:27px 20px; border-radius:15px; } .home-manifesto h2 { font-size:31px; } .home-manifesto span { font-size:13px; line-height:1.42; } }
+body.home-mode .catalog-intro { display:grid; min-height:112px; place-items:center; padding:22px 24px; text-align:center; }
+body.home-mode .catalog-intro h1 { max-width:780px; margin:0; font-size:clamp(29px,3.6vw,48px); line-height:1.05; letter-spacing:-.055em; }
+@media (max-width:700px) { body.home-mode .catalog-intro { min-height:102px; padding:21px 18px; } body.home-mode .catalog-intro h1 { font-size:31px; } }
