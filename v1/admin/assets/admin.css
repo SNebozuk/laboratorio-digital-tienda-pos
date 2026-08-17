@@ -3302,9 +3302,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 /* Área de trabajo más amplia y filas que responden claramente al recorrido. */
 .admin-shell { grid-template-columns: 192px minmax(0, 1fr); }
-.admin-sidebar { padding:22px 10px 15px; background:linear-gradient(180deg,#f8e8ef,#f4dce7); border-right-color:#e6bdce; }
-.admin-sidebar .admin-nav-button { color:#62364d; }
-.admin-sidebar .admin-nav-button:hover,.admin-sidebar .admin-nav-button.active { background:#fff7fa; color:#9d255d; }
+.admin-sidebar { padding:22px 10px 15px; background:linear-gradient(180deg,#f5c9da,#edb5cd); border-right-color:#dc8fb2; }
+.admin-sidebar .admin-nav-button { color:#57243f; }
+.admin-sidebar .admin-nav-button:hover,.admin-sidebar .admin-nav-button.active { background:#fff5f9; color:#a01559; }
 .admin-nav-button { padding-left:10px; padding-right:10px; font-size:13px; }
 .admin-nav-sales .admin-nav-button { padding-left:16px; }
 .admin-nav-sales { margin-bottom:8px; padding-bottom:13px; border-bottom:2px solid #dfa8bf; }
