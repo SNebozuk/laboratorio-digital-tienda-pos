@@ -3338,16 +3338,16 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .order-list-whatsapp .whatsapp-logo { width:21px; height:21px; }
 .whatsapp-action-menu { display:grid; gap:18px; }
 .whatsapp-action-menu header { display:flex; align-items:center; gap:12px; }
-.whatsapp-action-menu header h2 { margin:1px 0 0; color:#253044; font-size:26px; }
-.whatsapp-action-menu header small { color:#667087; font-size:13px; }
+.whatsapp-action-menu header h2 { margin:2px 0 0; color:#667087; font-size:15px; font-weight:650; letter-spacing:.035em; }
+.whatsapp-action-menu header small { display:block; margin-top:1px; color:#253044; font-size:24px; font-weight:650; line-height:1.15; }
 .whatsapp-menu-brand { display:grid; width:46px; height:46px; flex:0 0 auto; place-items:center; border-radius:50%; background:#25d366; color:#fff; }
 .whatsapp-logo { width:29px; height:29px; }
-.whatsapp-action-buttons { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
-.whatsapp-action-buttons button { display:grid; min-height:92px; gap:6px; padding:14px; border:1px solid #d7e6dc; border-radius:12px; background:#fff; color:#23523a; text-align:left; cursor:pointer; transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease,background .14s ease; }
+.whatsapp-action-buttons { display:grid; grid-template-columns:1fr; gap:9px; }
+.whatsapp-action-buttons button { display:grid; min-height:72px; gap:4px; padding:13px 15px; border:1px solid #d7e6dc; border-radius:12px; background:#fff; color:#23523a; text-align:left; cursor:pointer; transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease,background .14s ease; }
 .whatsapp-action-buttons button:hover { border-color:#55ad78; background:#f3fbf6; box-shadow:0 7px 16px rgba(25,105,56,.12); transform:translateY(-1px); }
 .whatsapp-action-buttons strong { color:#1b5f38; font-size:13px; letter-spacing:.025em; }
 .whatsapp-action-buttons small { color:#607067; font-size:12px; line-height:1.3; }
-@media (max-width:560px) { .whatsapp-action-buttons { grid-template-columns:1fr; } .whatsapp-action-buttons button { min-height:74px; } }
+@media (max-width:560px) { .whatsapp-action-menu header small { font-size:20px; } .whatsapp-action-buttons button { min-height:68px; } }
 .delivery-slot-print-choice { display:grid; gap:8px; margin:16px 0 20px; }
 .delivery-slot-print-choice label { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #ddd8e5; border-radius:8px; background:#fff; cursor:pointer; }
 .delivery-slot-print-choice label:hover { border-color:#9c7ac3; background:#fbf8ff; }
@@ -3385,7 +3385,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-nav-sales { margin-bottom:8px; padding-bottom:13px; border-bottom:2px solid #d9dee5; }
 .admin-main { padding-left:clamp(22px,3.2vw,52px); padding-right:clamp(22px,3.2vw,52px); }
 #view-orders .order-list-row { font-size:14px; transition:transform .16s ease,box-shadow .16s ease,background .16s ease; }
-#view-orders .order-list-row:hover { transform:translateX(2px) scale(1.012); position:relative; z-index:2; box-shadow:0 8px 20px rgba(58,42,86,.12); }
+#view-orders .order-list-row:hover { transform:none; position:relative; z-index:2; box-shadow:none; }
 #view-orders .order-list-number strong,#view-orders .order-list-customer strong,#view-orders .order-list-total { font-size:14px; }
 .product-list-row,.product-variant-inline-row,.category-admin-row,.customer-history-table tbody tr,.size-guide-edit-table tbody tr,.report-card tbody tr { transition:transform .16s ease,box-shadow .16s ease,background .16s ease; }
 .product-list-row:hover,.product-variant-inline-row:hover,.category-admin-row:hover,.customer-history-table tbody tr:hover,.size-guide-edit-table tbody tr:hover,.report-card tbody tr:hover { position:relative; z-index:2; transform:scale(1.008); background:#f4eefb !important; box-shadow:0 6px 17px rgba(58,42,86,.1); }

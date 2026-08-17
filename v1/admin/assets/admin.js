@@ -1947,7 +1947,7 @@
             const printButton = linkedOrders.length ? `<button class="delivery-print" type="button" data-print-delivery-slot="${number}" aria-label="Imprimir ventas de fila ${number}" title="Imprimir ventas de esta fila">⎙</button>` : '';
             const whatsappOrders = linkedOrders.filter(order => String(order.customer_phone || '').replace(/\D+/g, '').length >= 8);
             const whatsappButton = whatsappOrders.length === 1
-                ? `<button class="delivery-whatsapp" type="button" data-whatsapp-order="${Number(whatsappOrders[0].id)}" aria-label="Abrir WhatsApp de ${escapeHtml(whatsappOrders[0].customer_name || 'cliente')}" title="Abrir WhatsApp">${whatsappLogoMarkup()}</button>`
+                ? `<button class="delivery-whatsapp" type="button" data-delivery-whatsapp-phone="${String(whatsappOrders[0].customer_phone || '').replace(/\D+/g, '')}" aria-label="Abrir WhatsApp de ${escapeHtml(whatsappOrders[0].customer_name || 'cliente')}" title="Abrir WhatsApp">${whatsappLogoMarkup()}</button>`
                 : (whatsappOrders.length > 1
                     ? `<button class="delivery-whatsapp" type="button" data-open-delivery-whatsapp="${number}" aria-label="Elegir WhatsApp de fila ${number}" title="Elegir WhatsApp">${whatsappLogoMarkup()}</button>`
                     : '');
@@ -2178,7 +2178,7 @@
             return;
         }
         if (orders.length === 1) {
-            openOrderWhatsapp(Number(orders[0].id));
+            openDirectWhatsapp(orders[0].customer_phone);
             return;
         }
         openModal(`
@@ -2186,7 +2186,7 @@
             <h2 id="modal-title">FILA ${Number(slotNumber)}</h2>
             <p class="empty-copy">Elegí a qué comprador querés escribirle.</p>
             <div class="delivery-slot-print-choice">
-                ${orders.map(order => `<button class="secondary-button" type="button" data-whatsapp-order="${Number(order.id)}"><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.customer_name || '')} · ${escapeHtml(order.customer_phone || '')}</small></button>`).join('')}
+                ${orders.map(order => `<button class="secondary-button" type="button" data-delivery-whatsapp-phone="${escapeHtml(String(order.customer_phone || '').replace(/\D+/g, ''))}"><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.customer_name || '')} · ${escapeHtml(order.customer_phone || '')}</small></button>`).join('')}
             </div>
         `);
     }
@@ -2377,7 +2377,6 @@
                         <button type="button" data-send-order-whatsapp="${Number(order.id)}" data-whatsapp-message="received"><strong>COMPRA RECIBIDA</strong><small>Agradecimiento y datos de transferencia</small></button>
                         <button type="button" data-send-order-whatsapp="${Number(order.id)}" data-whatsapp-message="cancel"><strong>CANCELAR RESERVA</strong><small>Aviso amable para liberar productos</small></button>
                         <button type="button" data-send-order-whatsapp="${Number(order.id)}" data-whatsapp-message="question"><strong>HACER CONSULTA</strong><small>Mensaje breve sobre la compra</small></button>
-                        <button type="button" data-send-order-whatsapp="${Number(order.id)}" data-whatsapp-message="detail"><strong>DETALLE + DATOS DE PAGO</strong><small>Productos, cantidades, importes y total</small></button>
                     </div>
                 </section>
             `);
@@ -2386,9 +2385,6 @@
 
     function whatsappMessageForOrder(order, kind) {
         const bankDetails = `Banco Galicia\nTitular: Allessandra Lear\nAlias: labdigital`;
-        if (kind === 'received') {
-            return `¡Hola! 😊 Ya recibimos tu compra. ¡Muchas gracias!\n\nTe paso los datos para realizar la transferencia:\n\n${bankDetails}\n\nCuando la realices, ¿me enviás el comprobante por acá? Así dejamos tu pedido confirmado. 🙌`;
-        }
         if (kind === 'cancel') {
             return '¡Hola! 😊 Te escribimos porque todavía no recibimos el pago de tu compra.\n\nPara poder liberar los productos y que vuelvan a estar disponibles, vamos a cancelar la reserva.\n\nSi todavía querés realizar la compra, escribinos y con gusto te ayudamos. 💙';
         }
@@ -2400,7 +2396,17 @@
             const variant = fold(item.variant_name) === 'unica' || !item.variant_name ? '' : ` · ${item.variant_name}`;
             return `• ${Number(item.quantity)} × ${item.product_name}${variant}\n  ${money(item.unit_price_cents)} c/u · ${money(item.line_total_cents)}`;
         }).join('\n');
-        return `¡Hola! 😊\n\nTe compartimos el detalle de tu compra ${order.public_number}:\n\n${detail}\n\n*Total: ${money(order.total_cents)}*\n\nTe paso también los datos para realizar la transferencia:\n\n${bankDetails}\n\nCuando puedas realizarla, ¿me enviás el comprobante por acá? Muchas gracias 😊`;
+        return `¡Hola! 😊 Ya recibimos tu compra. ¡Muchas gracias!\n\nTe compartimos el detalle de tu compra ${order.public_number}:\n\n${detail}\n\n*Total: ${money(order.total_cents)}*\n\nTe paso también los datos para realizar la transferencia:\n\n${bankDetails}\n\nCuando puedas realizarla, ¿me enviás el comprobante por acá? Así dejamos tu pedido confirmado. 🙌`;
+    }
+
+    function openDirectWhatsapp(phoneValue) {
+        const phone = String(phoneValue || '').replace(/\D+/g, '');
+        if (phone.length < 8) {
+            toast('Esta venta no tiene un WhatsApp válido cargado.');
+            return;
+        }
+        if (elements.modal?.classList.contains('open')) closeModal();
+        window.open(`https://wa.me/${phone}`, '_blank', 'noopener');
     }
 
     async function sendOrderWhatsappMessage(orderId, kind) {
@@ -4311,6 +4317,11 @@
         const openDeliveryWhatsapp = event.target.closest('[data-open-delivery-whatsapp]');
         if (openDeliveryWhatsapp) {
             openDeliverySlotWhatsapp(Number(openDeliveryWhatsapp.dataset.openDeliveryWhatsapp));
+            return;
+        }
+        const directDeliveryWhatsapp = event.target.closest('[data-delivery-whatsapp-phone]');
+        if (directDeliveryWhatsapp) {
+            openDirectWhatsapp(directDeliveryWhatsapp.dataset.deliveryWhatsappPhone);
             return;
         }
         if (event.target.closest('[data-confirm-delivery-slot-print]')) {
