@@ -1907,13 +1907,16 @@
             const slot = byNumber.get(number) || { slot_number: number, location: '', order_numbers: '', customer_name: '', transfers: '', cash_due: '', order_total_cents: 0, revision: 0 };
             if (query && !fold(`${slot.order_numbers} ${slot.customer_name}`).includes(query)) return '';
             const tone = slotTone(slot);
+            const linkedOrders = Array.isArray(slot.orders) ? slot.orders : [];
             const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
             const location = `<input type="text" value="${escapeHtml(slot.location || '')}" data-delivery-field="location" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="Ubicación fila ${number}">`;
             const markerButton = /\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear" type="button" data-clear-delivery-marker="${number}" title="Quitar ARMAR / AGREGAR">⊘</button>` : '';
             const statusAttention = tone === 'delivery-slot-add'
                 ? '<span class="delivery-status-attention delivery-add-attention" role="img" aria-label="Atención: pedido agregado a una fila existente" title="Atención: este pedido se agregó a una fila existente">!</span>'
                 : (tone === 'delivery-slot-build' ? '<span class="delivery-status-attention delivery-build-attention" role="img" aria-label="Atención: pedido pendiente de armar" title="Atención: este pedido está pendiente de armar">!</span>' : '');
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}${statusAttention}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
+            const returnControls = linkedOrders.length ? `<div class="delivery-return-orders">${linkedOrders.map(order => `<button class="delivery-return-order" type="button" data-return-delivery-order="${Number(order.id)}" title="Devolver ${escapeHtml(order.public_number)} a Lista de Ventas" aria-label="Devolver ${escapeHtml(order.public_number)} a Lista de Ventas">← ${escapeHtml(order.public_number)}</button>`).join('')}</div>` : '';
+            const printButton = linkedOrders.length ? `<button class="delivery-print" type="button" data-print-delivery-slot="${number}" aria-label="Imprimir ventas de fila ${number}" title="Imprimir ventas de esta fila">⎙</button>` : '';
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}${statusAttention}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td>${field('order_numbers', 'Órdenes')}${returnControls}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td class="delivery-row-actions">${printButton}<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
@@ -2015,27 +2018,9 @@
             state.pendingDeliveryOrderIds = [];
             state.selectedOrderIds.clear();
             await Promise.all([loadOrders(true), loadDeliverySlots()]);
-            if (ids.length === 1) {
-                openModal(`<p class="eyebrow">PEDIDO UBICADO</p><h2 id="modal-title">FILA ${slot}</h2><p class="empty-copy">La venta fue agregada correctamente a la ubicación <strong>${slot}</strong>.</p><div class="modal-actions"><button class="primary-button" type="button" data-print-delivery-order="${ids[0]}">IMPRIMIR COMPROBANTE</button><button class="secondary-button" type="button" data-archive-delivery-order="${ids[0]}">ARCHIVAR VENTA</button><button class="secondary-button" type="button" data-close-modal>LISTO</button></div>`);
-            } else {
-                const count = ids.length;
-                openModal(`
-                    <p class="eyebrow">VENTAS UBICADAS</p>
-                    <h2 id="modal-title">FILA ${slot}</h2>
-                    <p class="empty-copy"><strong>${count} ventas</strong> fueron agregadas juntas a esta fila. Elegí cómo querés imprimir los comprobantes.</p>
-                    <div class="delivery-print-choice">
-                        <button class="primary-button" type="button" data-print-delivery-orders="${ids.join(',')}" data-print-delivery-layout="grouped">
-                            IMPRIMIR Y AGRUPAR ${count} VENTAS
-                            <small>Una impresión continua, separada por número de orden.</small>
-                        </button>
-                        <button class="secondary-button" type="button" data-print-delivery-orders="${ids.join(',')}" data-print-delivery-layout="individual">
-                            IMPRIMIR ${count} VENTAS INDIVIDUALES
-                            <small>Una venta por hoja.</small>
-                        </button>
-                    </div>
-                    <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>LISTO</button></div>
-                `);
-            }
+            toast(ids.length === 1
+                ? `Venta movida a Entregas · fila ${slot}.`
+                : `${ids.length} ventas movidas juntas a Entregas · fila ${slot}.`);
         } catch (error) { toast(error.message); }
     }
 
@@ -2047,6 +2032,44 @@
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
             toast(`Fila ${slotNumber} vaciada.`);
         } catch (error) { toast(error.message); }
+    }
+
+    async function returnOrderFromDeliveries(orderId) {
+        try {
+            await apiPost({ action: 'delivery_return_order', order_id: Number(orderId) });
+            await Promise.all([loadDeliverySlots(), loadOrders(true)]);
+            toast('Venta devuelta a Lista de Ventas.');
+        } catch (error) { toast(error.message); }
+    }
+
+    function openDeliverySlotPrint(slotNumber) {
+        const slot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slotNumber));
+        const orders = Array.isArray(slot?.orders) ? slot.orders : [];
+        if (!orders.length) return;
+        openModal(`
+            <p class="eyebrow">IMPRIMIR DESDE ENTREGAS</p>
+            <h2 id="modal-title">FILA ${Number(slotNumber)}</h2>
+            <p class="empty-copy">Elegí la venta o las ventas que querés imprimir.</p>
+            <div id="delivery-slot-print-choice" class="delivery-slot-print-choice">
+                ${orders.map(order => `<label><input type="checkbox" value="${Number(order.id)}" checked><span><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.customer_name || '')} · ${money(order.total_cents)}</small></span></label>`).join('')}
+            </div>
+            <div class="modal-actions"><button class="primary-button" type="button" data-confirm-delivery-slot-print="${Number(slotNumber)}">CONTINUAR</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
+        `);
+    }
+
+    function continueDeliverySlotPrint() {
+        const ids = Array.from(document.querySelectorAll('#delivery-slot-print-choice input:checked')).map(input => Number(input.value)).filter(Number.isFinite);
+        if (!ids.length) { toast('Elegí al menos una venta para imprimir.'); return; }
+        if (ids.length === 1) { closeModal(); printStoredOrder(ids[0]); return; }
+        openModal(`
+            <p class="eyebrow">${ids.length} VENTAS SELECCIONADAS</p>
+            <h2 id="modal-title">¿CÓMO QUERÉS IMPRIMIRLAS?</h2>
+            <div class="delivery-print-choice">
+                <button class="primary-button" type="button" data-print-delivery-orders="${ids.join(',')}" data-print-delivery-layout="grouped">IMPRIMIR Y AGRUPAR ${ids.length} VENTAS<small>Una impresión continua, separada por número de orden.</small></button>
+                <button class="secondary-button" type="button" data-print-delivery-orders="${ids.join(',')}" data-print-delivery-layout="individual">IMPRIMIR ${ids.length} VENTAS INDIVIDUALES<small>Una venta por hoja.</small></button>
+            </div>
+            <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
+        `);
     }
 
     function deliveryOrderSummary(order) {
@@ -4111,6 +4134,20 @@
         const deleteDelivery = event.target.closest('[data-delete-delivery-slot]');
         if (deleteDelivery) {
             deleteDeliverySlot(Number(deleteDelivery.dataset.deleteDeliverySlot));
+            return;
+        }
+        const returnDeliveryOrder = event.target.closest('[data-return-delivery-order]');
+        if (returnDeliveryOrder) {
+            returnOrderFromDeliveries(Number(returnDeliveryOrder.dataset.returnDeliveryOrder));
+            return;
+        }
+        const printDeliverySlot = event.target.closest('[data-print-delivery-slot]');
+        if (printDeliverySlot) {
+            openDeliverySlotPrint(Number(printDeliverySlot.dataset.printDeliverySlot));
+            return;
+        }
+        if (event.target.closest('[data-confirm-delivery-slot-print]')) {
+            continueDeliverySlotPrint();
             return;
         }
         const confirmDeleteDelivery = event.target.closest('[data-confirm-delete-delivery-slot]');

@@ -378,7 +378,9 @@ try {
                 (int) ($input['order_id'] ?? 0),
                 (int) $user['id']
             );
-            $app['deliveries']->allowReopenedOrder((int) ($input['order_id'] ?? 0));
+            // Si estaba en Entregas, reabrir también la devuelve a LDV para
+            // que nunca quede duplicada en ambas mesas de trabajo.
+            $app['deliveries']->returnOrderToSales((int) ($input['order_id'] ?? 0));
             Http::json(['ok' => true]);
 
         case 'order_deliver':
@@ -416,6 +418,11 @@ try {
         case 'delivery_slot_delete':
             $app['auth']->requireUser();
             $app['deliveries']->deleteSlot((int) ($input['slot_number'] ?? 0));
+            Http::json(['ok' => true]);
+
+        case 'delivery_return_order':
+            $app['auth']->requireUser();
+            $app['deliveries']->returnOrderToSales((int) ($input['order_id'] ?? 0));
             Http::json(['ok' => true]);
 
         case 'invitation_mark_sent':

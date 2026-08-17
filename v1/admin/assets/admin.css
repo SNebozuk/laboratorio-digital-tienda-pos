@@ -3316,6 +3316,19 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-order-total { color: #34214e; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .delivery-delete { display: grid; width: 34px; height: 34px; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #7c536c; cursor: pointer; font-size: 17px; }
 .delivery-delete:hover { background: #f5e3e9; color: #9a3152; }
+.delivery-row-actions { display:flex; align-items:center; gap:4px; min-width:70px; }
+.delivery-print { display:grid; width:34px; height:34px; place-items:center; padding:0; border:0; border-radius:8px; background:transparent; color:#4c4f78; cursor:pointer; font-size:19px; }
+.delivery-print:hover { background:#e8e8f6; color:#30275e; }
+.delivery-return-orders { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+.delivery-return-order { border:1px solid #b8cae9; border-radius:5px; background:#f5f8ff; color:#244c87; padding:3px 6px; font:inherit; font-size:10px; font-weight:800; cursor:pointer; }
+.delivery-return-order:hover { background:#315da0; border-color:#315da0; color:#fff; }
+.delivery-slot-print-choice { display:grid; gap:8px; margin:16px 0 20px; }
+.delivery-slot-print-choice label { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #ddd8e5; border-radius:8px; background:#fff; cursor:pointer; }
+.delivery-slot-print-choice label:hover { border-color:#9c7ac3; background:#fbf8ff; }
+.delivery-slot-print-choice input { width:17px; height:17px; accent-color:#6b3e9b; }
+.delivery-slot-print-choice span { display:grid; gap:2px; }
+.delivery-slot-print-choice strong { color:#3b2360; }
+.delivery-slot-print-choice small { color:#657084; font-size:12px; }
 .delivery-place { min-height: 32px; padding: 5px 9px; border: 1px solid #8c67b9; border-radius: 7px; background: #fff; color: #513179; font: inherit; font-size: 11px; font-weight: 850; cursor: pointer; }
 .delivery-place:hover { background: #6b3e9b; color: #fff; }
 @media (max-width:760px) { .delivery-copy-guide { align-items: flex-start; flex-wrap: wrap; } .delivery-copy-guide .small-button { margin-left: auto; } }
