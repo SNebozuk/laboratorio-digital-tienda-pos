@@ -3336,7 +3336,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .order-list-whatsapp:hover { background:#e7f6ed; color:#08743b; }
 .delivery-whatsapp .whatsapp-logo { width:27px; height:27px; }
 .order-list-whatsapp .whatsapp-logo { width:21px; height:21px; }
-.whatsapp-action-menu { display:grid; gap:18px; }
+.admin-modal-card:has(.whatsapp-action-menu) { width:min(480px, calc(100vw - 28px)); }
+.whatsapp-action-menu { display:grid; gap:15px; width:100%; max-width:430px; margin:0 auto; }
 .whatsapp-action-menu header { display:flex; align-items:center; gap:12px; }
 .whatsapp-action-menu header h2 { margin:2px 0 0; color:#667087; font-size:15px; font-weight:650; letter-spacing:.035em; }
 .whatsapp-action-menu header small { display:block; margin-top:1px; color:#253044; font-size:24px; font-weight:650; line-height:1.15; }
@@ -3386,6 +3387,19 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-main { padding-left:clamp(22px,3.2vw,52px); padding-right:clamp(22px,3.2vw,52px); }
 #view-orders .order-list-row { font-size:14px; transition:transform .16s ease,box-shadow .16s ease,background .16s ease; }
 #view-orders .order-list-row:hover { transform:none; position:relative; z-index:2; box-shadow:none; }
+
+/* Acciones operativas: misma huella visual y eje de alineación. */
+#view-orders .order-list-copy,
+#view-orders .order-list-print,
+#view-orders .order-list-whatsapp,
+#view-orders .order-list-delete,
+#view-orders .order-list-archive,
+.delivery-delete,
+.delivery-marker-clear,
+.delivery-place { display:grid; width:32px; height:32px; min-height:32px; place-items:center; padding:0; line-height:1; }
+.delivery-print,.delivery-return,.delivery-whatsapp { width:40px; height:40px; }
+.delivery-whatsapp .whatsapp-logo { width:24px; height:24px; }
+.order-list-whatsapp .whatsapp-logo { width:20px; height:20px; }
 #view-orders .order-list-number strong,#view-orders .order-list-customer strong,#view-orders .order-list-total { font-size:14px; }
 .product-list-row,.product-variant-inline-row,.category-admin-row,.customer-history-table tbody tr,.size-guide-edit-table tbody tr,.report-card tbody tr { transition:transform .16s ease,box-shadow .16s ease,background .16s ease; }
 .product-list-row:hover,.product-variant-inline-row:hover,.category-admin-row:hover,.customer-history-table tbody tr:hover,.size-guide-edit-table tbody tr:hover,.report-card tbody tr:hover { position:relative; z-index:2; transform:scale(1.008); background:#f4eefb !important; box-shadow:0 6px 17px rgba(58,42,86,.1); }

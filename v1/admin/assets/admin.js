@@ -2386,17 +2386,17 @@
     function whatsappMessageForOrder(order, kind) {
         const bankDetails = `Banco Galicia\nTitular: Allessandra Lear\nAlias: labdigital`;
         if (kind === 'cancel') {
-            return '¡Hola! 😊 Te escribimos porque todavía no recibimos el pago de tu compra.\n\nPara poder liberar los productos y que vuelvan a estar disponibles, vamos a cancelar la reserva.\n\nSi todavía querés realizar la compra, escribinos y con gusto te ayudamos. 💙';
+            return 'Te escribimos porque todavía no recibimos el pago de tu compra.\n\nPara poder liberar los productos y que vuelvan a estar disponibles, vamos a cancelar la reserva.\n\nSi todavía querés realizar la compra, escribinos y con gusto te ayudamos.';
         }
         if (kind === 'question') {
-            return '¡Hola! 😊 ¿Cómo estás?\n\nTe quería hacer una consulta sobre tu compra.';
+            return 'Te quería hacer una consulta sobre tu compra.';
         }
         const items = Array.isArray(order.items) ? order.items : [];
         const detail = items.map(item => {
             const variant = fold(item.variant_name) === 'unica' || !item.variant_name ? '' : ` · ${item.variant_name}`;
             return `• ${Number(item.quantity)} × ${item.product_name}${variant}\n  ${money(item.unit_price_cents)} c/u · ${money(item.line_total_cents)}`;
         }).join('\n');
-        return `¡Hola! 😊 Ya recibimos tu compra. ¡Muchas gracias!\n\nTe compartimos el detalle de tu compra ${order.public_number}:\n\n${detail}\n\n*Total: ${money(order.total_cents)}*\n\nTe paso también los datos para realizar la transferencia:\n\n${bankDetails}\n\nCuando puedas realizarla, ¿me enviás el comprobante por acá? Así dejamos tu pedido confirmado. 🙌`;
+        return `Ya recibimos tu compra. ¡Muchas gracias!\n\nTe compartimos el detalle de tu compra ${order.public_number}:\n\n${detail}\n\n*Total: ${money(order.total_cents)}*\n\nTe paso también los datos para realizar la transferencia:\n\n${bankDetails}\n\nCuando puedas realizarla, ¿me enviás el comprobante por acá? Así dejamos tu pedido confirmado. 💙`;
     }
 
     function openDirectWhatsapp(phoneValue) {
