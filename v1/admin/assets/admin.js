@@ -1858,6 +1858,15 @@
         const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
         try {
             if (!ids.length) return;
+            const pendingOrders = pendingDeliveryOrders();
+            const pendingOrder = pendingOrders.length === 1 ? pendingOrders[0] : null;
+            const matchingSlots = pendingOrder ? suggestedDeliverySlots(pendingOrder) : [];
+            const selectedSuggestedSlot = matchingSlots.some(item => Number(item.slot_number) === Number(slot));
+            if (matchingSlots.length && !selectedSuggestedSlot) {
+                const rows = matchingSlots.map(item => `fila ${Number(item.slot_number)}${item.location ? ` (${item.location})` : ''}`).join(', ');
+                const proceed = window.confirm(`Atención: ya encontramos pedidos de ${pendingOrder.customer_name} en ${rows}.\n\nVas a colocar esta venta en la fila ${slot}. ¿Querés continuar igualmente?`);
+                if (!proceed) return;
+            }
             await apiPost(ids.length === 1
                 ? { action: 'delivery_copy_order', order_id: ids[0], slot_number: slot }
                 : { action: 'delivery_copy_orders', order_ids: ids, slot_number: slot });

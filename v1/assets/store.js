@@ -808,11 +808,17 @@
                             <span>Deslizá para ver los 3 pasos →</span>
                         </header>
                         <div class="purchase-guide-track">
-                            <article class="purchase-guide-card">
-                                <figure class="purchase-photo"><img src="/v1/assets/guide/comprar-paso-1.webp" alt="Persona buscando un producto desde su teléfono" loading="eager"><b class="purchase-step-number">1</b></figure>
+                            <article class="purchase-guide-card purchase-guide-card-ui">
+                                <figure class="purchase-ui-shot purchase-ui-search" aria-label="Ejemplo de cómo buscar un producto">
+                                    <b class="purchase-step-number">1</b>
+                                    <span class="guide-shot-title">¿QUÉ ESTÁS BUSCANDO?</span>
+                                    <span class="guide-shot-search guide-shot-search-main">⌕ &nbsp; ESCRIBÍ LO QUE NECESITÁS</span>
+                                    <span class="guide-shot-example">FILMILO &nbsp; · &nbsp; REMERAS &nbsp; · &nbsp; TAZAS</span>
+                                    <span class="guide-shot-callout">EMPEZÁ POR ACÁ <b>↑</b></span>
+                                </figure>
                                 <div><strong>1. BUSCÁ</strong><span>Escribí lo que necesitás.</span></div>
                             </article>
-                            <article class="purchase-guide-card">
+                            <article class="purchase-guide-card purchase-guide-card-ui">
                                 <figure class="purchase-ui-shot purchase-ui-select" aria-label="Ejemplo de cómo elegir una variante y cantidad">
                                     <b class="purchase-step-number">2</b>
                                     <span class="guide-shot-title">ENCONTRASTE TU PRODUCTO</span>
@@ -823,7 +829,7 @@
                                 </figure>
                                 <div><strong>2. ELEGÍ Y SUMÁ</strong><span>Seleccioná una opción y tocá +.</span></div>
                             </article>
-                            <article class="purchase-guide-card">
+                            <article class="purchase-guide-card purchase-guide-card-ui">
                                 <figure class="purchase-ui-shot purchase-ui-checkout" aria-label="Ejemplo de cómo confirmar el pedido">
                                     <b class="purchase-step-number">3</b>
                                     <span class="guide-shot-title">¡YA CASI ESTÁ!</span>
