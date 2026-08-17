@@ -2499,6 +2499,7 @@
         const matchingOrders = state.orders
             .filter(orderMatchesFilters)
             .sort((first, second) => String(second.created_at || '').localeCompare(String(first.created_at || '')));
+        elements.orderList?.classList.toggle('hide-status-column', !state.showArchivedOrders);
         const actionsBar = document.getElementById('order-actions-bar');
         const selectedCount = selectedOrders().length;
         if (actionsBar) actionsBar.hidden = selectedCount === 0;
