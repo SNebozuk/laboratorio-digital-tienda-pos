@@ -4482,16 +4482,6 @@
             return;
         }
 
-        // Enter cierra la venta desde cualquier zona libre del PDV.
-        // Los controles y campos conservan su comportamiento normal.
-        if (
-            event.key === 'Enter'
-            && !isInteractive
-            && !elements.completeSale?.disabled
-        ) {
-            event.preventDefault();
-            finishPosSaleDirectly();
-        }
     });
     // Esc es contextual en el PDV: vuelve de la búsqueda a la venta que se
     // estaba armando, pero nunca abandona el Punto de Venta hacia el admin.

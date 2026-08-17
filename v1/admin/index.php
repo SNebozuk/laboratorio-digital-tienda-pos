@@ -85,6 +85,7 @@ header('Referrer-Policy: same-origin');
                 <nav class="admin-nav">
                     <div class="admin-nav-sales">
                         <button class="admin-nav-button active" type="button" data-view="orders">Lista de Ventas</button>
+                        <button class="admin-nav-button" type="button" data-view="deliveries">Entrega de pedidos</button>
                     </div>
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
