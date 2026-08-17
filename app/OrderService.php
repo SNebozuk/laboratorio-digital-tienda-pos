@@ -207,6 +207,10 @@ final class OrderService
     ): array {
         $quantities = $this->normalizeItems($items);
         $customerName = $this->normalizeCustomerName($customerName) ?: 'Consumidor final';
+        // Las ventas rápidas sin cliente identificado no requieren seguimiento
+        // en la lista diaria. Se conservan en la base de datos, pero quedan
+        // archivadas desde su creación.
+        $archiveConsumerFinal = $this->normalizeCustomerName($customerName) === 'CONSUMIDOR FINAL';
         $paymentMethod = trim($paymentMethod);
         if ($paymentMethod === '') {
             throw new ValidationException('Elegí un medio de pago.');
@@ -216,6 +220,7 @@ final class OrderService
             function (PDO $pdo) use (
                 $quantities,
                 $customerName,
+                $archiveConsumerFinal,
                 $paymentMethod,
                 $actorUserId
             ): array {
@@ -227,11 +232,11 @@ final class OrderService
                     'INSERT INTO orders(
                         public_number, channel, status,
                         customer_name, subtotal_cents, total_cents,
-                        payment_method, delivered_at, created_by
+                        payment_method, delivered_at, created_by, archived_at, archived_by
                      ) VALUES(
                         :public_number, :channel, :status,
                         :customer_name, :subtotal_cents, :total_cents,
-                        :payment_method, CURRENT_TIMESTAMP, :created_by
+                        :payment_method, CURRENT_TIMESTAMP, :created_by, :archived_at, :archived_by
                      )'
                 );
                 $insertOrder->execute([
@@ -243,6 +248,8 @@ final class OrderService
                     'total_cents' => $total,
                     'payment_method' => $paymentMethod,
                     'created_by' => $actorUserId,
+                    'archived_at' => $archiveConsumerFinal ? (new DateTimeImmutable())->format('Y-m-d H:i:s') : null,
+                    'archived_by' => $archiveConsumerFinal ? $actorUserId : null,
                 ]);
                 $orderId = (int) $pdo->lastInsertId();
                 $this->insertOrderItems($pdo, $orderId, $resolvedItems);
@@ -307,6 +314,7 @@ final class OrderService
                     'public_number' => $publicNumber,
                     'status' => 'delivered',
                     'customer_name' => $customerName,
+                    'archived_at' => $archiveConsumerFinal ? (new DateTimeImmutable())->format('Y-m-d H:i:s') : null,
                     'payment_method' => $paymentMethod,
                     'total_cents' => $total,
                     'items' => $resolvedItems,
