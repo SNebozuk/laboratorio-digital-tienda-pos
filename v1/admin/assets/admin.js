@@ -1507,7 +1507,7 @@
                 <h2 id="modal-title">${escapeHtml(state.pendingBarcode)}</h2>
                 <p>Buscá el producto y elegí la variante. El código quedará guardado y se agregará a la venta.</p>
                 <label for="barcode-assignment-search">PRODUCTO O VARIANTE</label>
-                <input id="barcode-assignment-search" type="search" autocomplete="off" placeholder="Nombre, talle, SKU o descripción">
+                <input id="barcode-assignment-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" placeholder="Nombre, talle, SKU o descripción">
                 <div id="barcode-assignment-results" class="barcode-assignment-results"></div>
             </div>
         `);
@@ -2602,6 +2602,10 @@
                             id="order-edit-search"
                             type="search"
                             autocomplete="off"
+                            autocorrect="off"
+                            autocapitalize="none"
+                            spellcheck="false"
+                            aria-autocomplete="none"
                             placeholder="Producto o variante"
                         >
                         <div id="order-edit-suggestions" class="suggestions"></div>

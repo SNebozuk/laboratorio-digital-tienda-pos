@@ -155,7 +155,7 @@ header('Referrer-Policy: same-origin');
                         <div class="order-page-actions"><button class="primary-button fit-button" id="new-product-button" type="button">NUEVO PRODUCTO</button></div>
                     </div>
                     <div class="admin-search product-search-tools">
-                        <input id="admin-product-search" type="search" placeholder="Buscar por título, variante, SKU o código">
+                        <input id="admin-product-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" placeholder="Buscar por título, variante, SKU o código">
                         <button class="small-button" id="copy-product-search-link" type="button" disabled>COPIAR ENLACE DE BÚSQUEDA</button>
                     </div>
                     <div id="admin-product-list"></div>
@@ -282,7 +282,7 @@ header('Referrer-Policy: same-origin');
                     <div class="order-toolbar">
                         <label class="order-filter-search">
                             <span>BUSCAR</span>
-                            <input id="order-search" type="search" placeholder="N.º de venta, nombre o apellido">
+                            <input id="order-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" placeholder="N.º de venta, nombre o apellido">
                         </label>
                         <label class="archive-orders-toggle">
                             <input id="show-archived-orders" type="checkbox">
@@ -322,7 +322,7 @@ header('Referrer-Policy: same-origin');
                     <div id="delivery-copy-guide" class="delivery-copy-guide" hidden></div>
                     <label class="delivery-search" for="delivery-search">
                         <span>BUSCAR EN ENTREGAS</span>
-                        <input id="delivery-search" type="search" placeholder="N.º de venta, nombre o apellido" autocomplete="off">
+                        <input id="delivery-search" type="search" placeholder="N.º de venta, nombre o apellido" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none">
                     </label>
                     <div class="delivery-table-wrap">
                         <table class="delivery-table">
