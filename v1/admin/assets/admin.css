@@ -3306,11 +3306,17 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-sidebar .admin-nav-button { color:#57243f; }
 .admin-sidebar .admin-nav-button:hover,.admin-sidebar .admin-nav-button.active { background:#fff5f9; color:#a01559; }
 .product-search-tools { display:flex; align-items:stretch; gap:9px; }
+.product-search-tools { width:min(100%,760px); min-height:46px; margin-left:0; }
 .product-search-tools input { flex:1 1 auto; min-width:0; }
 .product-search-tools button { flex:0 0 auto; padding-inline:13px; font-size:11px; font-weight:850; }
 .product-search-tools button:disabled { opacity:.48; cursor:not-allowed; }
 .admin-search input,.order-filter-search input,.order-toolbar input,.pos-page .pos-search-wrap input,.delivery-search input { font-size:17px !important; }
-@media (max-width:700px) { .product-search-tools { align-items:stretch; flex-direction:column; } .product-search-tools button { min-height:42px; } .admin-search input,.order-filter-search input,.order-toolbar input,.pos-page .pos-search-wrap input,.delivery-search input { font-size:16px !important; } }
+#view-products,#view-orders { width:100%; min-width:0; }
+#view-products #admin-product-list { width:100%; min-height:260px; }
+#view-orders .order-toolbar { width:100%; min-height:62px; margin-left:0; margin-right:0; }
+#view-orders .order-filter-search { flex:0 0 286px; margin-left:0 !important; }
+#view-orders .order-list { width:100%; min-height:250px; }
+@media (max-width:700px) { .product-search-tools { align-items:stretch; flex-direction:column; width:100%; } .product-search-tools button { min-height:42px; } #view-orders .order-filter-search { flex-basis:auto; width:100%; } .admin-search input,.order-filter-search input,.order-toolbar input,.pos-page .pos-search-wrap input,.delivery-search input { font-size:16px !important; } }
 .admin-nav-button { padding-left:10px; padding-right:10px; font-size:13px; }
 .admin-nav-sales .admin-nav-button { padding-left:16px; }
 .admin-nav-sales { margin-bottom:8px; padding-bottom:13px; border-bottom:2px solid #dfa8bf; }
