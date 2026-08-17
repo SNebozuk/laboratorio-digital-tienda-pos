@@ -85,7 +85,6 @@ header('Referrer-Policy: same-origin');
                 <nav class="admin-nav">
                     <div class="admin-nav-sales">
                         <button class="admin-nav-button active" type="button" data-view="orders">Lista de Ventas</button>
-                        <button class="admin-nav-button" type="button" data-view="deliveries">Entrega de Pedidos</button>
                     </div>
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
@@ -273,8 +272,9 @@ header('Referrer-Policy: same-origin');
                             <p>Consultá, imprimí, archivá o cancelá las ventas de la tienda y del mostrador.</p>
                         </div>
                         <div class="order-page-actions">
+                            <button class="secondary-button" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
                             <button class="secondary-button" id="refresh-orders" type="button">⇩ Exportar lista</button>
-                            <a class="primary-button" href="pos.php" target="_blank" rel="opener">⊕ ABRIR PUNTO DE VENTA</a>
+                            <a class="primary-button" href="pos.php" target="_blank" rel="opener" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
                         </div>
                     </div>
                     <div class="order-toolbar">

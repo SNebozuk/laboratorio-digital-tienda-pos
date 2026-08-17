@@ -4059,11 +4059,23 @@
     });
 
     document.addEventListener('keydown', event => {
+        if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F2') {
+            event.preventDefault();
+            showView('deliveries');
+            return;
+        }
+        if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
+            event.preventDefault();
+            window.open('pos.php', '_blank', 'noopener');
+            return;
+        }
         if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
         event.preventDefault();
         setPosQuantity(Number(event.target.dataset.posInput), Number(event.target.value));
         event.target.blur();
     });
+
+    document.getElementById('open-deliveries')?.addEventListener('click', () => showView('deliveries'));
 
     document.addEventListener('click', event => {
         const zone = event.target.closest('[data-image-drop]');
