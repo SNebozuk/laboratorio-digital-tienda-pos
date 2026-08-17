@@ -1856,7 +1856,7 @@
 
     function deliveryCustomerKey(value) {
         return fold(String(value || '')
-            .replace(/\b(ARMAR|AGREGAR)\b/gi, '')
+            .replace(/\b(ARMAR|AGREGAR)\b|📦/gi, '')
             .replace(/\s+/g, ' ')
             .trim());
     }
@@ -1940,7 +1940,7 @@
             const linkedOrders = Array.isArray(slot.orders) ? slot.orders : [];
             const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
             const location = `<input type="text" value="${escapeHtml(slot.location || '')}" data-delivery-field="location" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="Ubicación fila ${number}">`;
-            const markerButton = /\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear" type="button" data-clear-delivery-marker="${number}" title="Quitar ARMAR / AGREGAR">⊘</button>` : '';
+            const markerButton = /\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear" type="button" data-mark-delivery-packed="${number}" title="Marcar pedido preparado">✓</button>` : '';
             const statusAttention = tone === 'delivery-slot-add'
                 ? '<span class="delivery-status-attention delivery-add-attention" role="img" aria-label="Atención: pedido agregado a una fila existente" title="Atención: este pedido se agregó a una fila existente">!</span>'
                 : (tone === 'delivery-slot-build' ? '<span class="delivery-status-attention delivery-build-attention" role="img" aria-label="Atención: pedido pendiente de armar" title="Atención: este pedido está pendiente de armar">!</span>' : '');
@@ -4357,11 +4357,11 @@
             copyOrdersToDelivery(ids, Number(confirmDeliveryMatchSlot.dataset.confirmDeliveryMatchSlot), true);
             return;
         }
-        const clearMarker = event.target.closest('[data-clear-delivery-marker]');
-        if (clearMarker) {
-            const row = clearMarker.closest('[data-delivery-row]');
+        const markDeliveryPacked = event.target.closest('[data-mark-delivery-packed]');
+        if (markDeliveryPacked) {
+            const row = markDeliveryPacked.closest('[data-delivery-row]');
             const input = row?.querySelector('[data-delivery-field="customer_name"]');
-            if (input) { input.value = String(input.value).replace(/\s*·?\s*(ARMAR|AGREGAR)\s*$/i, '').trim(); saveDeliverySlot(Number(clearMarker.dataset.clearDeliveryMarker), input); }
+            if (input) { input.value = String(input.value).replace(/\s*·?\s*(ARMAR|AGREGAR)\s*$/i, ' · 📦').trim(); saveDeliverySlot(Number(markDeliveryPacked.dataset.markDeliveryPacked), input); }
             return;
         }
         const printDelivery = event.target.closest('[data-print-delivery-order]');
