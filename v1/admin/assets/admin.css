@@ -2923,6 +2923,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-main .size-guide-edit-table input:hover,
 .admin-main .size-guide-edit-table input:focus { background: #fff; border-color: #7668e8; }
 #view-orders button.order-list-customer { color: #252a3a !important; font: inherit; font-weight: 700; text-align: left; }
+/* El nombre del cliente usa la misma intensidad que venta e importe: no suma
+   la negrita propia de <strong> sobre el peso ya definido del botón. */
+#view-orders button.order-list-customer strong { font-weight: inherit; }
 
 .modal:has(.customer-history) .admin-modal-card { width: min(900px, calc(100vw - 32px)); }
 .customer-history { color: #252a3a; }
