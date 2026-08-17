@@ -809,28 +809,42 @@
                         </header>
                         <div class="purchase-guide-track">
                             <article class="purchase-guide-card">
-                                <figure><img src="/v1/assets/guide/comprar-paso-1.webp" alt="Persona buscando un producto desde su teléfono" loading="eager"><b>1</b></figure>
+                                <figure class="purchase-photo"><img src="/v1/assets/guide/comprar-paso-1.webp" alt="Persona buscando un producto desde su teléfono" loading="eager"><b class="purchase-step-number">1</b></figure>
                                 <div><strong>BUSCÁ</strong><span>Escribí lo que necesitás.</span></div>
                             </article>
                             <article class="purchase-guide-card">
-                                <figure><img src="/v1/assets/guide/comprar-paso-2.webp" alt="Persona eligiendo un producto y su cantidad" loading="lazy"><b>2</b></figure>
+                                <figure class="purchase-ui-shot purchase-ui-select" aria-label="Ejemplo de cómo elegir una variante y cantidad">
+                                    <b class="purchase-step-number">2</b>
+                                    <span class="guide-shot-title">BUSCAR PRODUCTO</span>
+                                    <span class="guide-shot-search">⌕ &nbsp; Filmilo blanco</span>
+                                    <span class="guide-shot-product"><strong>FILMILO BLANCO</strong><small>Elegí variante y cantidad</small></span>
+                                    <span class="guide-shot-quantity"><em>TALLE A4</em><i>−</i><b>1</b><i>+</i></span>
+                                    <span class="guide-shot-callout">TOCÁ + PARA SUMAR <b>↗</b></span>
+                                </figure>
                                 <div><strong>ELEGÍ</strong><span>Marcá variante y cantidad.</span></div>
                             </article>
                             <article class="purchase-guide-card">
-                                <figure><img src="/v1/assets/guide/comprar-paso-3.webp" alt="Persona confirmando su pedido desde el teléfono" loading="lazy"><b>3</b></figure>
+                                <figure class="purchase-ui-shot purchase-ui-checkout" aria-label="Ejemplo de cómo confirmar el pedido">
+                                    <b class="purchase-step-number">3</b>
+                                    <span class="guide-shot-title">DATOS DEL PEDIDO</span>
+                                    <span class="guide-shot-field">Nombre y apellido</span>
+                                    <span class="guide-shot-field">WhatsApp</span>
+                                    <span class="guide-shot-confirm">CONFIRMAR PEDIDO</span>
+                                    <span class="guide-shot-callout">COMPLETÁ ESTOS DATOS <b>↗</b></span>
+                                </figure>
                                 <div><strong>CONFIRMÁ</strong><span>Completá tus datos y envialo por WhatsApp.</span></div>
                             </article>
                         </div>
-                    </section>
-                    <section class="home-people-gallery" aria-label="Inspiración para tus próximos productos">
-                        <img src="${escapeHtml(safeImage(app.design?.hero_1_path) || '/v1/assets/brand/hero-1.webp')}" alt="Prenda personalizada en uso" loading="eager">
-                        <img src="${escapeHtml(safeImage(app.design?.hero_2_path) || '/v1/assets/brand/hero-2.webp')}" alt="Indumentaria personalizada" loading="lazy">
-                        <img src="${escapeHtml(safeImage(app.design?.hero_3_path) || '/v1/assets/brand/hero-3.webp')}" alt="Productos para personalizar" loading="lazy">
                     </section>
                     ${featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2 id="featured-products-title">PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div>
                         <div class="featured-product-grid">${featured.map(featuredProductCard).join('')}</div>
                     </section>` : ''}
+                    <section class="home-people-gallery" aria-label="Lo que podés encontrar en Laboratorio Digital">
+                        <img src="${escapeHtml(safeImage(app.design?.hero_1_path) || '/v1/assets/brand/hero-1.webp')}" alt="Productos para personalizar" loading="lazy">
+                        <img src="${escapeHtml(safeImage(app.design?.hero_2_path) || '/v1/assets/brand/hero-2.webp')}" alt="Indumentaria personalizada" loading="lazy">
+                        <img src="${escapeHtml(safeImage(app.design?.hero_3_path) || '/v1/assets/brand/hero-3.webp')}" alt="Materiales y productos para crear" loading="lazy">
+                    </section>
                     <div class="quick-categories">
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
                     </div>
