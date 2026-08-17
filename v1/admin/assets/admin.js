@@ -2140,9 +2140,11 @@
         const orders = orderIds
             .map(id => state.orders.find(order => Number(order.id) === Number(id)))
             .filter(Boolean);
-        const cancellable = orders.filter(order => order.status !== 'cancelled');
+        const cancellable = orders.filter(order => (
+            order.status !== 'cancelled' && !order.archived_at
+        ));
         if (!cancellable.length) {
-            toast('Seleccioná al menos una venta que todavía no esté cancelada.');
+            toast('Seleccioná al menos una venta activa, sin archivar, para cancelarla.');
             return;
         }
         const skipped = orders.length - cancellable.length;
@@ -2380,9 +2382,9 @@
                         </div>
                         <div class="order-detail-head-actions">
                             ${historyName ? `<button class="small-button" type="button" data-customer-history="${escapeHtml(historyName)}">← Historial</button>` : ''}
-                            <button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>
+                            ${order.archived_at ? '' : `<button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>`}
                             <button class="small-button" type="button" data-reopen-order="${Number(order.id)}">Reabrir</button>
-                            <button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar Venta</button>
+                            ${order.archived_at || order.status === 'cancelled' ? '' : `<button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar Venta</button>`}
                         </div>
                     </header>
                     <div class="order-detail-meta">
@@ -2531,6 +2533,14 @@
             const option = elements.bulkOrderAction?.querySelector(`option[value="${action}"]`);
             if (option) option.textContent = `${label} ${singularSelection ? 'Venta' : 'Ventas'}`;
         });
+        const selected = selectedOrders();
+        const cancelOption = elements.bulkOrderAction?.querySelector('option[value="cancel"]');
+        if (cancelOption) {
+            const hasArchived = selected.some(order => Boolean(order.archived_at));
+            const hasActiveCancellable = selected.some(order => !order.archived_at && order.status !== 'cancelled');
+            cancelOption.disabled = hasArchived || !hasActiveCancellable;
+            if (hasArchived) cancelOption.textContent = 'Cancelar no disponible para archivadas';
+        }
 
         // Las acciones masivas se muestran junto a la selección total.
 
@@ -2578,12 +2588,9 @@
         }
 
         if (matchingOrders.length) {
-            const allMatchingSelected = matchingOrders.every(order => (
-                state.selectedOrderIds.has(Number(order.id))
-            ));
             elements.orderList.innerHTML = `
                 <div class="order-list-head" aria-hidden="true">
-                    <label class="order-select-control"><input id="select-all-orders" type="checkbox" ${allMatchingSelected ? 'checked' : ''} aria-label="Seleccionar todas las ventas"></label><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
+                    <span class="order-select-control"></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
                 </div>
                 ${matchingOrders.map(order => `
                     <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
@@ -2595,7 +2602,7 @@
                         <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : (order.delivery_slot_number ? 'copied' : order.status))}">${escapeHtml(order.archived_at ? 'Archivada' : (order.delivery_slot_number ? 'COPIADA' : (statusLabels[order.status] || order.status)))}</span></span>
                         <button class="order-list-copy" type="button" data-copy-order-delivery="${Number(order.id)}" ${order.delivery_slot_number && !order.delivery_reopened_at ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="Copiar a Entregas">⇠</button>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
-                        ${order.status !== 'cancelled'
+                        ${order.status !== 'cancelled' && !order.archived_at
                             ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">🗑</button>`
                             : '<span class="order-list-delete-placeholder" aria-hidden="true"></span>'}
                         <span class="order-list-date">${escapeHtml(argentinaDateParts(order.created_at).date)}<small>${escapeHtml(argentinaDateParts(order.created_at).time)}</small></span>

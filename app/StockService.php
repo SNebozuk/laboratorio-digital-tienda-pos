@@ -180,6 +180,9 @@ final class StockService
             $this->pdo,
             function (PDO $pdo) use ($orderId, $reason, $actorUserId, $notifyCustomer, $restoreStock): void {
                 $order = $this->lockedOrder($pdo, $orderId);
+                if ($order['archived_at'] !== null) {
+                    throw new ConflictException('Una venta archivada no se puede cancelar. Primero reabrila si necesitás corregirla.');
+                }
                 if ($order['status'] === 'cancelled') {
                     return;
                 }
