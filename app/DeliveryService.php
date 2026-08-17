@@ -162,11 +162,15 @@ final class DeliveryService
                 $numbers = array_values(array_filter(array_map('trim', explode('/', (string) $existing['order_numbers'])), static fn (string $number): bool => $number !== '' && $number !== (string) $order['public_number']));
                 $remaining = implode(' / ', $numbers);
                 $total = max(0, (int) $existing['order_total_cents'] - (int) $order['total_cents']);
-                $customer = $remaining === ''
-                    ? preg_replace('/\s*·?\s*(ARMAR|AGREGAR)\s*$/iu', '', (string) $existing['customer_name'])
-                    : (string) $existing['customer_name'];
-                $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, customer_name = :customer, order_total_cents = :total, revision = revision + 1, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
-                    ->execute(['orders' => $remaining, 'customer' => trim((string) $customer), 'total' => $total, 'slot' => $slot]);
+                if ($remaining === '') {
+                    // La fila quedó vacía: se conserva únicamente la ubicación
+                    // física, nunca datos de cobro o de otro cliente.
+                    $pdo->prepare('UPDATE delivery_slots SET order_numbers = \'\', customer_name = \'\', transfers = \'\', cash_due = \'\', order_total_cents = 0, revision = revision + 1, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
+                        ->execute(['slot' => $slot]);
+                } else {
+                    $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, order_total_cents = :total, revision = revision + 1, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
+                        ->execute(['orders' => $remaining, 'total' => $total, 'slot' => $slot]);
+                }
             }
             $pdo->prepare('UPDATE orders SET delivery_slot_number = NULL, delivery_copied_at = NULL, delivery_reopened_at = CURRENT_TIMESTAMP, archived_at = NULL, archived_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
                 ->execute(['id' => $orderId]);
