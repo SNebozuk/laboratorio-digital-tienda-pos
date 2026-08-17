@@ -1753,7 +1753,7 @@
             window.setTimeout(() => confirmation.remove(), 220);
             state.posSaleConfirmationTimer = 0;
             if (typeof afterClose === 'function') afterClose();
-        }, 3000);
+        }, 2000);
     }
 
     async function finishPosSaleDirectly() {
