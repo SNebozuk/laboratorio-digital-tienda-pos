@@ -272,9 +272,11 @@ header('Referrer-Policy: same-origin');
                             <p>Consultá, imprimí, archivá o cancelá las ventas de la tienda y del mostrador.</p>
                         </div>
                         <div class="order-page-actions">
-                            <button class="primary-button" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
+                            <div class="order-quick-links">
+                                <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
+                                <a class="order-quick-link" href="pos.php" target="_blank" rel="opener" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
+                            </div>
                             <button class="secondary-button" id="refresh-orders" type="button">⇩ Exportar lista</button>
-                            <a class="primary-button" href="pos.php" target="_blank" rel="opener" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
                         </div>
                     </div>
                     <div class="order-toolbar">
