@@ -801,46 +801,10 @@
                 .filter(Boolean);
             elements.results.innerHTML = `
                 <section class="store-home" aria-label="Empezar a comprar">
-                    <section class="purchase-guide" aria-labelledby="purchase-guide-title">
-                        <header class="purchase-guide-head">
-                            <p class="eyebrow">COMPRÁ SIN VUELTAS</p>
-                            <h2 id="purchase-guide-title">COMPRÁ EN 3 PASOS</h2>
-                            <span>Deslizá para ver los 3 pasos →</span>
-                        </header>
-                        <div class="purchase-guide-track">
-                            <article class="purchase-guide-card purchase-guide-card-ui">
-                                <figure class="purchase-ui-shot purchase-ui-search" aria-label="Ejemplo de cómo buscar un producto">
-                                    <b class="purchase-step-number">1</b>
-                                    <span class="guide-shot-title">¿QUÉ ESTÁS BUSCANDO?</span>
-                                    <span class="guide-shot-search guide-shot-search-main">⌕ &nbsp; ESCRIBÍ LO QUE NECESITÁS</span>
-                                    <span class="guide-shot-example">FILMILO &nbsp; · &nbsp; REMERAS &nbsp; · &nbsp; TAZAS</span>
-                                    <span class="guide-shot-callout">EMPEZÁ POR ACÁ <b>↑</b></span>
-                                </figure>
-                                <div><strong>1. BUSCÁ</strong><span>Escribí lo que necesitás.</span></div>
-                            </article>
-                            <article class="purchase-guide-card purchase-guide-card-ui">
-                                <figure class="purchase-ui-shot purchase-ui-select" aria-label="Ejemplo de cómo elegir una variante y cantidad">
-                                    <b class="purchase-step-number">2</b>
-                                    <span class="guide-shot-title">ENCONTRASTE TU PRODUCTO</span>
-                                    <span class="guide-shot-search">⌕ &nbsp; BUSCÁ: FILMILO</span>
-                                    <span class="guide-shot-product"><strong>FILMILO BLANCO</strong><small>Elegí la opción que necesitás</small></span>
-                                    <span class="guide-shot-quantity"><em>A4</em><span class="guide-shot-arrow">→</span><i>−</i><b>1</b><i>+</i></span>
-                                    <span class="guide-shot-callout">SUMALO AL CARRITO <b>↑</b></span>
-                                </figure>
-                                <div><strong>2. ELEGÍ Y SUMÁ</strong><span>Seleccioná una opción y tocá +.</span></div>
-                            </article>
-                            <article class="purchase-guide-card purchase-guide-card-ui">
-                                <figure class="purchase-ui-shot purchase-ui-checkout" aria-label="Ejemplo de cómo confirmar el pedido">
-                                    <b class="purchase-step-number">3</b>
-                                    <span class="guide-shot-title">¡YA CASI ESTÁ!</span>
-                                    <span class="guide-shot-field"><b>✓</b> Nombre y apellido</span>
-                                    <span class="guide-shot-field"><b>✓</b> WhatsApp</span>
-                                    <span class="guide-shot-confirm">ENVIAR PEDIDO</span>
-                                    <span class="guide-shot-callout">TOCÁ ACÁ <b>↓</b></span>
-                                </figure>
-                                <div><strong>3. CONFIRMÁ</strong><span>Completá tus datos y enviá el pedido.</span></div>
-                            </article>
-                        </div>
+                    <section class="home-manifesto" aria-label="Mensaje de Laboratorio Digital">
+                        <p>TODO EMPIEZA CON UNA IDEA</p>
+                        <h2>Tus ideas merecen<br>hacerse realidad.</h2>
+                        <span>Materiales, productos y soluciones para crear, personalizar y vender.</span>
                     </section>
                     ${featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2 id="featured-products-title">PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div>
