@@ -3383,7 +3383,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 #view-orders .order-list-row-in-deliveries:hover { background:#f5edff; box-shadow:inset 6px 0 0 #7445aa,0 8px 20px rgba(91,50,135,.14); }
 .order-delivery-note { display:block; width:max-content; margin-top:4px; padding:2px 5px; border-radius:4px; background:#eadcf9; color:#512a7b; font-size:9px; font-weight:850; letter-spacing:.035em; white-space:nowrap; }
 #view-orders .order-list-row-in-deliveries .status-copied { border-color:#8455b4; background:#e9dafa; color:#482070; font-weight:850; box-shadow:0 0 0 2px rgba(132,85,180,.1); }
-.order-list-copy.order-list-copy-reopened { width:36px; height:36px; color:#0878b4; background:#dff3ff; box-shadow:0 0 0 2px rgba(8,120,180,.18); font-size:29px; font-weight:850; }
+.order-list-copy.order-list-copy-reopened { width:32px; height:32px; color:#0878b4; background:#dff3ff; box-shadow:0 0 0 2px rgba(8,120,180,.18); font-size:24px; font-weight:850; }
 .order-list-copy.order-list-copy-reopened:hover:not(:disabled) { color:#fff; background:#17708b; }
 
 /* Solicitudes de invitación a Codex: rápidas de revisar y listas para copiar. */
