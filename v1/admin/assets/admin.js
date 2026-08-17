@@ -2032,6 +2032,9 @@
             await apiPost(ids.length === 1
                 ? { action: 'delivery_copy_order', order_id: ids[0], slot_number: slot }
                 : { action: 'delivery_copy_orders', order_ids: ids, slot_number: slot });
+            // Si la ubicación fue elegida desde una ventana de validación, la
+            // decisión ya se aplicó correctamente: no dejamos el modal abierto.
+            closeModal();
             state.pendingDeliveryOrderId = 0;
             state.pendingDeliveryOrderIds = [];
             state.selectedOrderIds.clear();
