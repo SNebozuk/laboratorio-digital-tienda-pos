@@ -1999,11 +1999,29 @@
         `);
     }
 
+    function showDeliveryOccupiedWarning(orderIds, selectedSlot, existingSlot) {
+        const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
+        const incoming = pendingDeliveryOrders();
+        openModal(`
+            <p class="eyebrow">FILA CON PEDIDOS CARGADOS</p>
+            <h2 id="modal-title">REVISÁ ANTES DE AGREGAR</h2>
+            <p class="empty-copy">La fila <strong>${Number(selectedSlot)}</strong> ya tiene pedidos. Si continuás, las nuevas ventas se sumarán separadas por <strong>/</strong> y quedarán marcadas como <strong>AGREGAR</strong>.</p>
+            <div class="delivery-match-table-wrap"><table class="delivery-match-table"><thead><tr><th>FILA</th><th>UBICACIÓN</th><th>ÓRDENES YA CARGADAS</th><th>CLIENTE</th><th>IMPORTE ACTUAL</th></tr></thead><tbody><tr><td><strong>${Number(selectedSlot)}</strong></td><td>${escapeHtml(existingSlot.location || '—')}</td><td>${escapeHtml(existingSlot.order_numbers || '—')}</td><td>${escapeHtml(existingSlot.customer_name || '—')}</td><td>${money(existingSlot.order_total_cents)}</td></tr></tbody></table></div>
+            <p class="notice"><strong>Ventas a agregar:</strong> ${incoming.map(order => `${escapeHtml(order.public_number)} · ${escapeHtml(order.customer_name)}`).join(' &nbsp;|&nbsp; ')}</p>
+            <div class="modal-actions"><button class="primary-button" type="button" data-confirm-delivery-other-slot="${Number(selectedSlot)}" data-delivery-order-ids="${ids.join(',')}">SÍ, AGREGAR A FILA ${Number(selectedSlot)}</button><button class="secondary-button" type="button" data-close-modal>ELEGIR OTRA FILA</button></div>
+        `);
+    }
+
     async function copyOrdersToDelivery(orderIds, slot, skipDeliveryMatchWarning = false) {
         const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
         try {
             if (!ids.length) return;
             const pendingOrders = pendingDeliveryOrders();
+            const targetSlot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slot));
+            if (String(targetSlot?.order_numbers || '').trim() !== '' && !skipDeliveryMatchWarning) {
+                showDeliveryOccupiedWarning(ids, slot, targetSlot);
+                return;
+            }
             const matchGroups = pendingOrders
                 .map(order => ({ order, slots: suggestedDeliverySlots(order) }))
                 .filter(group => group.slots.length && !group.slots.some(item => Number(item.slot_number) === Number(slot)));
