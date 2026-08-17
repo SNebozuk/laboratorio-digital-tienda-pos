@@ -1915,7 +1915,7 @@
                 ? '<span class="delivery-status-attention delivery-add-attention" role="img" aria-label="Atención: pedido agregado a una fila existente" title="Atención: este pedido se agregó a una fila existente">!</span>'
                 : (tone === 'delivery-slot-build' ? '<span class="delivery-status-attention delivery-build-attention" role="img" aria-label="Atención: pedido pendiente de armar" title="Atención: este pedido está pendiente de armar">!</span>' : '');
             const printButton = linkedOrders.length ? `<button class="delivery-print" type="button" data-print-delivery-slot="${number}" aria-label="Imprimir ventas de fila ${number}" title="Imprimir ventas de esta fila">⎙</button>` : '';
-            const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Devolver ventas de fila ${number} a Lista de Ventas" title="Devolver ventas a Lista de Ventas">←</button>` : '';
+            const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">→</button>` : '';
             return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}${statusAttention}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${returnButton}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
@@ -2038,7 +2038,7 @@
         try {
             await apiPost({ action: 'delivery_return_order', order_id: Number(orderId) });
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
-            toast('Venta devuelta a Lista de Ventas.');
+            toast('Venta movida a Lista de Ventas.');
         } catch (error) { toast(error.message); }
     }
 
@@ -2052,16 +2052,16 @@
                 catch { return order; }
             }));
             openModal(`
-                <p class="eyebrow">DEVOLVER A LISTA DE VENTAS</p>
+                <p class="eyebrow">MOVER A LISTA DE VENTAS</p>
                 <h2 id="modal-title">FILA ${Number(slotNumber)}</h2>
-                <p class="empty-copy">Elegí las ventas que querés devolver. Se reabrirán en LDV y se quitarán de esta fila.</p>
+                <p class="empty-copy">Elegí las ventas que querés mover. Se reabrirán en LDV y se quitarán de esta fila.</p>
                 <div id="delivery-slot-return-choice" class="delivery-slot-print-choice">
                     ${details.map(order => {
                         const products = Array.isArray(order.items) ? sortedOrderItems(order.items).map(item => `${Number(item.quantity)} × ${item.product_name}${fold(item.variant_name) === 'unica' ? '' : ` · ${item.variant_name || ''}`}`).join(' · ') : '';
                         return `<label><input type="checkbox" value="${Number(order.id)}" checked><span><strong>${escapeHtml(order.public_number)}</strong><small>${escapeHtml(order.customer_name || '')} · ${money(order.total_cents)}${products ? `<br>${escapeHtml(products)}` : ''}</small></span></label>`;
                     }).join('')}
                 </div>
-                <div class="modal-actions"><button class="primary-button" type="button" data-confirm-delivery-slot-return>DEVOLVER A LDV</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
+                <div class="modal-actions"><button class="primary-button" type="button" data-confirm-delivery-slot-return>MOVER A LISTA DE VENTAS</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
             `);
         } catch (error) { toast(error.message); }
     }
@@ -2073,7 +2073,7 @@
             for (const orderId of ids) await apiPost({ action: 'delivery_return_order', order_id: orderId });
             closeModal();
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
-            toast(ids.length === 1 ? 'Venta devuelta a Lista de Ventas.' : `${ids.length} ventas devueltas a Lista de Ventas.`);
+            toast(ids.length === 1 ? 'Venta movida a Lista de Ventas.' : `${ids.length} ventas movidas a Lista de Ventas.`);
         } catch (error) { toast(error.message); }
     }
 
