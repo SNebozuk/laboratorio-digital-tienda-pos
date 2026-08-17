@@ -4387,6 +4387,20 @@
             finishPosSaleDirectly();
         }
     });
+    // En el PDV Esc no debe abandonar la búsqueda ni volver al administrador.
+    // Si hay una ventana emergente, el manejador siguiente conserva el cierre normal.
+    document.addEventListener('keydown', event => {
+        if (
+            event.key === 'Escape'
+            && document.querySelector('.pos-page')
+            && !elements.modal?.classList.contains('open')
+        ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            closePosSuggestions();
+            elements.posSearch?.focus();
+        }
+    }, true);
     document.addEventListener('keydown', event => {
         if (
             event.key === 'Escape'
