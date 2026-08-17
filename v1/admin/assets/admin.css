@@ -3382,7 +3382,6 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 #view-orders .order-list-row-in-deliveries { background:#fbf7ff; box-shadow:inset 5px 0 0 #8d65bd; }
 #view-orders .order-list-row-in-deliveries:hover { background:#f5edff; box-shadow:inset 6px 0 0 #7445aa,0 8px 20px rgba(91,50,135,.14); }
 .order-delivery-note { display:block; width:max-content; margin-top:4px; padding:2px 5px; border-radius:4px; background:#eadcf9; color:#512a7b; font-size:9px; font-weight:850; letter-spacing:.035em; white-space:nowrap; }
-.order-returned-note { display:block; width:max-content; margin-top:4px; padding:2px 5px; border-radius:4px; background:#e5f3ff; color:#245c92; font-size:9px; font-weight:850; letter-spacing:.035em; white-space:nowrap; }
 #view-orders .order-list-row-in-deliveries .status-copied { border-color:#8455b4; background:#e9dafa; color:#482070; font-weight:850; box-shadow:0 0 0 2px rgba(132,85,180,.1); }
 .order-list-copy.order-list-copy-reopened { color:#17708b; background:#e6f6fb; box-shadow:0 0 0 2px rgba(23,112,139,.13); }
 .order-list-copy.order-list-copy-reopened:hover:not(:disabled) { color:#fff; background:#17708b; }
