@@ -163,8 +163,8 @@ header('Referrer-Policy: same-origin');
             <small>Horario, WhatsApp y ubicación</small>
         </button>
         <a class="creator-credit" href="<?= $escape($storePath) ?>/sergio-nebozuk.php">
-            <span>¿QUERÉS VENDER MÁS ONLINE?</span>
-            <strong>Creemos una tienda que trabaje para tu negocio <b aria-hidden="true">→</b></strong>
+            <span>¿TE GUSTARÍA CREAR TU PROPIA WEB?</span>
+            <strong>Aprendé a hacerlo con Codex, paso a paso y gratis <b aria-hidden="true">→</b></strong>
         </a>
     </footer>
 

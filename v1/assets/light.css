@@ -106,6 +106,10 @@ body { background:#fbf8ff !important; }
 .creator-services strong { color:#503480; font-size:12px; letter-spacing:.06em; }
 .creator-services span { color:#685d76; font-size:14px; line-height:1.45; }
 .creator-cta { display:inline-flex; text-decoration:none; }
+.creator-gift { max-width:650px; margin:4px 0 22px; padding:18px 20px; border:1px solid #d9c7ed; border-radius:14px; background:#fbf8ff; }
+.creator-gift strong { color:#503480; font-size:16px; }
+.creator-gift p { margin:6px 0 0; color:#574d65; font-size:15px; line-height:1.5; }
+.creator-gift b { color:#7652b8; }
 .creator-signature { display:block; margin-top:38px; color:#857c91; font-size:12px; }
 .home-featured-products { display:grid; gap:16px; padding:22px; border:1px solid #cdb5e4; border-radius:18px; background:radial-gradient(circle at 100% 0,rgba(143,91,194,.16),transparent 35%),linear-gradient(135deg,#fff,#f4edfb); box-shadow:0 15px 35px rgba(77,47,116,.13); }
 .home-featured-heading { display:flex; align-items:end; justify-content:space-between; gap:15px; }
