@@ -399,6 +399,13 @@ header('Referrer-Policy: same-origin');
                             <p>Se genera una copia automática diaria de la base y las fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
                             <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
                         </section>
+                        <form id="ses-test-form" class="settings-card backup-card">
+                            <p class="eyebrow">CORREOS AUTOMÁTICOS</p>
+                            <h2>Prueba de Amazon SES</h2>
+                            <p>Las credenciales se guardan únicamente en el archivo privado del servidor. Este botón no activa los avisos de ventas: solo verifica la conexión con SES.</p>
+                            <label>DESTINATARIO DE PRUEBA<input name="recipient" type="email" value="ventas@laboratorio-digital.com.ar" required autocomplete="off"></label>
+                            <button class="primary-button fit-button" type="submit">ENVIAR PRUEBA</button>
+                        </form>
                     </section>
 
                     <section class="admin-view" id="view-maintenance">

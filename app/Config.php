@@ -108,22 +108,24 @@ final class Config
                     FILTER_VALIDATE_BOOL
                 )
             ),
-            // Solo se utiliza para el aviso interno de una nueva venta. La
-            // comunicación con clientes continúa exclusivamente por WhatsApp.
-            // Las credenciales se cargan exclusivamente en config.mail.local.php
-            // del servidor. Ese archivo está excluido de Git.
-            // Los avisos internos están pausados. Ningún envío de correo puede
-            // interferir con la creación o confirmación de una venta.
-            'mail_enabled' => false,
+            // SES se utiliza exclusivamente para avisos transaccionales. Las
+            // credenciales viven en config.mail.local.php, fuera de Git y del
+            // panel web. Por seguridad el envío sigue apagado hasta activarlo
+            // expresamente en esa configuración privada.
+            'mail_enabled' => self::bool(
+                $local,
+                'mail_enabled',
+                filter_var(getenv('APP_MAIL_ENABLED') ?: false, FILTER_VALIDATE_BOOL)
+            ),
             'mail_transport' => self::string(
                 $local,
                 'mail_transport',
-                getenv('APP_MAIL_TRANSPORT') ?: 'smtp'
+                getenv('APP_MAIL_TRANSPORT') ?: 'ses_smtp'
             ),
             'mail_from' => self::string(
                 $local,
                 'mail_from',
-                getenv('APP_MAIL_FROM') ?: 'pedidos@laboratoriodigital.com.ar'
+                getenv('APP_MAIL_FROM') ?: 'ventas@laboratorio-digital.com.ar'
             ),
             'mail_from_name' => self::string(
                 $local,

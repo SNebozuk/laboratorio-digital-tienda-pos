@@ -3348,6 +3348,24 @@
         }
     }
 
+    async function sendSesTest(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'ENVIANDO…';
+        try {
+            await apiPost({
+                action: 'mail_test',
+                recipient: form.elements.recipient.value.trim(),
+            });
+            toast('Prueba enviada. Revisá la bandeja de entrada y también Correo no deseado.');
+        } catch (error) {
+            toast(error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'ENVIAR PRUEBA';
+        }
+    }
+
     async function loadEmailSettings() {
         const form = document.getElementById('whatsapp-settings-form');
         if (!form || app.user?.role !== 'admin') return;
@@ -3609,6 +3627,10 @@
         if (event.target.id === 'settings-form') {
             event.preventDefault();
             saveSettings(event.target);
+        }
+        if (event.target.id === 'ses-test-form') {
+            event.preventDefault();
+            sendSesTest(event.target);
         }
         if (event.target.id === 'maintenance-form') {
             event.preventDefault();

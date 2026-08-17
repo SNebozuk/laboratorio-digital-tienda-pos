@@ -27,19 +27,21 @@ return [
     // Mantener en false hasta cargar banco, retiro, correo y stock final.
     'orders_enabled' => false,
 
-    // Activar únicamente después de crear y validar la casilla en DonWeb.
-    // Aviso interno por cada venta. No se envían emails al cliente.
+    // Amazon SES se usa solo para los correos automáticos de la tienda.
+    // No modifica ni reemplaza la casilla de Outlook/DonWeb. Activar únicamente
+    // después de verificar el dominio y ejecutar la prueba desde el administrador.
     'mail_enabled' => false,
-    // SMTP autenticado: las credenciales quedan solo en config.local.php.
-    'mail_transport' => 'smtp',
-    'mail_from' => 'pedidos@laboratoriodigital.com.ar',
+    'mail_transport' => 'ses_smtp',
+    'mail_from' => 'ventas@laboratorio-digital.com.ar',
     'mail_from_name' => 'Laboratorio Digital',
     'mail_reply_to' => 'ventas@laboratorio-digital.com.ar',
-    'mail_smtp_host' => 'CAMBIAR-POR-EL-SERVIDOR-SMTP',
-    'mail_smtp_port' => 465,
-    'mail_smtp_encryption' => 'ssl',
-    'mail_smtp_username' => 'pedidos@laboratoriodigital.com.ar',
-    'mail_smtp_password' => 'CAMBIAR-POR-LA-CONTRASENA-DE-LA-CASILLA',
+    // Datos SMTP creados en SES, no las credenciales de AWS ni de Outlook.
+    // Ejemplo: email-smtp.sa-east-1.amazonaws.com, 587, tls.
+    'mail_smtp_host' => 'CAMBIAR-POR-ENDPOINT-SES-DE-TU-REGION',
+    'mail_smtp_port' => 587,
+    'mail_smtp_encryption' => 'tls',
+    'mail_smtp_username' => 'CAMBIAR-POR-USUARIO-SMTP-SES',
+    'mail_smtp_password' => 'CAMBIAR-POR-CONTRASENA-SMTP-SES',
     'sales_notification_email' => 'ventas@laboratorio-digital.com.ar',
 
     // Ayuda a revisar comprobantes; nunca aprueba pagos automáticamente.

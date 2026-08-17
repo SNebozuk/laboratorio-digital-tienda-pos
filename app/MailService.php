@@ -6,7 +6,7 @@ namespace LaboratorioDigital;
 use PDO;
 use Throwable;
 
-/** Envía únicamente avisos internos de nuevas ventas desde una cola. */
+/** Envía avisos transaccionales desde una cola mediante SMTP seguro. */
 final class MailService
 {
     /** @param array<string, mixed> $config */
@@ -49,7 +49,7 @@ final class MailService
             try {
                 $payload = json_decode((string) $message['payload_json'], true, 512, JSON_THROW_ON_ERROR);
                 if (!is_array($payload) || ($payload['audience'] ?? '') !== 'internal') {
-                    throw new \RuntimeException('La cola contiene un mensaje no interno.');
+                    throw new \RuntimeException('La cola contiene un tipo de mensaje no permitido.');
                 }
                 $this->send(
                     (string) $message['recipient'],
@@ -83,15 +83,30 @@ final class MailService
         return $result;
     }
 
+    /** Envía una prueba directa sin activar ni consumir la cola de ventas. */
+    public function sendTest(string $recipient): void
+    {
+        $this->assertConfiguration();
+        $this->send(
+            $recipient,
+            'Prueba de correo · Laboratorio Digital',
+            '<!doctype html><html lang="es"><body style="margin:0;background:#f5f3f8;color:#24202a;font:16px Arial,sans-serif"><div style="max-width:620px;margin:auto;padding:28px"><div style="background:#fff;border:1px solid #e3dfea;border-radius:14px;padding:26px"><p style="margin:0 0 12px;color:#72569a;font-size:12px;font-weight:bold;letter-spacing:.08em">LABORATORIO DIGITAL</p><h1 style="margin:0 0 12px;font-size:24px">Amazon SES está conectado</h1><p style="margin:0">Esta es una prueba enviada por la tienda. Si la recibiste, el remitente, Reply-To y la conexión SMTP con Amazon SES están funcionando correctamente.</p></div></div></body></html>'
+        );
+    }
+
     private function assertConfiguration(): void
     {
-        if (($this->config['mail_transport'] ?? 'smtp') === 'native') {
+        $transport = (string) ($this->config['mail_transport'] ?? 'ses_smtp');
+        if ($transport === 'native') {
             if (trim((string) ($this->config['mail_from'] ?? '')) === '') {
                 throw new \RuntimeException('Falta completar el remitente del correo.');
             }
             return;
         }
 
+        if (!in_array($transport, ['smtp', 'ses_smtp'], true)) {
+            throw new \RuntimeException('El transporte de correo configurado no es válido.');
+        }
         foreach (['mail_from', 'mail_smtp_host', 'mail_smtp_username', 'mail_smtp_password'] as $key) {
             if (trim((string) ($this->config[$key] ?? '')) === '') {
                 throw new \RuntimeException('Falta completar la configuración privada de correo.');
@@ -102,10 +117,11 @@ final class MailService
     private function send(string $recipient, string $subject, string $html): void
     {
         if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
-            throw new \RuntimeException('El destinatario interno no es válido.');
+            throw new \RuntimeException('El destinatario de correo no es válido.');
         }
         $from = (string) $this->config['mail_from'];
-        if (($this->config['mail_transport'] ?? 'smtp') === 'native') {
+        $transport = (string) ($this->config['mail_transport'] ?? 'ses_smtp');
+        if ($transport === 'native') {
             $this->sendNative($recipient, $subject, $html);
             return;
         }
@@ -118,6 +134,9 @@ final class MailService
         $target = ($encryption === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
         $socket = @stream_socket_client($target, $errno, $error, 20, STREAM_CLIENT_CONNECT);
         if (!is_resource($socket)) {
+            if ($transport === 'ses_smtp') {
+                throw new \RuntimeException('No se pudo conectar de forma segura con Amazon SES: ' . $error);
+            }
             // En algunos planes compartidos el servidor bloquea conexiones SMTP
             // hacia sí mismo. El MTA local de Ferozo mantiene el mismo remitente.
             $this->sendNative($recipient, $subject, $html);
@@ -149,7 +168,7 @@ final class MailService
                 'Subject: ' . $encodedSubject,
                 'MIME-Version: 1.0',
                 'Content-Type: text/html; charset=UTF-8',
-                'From: Laboratorio Digital <' . $from . '>',
+                'From: ' . $this->headerText((string) ($this->config['mail_from_name'] ?? 'Laboratorio Digital')) . ' <' . $from . '>',
                 'Reply-To: ' . (string) ($this->config['mail_reply_to'] ?? $from),
                 'X-Mailer: Laboratorio Digital',
             ];
@@ -171,7 +190,7 @@ final class MailService
         $headers = [
             'MIME-Version: 1.0',
             'Content-Type: text/html; charset=UTF-8',
-            'From: Laboratorio Digital <' . $from . '>',
+            'From: ' . $this->headerText((string) ($this->config['mail_from_name'] ?? 'Laboratorio Digital')) . ' <' . $from . '>',
             'Reply-To: ' . (string) ($this->config['mail_reply_to'] ?? $from),
             'X-Mailer: Laboratorio Digital',
         ];
@@ -239,5 +258,10 @@ final class MailService
     private function escape(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    private function headerText(string $value): string
+    {
+        return trim(str_replace(["\r", "\n"], '', $value));
     }
 }

@@ -404,6 +404,15 @@ try {
                 'backup' => $app['backups']->create((int) $user['id']),
             ], 201);
 
+        case 'mail_test':
+            $app['auth']->requireAdmin();
+            $recipient = trim((string) ($input['recipient'] ?? ''));
+            if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+                throw new ValidationException('Indicá un destinatario de prueba válido.');
+            }
+            $app['mail']->sendTest($recipient);
+            Http::json(['ok' => true]);
+
         case 'reset_demo_data':
             $app['auth']->requireAdmin();
             Http::json([
