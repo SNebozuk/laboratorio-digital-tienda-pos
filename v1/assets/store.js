@@ -8,15 +8,17 @@
     let featuredProductIds = Array.isArray(app.featured_product_ids)
         ? app.featured_product_ids.map(Number).filter(Number.isFinite)
         : [];
+    const initialUrl = new URL(window.location.href);
     const linkedProductId = (() => {
-        const value = Number(new URL(window.location.href).searchParams.get('producto'));
+        const value = Number(initialUrl.searchParams.get('producto'));
         return Number.isFinite(value) && value > 0 ? value : null;
     })();
+    const initialSearchQuery = String(initialUrl.searchParams.get('buscar') || '').trim();
     const state = {
         category: '',
         showAll: false,
-        query: '',
-        searchActive: false,
+        query: initialSearchQuery,
+        searchActive: initialSearchQuery.length >= 3,
         openedProductId: linkedProductId,
         remoteSearchIds: new Set(),
         cart: new Map(),
@@ -103,6 +105,22 @@
             url.searchParams.set('producto', String(Number(productId)));
         }
         window.history.replaceState({}, '', url);
+    }
+
+    function searchShareUrl(query) {
+        const url = new URL(window.location.href);
+        const term = String(query || '').trim();
+        url.searchParams.delete('producto');
+        if (term.length >= 3) {
+            url.searchParams.set('buscar', term);
+        } else {
+            url.searchParams.delete('buscar');
+        }
+        return url.href;
+    }
+
+    function syncSearchUrl(query) {
+        window.history.replaceState({}, '', searchShareUrl(query));
     }
 
     const variantIndex = new Map();
@@ -763,8 +781,8 @@
         elements.results.innerHTML = `
             <section class="store-home home-search-embedded" aria-label="Resultados de búsqueda">
                 <div class="home-search-prompt">
-                    <strong>RESULTADOS PARA “${escapeHtml(query)}”</strong>
-                    <span>Encontramos productos en todo el catálogo, sin importar la categoría.</span>
+                    <div><strong>RESULTADOS PARA “${escapeHtml(query)}”</strong><span>Encontramos productos en todo el catálogo, sin importar la categoría.</span></div>
+                    <button class="search-share-link" type="button" data-copy-search-link="${escapeHtml(searchShareUrl(query))}" title="Copiar enlace de estos resultados">COPIAR ENLACE</button>
                 </div>
                 ${productSummaryList(matches, true)}
             </section>
@@ -1316,6 +1334,7 @@
         state.searchActive = false;
         state.openedProductId = null;
         syncProductUrl(null);
+        syncSearchUrl('');
         state.query = '';
         state.remoteSearchIds = new Set();
         elements.search.value = '';
@@ -1335,6 +1354,14 @@
             navigator.clipboard.writeText(copyBank.dataset.copyBank)
                 .then(() => toast('Dato bancario copiado.'))
                 .catch(() => window.prompt('Copiá este dato:', copyBank.dataset.copyBank));
+            return;
+        }
+        const copySearchLink = event.target.closest('[data-copy-search-link]');
+        if (copySearchLink) {
+            const link = copySearchLink.dataset.copySearchLink;
+            navigator.clipboard.writeText(link)
+                .then(() => toast('Enlace de búsqueda copiado. Ya podés pegarlo en WhatsApp.'))
+                .catch(() => window.prompt('Copiá este enlace:', link));
             return;
         }
         const imagePreview = event.target.closest('[data-image-preview]');
@@ -1369,6 +1396,7 @@
             state.searchActive = false;
             state.openedProductId = null;
             syncProductUrl(null);
+            syncSearchUrl('');
             state.remoteSearchIds = new Set();
             elements.search.value = '';
             setCategoryMenuOpen(false);
@@ -1488,6 +1516,7 @@
         state.searchActive = state.query.trim().length >= 3;
         state.openedProductId = null;
         syncProductUrl(null);
+        syncSearchUrl(state.query);
         scheduleCodeSearch(state.query);
         renderCatalog();
         if (state.searchActive && !catalogLoaded) {
@@ -1530,12 +1559,13 @@
             closeModal();
             return;
         }
+        const url = new URL(window.location.href);
         state.category = '';
         state.showAll = false;
-        state.query = '';
-        state.searchActive = false;
+        state.query = String(url.searchParams.get('buscar') || '').trim();
+        state.searchActive = state.query.length >= 3;
         state.openedProductId = null;
-        elements.search.value = '';
+        elements.search.value = state.query;
         renderCategories();
         renderCatalog();
     });
@@ -1649,6 +1679,8 @@
         }
     });
 
+    elements.search.value = state.query;
+    if (state.searchActive) scheduleCodeSearch(state.query);
     renderCategories();
     renderCatalog();
     renderCart();
