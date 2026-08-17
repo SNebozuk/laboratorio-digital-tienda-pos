@@ -276,7 +276,6 @@ header('Referrer-Policy: same-origin');
                                 <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
                                 <a class="order-quick-link" href="pos.php" target="_blank" rel="opener" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
                             </div>
-                            <button class="secondary-button" id="refresh-orders" type="button">⇩ Exportar lista</button>
                         </div>
                     </div>
                     <div class="order-toolbar">
@@ -304,6 +303,9 @@ header('Referrer-Policy: same-origin');
                         </label>
                     </div>
                     <div id="order-list" class="order-list"></div>
+                    <div class="order-list-footer">
+                        <button class="secondary-button" id="refresh-orders" type="button">⇩ Exportar lista</button>
+                    </div>
                 </section>
 
                 <section class="admin-view" id="view-deliveries">
