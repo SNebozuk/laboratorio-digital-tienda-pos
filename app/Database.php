@@ -9,6 +9,12 @@ use Throwable;
 
 final class Database
 {
+    /**
+     * Marca que todas las migraciones históricas de esta versión ya fueron
+     * aplicadas. Evita recorrer el esquema completo en cada visita pública.
+     */
+    private const CURRENT_MIGRATION_VERSION = 26;
+
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
         if (!extension_loaded('pdo_sqlite')) {
@@ -48,6 +54,35 @@ final class Database
 
     public static function migrate(PDO $pdo, string $schemaPath): void
     {
+        // La aplicación abre SQLite en cada petición PHP. Antes se ejecutaba
+        // todo el archivo de esquema y cada reparación histórica en cada
+        // carga de la tienda, aun cuando la base ya estaba actualizada. En un
+        // hosting compartido eso agrega una demora muy perceptible.
+        try {
+            $current = $pdo->prepare(
+                'SELECT 1 FROM schema_migrations WHERE version = :version LIMIT 1'
+            );
+            $current->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+            if ($current->fetchColumn() !== false) {
+                return;
+            }
+
+            // Las bases ya actualizadas hasta la migración 25 no necesitan
+            // repetir reparaciones históricas. Sólo se les agrega esta marca
+            // de rendimiento, sin tocar catálogo, ventas ni configuración.
+            $previous = $pdo->prepare(
+                'SELECT 1 FROM schema_migrations WHERE version = 25 LIMIT 1'
+            );
+            $previous->execute();
+            if ($previous->fetchColumn() !== false) {
+                $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
+                    ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+                return;
+            }
+        } catch (PDOException) {
+            // Es una base nueva: se crea el esquema completo a continuación.
+        }
+
         $schema = file_get_contents($schemaPath);
         if ($schema === false) {
             throw new \RuntimeException('No se pudo leer el esquema de base de datos.');
@@ -83,6 +118,8 @@ final class Database
         self::migrateDeliverySlotAmounts($pdo);
         self::migrateDeliveryReopen($pdo);
         self::uppercaseCustomerNames($pdo);
+        $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
+            ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
 
     private static function migrateDeliverySlots(PDO $pdo): void

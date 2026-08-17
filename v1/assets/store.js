@@ -1684,15 +1684,12 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    // La portada puede mostrarse sin descargar productos. El catálogo se carga
-    // al primer gesto del usuario o durante el tiempo ocioso del navegador.
+    // La portada puede mostrarse sin descargar cientos de productos. El
+    // catálogo completo se obtiene al buscar, abrir una categoría o pedir el
+    // listado; esto acelera la primera carga en equipos de escritorio.
     const loadCatalogWhenIdle = () => refreshCatalog();
     if (linkedProductId) {
         loadCatalogWhenIdle();
-    } else if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(loadCatalogWhenIdle, { timeout: 1200 });
-    } else {
-        window.setTimeout(loadCatalogWhenIdle, 700);
     }
     try {
         const completedOrder = JSON.parse(

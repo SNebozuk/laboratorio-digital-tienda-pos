@@ -1,6 +1,21 @@
 Options -Indexes
 DirectoryIndex index.php
 
+# Los nombres de CSS y JavaScript llevan una versión en la URL. Se pueden
+# guardar de forma segura en el navegador y así las visitas posteriores no
+# vuelven a descargar la interfaz completa.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(?:css|js|svg|woff2?|webp|png|jpe?g|gif|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+# Reduce notablemente la descarga del catálogo JSON cuando Apache cuenta con
+# mod_deflate (configuración habitual en hosting compartido).
+<IfModule mod_filter.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
