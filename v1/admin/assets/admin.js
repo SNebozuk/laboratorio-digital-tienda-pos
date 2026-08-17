@@ -9,6 +9,7 @@
         orders: [],
         deliverySlots: [],
         pendingDeliveryOrderId: 0,
+        pendingDeliveryOrderIds: [],
         deliveryQuery: '',
         orderQuery: '',
         orderStatus: '',
@@ -1749,19 +1750,34 @@
         ));
     }
 
+    function pendingDeliveryOrders() {
+        const ids = state.pendingDeliveryOrderIds.length
+            ? state.pendingDeliveryOrderIds
+            : (state.pendingDeliveryOrderId ? [state.pendingDeliveryOrderId] : []);
+        return ids.map(id => state.orders.find(order => Number(order.id) === Number(id))).filter(Boolean);
+    }
+
     function renderDeliverySlots() {
         if (!elements.deliverySlots) return;
         const byNumber = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
-        const pending = state.orders.find(order => Number(order.id) === Number(state.pendingDeliveryOrderId));
-        const suggestions = pending ? suggestedDeliverySlots(pending) : [];
+        const pendingOrders = pendingDeliveryOrders();
+        const pending = pendingOrders[0];
+        const pendingIds = pendingOrders.map(order => Number(order.id));
+        const suggestions = pendingOrders.length === 1 ? suggestedDeliverySlots(pending) : [];
         const suggestedNumbers = new Set(suggestions.map(slot => Number(slot.slot_number)));
         const query = fold(state.deliveryQuery);
         if (elements.deliveryCopyGuide) {
             elements.deliveryCopyGuide.hidden = !pending;
             const suggestedHtml = suggestions.length
-                ? `<span class="delivery-suggestion-label">Posibles coincidencias de cliente:</span><span class="delivery-suggestions">${suggestions.map(slot => `<button type="button" class="delivery-suggestion" data-place-delivery-order="${Number(pending.id)}" data-place-delivery-slot="${Number(slot.slot_number)}">FILA ${Number(slot.slot_number)}${slot.location ? ` · ${escapeHtml(slot.location)}` : ''}</button>`).join('')}</span>`
+                ? `<span class="delivery-suggestion-label">Posibles coincidencias de cliente:</span><span class="delivery-suggestions">${suggestions.map(slot => `<button type="button" class="delivery-suggestion" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${Number(slot.slot_number)}">FILA ${Number(slot.slot_number)}${slot.location ? ` · ${escapeHtml(slot.location)}` : ''}</button>`).join('')}</span>`
                 : '<span>Elegí una fila: una vacía queda marcada <b>ARMAR</b>; si ya tiene pedidos, se suma como <b>AGREGAR</b>.</span>';
-            elements.deliveryCopyGuide.innerHTML = pending ? `<strong><span class="delivery-guide-arrow" aria-hidden="true">→</span> ${escapeHtml(pending.public_number)}</strong><span class="delivery-guide-content"><span>${escapeHtml(pending.customer_name)}.</span>${suggestedHtml}</span><button class="small-button" type="button" data-cancel-delivery-placement>CANCELAR</button>` : '';
+            const pendingLabel = pendingOrders.length === 1
+                ? `${escapeHtml(pending.public_number)}`
+                : `${pendingOrders.length} VENTAS`;
+            const customerLabel = pendingOrders.length === 1
+                ? `${escapeHtml(pending.customer_name)}.`
+                : 'Las ventas seleccionadas se agregarán juntas, separadas por / y con sus importes sumados.';
+            elements.deliveryCopyGuide.innerHTML = pending ? `<strong><span class="delivery-guide-arrow" aria-hidden="true">→</span> ${pendingLabel}</strong><span class="delivery-guide-content"><span>${customerLabel}</span>${suggestedHtml}</span><button class="small-button" type="button" data-cancel-delivery-placement>CANCELAR</button>` : '';
         }
         const rows = Array.from({ length: 100 }, (_, index) => {
             const number = index + 1;
@@ -1771,7 +1787,7 @@
             const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
             const location = `<input type="text" value="${escapeHtml(slot.location || '')}" data-delivery-field="location" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="Ubicación fila ${number}">`;
             const markerButton = /\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear" type="button" data-clear-delivery-marker="${number}" title="Quitar ARMAR / AGREGAR">⊘</button>` : '';
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-order="${Number(pending.id)}" data-place-delivery-slot="${number}" aria-label="Ubicar ${escapeHtml(pending.public_number)} en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
@@ -1817,6 +1833,7 @@
         if (order.delivery_slot_number && !order.delivery_reopened_at) { toast('Esta venta ya fue copiada a Entregas.'); return; }
         await loadDeliverySlots();
         state.pendingDeliveryOrderId = Number(orderId);
+        state.pendingDeliveryOrderIds = [];
         state.deliveryQuery = '';
         showView('deliveries');
         const suggestions = suggestedDeliverySlots(order);
@@ -1825,14 +1842,38 @@
             : 'Elegí la fila donde querés ubicar esta venta.');
     }
 
-    async function copyOrderToDelivery(orderId, slot) {
+    async function showSelectedOrdersToDeliveries(orderIds) {
+        const orders = orderIds.map(id => state.orders.find(order => Number(order.id) === Number(id))).filter(Boolean);
+        const available = orders.filter(order => !order.delivery_slot_number || order.delivery_reopened_at);
+        if (!available.length) { toast('Las ventas seleccionadas ya fueron copiadas a Entregas.'); return; }
+        await loadDeliverySlots();
+        state.pendingDeliveryOrderId = 0;
+        state.pendingDeliveryOrderIds = available.map(order => Number(order.id));
+        state.deliveryQuery = '';
+        showView('deliveries');
+        toast(`Elegí una fila para pasar ${available.length === 1 ? 'la venta seleccionada' : `las ${available.length} ventas seleccionadas`}.`);
+    }
+
+    async function copyOrdersToDelivery(orderIds, slot) {
+        const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
         try {
-            await apiPost({ action: 'delivery_copy_order', order_id: Number(orderId), slot_number: slot });
+            if (!ids.length) return;
+            await apiPost(ids.length === 1
+                ? { action: 'delivery_copy_order', order_id: ids[0], slot_number: slot }
+                : { action: 'delivery_copy_orders', order_ids: ids, slot_number: slot });
             state.pendingDeliveryOrderId = 0;
+            state.pendingDeliveryOrderIds = [];
+            state.selectedOrderIds.clear();
             await Promise.all([loadOrders(true), loadDeliverySlots()]);
-            openModal(`<p class="eyebrow">PEDIDO UBICADO</p><h2 id="modal-title">FILA ${slot}</h2><p class="empty-copy">La venta fue agregada correctamente a la ubicación <strong>${slot}</strong>.</p><div class="modal-actions"><button class="primary-button" type="button" data-print-delivery-order="${Number(orderId)}">IMPRIMIR COMPROBANTE</button><button class="secondary-button" type="button" data-archive-delivery-order="${Number(orderId)}">ARCHIVAR VENTA</button><button class="secondary-button" type="button" data-close-modal>LISTO</button></div>`);
+            if (ids.length === 1) {
+                openModal(`<p class="eyebrow">PEDIDO UBICADO</p><h2 id="modal-title">FILA ${slot}</h2><p class="empty-copy">La venta fue agregada correctamente a la ubicación <strong>${slot}</strong>.</p><div class="modal-actions"><button class="primary-button" type="button" data-print-delivery-order="${ids[0]}">IMPRIMIR COMPROBANTE</button><button class="secondary-button" type="button" data-archive-delivery-order="${ids[0]}">ARCHIVAR VENTA</button><button class="secondary-button" type="button" data-close-modal>LISTO</button></div>`);
+            } else {
+                toast(`${ids.length} ventas fueron agregadas a la fila ${slot}.`);
+            }
         } catch (error) { toast(error.message); }
     }
+
+    async function copyOrderToDelivery(orderId, slot) { return copyOrdersToDelivery([orderId], slot); }
 
     async function deleteDeliverySlot(slotNumber) {
         try {
@@ -2378,6 +2419,7 @@
                 : 'ACCIONES SOBRE LAS VENTAS SELECCIONADAS';
         }
         [
+            ['pass_to_deliveries', 'Pasar'],
             ['archive', 'Archivar'],
             ['cancel', 'Cancelar'],
             ['reopen', 'Reabrir'],
@@ -3765,9 +3807,10 @@
             deleteDeliverySlot(Number(deleteDelivery.dataset.deleteDeliverySlot));
             return;
         }
-        const placeDelivery = event.target.closest('[data-place-delivery-order]');
+        const placeDelivery = event.target.closest('[data-place-delivery-orders]');
         if (placeDelivery) {
-            copyOrderToDelivery(Number(placeDelivery.dataset.placeDeliveryOrder), Number(placeDelivery.dataset.placeDeliverySlot));
+            const ids = String(placeDelivery.dataset.placeDeliveryOrders || '').split(',').map(Number).filter(Number.isFinite);
+            copyOrdersToDelivery(ids, Number(placeDelivery.dataset.placeDeliverySlot));
             return;
         }
         const clearMarker = event.target.closest('[data-clear-delivery-marker]');
@@ -3788,6 +3831,7 @@
         }
         if (event.target.closest('[data-cancel-delivery-placement]')) {
             state.pendingDeliveryOrderId = 0;
+            state.pendingDeliveryOrderIds = [];
             renderDeliverySlots();
             return;
         }
@@ -4167,6 +4211,8 @@
                 return;
             }
             printStoredOrders(ids, 'grouped');
+        } else if (action === 'pass_to_deliveries') {
+            showSelectedOrdersToDeliveries(ids);
         } else if (action === 'cancel') {
             showCancellationDialog(ids);
         } else if (action === 'archive') {
@@ -4194,6 +4240,8 @@
                 return;
             }
             printStoredOrders(ids, 'grouped');
+        } else if (action === 'pass_to_deliveries') {
+            showSelectedOrdersToDeliveries(ids);
         } else if (action === 'cancel') {
             showCancellationDialog(ids);
         } else if (action === 'archive') {

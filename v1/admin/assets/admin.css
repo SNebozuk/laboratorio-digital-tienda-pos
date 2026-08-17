@@ -3220,6 +3220,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 /* Entrega de pedidos: cien ubicaciones físicas, sin reordenamientos. */
 #view-deliveries { padding-bottom: 36px; }
+.delivery-back-link { display: inline-flex; margin: 0 0 14px; }
 /* Entregas es una mesa de trabajo: ocupa el ancho completo del administrador. */
 .admin-shell.delivery-workspace { display: block; min-height: 100vh; }
 .admin-shell.delivery-workspace .admin-sidebar { display: none; }

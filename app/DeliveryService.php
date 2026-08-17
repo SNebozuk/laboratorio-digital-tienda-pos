@@ -51,30 +51,46 @@ final class DeliveryService
     /** @return array<string, mixed> */
     public function copyOrder(int $orderId, int $slot, int $actorUserId): array
     {
+        return $this->copyOrders([$orderId], $slot, $actorUserId);
+    }
+
+    /** @param list<int> $orderIds @return array<string, mixed> */
+    public function copyOrders(array $orderIds, int $slot, int $actorUserId): array
+    {
         $this->assertSlot($slot);
-        return Database::immediate($this->pdo, function (PDO $pdo) use ($orderId, $slot, $actorUserId): array {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $orderIds), static fn (int $id): bool => $id > 0)));
+        if ($ids === []) throw new ValidationException('Elegí al menos una venta para pasar a Entregas.');
+        return Database::immediate($this->pdo, function (PDO $pdo) use ($ids, $slot, $actorUserId): array {
             $orderQuery = $pdo->prepare('SELECT id, public_number, customer_name, total_cents, delivery_slot_number, delivery_reopened_at FROM orders WHERE id = :id');
-            $orderQuery->execute(['id' => $orderId]);
-            $order = $orderQuery->fetch();
-            if (!$order) throw new ValidationException('La venta no existe.');
-            if ($order['delivery_slot_number'] !== null && $order['delivery_reopened_at'] === null) throw new ConflictException('Esta venta ya fue copiada a Entregas.');
+            $orders = [];
+            foreach ($ids as $orderId) {
+                $orderQuery->execute(['id' => $orderId]);
+                $order = $orderQuery->fetch();
+                if (!$order) throw new ValidationException('Una de las ventas ya no existe.');
+                if ($order['delivery_slot_number'] !== null && $order['delivery_reopened_at'] === null) throw new ConflictException('Una de las ventas ya fue copiada a Entregas.');
+                $orders[] = $order;
+            }
             $existing = $this->findSlot($pdo, $slot);
             $hasOrder = trim((string) ($existing['order_numbers'] ?? '')) !== '';
-            $orderNumbers = $hasOrder ? trim((string) $existing['order_numbers']) . ' / ' . $order['public_number'] : (string) $order['public_number'];
+            $newNumbers = implode(' / ', array_map(static fn (array $order): string => (string) $order['public_number'], $orders));
+            $orderNumbers = $hasOrder ? trim((string) $existing['order_numbers']) . ' / ' . $newNumbers : $newNumbers;
             $customer = $hasOrder
                 ? $this->setMarker((string) ($existing['customer_name'] ?? ''), 'AGREGAR')
-                : trim((string) $order['customer_name']) . ' · ARMAR';
+                : trim((string) $orders[0]['customer_name']) . ' · ARMAR';
+            $total = array_sum(array_map(static fn (array $order): int => (int) $order['total_cents'], $orders));
             if ($existing) {
                 $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, customer_name = :customer, order_total_cents = order_total_cents + :total, revision = revision + 1, updated_by = :user, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
-                    ->execute(['orders' => $orderNumbers, 'customer' => $customer, 'total' => (int) $order['total_cents'], 'user' => $actorUserId, 'slot' => $slot]);
+                    ->execute(['orders' => $orderNumbers, 'customer' => $customer, 'total' => $total, 'user' => $actorUserId, 'slot' => $slot]);
             } else {
                 $pdo->prepare('INSERT INTO delivery_slots(slot_number, order_numbers, customer_name, order_total_cents, revision, updated_by) VALUES(:slot, :orders, :customer, :total, 1, :user)')
-                    ->execute(['slot' => $slot, 'orders' => $orderNumbers, 'customer' => $customer, 'total' => (int) $order['total_cents'], 'user' => $actorUserId]);
+                    ->execute(['slot' => $slot, 'orders' => $orderNumbers, 'customer' => $customer, 'total' => $total, 'user' => $actorUserId]);
             }
             $updated = $pdo->prepare('UPDATE orders SET delivery_slot_number = :slot, delivery_copied_at = CURRENT_TIMESTAMP, delivery_reopened_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND (delivery_slot_number IS NULL OR delivery_reopened_at IS NOT NULL)');
-            $updated->execute(['slot' => $slot, 'id' => $orderId]);
-            if ($updated->rowCount() !== 1) throw new ConflictException('Esta venta fue copiada por otra persona.');
-            return ['slot' => $this->findSlot($pdo, $slot), 'order_id' => $orderId];
+            foreach ($ids as $orderId) {
+                $updated->execute(['slot' => $slot, 'id' => $orderId]);
+                if ($updated->rowCount() !== 1) throw new ConflictException('Una venta fue copiada por otra persona.');
+            }
+            return ['slot' => $this->findSlot($pdo, $slot), 'order_ids' => $ids];
         });
     }
 

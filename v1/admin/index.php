@@ -296,6 +296,7 @@ header('Referrer-Policy: same-origin');
                                 <option value="">Acciones</option>
                                 <option value="print_individual">Imprimir ventas individuales</option>
                                 <option value="print_grouped">Imprimir y agrupar ventas</option>
+                                <option value="pass_to_deliveries">Pasar Ventas</option>
                                 <option value="archive">Archivar Ventas</option>
                                 <option value="cancel">Cancelar Ventas</option>
                                 <option value="reopen">Reabrir Ventas</option>
@@ -309,6 +310,7 @@ header('Referrer-Policy: same-origin');
                 </section>
 
                 <section class="admin-view" id="view-deliveries">
+                    <a href="./?view=orders" class="pos-back-link delivery-back-link">← Administración</a>
                     <div class="view-heading">
                         <div>
                             <p class="eyebrow">ARMADO FÍSICO</p>
