@@ -804,35 +804,35 @@
                     <section class="purchase-guide" aria-labelledby="purchase-guide-title">
                         <header class="purchase-guide-head">
                             <p class="eyebrow">COMPRÁ SIN VUELTAS</p>
-                            <h2 id="purchase-guide-title">ASÍ DE FÁCIL</h2>
+                            <h2 id="purchase-guide-title">COMPRÁ EN 3 PASOS</h2>
                             <span>Deslizá para ver los 3 pasos →</span>
                         </header>
                         <div class="purchase-guide-track">
                             <article class="purchase-guide-card">
                                 <figure class="purchase-photo"><img src="/v1/assets/guide/comprar-paso-1.webp" alt="Persona buscando un producto desde su teléfono" loading="eager"><b class="purchase-step-number">1</b></figure>
-                                <div><strong>BUSCÁ</strong><span>Escribí lo que necesitás.</span></div>
+                                <div><strong>1. BUSCÁ</strong><span>Escribí lo que necesitás.</span></div>
                             </article>
                             <article class="purchase-guide-card">
                                 <figure class="purchase-ui-shot purchase-ui-select" aria-label="Ejemplo de cómo elegir una variante y cantidad">
                                     <b class="purchase-step-number">2</b>
-                                    <span class="guide-shot-title">BUSCAR PRODUCTO</span>
-                                    <span class="guide-shot-search">⌕ &nbsp; Filmilo blanco</span>
-                                    <span class="guide-shot-product"><strong>FILMILO BLANCO</strong><small>Elegí variante y cantidad</small></span>
-                                    <span class="guide-shot-quantity"><em>TALLE A4</em><i>−</i><b>1</b><i>+</i></span>
-                                    <span class="guide-shot-callout">TOCÁ + PARA SUMAR <b>↗</b></span>
+                                    <span class="guide-shot-title">ENCONTRASTE TU PRODUCTO</span>
+                                    <span class="guide-shot-search">⌕ &nbsp; BUSCÁ: FILMILO</span>
+                                    <span class="guide-shot-product"><strong>FILMILO BLANCO</strong><small>Elegí la opción que necesitás</small></span>
+                                    <span class="guide-shot-quantity"><em>A4</em><span class="guide-shot-arrow">→</span><i>−</i><b>1</b><i>+</i></span>
+                                    <span class="guide-shot-callout">SUMALO AL CARRITO <b>↑</b></span>
                                 </figure>
-                                <div><strong>ELEGÍ</strong><span>Marcá variante y cantidad.</span></div>
+                                <div><strong>2. ELEGÍ Y SUMÁ</strong><span>Seleccioná una opción y tocá +.</span></div>
                             </article>
                             <article class="purchase-guide-card">
                                 <figure class="purchase-ui-shot purchase-ui-checkout" aria-label="Ejemplo de cómo confirmar el pedido">
                                     <b class="purchase-step-number">3</b>
-                                    <span class="guide-shot-title">DATOS DEL PEDIDO</span>
-                                    <span class="guide-shot-field">Nombre y apellido</span>
-                                    <span class="guide-shot-field">WhatsApp</span>
-                                    <span class="guide-shot-confirm">CONFIRMAR PEDIDO</span>
-                                    <span class="guide-shot-callout">COMPLETÁ ESTOS DATOS <b>↗</b></span>
+                                    <span class="guide-shot-title">¡YA CASI ESTÁ!</span>
+                                    <span class="guide-shot-field"><b>✓</b> Nombre y apellido</span>
+                                    <span class="guide-shot-field"><b>✓</b> WhatsApp</span>
+                                    <span class="guide-shot-confirm">ENVIAR PEDIDO</span>
+                                    <span class="guide-shot-callout">TOCÁ ACÁ <b>↓</b></span>
                                 </figure>
-                                <div><strong>CONFIRMÁ</strong><span>Completá tus datos y envialo por WhatsApp.</span></div>
+                                <div><strong>3. CONFIRMÁ</strong><span>Completá tus datos y enviá el pedido.</span></div>
                             </article>
                         </div>
                     </section>
