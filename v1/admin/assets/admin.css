@@ -3492,3 +3492,52 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-main .secondary-button,
 .admin-main .small-button { font-size:14px; }
 @media (max-width:700px) { .admin-main input,.admin-main select,.admin-main textarea { font-size:16px !important; } }
+
+/* Fondo claro y lectura consistente en toda la administración.
+   Estas reglas finales reemplazan la antigua piel oscura de Ventas. */
+#view-orders,
+#view-orders::before,
+#view-orders .view-heading,
+#view-orders .order-page-heading {
+    background: #f6f7fb !important;
+    color: #252a3a !important;
+}
+#view-orders .view-heading {
+    border-color: #e2e6ef !important;
+    box-shadow: none !important;
+}
+#view-orders .view-heading h1,
+#view-orders .view-heading h1 small,
+#view-orders .view-heading p {
+    color: #252a3a !important;
+}
+
+/* Base única para que la lectura no dependa de pasar el mouse por una fila. */
+.admin-body,
+.admin-shell,
+.admin-main,
+.admin-main .admin-view,
+.admin-main .admin-modal-card {
+    font-family: "Segoe UI", Arial, sans-serif !important;
+    color: #252a3a;
+}
+.admin-main :is(p, li, label, legend, dt, dd, .form-hint, .invitation-note,
+    .empty-copy, .empty-state, .notice, .status-copy, .order-list-empty span) {
+    font-size: 15px;
+    line-height: 1.5;
+}
+.admin-main :is(button, input, select, textarea) {
+    font-size: 15px !important;
+    line-height: 1.35;
+}
+.admin-main :is(h1, h2, h3) { line-height: 1.18; }
+.admin-main small { font-size: 13px; line-height: 1.4; }
+.admin-main table thead th { font-size: 13px !important; }
+
+@media (max-width:700px) {
+    .admin-main :is(p, li, label, legend, dt, dd, .form-hint, .invitation-note,
+        .empty-copy, .empty-state, .notice, .status-copy, .order-list-empty span),
+    .admin-main :is(button, input, select, textarea) { font-size: 16px !important; }
+    .admin-main small,
+    .admin-main table thead th { font-size: 13px !important; }
+}
