@@ -2292,11 +2292,6 @@
         if (String(order.customer_phone || '').replace(/\D+/g, '').length >= 8) {
             actions.push(`<button class="small-button" type="button" data-whatsapp-order="${Number(order.id)}">WhatsApp</button>`);
         }
-        if (['web', 'whatsapp'].includes(order.channel) && order.status !== 'cancelled') {
-            actions.push(
-                `<button class="small-button" type="button" data-edit-order="${Number(order.id)}">Editar productos</button>`
-            );
-        }
         return actions.join('');
     }
 

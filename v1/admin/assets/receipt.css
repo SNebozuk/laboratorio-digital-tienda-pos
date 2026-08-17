@@ -151,6 +151,13 @@ small,
         padding: 0;
     }
 
+    /* Cada venta agrupada se imprime como un bloque entero. Si no entra
+       completa, el navegador debe iniciar esa venta en la hoja siguiente. */
+    .receipt-batch .receipt-order {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+    }
+
     thead { display: table-header-group; }
     tr { break-inside: avoid; page-break-inside: avoid; }
     tbody tr:nth-child(even) { background: #e9ecef !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
