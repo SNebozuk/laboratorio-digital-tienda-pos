@@ -98,6 +98,27 @@ final class Auth
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
 
+    public function newOrderCount(int $userId): int
+    {
+        $query = $this->pdo->prepare(
+            "SELECT COUNT(*)
+             FROM orders o
+             JOIN users u ON u.id = :user_id
+             WHERE o.created_at > COALESCE(u.orders_seen_at, CURRENT_TIMESTAMP)
+               AND o.archived_at IS NULL"
+        );
+        $query->execute(['user_id' => $userId]);
+        return (int) $query->fetchColumn();
+    }
+
+    public function markOrdersSeen(int $userId): void
+    {
+        $update = $this->pdo->prepare(
+            'UPDATE users SET orders_seen_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id'
+        );
+        $update->execute(['id' => $userId]);
+    }
+
     public function createInitialAdmin(
         string $setupToken,
         string $configuredToken,

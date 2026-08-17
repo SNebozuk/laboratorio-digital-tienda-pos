@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 27;
+    private const CURRENT_MIGRATION_VERSION = 28;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -67,15 +67,15 @@ final class Database
                 return;
             }
 
-            // Las bases ya actualizadas hasta la migración 26 sólo necesitan
-            // crear la tabla de solicitudes de invitación. Evitamos repetir
+            // Las bases ya actualizadas hasta la migración 27 sólo necesitan
+            // agregar la marca de lectura del listado de ventas. Evitamos repetir
             // todas las reparaciones históricas en cada visita pública.
             $previous = $pdo->prepare(
-                'SELECT 1 FROM schema_migrations WHERE version = 26 LIMIT 1'
+                'SELECT 1 FROM schema_migrations WHERE version = 27 LIMIT 1'
             );
             $previous->execute();
             if ($previous->fetchColumn() !== false) {
-                self::migrateInvitations($pdo);
+                self::migrateOrderNotificationSeen($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -120,6 +120,7 @@ final class Database
         self::migrateDeliveryReopen($pdo);
         self::uppercaseCustomerNames($pdo);
         self::migrateInvitations($pdo);
+        self::migrateOrderNotificationSeen($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
@@ -144,6 +145,27 @@ final class Database
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )");
             $pdo->exec('CREATE INDEX IF NOT EXISTS idx_invitation_requests_status_created ON invitation_requests(status, created_at DESC)');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    /** Guarda por usuario hasta qué momento revisó el listado de ventas. */
+    private static function migrateOrderNotificationSeen(PDO $pdo): void
+    {
+        $version = 28;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $columns = array_column($pdo->query('PRAGMA table_info(users)')->fetchAll(), 'name');
+            if (!in_array('orders_seen_at', $columns, true)) {
+                $pdo->exec('ALTER TABLE users ADD COLUMN orders_seen_at TEXT');
+            }
+            // Las ventas anteriores no deben aparecer como una alerta nueva.
+            $pdo->exec('UPDATE users SET orders_seen_at = CURRENT_TIMESTAMP WHERE orders_seen_at IS NULL');
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

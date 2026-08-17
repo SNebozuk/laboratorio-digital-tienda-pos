@@ -27,6 +27,7 @@
         users: [],
         invitations: [],
         pendingInvitationCount: 0,
+        newOrderCount: 0,
         posCart: new Map(),
         posQuery: '',
         posProductId: null,
@@ -136,6 +137,7 @@
         mobileView: document.getElementById('mobile-view'),
         invitationList: document.getElementById('invitation-list'),
         invitationsBadge: document.getElementById('invitations-badge'),
+        ordersBadge: document.getElementById('orders-badge'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -144,6 +146,7 @@
     let quickUpdateInFlight = 0;
     let productActionsMenuPauseUntil = 0;
     let invitationBadgeRefreshAt = 0;
+    let orderBadgeRefreshAt = 0;
 
     async function apiGet(action, parameters = {}) {
         const url = new URL(app.api_url, window.location.href);
@@ -300,7 +303,7 @@
             elements.mobileView.value = view;
         }
         if (view === 'orders') {
-            loadOrders();
+            loadOrders().then(markOrdersSeen);
         }
         if (view === 'deliveries') {
             loadDeliverySlots();
@@ -374,6 +377,36 @@
             renderInvitationBadge();
         } catch (error) {
             toast(error.message);
+        }
+    }
+
+    function renderOrderBadge() {
+        if (!elements.ordersBadge) return;
+        const count = Number(state.newOrderCount || 0);
+        elements.ordersBadge.hidden = count < 1;
+        elements.ordersBadge.textContent = String(count);
+        elements.ordersBadge.setAttribute('aria-label', `${count} ventas nuevas desde la última revisión`);
+    }
+
+    async function loadOrderNotifications() {
+        if (!elements.ordersBadge) return;
+        try {
+            const data = await apiGet('order_notifications');
+            state.newOrderCount = Number(data.new_count || 0);
+            renderOrderBadge();
+        } catch (error) {
+            // Una alerta no debe interrumpir el trabajo si la red se demora.
+        }
+    }
+
+    async function markOrdersSeen() {
+        if (!elements.ordersBadge) return;
+        try {
+            await apiPost({ action: 'order_notifications_seen' });
+            state.newOrderCount = 0;
+            renderOrderBadge();
+        } catch (error) {
+            // La lista permanece disponible aunque la marca de lectura falle.
         }
     }
 
@@ -2093,6 +2126,10 @@
             if (elements.invitationsBadge && state.view !== 'invitations' && Date.now() >= invitationBadgeRefreshAt) {
                 invitationBadgeRefreshAt = Date.now() + 10000;
                 await loadInvitations();
+            }
+            if (elements.ordersBadge && state.view !== 'orders' && Date.now() >= orderBadgeRefreshAt) {
+                orderBadgeRefreshAt = Date.now() + 10000;
+                await loadOrderNotifications();
             }
             if (elements.posProducts || elements.posCartLines) {
                 await refreshPosAvailability();
@@ -4765,6 +4802,7 @@
         restorePosCustomer();
         loadProducts();
         if (elements.invitationsBadge) loadInvitations();
+        if (elements.ordersBadge) loadOrderNotifications();
         renderPosCart();
         if (document.getElementById('view-orders')) {
             const requestedView = new URL(window.location.href).searchParams.get('view') || 'orders';

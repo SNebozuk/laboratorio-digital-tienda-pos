@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     role TEXT NOT NULL CHECK (role IN ('admin', 'seller')),
     active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
     last_login_at TEXT,
+    orders_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -69,6 +69,13 @@ try {
                     ),
                 ]);
 
+            case 'order_notifications':
+                $user = $app['auth']->requireUser();
+                Http::json([
+                    'ok' => true,
+                    'new_count' => $app['auth']->newOrderCount((int) $user['id']),
+                ]);
+
             case 'delivery_slots':
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'slots' => $app['deliveries']->slots()]);
@@ -358,6 +365,11 @@ try {
                 (int) ($input['order_id'] ?? 0),
                 (int) $user['id']
             );
+            Http::json(['ok' => true]);
+
+        case 'order_notifications_seen':
+            $user = $app['auth']->requireUser();
+            $app['auth']->markOrdersSeen((int) $user['id']);
             Http::json(['ok' => true]);
 
         case 'order_reopen':
