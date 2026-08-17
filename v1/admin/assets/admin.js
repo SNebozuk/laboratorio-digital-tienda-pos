@@ -28,6 +28,7 @@
         posCart: new Map(),
         posQuery: '',
         posProductId: null,
+        posShortcutVariantId: 0,
         pendingBarcode: '',
         barcodeBuffer: '',
         barcodeStartedAt: 0,
@@ -4345,11 +4346,23 @@
         }
         if (event.key === 'Escape') {
             event.preventDefault();
-            if (document.body.classList.contains('pos-search-page')) {
-                window.location.href = 'pos.php';
-            } else {
-                closePosSuggestions();
-            }
+            closePosSuggestions();
+        }
+    });
+    document.addEventListener('pointerover', event => {
+        const button = event.target.closest?.('button[data-pos-quantity]');
+        if (!button || button.disabled) return;
+        const variantId = Number(button.dataset.posQuantity);
+        if (Number(button.dataset.value) > posQuantity(variantId)) {
+            state.posShortcutVariantId = variantId;
+        }
+    });
+    document.addEventListener('focusin', event => {
+        const button = event.target.closest?.('button[data-pos-quantity]');
+        if (!button || button.disabled) return;
+        const variantId = Number(button.dataset.posQuantity);
+        if (Number(button.dataset.value) > posQuantity(variantId)) {
+            state.posShortcutVariantId = variantId;
         }
     });
     document.addEventListener('keydown', event => {
@@ -4372,9 +4385,15 @@
         // Con foco en un botón +, Espacio suma una sola unidad sin requerir mouse.
         // Se evita el clic nativo posterior para que no duplique la cantidad.
         if (event.key === ' ' || event.key === 'Spacebar') {
-            const addButton = document.activeElement instanceof Element
+            let addButton = document.activeElement instanceof Element
                 ? document.activeElement.closest('button[data-pos-quantity]')
                 : null;
+            if (!addButton && state.posShortcutVariantId) {
+                addButton = Array.from(document.querySelectorAll('button[data-pos-quantity]')).find(button => (
+                    Number(button.dataset.posQuantity) === Number(state.posShortcutVariantId)
+                    && Number(button.dataset.value) > posQuantity(Number(button.dataset.posQuantity))
+                )) || null;
+            }
             const variantId = Number(addButton?.dataset.posQuantity);
             const nextValue = Number(addButton?.dataset.value);
             if (addButton && !addButton.disabled && nextValue > posQuantity(variantId)) {
@@ -4410,21 +4429,6 @@
         ) {
             event.preventDefault();
             showView('orders');
-        } else if (
-            event.key === 'Escape'
-            && !event.defaultPrevented
-            && document.querySelector('.pos-page')
-        ) {
-            event.preventDefault();
-            // El carrito queda guardado en localStorage hasta que se finalice la venta.
-            returnToAdminOrders(false);
-        } else if (
-            event.key === 'Escape'
-            && !event.defaultPrevented
-            && document.body.classList.contains('pos-search-page')
-        ) {
-            event.preventDefault();
-            window.location.href = 'pos.php';
         }
     });
     document.addEventListener('keydown', captureGlobalBarcode);

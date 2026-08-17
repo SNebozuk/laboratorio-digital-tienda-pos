@@ -89,6 +89,7 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
+                    <a class="admin-nav-button" href="pos.php">Punto de Venta</a>
                     <?php if ($user['role'] === 'admin'): ?>
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
