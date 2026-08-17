@@ -154,8 +154,9 @@ header('Referrer-Policy: same-origin');
                         </div>
                         <div class="order-page-actions"><button class="primary-button fit-button" id="new-product-button" type="button">NUEVO PRODUCTO</button></div>
                     </div>
-                    <div class="admin-search">
+                    <div class="admin-search product-search-tools">
                         <input id="admin-product-search" type="search" placeholder="Buscar por título, variante, SKU o código">
+                        <button class="small-button" id="copy-product-search-link" type="button" disabled>COPIAR ENLACE DE BÚSQUEDA</button>
                     </div>
                     <div id="admin-product-list"></div>
                 </section>

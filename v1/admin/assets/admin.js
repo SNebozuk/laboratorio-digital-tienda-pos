@@ -108,6 +108,7 @@
         toast: document.getElementById('toast'),
         productList: document.getElementById('admin-product-list'),
         productSearch: document.getElementById('admin-product-search'),
+        productSearchShare: document.getElementById('copy-product-search-link'),
         categoryTree: document.getElementById('category-admin-tree'),
         posSearch: document.getElementById('pos-search'),
         posSuggestions: document.getElementById('pos-suggestions'),
@@ -598,6 +599,27 @@
         const url = new URL(app.store_url || '/', window.location.href);
         url.searchParams.set('producto', String(Number(productId)));
         return url.href;
+    }
+
+    function productSearchShareUrl(query) {
+        const url = new URL(app.store_url || '/', window.location.href);
+        url.searchParams.set('buscar', String(query || '').trim());
+        return url.href;
+    }
+
+    async function shareProductSearch() {
+        const query = String(elements.productSearch?.value || '').trim();
+        if (query.length < 3) {
+            toast('Escribí al menos 3 letras para crear un enlace de búsqueda.');
+            return;
+        }
+        const url = productSearchShareUrl(query);
+        try {
+            await navigator.clipboard.writeText(url);
+            toast('Enlace de búsqueda copiado. Ya podés pegarlo en WhatsApp.');
+        } catch {
+            window.prompt('Copiá este enlace de búsqueda:', url);
+        }
     }
 
     async function shareProduct(productId) {
@@ -4203,7 +4225,12 @@
             toast(error.message);
         }
     });
-    elements.productSearch?.addEventListener('input', renderProducts);
+    elements.productSearch?.addEventListener('input', () => {
+        const canShare = String(elements.productSearch.value || '').trim().length >= 3;
+        if (elements.productSearchShare) elements.productSearchShare.disabled = !canShare;
+        renderProducts();
+    });
+    elements.productSearchShare?.addEventListener('click', shareProductSearch);
     elements.orderSearch?.addEventListener('input', event => {
         state.orderQuery = event.target.value;
         renderOrders();
