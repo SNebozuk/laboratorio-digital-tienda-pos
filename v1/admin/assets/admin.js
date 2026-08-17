@@ -4249,6 +4249,17 @@
     });
 
     document.getElementById('open-deliveries')?.addEventListener('click', () => showView('deliveries'));
+    document.getElementById('archive-consumer-final-orders')?.addEventListener('click', () => {
+        const consumerFinalOrders = state.orders.filter(order => (
+            !order.archived_at
+            && fold(order.customer_name) === 'consumidor final'
+        ));
+        if (!consumerFinalOrders.length) {
+            toast('No hay ventas activas de CONSUMIDOR FINAL para archivar.');
+            return;
+        }
+        archiveSelectedOrders(consumerFinalOrders.map(order => Number(order.id)));
+    });
 
     document.addEventListener('click', event => {
         const zone = event.target.closest('[data-image-drop]');
