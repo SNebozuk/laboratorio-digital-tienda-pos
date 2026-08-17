@@ -1854,7 +1854,21 @@
         toast(`Elegí una fila para pasar ${available.length === 1 ? 'la venta seleccionada' : `las ${available.length} ventas seleccionadas`}.`);
     }
 
-    async function copyOrdersToDelivery(orderIds, slot) {
+    function showDeliveryMatchWarning(orderIds, selectedSlot, order, matchingSlots) {
+        const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
+        openModal(`
+            <p class="eyebrow">POSIBLE PEDIDO DEL MISMO CLIENTE</p>
+            <h2 id="modal-title">¿DÓNDE QUERÉS UBICARLO?</h2>
+            <p class="empty-copy">Ya encontramos pedidos de <strong>${escapeHtml(order.customer_name)}</strong>. Para evitar separar compras por error, podés agregar esta venta directamente a una de estas filas.</p>
+            <div class="delivery-match-table-wrap"><table class="delivery-match-table"><thead><tr><th>FILA</th><th>UBICACIÓN</th><th>ÓRDENES</th><th>IMPORTE</th><th></th></tr></thead><tbody>
+                ${matchingSlots.map(item => `<tr><td><strong>${Number(item.slot_number)}</strong></td><td>${escapeHtml(item.location || '—')}</td><td>${escapeHtml(item.order_numbers || '—')}</td><td>${money(item.order_total_cents)}</td><td><button class="small-button" type="button" data-place-delivery-orders="${ids.join(',')}" data-place-delivery-slot="${Number(item.slot_number)}">USAR ESTA FILA →</button></td></tr>`).join('')}
+            </tbody></table></div>
+            <div class="delivery-match-choice"><span>También podés continuar con la fila <strong>${Number(selectedSlot)}</strong> que habías elegido.</span><button class="secondary-button" type="button" data-confirm-delivery-other-slot="${Number(selectedSlot)}" data-delivery-order-ids="${ids.join(',')}">UBICAR IGUAL EN FILA ${Number(selectedSlot)}</button></div>
+            <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
+        `);
+    }
+
+    async function copyOrdersToDelivery(orderIds, slot, skipDeliveryMatchWarning = false) {
         const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
         try {
             if (!ids.length) return;
@@ -1862,10 +1876,9 @@
             const pendingOrder = pendingOrders.length === 1 ? pendingOrders[0] : null;
             const matchingSlots = pendingOrder ? suggestedDeliverySlots(pendingOrder) : [];
             const selectedSuggestedSlot = matchingSlots.some(item => Number(item.slot_number) === Number(slot));
-            if (matchingSlots.length && !selectedSuggestedSlot) {
-                const rows = matchingSlots.map(item => `fila ${Number(item.slot_number)}${item.location ? ` (${item.location})` : ''}`).join(', ');
-                const proceed = window.confirm(`Atención: ya encontramos pedidos de ${pendingOrder.customer_name} en ${rows}.\n\nVas a colocar esta venta en la fila ${slot}. ¿Querés continuar igualmente?`);
-                if (!proceed) return;
+            if (matchingSlots.length && !selectedSuggestedSlot && !skipDeliveryMatchWarning) {
+                showDeliveryMatchWarning(ids, slot, pendingOrder, matchingSlots);
+                return;
             }
             await apiPost(ids.length === 1
                 ? { action: 'delivery_copy_order', order_id: ids[0], slot_number: slot }
@@ -3820,6 +3833,12 @@
         if (placeDelivery) {
             const ids = String(placeDelivery.dataset.placeDeliveryOrders || '').split(',').map(Number).filter(Number.isFinite);
             copyOrdersToDelivery(ids, Number(placeDelivery.dataset.placeDeliverySlot));
+            return;
+        }
+        const confirmOtherDeliverySlot = event.target.closest('[data-confirm-delivery-other-slot]');
+        if (confirmOtherDeliverySlot) {
+            const ids = String(confirmOtherDeliverySlot.dataset.deliveryOrderIds || '').split(',').map(Number).filter(Number.isFinite);
+            copyOrdersToDelivery(ids, Number(confirmOtherDeliverySlot.dataset.confirmDeliveryOtherSlot), true);
             return;
         }
         const clearMarker = event.target.closest('[data-clear-delivery-marker]');
