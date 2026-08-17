@@ -3324,6 +3324,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-order-total { color: #34214e; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .delivery-delete { display: grid; width: 34px; height: 34px; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #7c536c; cursor: pointer; font-size: 17px; }
 .delivery-delete:hover { background: #f5e3e9; color: #9a3152; }
+.delivery-row-number { display:flex; align-items:center; justify-content:flex-start; gap:7px; white-space:nowrap; }
+.delivery-row-number > span { display:inline-flex; align-items:center; }
 .delivery-flow-actions { display:flex; align-items:center; justify-content:center; gap:6px; min-width:154px; }
 .delivery-print,.delivery-return,.delivery-whatsapp { display:grid; width:44px; height:44px; place-items:center; padding:0; border:1px solid #c9b9de; border-radius:9px; background:#faf7ff; color:#4c2574; cursor:pointer; font-size:26px; line-height:1; }
 .delivery-print:hover { background:#694093; border-color:#694093; color:#fff; }

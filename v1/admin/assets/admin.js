@@ -1952,11 +1952,11 @@
                     ? `<button class="delivery-whatsapp" type="button" data-open-delivery-whatsapp="${number}" aria-label="Elegir WhatsApp de fila ${number}" title="Elegir WhatsApp">${whatsappLogoMarkup()}</button>`
                     : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">→</button>` : '';
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th scope="row">${number}${statusAttention}</th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${whatsappButton}${returnButton}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td><td><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button></td></tr>`;
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${whatsappButton}${returnButton}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td>${field('cash_due', 'Efectivo pendiente')}</td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
-            : '<tr><td class="delivery-no-results" colspan="11">No encontramos una fila que coincida con esa búsqueda.</td></tr>';
+            : '<tr><td class="delivery-no-results" colspan="10">No encontramos una fila que coincida con esa búsqueda.</td></tr>';
     }
 
     async function loadDeliverySlots() {
@@ -2211,21 +2211,15 @@
     async function deleteDeliverySlot(slotNumber) {
         const slot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slotNumber));
         const customer = String(slot?.customer_name || '').trim();
-        if (!customer || !deliveryCustomerKey(customer)) {
-            await removeDeliverySlot(slotNumber);
-            return;
-        }
+        const customerLabel = deliveryCustomerKey(customer) || 'sin nombre y apellido cargado';
         try {
             // Se consulta nuevamente al servidor para no depender del listado que pudo quedar viejo.
             const data = await apiGet('orders', { limit: 150, include_archived: 0 });
             const matches = (data.orders || []).filter(order => (
                 !order.archived_at
+                && customer !== ''
                 && isLikelySameDeliveryCustomer(customer, order.customer_name)
             ));
-            if (!matches.length) {
-                await removeDeliverySlot(slotNumber);
-                return;
-            }
             const details = await Promise.all(matches.map(async order => {
                 try {
                     return (await apiGet('order', { id: Number(order.id) })).order;
@@ -2236,10 +2230,10 @@
             openModal(`
                 <section class="delivery-delete-warning">
                     <p class="eyebrow">REVISIÓN ANTES DE VACIAR</p>
-                    <h2 id="modal-title">PEDIDOS SIN ARCHIVAR</h2>
-                    <p>La fila <strong>${Number(slotNumber)}</strong> corresponde a <strong>${escapeHtml(deliveryCustomerKey(customer))}</strong>. Encontramos ${details.length === 1 ? 'una venta activa' : `${details.length} ventas activas`} de esta persona en la Lista de Ventas.</p>
-                    <div class="delivery-match-table-wrap"><table class="delivery-match-table delivery-delete-orders"><thead><tr><th>VENTA</th><th>FECHA</th><th>PRODUCTOS</th><th>TOTAL</th><th>ESTADO</th></tr></thead><tbody>${details.map(deliveryOrderSummary).join('')}</tbody></table></div>
-                    <p class="notice">Vaciar la fila no archiva ni cancela estas ventas; solamente las libera de Entregas para que puedas ubicarlas de nuevo.</p>
+                    <h2 id="modal-title">¿VACIAR FILA ${Number(slotNumber)}?</h2>
+                    <p>Vas a vaciar la fila que contiene a <strong>${escapeHtml(customerLabel)}</strong>.</p>
+                    ${details.length ? `<p>Además, encontramos ${details.length === 1 ? 'una venta activa' : `${details.length} ventas activas`} de esta persona en la Lista de Ventas.</p><div class="delivery-match-table-wrap"><table class="delivery-match-table delivery-delete-orders"><thead><tr><th>VENTA</th><th>FECHA</th><th>PRODUCTOS</th><th>TOTAL</th><th>ESTADO</th></tr></thead><tbody>${details.map(deliveryOrderSummary).join('')}</tbody></table></div>` : '<p class="notice">No encontramos otras ventas abiertas asociadas a esta fila.</p>'}
+                    <p class="notice">Vaciar la fila no archiva ni cancela ventas; solamente las libera de Entregas para que puedas ubicarlas de nuevo.</p>
                     <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>VOLVER</button><button class="danger-button" type="button" data-confirm-delete-delivery-slot="${Number(slotNumber)}">VACIAR FILA ${Number(slotNumber)}</button></div>
                 </section>
             `);
