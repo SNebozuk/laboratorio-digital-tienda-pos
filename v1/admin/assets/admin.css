@@ -3470,5 +3470,25 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .category-admin-row:hover {
     transform:none !important;
     box-shadow:none !important;
-    background:#e8e1f2 !important;
+    background:#d4b9e9 !important;
 }
+
+/* Escala de lectura común: contenido operativo legible y encabezados diferenciados. */
+.admin-body { font-family:"Segoe UI", Arial, sans-serif; font-size:15px; line-height:1.45; }
+.admin-sidebar .admin-nav-button { font-size:14px; }
+.admin-main { font-size:15px; }
+.admin-main input,
+.admin-main select,
+.admin-main textarea { font-size:15px !important; }
+.admin-main table tbody td,
+.admin-main .order-list-row,
+.admin-main .product-list-row,
+.admin-main .product-variant-inline-row,
+.admin-main .category-admin-row,
+.admin-main .invitation-note,
+.admin-main .form-hint { font-size:15px; }
+.admin-main table thead th { font-size:12px !important; }
+.admin-main .primary-button,
+.admin-main .secondary-button,
+.admin-main .small-button { font-size:14px; }
+@media (max-width:700px) { .admin-main input,.admin-main select,.admin-main textarea { font-size:16px !important; } }
