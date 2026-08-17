@@ -82,6 +82,7 @@ final class Database
         self::migrateDeliverySlots($pdo);
         self::migrateDeliverySlotAmounts($pdo);
         self::migrateDeliveryReopen($pdo);
+        self::uppercaseCustomerNames($pdo);
     }
 
     private static function migrateDeliverySlots(PDO $pdo): void
@@ -123,6 +124,44 @@ final class Database
         self::immediate($pdo, static function (PDO $pdo) use ($version): void {
             $names = array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(), 'name');
             if (!in_array('delivery_reopened_at', $names, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN delivery_reopened_at TEXT');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    /**
+     * Mantiene una lectura uniforme en las listas operativas: los nombres de
+     * compradores siempre se conservan en MAYÚSCULAS, también los históricos.
+     */
+    private static function uppercaseCustomerNames(PDO $pdo): void
+    {
+        $version = 25;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $upper = static function (string $value): string {
+                $spaced = preg_replace('/\s+/u', ' ', trim($value)) ?? '';
+                return function_exists('mb_strtoupper')
+                    ? mb_strtoupper($spaced, 'UTF-8')
+                    : strtoupper($spaced);
+            };
+            $orders = $pdo->query("SELECT id, customer_name FROM orders WHERE trim(customer_name) <> ''")->fetchAll();
+            $updateOrder = $pdo->prepare('UPDATE orders SET customer_name = :name, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+            foreach ($orders as $order) {
+                $name = $upper((string) $order['customer_name']);
+                if ($name !== '' && $name !== (string) $order['customer_name']) {
+                    $updateOrder->execute(['name' => $name, 'id' => (int) $order['id']]);
+                }
+            }
+            $slots = $pdo->query("SELECT slot_number, customer_name FROM delivery_slots WHERE trim(customer_name) <> ''")->fetchAll();
+            $updateSlot = $pdo->prepare('UPDATE delivery_slots SET customer_name = :name, revision = revision + 1, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot');
+            foreach ($slots as $slot) {
+                $name = $upper((string) $slot['customer_name']);
+                if ($name !== '' && $name !== (string) $slot['customer_name']) {
+                    $updateSlot->execute(['name' => $name, 'slot' => (int) $slot['slot_number']]);
+                }
+            }
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

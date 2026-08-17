@@ -23,7 +23,7 @@ final class DeliveryService
         $expected = max(0, (int) ($input['revision'] ?? 0));
         $location = $this->normalizeLocation($input['location'] ?? '');
         $orders = $this->clean($input['order_numbers'] ?? '');
-        $customer = $this->clean($input['customer_name'] ?? '');
+        $customer = $this->upper($input['customer_name'] ?? '');
         $transfers = $this->clean($input['transfers'] ?? '');
         $cashDue = $this->clean($input['cash_due'] ?? '');
 
@@ -138,6 +138,11 @@ final class DeliveryService
 
     private function assertSlot(int $slot): void { if ($slot < 1 || $slot > 100) throw new ValidationException('Elegí una ubicación entre 1 y 100.'); }
     private function clean(mixed $value): string { $text = trim(preg_replace('/\s+/u', ' ', (string) $value) ?? ''); return function_exists('mb_substr') ? mb_substr($text, 0, 500) : substr($text, 0, 500); }
+    private function upper(mixed $value): string
+    {
+        $text = $this->clean($value);
+        return function_exists('mb_strtoupper') ? mb_strtoupper($text, 'UTF-8') : strtoupper($text);
+    }
     private function normalizeLocation(mixed $value): string
     {
         $text = $this->clean($value);
