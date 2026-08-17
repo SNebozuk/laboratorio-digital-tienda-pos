@@ -1924,11 +1924,66 @@
 
     async function copyOrderToDelivery(orderId, slot) { return copyOrdersToDelivery([orderId], slot); }
 
-    async function deleteDeliverySlot(slotNumber) {
+    async function removeDeliverySlot(slotNumber) {
         try {
             await apiPost({ action: 'delivery_slot_delete', slot_number: Number(slotNumber) });
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
             toast(`Fila ${slotNumber} vaciada.`);
+        } catch (error) { toast(error.message); }
+    }
+
+    function deliveryOrderSummary(order) {
+        const items = sortedOrderItems(order.items || []).map(item => {
+            const variant = fold(item.variant_name) === 'unica' ? '' : ` · ${item.variant_name || ''}`;
+            return `${Number(item.quantity)} × ${item.product_name || 'Producto'}${variant}`;
+        }).join('<br>');
+        const status = order.status === 'cancelled'
+            ? 'Cancelada'
+            : (statusLabels[order.status] || 'Activa');
+        return `<tr>
+            <td><strong>${escapeHtml(order.public_number)}</strong></td>
+            <td>${escapeHtml(argentinaDateLabel(order.created_at))}</td>
+            <td>${items || 'Sin productos'}</td>
+            <td><strong>${money(order.total_cents)}</strong></td>
+            <td>${escapeHtml(status)}</td>
+        </tr>`;
+    }
+
+    async function deleteDeliverySlot(slotNumber) {
+        const slot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slotNumber));
+        const customer = String(slot?.customer_name || '').trim();
+        if (!customer || !deliveryCustomerKey(customer)) {
+            await removeDeliverySlot(slotNumber);
+            return;
+        }
+        try {
+            // Se consulta nuevamente al servidor para no depender del listado que pudo quedar viejo.
+            const data = await apiGet('orders', { limit: 150, include_archived: 0 });
+            const matches = (data.orders || []).filter(order => (
+                !order.archived_at
+                && isLikelySameDeliveryCustomer(customer, order.customer_name)
+            ));
+            if (!matches.length) {
+                await removeDeliverySlot(slotNumber);
+                return;
+            }
+            const details = await Promise.all(matches.map(async order => {
+                try {
+                    return (await apiGet('order', { id: Number(order.id) })).order;
+                } catch {
+                    return order;
+                }
+            }));
+            openModal(`
+                <section class="delivery-delete-warning">
+                    <p class="eyebrow">REVISIÓN ANTES DE VACIAR</p>
+                    <h2 id="modal-title">PEDIDOS SIN ARCHIVAR</h2>
+                    <p>La fila <strong>${Number(slotNumber)}</strong> corresponde a <strong>${escapeHtml(deliveryCustomerKey(customer))}</strong>. Encontramos ${details.length === 1 ? 'una venta activa' : `${details.length} ventas activas`} de esta persona en la Lista de Ventas.</p>
+                    <div class="delivery-match-table-wrap"><table class="delivery-match-table delivery-delete-orders"><thead><tr><th>VENTA</th><th>FECHA</th><th>PRODUCTOS</th><th>TOTAL</th><th>ESTADO</th></tr></thead><tbody>${details.map(deliveryOrderSummary).join('')}</tbody></table></div>
+                    <p class="notice">Vaciar la fila no archiva ni cancela estas ventas; solamente las libera de Entregas para que puedas ubicarlas de nuevo.</p>
+                    <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>VOLVER</button><button class="danger-button" type="button" data-confirm-delete-delivery-slot="${Number(slotNumber)}">VACIAR FILA ${Number(slotNumber)}</button></div>
+                </section>
+            `);
         } catch (error) { toast(error.message); }
     }
 
@@ -3858,6 +3913,13 @@
         const deleteDelivery = event.target.closest('[data-delete-delivery-slot]');
         if (deleteDelivery) {
             deleteDeliverySlot(Number(deleteDelivery.dataset.deleteDeliverySlot));
+            return;
+        }
+        const confirmDeleteDelivery = event.target.closest('[data-confirm-delete-delivery-slot]');
+        if (confirmDeleteDelivery) {
+            const slotNumber = Number(confirmDeleteDelivery.dataset.confirmDeleteDeliverySlot);
+            closeModal();
+            removeDeliverySlot(slotNumber);
             return;
         }
         const placeDelivery = event.target.closest('[data-place-delivery-orders]');
