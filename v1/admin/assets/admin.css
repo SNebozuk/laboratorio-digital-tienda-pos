@@ -3384,3 +3384,8 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .invitation-actions { width:54px; text-align:right; }
 .invitation-copy { display:inline-grid; width:34px; height:34px; place-items:center; border-radius:8px; color:#5a347c; font-size:22px; }
 .invitation-copy:hover { background:#f1e8f9; }
+
+/* Elección clara de impresión después de ubicar varias ventas en Entregas. */
+.delivery-print-choice { display:grid; gap:10px; margin:20px 0; }
+.delivery-print-choice button { display:grid; gap:4px; width:100%; justify-items:start; text-align:left; }
+.delivery-print-choice button small { color:inherit; font-size:12px; font-weight:600; opacity:.82; }

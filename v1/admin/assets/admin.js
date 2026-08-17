@@ -1985,7 +1985,23 @@
             if (ids.length === 1) {
                 openModal(`<p class="eyebrow">PEDIDO UBICADO</p><h2 id="modal-title">FILA ${slot}</h2><p class="empty-copy">La venta fue agregada correctamente a la ubicación <strong>${slot}</strong>.</p><div class="modal-actions"><button class="primary-button" type="button" data-print-delivery-order="${ids[0]}">IMPRIMIR COMPROBANTE</button><button class="secondary-button" type="button" data-archive-delivery-order="${ids[0]}">ARCHIVAR VENTA</button><button class="secondary-button" type="button" data-close-modal>LISTO</button></div>`);
             } else {
-                toast(`${ids.length} ventas fueron agregadas a la fila ${slot}.`);
+                const count = ids.length;
+                openModal(`
+                    <p class="eyebrow">VENTAS UBICADAS</p>
+                    <h2 id="modal-title">FILA ${slot}</h2>
+                    <p class="empty-copy"><strong>${count} ventas</strong> fueron agregadas juntas a esta fila. Elegí cómo querés imprimir los comprobantes.</p>
+                    <div class="delivery-print-choice">
+                        <button class="primary-button" type="button" data-print-delivery-orders="${ids.join(',')}" data-print-delivery-layout="grouped">
+                            IMPRIMIR Y AGRUPAR ${count} VENTAS
+                            <small>Una impresión continua, separada por número de orden.</small>
+                        </button>
+                        <button class="secondary-button" type="button" data-print-delivery-orders="${ids.join(',')}" data-print-delivery-layout="individual">
+                            IMPRIMIR ${count} VENTAS INDIVIDUALES
+                            <small>Una venta por hoja.</small>
+                        </button>
+                    </div>
+                    <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>LISTO</button></div>
+                `);
             }
         } catch (error) { toast(error.message); }
     }
@@ -4075,6 +4091,13 @@
         }
         const printDelivery = event.target.closest('[data-print-delivery-order]');
         if (printDelivery) { printStoredOrder(Number(printDelivery.dataset.printDeliveryOrder)); return; }
+        const printDeliveryOrders = event.target.closest('[data-print-delivery-orders]');
+        if (printDeliveryOrders) {
+            const ids = String(printDeliveryOrders.dataset.printDeliveryOrders || '')
+                .split(',').map(Number).filter(Number.isFinite);
+            printStoredOrders(ids, printDeliveryOrders.dataset.printDeliveryLayout === 'individual' ? 'individual' : 'grouped');
+            return;
+        }
         const archiveDelivery = event.target.closest('[data-archive-delivery-order]');
         if (archiveDelivery) {
             apiPost({ action: 'order_archive', order_id: Number(archiveDelivery.dataset.archiveDeliveryOrder) })
