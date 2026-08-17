@@ -67,13 +67,14 @@ try {
                         (int) ($_GET['limit'] ?? 100),
                         (bool) ($_GET['include_archived'] ?? false)
                     ),
+                    'open_count' => $app['orders']->openOrderCount(),
                 ]);
 
             case 'order_notifications':
                 $user = $app['auth']->requireUser();
                 Http::json([
                     'ok' => true,
-                    'new_count' => $app['auth']->newOrderCount((int) $user['id']),
+                    'open_count' => $app['orders']->openOrderCount(),
                 ]);
 
             case 'delivery_slots':

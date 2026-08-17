@@ -843,6 +843,13 @@ final class OrderService
         return $query->fetchAll();
     }
 
+    public function openOrderCount(): int
+    {
+        return (int) $this->pdo->query(
+            "SELECT COUNT(*) FROM orders WHERE archived_at IS NULL AND status <> 'cancelled'"
+        )->fetchColumn();
+    }
+
     /** @return array<string, mixed> */
     public function orderDetail(int $orderId): array
     {

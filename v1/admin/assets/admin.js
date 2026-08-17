@@ -27,7 +27,7 @@
         users: [],
         invitations: [],
         pendingInvitationCount: 0,
-        newOrderCount: 0,
+        openOrderCount: 0,
         posCart: new Map(),
         posQuery: '',
         posProductId: null,
@@ -383,17 +383,17 @@
 
     function renderOrderBadge() {
         if (!elements.ordersBadge) return;
-        const count = Number(state.newOrderCount || 0);
+        const count = Number(state.openOrderCount || 0);
         elements.ordersBadge.hidden = count < 1;
         elements.ordersBadge.textContent = String(count);
-        elements.ordersBadge.setAttribute('aria-label', `${count} ventas nuevas desde la última revisión`);
+        elements.ordersBadge.setAttribute('aria-label', `${count} ventas abiertas en Lista de Ventas`);
     }
 
     async function loadOrderNotifications() {
         if (!elements.ordersBadge) return;
         try {
             const data = await apiGet('order_notifications');
-            state.newOrderCount = Number(data.new_count || 0);
+            state.openOrderCount = Number(data.open_count || 0);
             renderOrderBadge();
         } catch (error) {
             // Una alerta no debe interrumpir el trabajo si la red se demora.
@@ -404,8 +404,8 @@
         if (!elements.ordersBadge) return;
         try {
             await apiPost({ action: 'order_notifications_seen' });
-            state.newOrderCount = 0;
-            renderOrderBadge();
+            // La marca de lectura se mantiene para el historial del usuario,
+            // pero el círculo de Lista de Ventas siempre muestra abiertas.
         } catch (error) {
             // La lista permanece disponible aunque la marca de lectura falle.
         }
@@ -1822,6 +1822,8 @@
                 include_archived: state.showArchivedOrders ? 1 : 0,
             });
             state.orders = data.orders;
+            state.openOrderCount = Number(data.open_count || 0);
+            renderOrderBadge();
             const currentIds = new Set(state.orders.map(order => Number(order.id)));
             state.selectedOrderIds = new Set(
                 Array.from(state.selectedOrderIds).filter(id => currentIds.has(Number(id)))
