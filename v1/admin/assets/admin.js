@@ -1612,15 +1612,17 @@
         }
     }
 
-    function returnToAdminOrders() {
+    function returnToAdminOrders(notifySaleCompleted = true) {
         const ordersUrl = new URL('./', window.location.href);
         ordersUrl.searchParams.set('view', 'orders');
         if (window.opener && !window.opener.closed) {
             try {
-                window.opener.postMessage(
-                    { type: 'laboratorio-pos-sale-completed' },
-                    window.location.origin
-                );
+                if (notifySaleCompleted) {
+                    window.opener.postMessage(
+                        { type: 'laboratorio-pos-sale-completed' },
+                        window.location.origin
+                    );
+                }
                 window.opener.focus();
                 window.close();
                 window.setTimeout(() => {
@@ -4059,14 +4061,14 @@
     });
 
     document.addEventListener('keydown', event => {
-        if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F2') {
+        if (document.getElementById('view-orders') && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F2') {
             event.preventDefault();
             showView('deliveries');
             return;
         }
-        if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
+        if (document.getElementById('view-orders') && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
             event.preventDefault();
-            window.open('pos.php', '_blank', 'noopener');
+            window.open('pos.php', '_blank');
             return;
         }
         if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
@@ -4247,6 +4249,14 @@
         ) {
             event.preventDefault();
             showView('orders');
+        } else if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && document.querySelector('.pos-page')
+        ) {
+            event.preventDefault();
+            // El carrito queda guardado en localStorage hasta que se finalice la venta.
+            returnToAdminOrders(false);
         } else if (
             event.key === 'Escape'
             && !event.defaultPrevented
