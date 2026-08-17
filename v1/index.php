@@ -87,6 +87,7 @@ header('Referrer-Policy: same-origin');
             <?php endif; ?>
             <div class="catalog-intro">
                 <h1 id="catalog-title">Tus ideas merecen hacerse realidad.</h1>
+                <p>Insumos para sublimación, papeles, indumentaria y productos para personalizar.</p>
             </div>
 
             <div class="trust-strip" aria-label="Información de compra">
