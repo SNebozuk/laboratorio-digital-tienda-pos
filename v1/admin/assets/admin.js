@@ -1854,14 +1854,16 @@
         toast(`Elegí una fila para pasar ${available.length === 1 ? 'la venta seleccionada' : `las ${available.length} ventas seleccionadas`}.`);
     }
 
-    function showDeliveryMatchWarning(orderIds, selectedSlot, order, matchingSlots) {
+    function showDeliveryMatchWarning(orderIds, selectedSlot, matchGroups) {
         const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
+        const rows = matchGroups.flatMap(({ order, slots }) => slots.map(item => ({ order, item })));
+        const rowCount = new Set(rows.map(({ item }) => Number(item.slot_number))).size;
         openModal(`
-            <p class="eyebrow">POSIBLE PEDIDO DEL MISMO CLIENTE</p>
-            <h2 id="modal-title">¿DÓNDE QUERÉS UBICARLO?</h2>
-            <p class="empty-copy">Encontramos <strong>${matchingSlots.length === 1 ? 'una fila con un pedido' : `${matchingSlots.length} filas con pedidos`}</strong> de <strong>${escapeHtml(order.customer_name)}</strong>. Revisá los datos completos antes de elegir dónde ubicar esta venta.</p>
-            <div class="delivery-match-table-wrap"><table class="delivery-match-table"><thead><tr><th>FILA</th><th>UBICACIÓN</th><th>ÓRDENES CARGADAS</th><th>CLIENTE</th><th>TRANSFERENCIAS</th><th>EFECTIVO</th><th>IMPORTE</th><th></th></tr></thead><tbody>
-                ${matchingSlots.map(item => `<tr><td><strong>${Number(item.slot_number)}</strong></td><td>${escapeHtml(item.location || '—')}</td><td>${escapeHtml(item.order_numbers || '—')}</td><td>${escapeHtml(item.customer_name || '—')}</td><td>${escapeHtml(item.transfers || '—')}</td><td>${escapeHtml(item.cash_due || '—')}</td><td>${money(item.order_total_cents)}</td><td><button class="small-button" type="button" data-place-delivery-orders="${ids.join(',')}" data-place-delivery-slot="${Number(item.slot_number)}">USAR FILA ${Number(item.slot_number)} →</button></td></tr>`).join('')}
+            <p class="eyebrow">REVISIÓN DE PEDIDOS EXISTENTES</p>
+            <h2 id="modal-title">¿DÓNDE QUERÉS UBICAR LAS VENTAS?</h2>
+            <p class="empty-copy">Encontramos <strong>${rowCount === 1 ? 'una fila con una coincidencia' : `${rowCount} filas con coincidencias`}</strong> para las ventas seleccionadas. Revisá cada caso antes de continuar.</p>
+            <div class="delivery-match-table-wrap"><table class="delivery-match-table"><thead><tr><th>VENTA NUEVA</th><th>CLIENTE NUEVO</th><th>FILA</th><th>UBICACIÓN</th><th>ÓRDENES CARGADAS</th><th>CLIENTE CARGADO</th><th>TRANSFERENCIAS</th><th>EFECTIVO</th><th>IMPORTE</th><th></th></tr></thead><tbody>
+                ${rows.map(({ order, item }) => `<tr><td>${escapeHtml(order.public_number)}</td><td>${escapeHtml(order.customer_name)}</td><td><strong>${Number(item.slot_number)}</strong></td><td>${escapeHtml(item.location || '—')}</td><td>${escapeHtml(item.order_numbers || '—')}</td><td>${escapeHtml(item.customer_name || '—')}</td><td>${escapeHtml(item.transfers || '—')}</td><td>${escapeHtml(item.cash_due || '—')}</td><td>${money(item.order_total_cents)}</td><td><button class="small-button" type="button" data-confirm-delivery-match-slot="${Number(item.slot_number)}" data-delivery-order-ids="${ids.join(',')}">USAR FILA ${Number(item.slot_number)} →</button></td></tr>`).join('')}
             </tbody></table></div>
             <div class="delivery-match-choice"><span>También podés continuar con la fila <strong>${Number(selectedSlot)}</strong> que habías elegido.</span><button class="secondary-button" type="button" data-confirm-delivery-other-slot="${Number(selectedSlot)}" data-delivery-order-ids="${ids.join(',')}">UBICAR IGUAL EN FILA ${Number(selectedSlot)}</button></div>
             <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
@@ -1873,11 +1875,11 @@
         try {
             if (!ids.length) return;
             const pendingOrders = pendingDeliveryOrders();
-            const pendingOrder = pendingOrders.length === 1 ? pendingOrders[0] : null;
-            const matchingSlots = pendingOrder ? suggestedDeliverySlots(pendingOrder) : [];
-            const selectedSuggestedSlot = matchingSlots.some(item => Number(item.slot_number) === Number(slot));
-            if (matchingSlots.length && !selectedSuggestedSlot && !skipDeliveryMatchWarning) {
-                showDeliveryMatchWarning(ids, slot, pendingOrder, matchingSlots);
+            const matchGroups = pendingOrders
+                .map(order => ({ order, slots: suggestedDeliverySlots(order) }))
+                .filter(group => group.slots.length && !group.slots.some(item => Number(item.slot_number) === Number(slot)));
+            if (matchGroups.length && !skipDeliveryMatchWarning) {
+                showDeliveryMatchWarning(ids, slot, matchGroups);
                 return;
             }
             await apiPost(ids.length === 1
@@ -3839,6 +3841,12 @@
         if (confirmOtherDeliverySlot) {
             const ids = String(confirmOtherDeliverySlot.dataset.deliveryOrderIds || '').split(',').map(Number).filter(Number.isFinite);
             copyOrdersToDelivery(ids, Number(confirmOtherDeliverySlot.dataset.confirmDeliveryOtherSlot), true);
+            return;
+        }
+        const confirmDeliveryMatchSlot = event.target.closest('[data-confirm-delivery-match-slot]');
+        if (confirmDeliveryMatchSlot) {
+            const ids = String(confirmDeliveryMatchSlot.dataset.deliveryOrderIds || '').split(',').map(Number).filter(Number.isFinite);
+            copyOrdersToDelivery(ids, Number(confirmDeliveryMatchSlot.dataset.confirmDeliveryMatchSlot), true);
             return;
         }
         const clearMarker = event.target.closest('[data-clear-delivery-marker]');

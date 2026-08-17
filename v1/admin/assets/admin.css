@@ -3244,9 +3244,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-suggestion:hover { background: #6b3e9b; border-color: #6b3e9b; color: #fff; }
 .modal:has(.delivery-match-table) .admin-modal-card { width:min(1180px, calc(100vw - 32px)); }
 .delivery-match-table-wrap { overflow:visible; margin:18px 0 14px; border:1px solid #e2d8ee; border-radius:10px; }
-.delivery-match-table { width:100%; min-width:0; table-layout:fixed; border-collapse:collapse; color:#2c1e3d; font-size:13px; }
-.delivery-match-table th,.delivery-match-table td { padding:11px 12px; border-bottom:1px solid #eee7f5; text-align:left; vertical-align:middle; }
-.delivery-match-table th:nth-child(1) { width:52px; }.delivery-match-table th:nth-child(2) { width:76px; }.delivery-match-table th:nth-child(3) { width:15%; }.delivery-match-table th:nth-child(4) { width:17%; }.delivery-match-table th:nth-child(5),.delivery-match-table th:nth-child(6) { width:12%; }.delivery-match-table th:nth-child(7) { width:11%; }.delivery-match-table th:nth-child(8) { width:132px; }
+.delivery-match-table { width:100%; min-width:0; table-layout:fixed; border-collapse:collapse; color:#2c1e3d; font-size:12px; }
+.delivery-match-table th,.delivery-match-table td { padding:10px 8px; border-bottom:1px solid #eee7f5; text-align:left; vertical-align:middle; }
+.delivery-match-table th:nth-child(1) { width:70px; }.delivery-match-table th:nth-child(2) { width:11%; }.delivery-match-table th:nth-child(3) { width:42px; }.delivery-match-table th:nth-child(4) { width:66px; }.delivery-match-table th:nth-child(5),.delivery-match-table th:nth-child(6) { width:12%; }.delivery-match-table th:nth-child(7),.delivery-match-table th:nth-child(8),.delivery-match-table th:nth-child(9) { width:8%; }.delivery-match-table th:nth-child(10) { width:116px; }
 .delivery-match-table td { overflow-wrap:anywhere; }
 .delivery-match-table th { background:#f4eff9; color:#5b337b; font-size:10px; letter-spacing:.06em; }
 .delivery-match-table tbody tr:last-child td { border-bottom:0; }
