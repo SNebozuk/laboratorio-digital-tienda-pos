@@ -11,23 +11,23 @@ $apiPath = $storePath . '/api.php';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fbf8ff">
-    <title>Creá tu web con Codex · Sergio Nebozuk</title>
+    <title>Creá tu web con ChatGPT Codex · Sergio Nebozuk</title>
     <link rel="stylesheet" href="<?= $assetPath ?>/app.css">
     <link rel="stylesheet" href="<?= $assetPath ?>/light.css">
 </head>
 <body class="creator-page">
     <main class="creator-shell">
         <a class="creator-back" href="<?= $storePath ?>/">← Volver a Laboratorio Digital</a>
-        <p class="eyebrow">CREÁ TU PROPIA WEB CON IA</p>
+        <p class="eyebrow">CREÁ TU PROPIA WEB CON CHATGPT CODEX</p>
         <h1>Tu idea puede tener<br>su propia web.</h1>
-        <p class="creator-intro">Con Codex podés crear una tienda, una página para tu negocio o una herramienta a medida sin saber programar. Le explicás lo que necesitás y lo construyen juntos, paso a paso.</p>
+        <p class="creator-intro">ChatGPT Codex es una herramienta de inteligencia artificial con la que podés crear una tienda, una página para tu negocio o una solución a medida sin saber programar. Le explicás lo que necesitás y lo construyen juntos, paso a paso.</p>
         <div class="creator-services">
             <article><strong>1 · CONTÁ TU IDEA</strong><span>Escribí con palabras simples qué querés crear y para quién.</span></article>
             <article><strong>2 · MIRÁ EL AVANCE</strong><span>Codex arma la web y vos pedís los cambios que necesites.</span></article>
             <article><strong>3 · PUBLICALA</strong><span>Cuando te guste, la dejás lista para compartir con tus clientes.</span></article>
         </div>
         <section class="creator-gift" aria-label="Invitación para comenzar">
-            <strong>¿Querés probar Codex?</strong>
+            <strong>¿Querés probar ChatGPT Codex?</strong>
             <p>Mandame tu email por WhatsApp y recibí créditos gratis para hacer tu página.</p>
             <form class="creator-invitation-form" id="creator-invitation-form">
                 <label for="creator-email">O dejalo acá para que Sergio pueda enviarte la invitación</label>
@@ -39,7 +39,7 @@ $apiPath = $storePath . '/api.php';
                 <small id="creator-invitation-status" role="status" aria-live="polite">Usaremos tu email sólo para gestionar esta solicitud.</small>
             </form>
         </section>
-        <a class="primary-button creator-cta" href="https://wa.me/5493415699338?text=Hola%20Sergio%2C%20quiero%20recibir%20cr%C3%A9ditos%20gratis%20para%20hacer%20mi%20p%C3%A1gina%20con%20Codex.%20Mi%20email%20es%3A%20" target="_blank" rel="noopener">MANDAR MI EMAIL POR WHATSAPP</a>
+        <a class="primary-button creator-cta" href="https://wa.me/5493415699338?text=Hola%20Sergio%2C%20quiero%20recibir%20cr%C3%A9ditos%20gratis%20para%20hacer%20mi%20p%C3%A1gina%20con%20ChatGPT%20Codex.%20Mi%20email%20es%3A%20" target="_blank" rel="noopener">PROBAR CHATGPT CODEX</a>
         <small class="creator-signature">Una invitación de Sergio Nebozuk · creador de experiencias digitales</small>
     </main>
     <script>
