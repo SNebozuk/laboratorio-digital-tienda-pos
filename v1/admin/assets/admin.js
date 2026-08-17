@@ -2081,6 +2081,10 @@
         const slot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slotNumber));
         const orders = Array.isArray(slot?.orders) ? slot.orders : [];
         if (!orders.length) return;
+        if (orders.length === 1) {
+            printStoredOrder(Number(orders[0].id));
+            return;
+        }
         openModal(`
             <p class="eyebrow">IMPRIMIR DESDE ENTREGAS</p>
             <h2 id="modal-title">FILA ${Number(slotNumber)}</h2>
