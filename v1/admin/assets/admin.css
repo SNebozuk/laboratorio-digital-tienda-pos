@@ -3253,10 +3253,6 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-table tbody th { width: 64px; color: #4c2574; font-size: 20px; font-weight: 850; font-variant-numeric: tabular-nums; text-align: center; }
 .delivery-table tbody tr:nth-child(even) { background: #fcfaff; }
 .delivery-table tbody tr:hover { background: #eee7fa !important; box-shadow: inset 4px 0 0 #8d68bc; }
-.delivery-table tbody tr td, .delivery-table tbody tr th, .delivery-table tbody tr input { transition: font-size .14s ease, font-weight .14s ease; }
-.delivery-table tbody tr:hover th { font-size: 22px; }
-.delivery-table tbody tr:hover td { font-size: 16px; }
-.delivery-table tbody tr:hover input { font-size: 16px; font-weight: 700; }
 .delivery-table tbody tr.delivery-placement-active:hover { background: #e8dbf7 !important; box-shadow: inset 5px 0 0 #6b3b9a; }
 .delivery-table tbody tr.delivery-placement-suggested { background: #f0e7fa; box-shadow: inset 5px 0 0 #6b3b9a; }
 .delivery-no-results { padding: 26px !important; color: #667085; text-align: center !important; }
