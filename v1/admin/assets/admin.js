@@ -43,6 +43,7 @@
         editOrder: null,
         customerHistoryName: '',
         customerHistoryChildOpen: false,
+        posSaleConfirmationTimer: 0,
         view: 'orders',
     };
 
@@ -1729,10 +1730,37 @@
         `);
     }
 
+    function showPosSaleConfirmation(sale, archived, afterClose = null) {
+        if (state.posSaleConfirmationTimer) {
+            window.clearTimeout(state.posSaleConfirmationTimer);
+        }
+        document.querySelector('.pos-sale-confirmation')?.remove();
+        const confirmation = document.createElement('section');
+        confirmation.className = 'pos-sale-confirmation';
+        confirmation.setAttribute('role', 'status');
+        confirmation.setAttribute('aria-live', 'assertive');
+        confirmation.innerHTML = `
+            <span class="pos-sale-confirmation-check" aria-hidden="true">✓</span>
+            <div>
+                <strong>${archived ? 'VENTA ARCHIVADA' : 'VENTA REGISTRADA'}</strong>
+                <span>${escapeHtml(sale.public_number)} · ${archived ? 'Guardada correctamente' : 'Guardada en Lista de Ventas'}</span>
+            </div>
+        `;
+        document.body.appendChild(confirmation);
+        window.requestAnimationFrame(() => confirmation.classList.add('open'));
+        state.posSaleConfirmationTimer = window.setTimeout(() => {
+            confirmation.classList.remove('open');
+            window.setTimeout(() => confirmation.remove(), 220);
+            state.posSaleConfirmationTimer = 0;
+            if (typeof afterClose === 'function') afterClose();
+        }, 3000);
+    }
+
     async function finishPosSaleDirectly() {
         const sale = await createPosSale();
         if (sale) {
-            returnToAdminOrders();
+            const archived = Boolean(sale.archived_at);
+            showPosSaleConfirmation(sale, archived, archived ? null : () => returnToAdminOrders());
         }
     }
 

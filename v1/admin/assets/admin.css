@@ -2994,6 +2994,12 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-launch-card .primary-button { text-decoration: none; white-space: nowrap; }
 
 .pos-page-body { min-height: 100vh; background: #f6f7fb; }
+.pos-sale-confirmation { position: fixed; z-index: 1000; left: 50%; top: 50%; display: flex; align-items: center; gap: 16px; width: min(420px, calc(100vw - 32px)); padding: 22px 24px; border: 1px solid #a8d7b6; border-radius: 18px; background: #fff; box-shadow: 0 18px 48px rgba(20, 66, 38, .22); color: #1e4a2c; opacity: 0; transform: translate(-50%, -46%) scale(.96); transition: opacity .2s ease, transform .2s ease; pointer-events: none; }
+.pos-sale-confirmation.open { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.pos-sale-confirmation-check { display: grid; flex: 0 0 48px; width: 48px; height: 48px; place-items: center; border-radius: 50%; background: #188c4c; color: #fff; font-size: 30px; font-weight: 900; line-height: 1; }
+.pos-sale-confirmation div { display: grid; gap: 3px; }
+.pos-sale-confirmation strong { color: #176b39; font-size: 18px; letter-spacing: .02em; }
+.pos-sale-confirmation span:not(.pos-sale-confirmation-check) { color: #435146; font-size: 14px; }
 .pos-page { min-height: 100vh; }
 .pos-page-intro { width: 100%; padding: 30px 30px 0; }
 .pos-page-intro .pos-page-title { margin-bottom: 18px; }
