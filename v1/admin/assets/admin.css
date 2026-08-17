@@ -3362,6 +3362,16 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .order-list-copy:disabled { color: #a89db5; cursor: default; opacity: .65; }
 #view-orders .status-copied { border-color: #7e5bb0; background: #f1e9fb; color: #4c2574; }
 
+/* Ventas que ya se pasaron a Entregas: deben verse aunque todavía estén abiertas. */
+.order-delivery-reminder { display:flex; align-items:center; gap:11px; margin:0 0 10px; padding:11px 14px; border:1px solid #b996db; border-radius:10px; background:#f6efff; color:#4c2574; }
+.order-delivery-reminder-icon { display:grid; width:26px; height:26px; flex:0 0 auto; place-items:center; border-radius:50%; background:#65418d; color:#fff; font-weight:900; }
+.order-delivery-reminder strong { display:block; font-size:12px; letter-spacing:.035em; }
+.order-delivery-reminder small { display:block; margin-top:2px; color:#5e536d; font-size:12px; }
+#view-orders .order-list-row-in-deliveries { background:#fbf7ff; box-shadow:inset 5px 0 0 #8d65bd; }
+#view-orders .order-list-row-in-deliveries:hover { background:#f5edff; box-shadow:inset 6px 0 0 #7445aa,0 8px 20px rgba(91,50,135,.14); }
+.order-delivery-note { display:block; width:max-content; margin-top:4px; padding:2px 5px; border-radius:4px; background:#eadcf9; color:#512a7b; font-size:9px; font-weight:850; letter-spacing:.035em; white-space:nowrap; }
+#view-orders .order-list-row-in-deliveries .status-copied { border-color:#8455b4; background:#e9dafa; color:#482070; font-weight:850; box-shadow:0 0 0 2px rgba(132,85,180,.1); }
+
 /* Solicitudes de invitación a Codex: rápidas de revisar y listas para copiar. */
 .admin-nav-invitations { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .nav-notification-badge { display:inline-grid; min-width:20px; height:20px; place-items:center; padding:0 5px; border-radius:999px; background:#7b3f9e; color:#fff; font-size:11px; line-height:1; font-variant-numeric:tabular-nums; }

@@ -2622,6 +2622,10 @@
             && orderIsInDateRange(order);
     }
 
+    function orderIsInDeliveries(order) {
+        return Boolean(order?.delivery_slot_number && !order?.delivery_reopened_at);
+    }
+
     function renderOrders() {
         const matchingOrders = state.orders
             .filter(orderMatchesFilters)
@@ -2715,27 +2719,42 @@
             `;
         }
 
+        const openOrdersInDeliveries = state.orders.filter(order => (
+            !order.archived_at
+            && order.status !== 'cancelled'
+            && orderIsInDeliveries(order)
+        ));
+
         if (matchingOrders.length) {
             elements.orderList.innerHTML = `
+                ${openOrdersInDeliveries.length ? `
+                    <div class="order-delivery-reminder" role="status">
+                        <span class="order-delivery-reminder-icon" aria-hidden="true">✓</span>
+                        <span><strong>${openOrdersInDeliveries.length === 1 ? '1 VENTA ABIERTA YA ESTÁ EN ENTREGAS' : `${openOrdersInDeliveries.length} VENTAS ABIERTAS YA ESTÁN EN ENTREGAS`}</strong><small>Quedaron señaladas en violeta. Cuando el pedido esté listo, archivá la venta para que no quede pendiente.</small></span>
+                    </div>
+                ` : ''}
                 <div class="order-list-head" aria-hidden="true">
                     <span class="order-select-control"></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
                 </div>
-                ${matchingOrders.map(order => `
-                    <div class="order-list-row" role="button" tabindex="0" data-view-order="${Number(order.id)}">
+                ${matchingOrders.map(order => {
+                    const inDeliveries = orderIsInDeliveries(order);
+                    const deliverySlot = inDeliveries ? Number(order.delivery_slot_number) : null;
+                    return `
+                    <div class="order-list-row ${inDeliveries && !order.archived_at && order.status !== 'cancelled' ? 'order-list-row-in-deliveries' : ''}" role="button" tabindex="0" data-view-order="${Number(order.id)}">
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
-                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : `<button class="order-list-archive" type="button" data-archive-order="${Number(order.id)}" aria-label="Archivar ${escapeHtml(order.public_number)}" title="Archivar venta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v12H4zM3 4h18v3.5H3zM9 12h6"/></svg></button>`}</span>
+                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${order.archived_at ? '<small>Archivada</small>' : `<button class="order-list-archive" type="button" data-archive-order="${Number(order.id)}" aria-label="Archivar ${escapeHtml(order.public_number)}" title="Archivar venta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v12H4zM3 4h18v3.5H3zM9 12h6"/></svg></button>`}${inDeliveries && !order.archived_at && order.status !== 'cancelled' ? `<small class="order-delivery-note">✓ EN ENTREGAS · FILA ${deliverySlot}</small>` : ''}</span>
                         <button class="order-list-customer" type="button" data-customer-history="${escapeHtml(order.customer_name)}" aria-label="Ver historial de ${escapeHtml(order.customer_name)}">${escapeHtml(order.customer_name)}</button>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
-                        <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : (order.delivery_slot_number ? 'copied' : order.status))}">${escapeHtml(order.archived_at ? 'Archivada' : (order.delivery_slot_number ? 'COPIADA' : (statusLabels[order.status] || order.status)))}</span></span>
-                        <button class="order-list-copy" type="button" data-copy-order-delivery="${Number(order.id)}" ${order.delivery_slot_number && !order.delivery_reopened_at ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="Copiar a Entregas">⇠</button>
+                        <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : (inDeliveries ? 'copied' : order.status))}">${escapeHtml(order.archived_at ? 'Archivada' : (inDeliveries ? `EN ENTREGAS · ${deliverySlot}` : (statusLabels[order.status] || order.status)))}</span></span>
+                        <button class="order-list-copy" type="button" data-copy-order-delivery="${Number(order.id)}" ${inDeliveries ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="Copiar a Entregas">⇠</button>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
                         ${order.status !== 'cancelled' && !order.archived_at
                             ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">🗑</button>`
                             : '<span class="order-list-delete-placeholder" aria-hidden="true"></span>'}
                         <span class="order-list-date">${escapeHtml(argentinaDateParts(order.created_at).date)}<small>${escapeHtml(argentinaDateParts(order.created_at).time)}</small></span>
                     </div>
-                `).join('')}
+                `}).join('')}
             `;
             return;
         }
