@@ -4453,6 +4453,21 @@
             finishPosSaleDirectly();
         }
     });
+    // Esc es contextual en el PDV: vuelve de la búsqueda a la venta que se
+    // estaba armando, pero nunca abandona el Punto de Venta hacia el admin.
+    // Las ventanas emergentes se dejan al manejador general para que se cierren.
+    document.addEventListener('keydown', event => {
+        if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && document.body.classList.contains('pos-search-page')
+            && !elements.modal?.classList.contains('open')
+        ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            window.location.href = 'pos.php';
+        }
+    }, true);
     document.addEventListener('keydown', event => {
         if (
             event.key === 'Escape'
