@@ -3456,3 +3456,19 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .delivery-print-choice { display:grid; gap:10px; margin:20px 0; }
 .delivery-print-choice button { display:grid; gap:4px; width:100%; justify-items:start; text-align:left; }
 .delivery-print-choice button small { color:inherit; font-size:12px; font-weight:600; opacity:.82; }
+
+/* Recorrido visual uniforme: las filas se destacan sólo por el fondo. */
+.admin-main table tbody tr,
+#view-orders .order-list-row,
+.product-list-row,
+.product-variant-inline-row,
+.category-admin-row { transition:background-color .15s ease; }
+.admin-main table tbody tr:hover,
+#view-orders .order-list-row:hover,
+.product-list-row:hover,
+.product-variant-inline-row:hover,
+.category-admin-row:hover {
+    transform:none !important;
+    box-shadow:none !important;
+    background:#e8e1f2 !important;
+}
