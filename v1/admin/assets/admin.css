@@ -3243,7 +3243,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-suggestion { border: 1px solid #8d68bc; border-radius: 999px; background: #fff; color: #513179; padding: 5px 9px; font: inherit; font-size: 11px; font-weight: 850; cursor: pointer; }
 .delivery-suggestion:hover { background: #6b3e9b; border-color: #6b3e9b; color: #fff; }
 .delivery-match-table-wrap { overflow:auto; margin:18px 0 14px; border:1px solid #e2d8ee; border-radius:10px; }
-.delivery-match-table { width:100%; min-width:620px; border-collapse:collapse; color:#2c1e3d; font-size:13px; }
+.delivery-match-table { width:100%; min-width:980px; border-collapse:collapse; color:#2c1e3d; font-size:13px; }
 .delivery-match-table th,.delivery-match-table td { padding:11px 12px; border-bottom:1px solid #eee7f5; text-align:left; vertical-align:middle; }
 .delivery-match-table th { background:#f4eff9; color:#5b337b; font-size:10px; letter-spacing:.06em; }
 .delivery-match-table tbody tr:last-child td { border-bottom:0; }
