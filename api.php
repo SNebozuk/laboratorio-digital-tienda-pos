@@ -208,8 +208,16 @@ try {
             if ($requestKey !== '') {
                 $_SESSION['web_order_requests'] = array_slice((array) ($_SESSION['web_order_requests'] ?? []) + [$requestKey => $order], -10, null, true);
             }
-            // Intentamos entregar la confirmación al instante. La tarea programada
-            // conserva los reintentos y procesa cualquier correo pendiente.
+            // Entrega inmediata: la venta ya quedó confirmada antes de este punto.
+            // Si SES no responde, la cola y la tarea programada conservan el reintento
+            // sin afectar la experiencia de compra ni duplicar pedidos reenviados.
+            if (!is_array($cached) && !empty($app['config']['mail_enabled'])) {
+                try {
+                    $app['mail']->process(1);
+                } catch (Throwable $mailException) {
+                    error_log('No se pudo entregar el aviso inmediato de venta: ' . $mailException->getMessage());
+                }
+            }
             Http::json(['ok' => true, 'order' => $order], 201);
 
         case 'upload_proof':
