@@ -272,11 +272,20 @@ try {
 
         case 'product_visibility':
             $app['auth']->requireAdmin();
+            // No usar un casteo directo: la cadena "false" en PHP equivale a true.
+            // Así Ocultar siempre llega al servicio como falso, incluso desde
+            // navegadores o formularios que serializan los booleanos como texto.
+            $visibilityValue = $input['active'] ?? false;
+            $isVisible = $visibilityValue === true
+                || $visibilityValue === 1
+                || $visibilityValue === '1'
+                || strtolower((string) $visibilityValue) === 'true'
+                || strtolower((string) $visibilityValue) === 'on';
             $app['products']->setVisibility(
                 is_array($input['product_ids'] ?? null) ? $input['product_ids'] : [],
-                (bool) ($input['active'] ?? false)
+                $isVisible
             );
-            Http::json(['ok' => true]);
+            Http::json(['ok' => true, 'active' => $isVisible]);
 
         case 'featured_products_update':
             $app['auth']->requireAdmin();

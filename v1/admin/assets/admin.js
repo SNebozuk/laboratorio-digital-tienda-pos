@@ -812,7 +812,11 @@
     }
 
     async function setProductsVisibility(ids, active) {
-        await apiPost({ action: 'product_visibility', product_ids: ids, active });
+        const response = await apiPost({ action: 'product_visibility', product_ids: ids, active: Boolean(active) });
+        if (Boolean(response.active) !== Boolean(active)) {
+            throw new Error('No pudimos confirmar el cambio de visibilidad.');
+        }
+        ids.forEach(id => state.selectedProductIds.delete(Number(id)));
         await loadProducts();
         toast(active ? 'Productos visibles en tienda y PDV.' : 'Productos ocultos de tienda y PDV.');
     }
