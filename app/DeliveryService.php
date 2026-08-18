@@ -192,12 +192,9 @@ final class DeliveryService
     }
     private function normalizeLocation(mixed $value): string
     {
-        $text = $this->clean($value);
-        if ($text === '') return '';
-        if (!preg_match('/^([a-z])\s*([0-9]{1,4})$/i', $text, $match)) {
-            throw new ValidationException('La ubicación debe llevar una letra y un número, por ejemplo A1 o B12.');
-        }
-        return strtoupper($match[1]) . $match[2];
+        // La ubicación es una referencia libre de depósito. No forzamos formatos
+        // como A1/B2 para que cada persona pueda usar su propia organización.
+        return $this->clean($value);
     }
     /** @return array<string, mixed>|false */
     private function findSlot(PDO $pdo, int $slot): array|false { $q = $pdo->prepare('SELECT * FROM delivery_slots WHERE slot_number = :slot'); $q->execute(['slot' => $slot]); return $q->fetch(); }

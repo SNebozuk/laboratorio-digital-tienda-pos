@@ -349,7 +349,7 @@ header('Referrer-Policy: same-origin');
                     </label>
                     <div class="delivery-table-wrap">
                         <table class="delivery-table">
-                            <thead><tr><th>N.º</th><th></th><th>Ubicación</th><th></th><th># Orden</th><th>Nombre y Apellido</th><th></th><th>Transferencias</th><th>Efectivo</th><th>Importe</th></tr></thead>
+                            <thead><tr><th>N.º</th><th></th><th>Ubicación</th><th></th><th># Orden</th><th>Nombre y Apellido</th><th></th><th>Transferencias</th><th>Importe</th></tr></thead>
                             <tbody id="delivery-slots"></tbody>
                         </table>
                     </div>
