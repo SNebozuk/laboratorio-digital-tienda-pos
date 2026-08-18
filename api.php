@@ -213,7 +213,7 @@ try {
             // sin afectar la experiencia de compra ni duplicar pedidos reenviados.
             if (!is_array($cached) && !empty($app['config']['mail_enabled'])) {
                 try {
-                    $app['mail']->process(1);
+                    $app['mail']->process(2);
                 } catch (Throwable $mailException) {
                     error_log('No se pudo entregar el aviso inmediato de venta: ' . $mailException->getMessage());
                 }

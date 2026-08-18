@@ -162,10 +162,7 @@ header('Referrer-Policy: same-origin');
             <span>CONTACTO</span>
             <small>Horario, WhatsApp y ubicación</small>
         </button>
-        <a class="creator-credit" href="<?= $escape($storePath) ?>/sergio-nebozuk.php">
-            <span>¿TE GUSTARÍA CREAR TU PROPIA WEB?</span>
-            <strong>Aprendé a hacerlo con Codex, paso a paso y gratis <b aria-hidden="true">→</b></strong>
-        </a>
+        <p class="creator-credit"><strong>Tienda creada por Alle y Sergio</strong></p>
     </footer>
 
     <a

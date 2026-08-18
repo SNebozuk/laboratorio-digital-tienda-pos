@@ -104,9 +104,6 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button" type="button" data-view="design">
                             Diseño
                         </button>
-                        <button class="admin-nav-button admin-nav-invitations" type="button" data-view="invitations">
-                            Invitaciones <b id="invitations-badge" class="nav-notification-badge" hidden>0</b>
-                        </button>
                         <button class="admin-nav-button" type="button" data-view="whatsapp">
                             WhatsApp
                         </button>
@@ -142,7 +139,6 @@ header('Referrer-Policy: same-origin');
                             <option value="size-guide">Tabla de Talles</option>
                             <option value="contact">Contacto</option>
                             <option value="design">Diseño</option>
-                            <option value="invitations">Invitaciones</option>
                             <option value="whatsapp">WhatsApp</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
@@ -204,23 +200,6 @@ header('Referrer-Policy: same-origin');
                             <div id="size-guide-rows" class="size-guide-editor-rows"></div>
                             <button class="primary-button fit-button" type="submit">GUARDAR TABLA DE TALLES</button>
                         </form>
-                    </section>
-
-                    <section class="admin-view" id="view-invitations">
-                        <div class="view-heading">
-                            <div>
-                                <p class="eyebrow">CODEX · REFERIDOS</p>
-                                <h1>INVITACIONES</h1>
-                                <p>Copiá el email y cargalo en Codex desde “Invitar a un amigo”. Al terminar, marcá la invitación como enviada.</p>
-                            </div>
-                        </div>
-                        <div class="invitation-note">Las solicitudes se guardan desde la página pública. El estado pendiente indica que todavía falta enviar la invitación oficial.</div>
-                        <div class="invitation-table-wrap">
-                            <table class="invitation-table">
-                                <thead><tr><th>Email</th><th>Solicitud</th><th>Estado</th><th></th></tr></thead>
-                                <tbody id="invitation-list"></tbody>
-                            </table>
-                        </div>
                     </section>
 
                     <section class="admin-view" id="view-contact">

@@ -283,7 +283,7 @@
     }
 
     function showView(view) {
-        const availableViews = new Set(['orders', 'deliveries', 'products', 'categories', 'size-guide', 'contact', 'design', 'invitations', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'products', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }

@@ -78,10 +78,11 @@ body { background:#fbf8ff !important; }
 
 /* Pie simplificado, contacto en panel y presentación profesional del creador. */
 .store-footer { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:22px clamp(20px,4vw,58px) 86px; border-top:1px solid var(--line); background:#f4effb; }
-.footer-contact-button,.creator-credit { appearance:none; border:0; background:transparent; padding:0; text-align:left; color:#2a1d3c; text-decoration:none; cursor:pointer; }
+.footer-contact-button,.creator-credit { appearance:none; border:0; background:transparent; padding:0; text-align:left; color:#2a1d3c; text-decoration:none; }
+.footer-contact-button { cursor:pointer; }
 .footer-contact-button span,.creator-credit span { display:block; color:#7652b8; font-size:11px; font-weight:850; letter-spacing:.1em; }
 .footer-contact-button small { display:block; margin-top:4px; color:#685d76; font-size:13px; }
-.footer-contact-button:hover span,.footer-contact-button:focus-visible span,.creator-credit:hover strong,.creator-credit:focus-visible strong { text-decoration:underline; text-underline-offset:4px; }
+.footer-contact-button:hover span,.footer-contact-button:focus-visible span { text-decoration:underline; text-underline-offset:4px; }
 .creator-credit { display:grid; gap:4px; }
 .creator-credit strong { color:#2a1d3c; font-size:13px; }
 .creator-credit b { color:#7652b8; font-size:17px; }

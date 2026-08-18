@@ -168,26 +168,6 @@ final class PaymentProofService
                     ]);
                     $proofId = (int) $pdo->lastInsertId();
 
-                    if (!empty($lockedOrder['customer_email'])) {
-                        $mail = $pdo->prepare(
-                            'INSERT INTO mail_queue(
-                                order_id, recipient, subject, template, payload_json
-                             ) VALUES(
-                                :order_id, :recipient, :subject, :template, :payload_json
-                             )'
-                        );
-                        $mail->execute([
-                            'order_id' => $lockedOrder['id'],
-                            'recipient' => $lockedOrder['customer_email'],
-                            'subject' => 'Comprobante recibido · '
-                                . $lockedOrder['public_number'],
-                            'template' => 'payment_reported',
-                            'payload_json' => json_encode([
-                                'public_number' => $lockedOrder['public_number'],
-                                'customer_name' => $lockedOrder['customer_name'],
-                            ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                        ]);
-                    }
                 }
             );
         } catch (Throwable $exception) {

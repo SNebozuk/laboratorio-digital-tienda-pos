@@ -47,9 +47,8 @@ final class OrderService
         }
 
         $customerName = $this->normalizeCustomerName((string) ($customer['name'] ?? ''));
-        // Los pedidos se identifican por nombre y WhatsApp; no se conserva ni
-        // utiliza correo del cliente para comunicaciones.
-        $customerEmail = null;
+        $customerEmail = trim((string) ($customer['email'] ?? ''));
+        $customerEmail = $customerEmail !== '' ? strtolower($customerEmail) : null;
         $customerPhone = preg_replace(
             '/\D+/',
             '',
@@ -158,14 +157,30 @@ final class OrderService
                     !empty($this->config['mail_enabled'])
                     && filter_var($salesEmail, FILTER_VALIDATE_EMAIL)
                 ) {
-                    $mailPayload['audience'] = 'internal';
+                    $internalPayload = $mailPayload;
+                    $internalPayload['audience'] = 'internal';
                     $this->queueOrderMail(
                         $pdo,
                         $orderId,
                         $salesEmail,
                         'Nueva venta ' . $publicNumber . ' · ' . $customerName,
                         'order_created',
-                        $mailPayload
+                        $internalPayload
+                    );
+                }
+                if (
+                    !empty($this->config['mail_enabled'])
+                    && $customerEmail !== null
+                ) {
+                    $customerPayload = $mailPayload;
+                    $customerPayload['audience'] = 'customer';
+                    $this->queueOrderMail(
+                        $pdo,
+                        $orderId,
+                        $customerEmail,
+                        'Recibimos tu pedido ' . $publicNumber . ' · Laboratorio Digital',
+                        'order_created',
+                        $customerPayload
                     );
                 }
 
@@ -641,21 +656,6 @@ final class OrderService
                     $detail
                 );
 
-                if (!empty($order['customer_email'])) {
-                    $this->queueOrderMail(
-                        $pdo,
-                        $orderId,
-                        (string) $order['customer_email'],
-                        $subject,
-                        $template,
-                        [
-                            'public_number' => $order['public_number'],
-                            'customer_name' => $order['customer_name'],
-                            'retry_deadline_at' => $deadline,
-                            'payment_url' => $paymentUrl,
-                        ]
-                    );
-                }
             }
         );
     }
@@ -698,19 +698,6 @@ final class OrderService
                         : 'Pedido listo para retirar.'
                 );
 
-                if (!empty($order['customer_email'])) {
-                    $this->queueOrderMail(
-                        $pdo,
-                        $orderId,
-                        (string) $order['customer_email'],
-                        'Tu pedido está listo para retirar · ' . $order['public_number'],
-                        'order_ready',
-                        [
-                            'public_number' => $order['public_number'],
-                            'customer_name' => $order['customer_name'],
-                        ]
-                    );
-                }
             }
         );
     }

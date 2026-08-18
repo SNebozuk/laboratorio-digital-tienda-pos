@@ -48,7 +48,11 @@ final class MailService
 
             try {
                 $payload = json_decode((string) $message['payload_json'], true, 512, JSON_THROW_ON_ERROR);
-                if (!is_array($payload) || ($payload['audience'] ?? '') !== 'internal') {
+                if (
+                    !is_array($payload)
+                    || !in_array(($payload['audience'] ?? ''), ['internal', 'customer'], true)
+                    || (string) ($message['template'] ?? '') !== 'order_created'
+                ) {
                     throw new \RuntimeException('La cola contiene un tipo de mensaje no permitido.');
                 }
                 $this->send(
@@ -238,15 +242,24 @@ final class MailService
                 . $this->money((int) ($item['line_total_cents'] ?? 0)) . '</td></tr>';
         }
 
+        $customerCopy = ($payload['audience'] ?? '') === 'customer';
+        $heading = $customerCopy
+            ? '¡Gracias por tu pedido! ' . $this->escape((string) ($payload['public_number'] ?? ''))
+            : 'Nueva venta ' . $this->escape((string) ($payload['public_number'] ?? ''));
+        $intro = $customerCopy
+            ? '<p>Hola ' . $this->escape((string) ($payload['customer_name'] ?? '')) . '. Recibimos correctamente tu compra. Este es el detalle:</p>'
+            : '<p><strong>Cliente:</strong> ' . $this->escape((string) ($payload['customer_name'] ?? ''))
+                . '<br><strong>WhatsApp:</strong> ' . $this->escape((string) ($payload['customer_phone'] ?? ''))
+                . (($payload['customer_email'] ?? '') !== '' ? '<br><strong>Email:</strong> ' . $this->escape((string) $payload['customer_email']) : '') . '</p>';
+
         return '<!doctype html><html lang="es"><body style="margin:0;background:#f5f3f8;color:#24202a;font:15px Arial,sans-serif">'
             . '<div style="max-width:680px;margin:auto;padding:24px"><div style="background:#fff;border:1px solid #e3dfea;border-radius:14px;padding:24px">'
             . '<p style="color:#72569a;font-size:12px;font-weight:bold;letter-spacing:.08em">LABORATORIO DIGITAL</p>'
-            . '<h1 style="margin:0 0 8px">Nueva venta ' . $this->escape((string) ($payload['public_number'] ?? '')) . '</h1>'
-            . '<p><strong>Cliente:</strong> ' . $this->escape((string) ($payload['customer_name'] ?? ''))
-            . '<br><strong>WhatsApp:</strong> ' . $this->escape((string) ($payload['customer_phone'] ?? '')) . '</p>'
+            . '<h1 style="margin:0 0 8px">' . $heading . '</h1>' . $intro
             . '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:10px">Producto</th><th style="padding:10px">Cantidad</th><th style="text-align:right;padding:10px">Importe</th></tr></thead><tbody>'
             . $rows . '</tbody></table><p style="font-size:20px;text-align:right"><strong>Total: '
             . $this->money((int) ($payload['total_cents'] ?? 0)) . '</strong></p>'
+            . ($customerCopy ? '<p style="margin-top:22px">Nos comunicaremos por WhatsApp para coordinar tu compra. Muchas gracias.</p>' : '')
             . '</div></div></body></html>';
     }
 

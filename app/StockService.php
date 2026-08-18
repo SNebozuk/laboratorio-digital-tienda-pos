@@ -559,26 +559,6 @@ final class StockService
             $detail
         );
 
-        if ($notifyCustomer && !empty($order['customer_email'])) {
-            $mail = $pdo->prepare(
-                'INSERT INTO mail_queue(
-                    order_id, recipient, subject, template, payload_json
-                 ) VALUES(
-                    :order_id, :recipient, :subject, :template, :payload_json
-                 )'
-            );
-            $mail->execute([
-                'order_id' => $orderId,
-                'recipient' => $order['customer_email'],
-                'subject' => 'Pedido cancelado · ' . $order['public_number'],
-                'template' => 'order_cancelled',
-                'payload_json' => json_encode([
-                    'public_number' => $order['public_number'],
-                    'customer_name' => $order['customer_name'],
-                    'detail' => $detail,
-                ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-            ]);
-        }
         if (
             $notifyCustomer
             && (!empty($order['customer_phone']) || !empty($order['customer_email']))

@@ -1086,6 +1086,17 @@
                         value="${escapeHtml(customer.phone || '')}"
                     >
                 </label>
+                <label>
+                    Email <span class="optional-field">(opcional)</span>
+                    <input
+                        name="email"
+                        type="email"
+                        autocomplete="email"
+                        placeholder="Ej.: nombre@email.com"
+                        value="${escapeHtml(customer.email || '')}"
+                    >
+                </label>
+                <small class="field-help">Si lo completás, te enviaremos el detalle de esta compra.</small>
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
@@ -1180,6 +1191,7 @@
         const formData = new FormData(form);
         const customerName = String(formData.get('name') || '').trim();
         const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
+        const customerEmail = String(formData.get('email') || '').trim();
         // La tienda opera con transferencia como único medio de pago web.
         const paymentMethod = 'bank_transfer';
         if (!hasValidCustomerFullName(customerName) || customerPhone.length < 8) {
@@ -1192,8 +1204,14 @@
                 : '[name="phone"]')?.focus();
             return;
         }
+        if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+            errorBox.hidden = false;
+            errorBox.textContent = 'Revisá el email o dejalo vacío si preferís no recibir el detalle.';
+            form.querySelector('[name="email"]')?.focus();
+            return;
+        }
         errorBox.hidden = true;
-        persistCustomer(customerName, String(formData.get('phone') || '').trim(), '');
+        persistCustomer(customerName, String(formData.get('phone') || '').trim(), customerEmail);
         button.disabled = true;
         button.textContent = 'PREPARANDO TRANSFERENCIA…';
         try {
@@ -1204,7 +1222,7 @@
                 payment_method: paymentMethod,
                 customer: {
                     name: formData.get('name'),
-                    email: '',
+                    email: customerEmail,
                     phone: formData.get('phone'),
                 },
                 items: cartItems().map(item => ({
