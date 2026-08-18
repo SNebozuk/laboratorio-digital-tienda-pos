@@ -326,10 +326,20 @@ try {
             $sale = $app['orders']->createPosSale(
                 is_array($input['items'] ?? null) ? $input['items'] : [],
                 (string) ($input['customer_name'] ?? ''),
+                (string) ($input['customer_phone'] ?? ''),
                 (string) ($input['payment_method'] ?? ''),
                 (int) $user['id']
             );
             Http::json(['ok' => true, 'order' => $sale], 201);
+
+        case 'contact_update':
+            $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'settings' => $app['settings']->updateContact(
+                    is_array($input['contact'] ?? null) ? $input['contact'] : []
+                ),
+            ]);
 
         case 'payment_review':
             $user = $app['auth']->requireAdmin();

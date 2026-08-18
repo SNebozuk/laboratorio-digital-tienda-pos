@@ -66,6 +66,7 @@ final class SettingsService
             1
         );
         $values += [
+            'business_hours' => 'Lunes a viernes de 9:30 a 17 · Sábados de 9:30 a 12:30',
             'cart_maintenance_enabled' => '0',
             'whatsapp_message_order_created' => 'Hola {{cliente}}! Recibimos tu pedido {{pedido}} por {{total}}. Cuando realices la transferencia, por favor respondé a este chat para que podamos prepararlo. Gracias por elegirnos.',
             'whatsapp_message_cash_created' => 'Hola {{cliente}}! Recibimos tu pedido {{pedido}} por {{total}}. Lo reservamos por 6 horas para que puedas retirarlo y abonarlo en efectivo. Te esperamos!',
@@ -321,6 +322,31 @@ final class SettingsService
             }
         );
 
+        return $this->values();
+    }
+
+    /** Guarda Contacto sin obligar a reenviar la configuración operativa completa. */
+    public function updateContact(array $data): array
+    {
+        $storeName = $this->text($data, 'store_name', 2, 100);
+        $whatsapp = preg_replace('/\D+/', '', (string) ($data['whatsapp_number'] ?? ''));
+        if (strlen((string) $whatsapp) < 10 || strlen((string) $whatsapp) > 20) {
+            throw new ValidationException('Ingresá el WhatsApp con código de país y área.');
+        }
+        $pickupAddress = trim((string) ($data['pickup_address'] ?? ''));
+        if (strlen($pickupAddress) > 250) throw new ValidationException('La dirección de retiro es demasiado larga.');
+        $businessHours = trim((string) ($data['business_hours'] ?? ''));
+        if (strlen($businessHours) < 3 || strlen($businessHours) > 300) throw new ValidationException('Revisá los horarios de atención.');
+        $values = [
+            'store_name' => $storeName,
+            'whatsapp_number' => (string) $whatsapp,
+            'pickup_address' => $pickupAddress,
+            'business_hours' => $businessHours,
+        ];
+        Database::immediate($this->pdo, static function (PDO $pdo) use ($values): void {
+            $save = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
+            foreach ($values as $key => $value) $save->execute(['key' => $key, 'value' => $value]);
+        });
         return $this->values();
     }
 

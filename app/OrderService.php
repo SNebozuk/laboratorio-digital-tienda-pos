@@ -202,15 +202,20 @@ final class OrderService
     public function createPosSale(
         array $items,
         string $customerName,
+        string $customerPhone,
         string $paymentMethod,
         int $actorUserId
     ): array {
         $quantities = $this->normalizeItems($items);
         $customerName = $this->normalizeCustomerName($customerName) ?: 'Consumidor final';
+        $customerPhone = preg_replace('/\D+/', '', $customerPhone) ?: '';
         // Las ventas rápidas sin cliente identificado no requieren seguimiento
         // en la lista diaria. Se conservan en la base de datos, pero quedan
         // archivadas desde su creación.
         $archiveConsumerFinal = $this->normalizeCustomerName($customerName) === 'CONSUMIDOR FINAL';
+        if (!$archiveConsumerFinal && strlen($customerPhone) < 8) {
+            throw new ValidationException('Ingresá el WhatsApp del cliente para registrar esta venta.');
+        }
         $paymentMethod = trim($paymentMethod);
         if ($paymentMethod === '') {
             throw new ValidationException('Elegí un medio de pago.');
@@ -220,6 +225,7 @@ final class OrderService
             function (PDO $pdo) use (
                 $quantities,
                 $customerName,
+                $customerPhone,
                 $archiveConsumerFinal,
                 $paymentMethod,
                 $actorUserId
@@ -231,11 +237,11 @@ final class OrderService
                 $insertOrder = $pdo->prepare(
                     'INSERT INTO orders(
                         public_number, channel, status,
-                        customer_name, subtotal_cents, total_cents,
+                        customer_name, customer_phone, subtotal_cents, total_cents,
                         payment_method, delivered_at, created_by, archived_at, archived_by
                      ) VALUES(
                         :public_number, :channel, :status,
-                        :customer_name, :subtotal_cents, :total_cents,
+                        :customer_name, :customer_phone, :subtotal_cents, :total_cents,
                         :payment_method, CURRENT_TIMESTAMP, :created_by, :archived_at, :archived_by
                      )'
                 );
@@ -244,6 +250,7 @@ final class OrderService
                     'channel' => 'pos',
                     'status' => 'delivered',
                     'customer_name' => $customerName,
+                    'customer_phone' => $customerPhone ?: null,
                     'subtotal_cents' => $total,
                     'total_cents' => $total,
                     'payment_method' => $paymentMethod,
@@ -314,6 +321,7 @@ final class OrderService
                     'public_number' => $publicNumber,
                     'status' => 'delivered',
                     'customer_name' => $customerName,
+                    'customer_phone' => $customerPhone ?: null,
                     'archived_at' => $archiveConsumerFinal ? (new DateTimeImmutable())->format('Y-m-d H:i:s') : null,
                     'payment_method' => $paymentMethod,
                     'total_cents' => $total,

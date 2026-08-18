@@ -1430,6 +1430,7 @@
                     <input type="number" value="${item.quantity}" min="0" max="${Number(item.variant.available_stock)}" data-pos-input="${item.variantId}">
                     <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity + 1}" ${item.quantity >= Number(item.variant.available_stock) ? 'disabled' : ''}>+</button>
                 </div>
+                <small class="pos-cart-available">Stock: ${Number(item.variant.available_stock)} disponible${Number(item.variant.available_stock) === 1 ? '' : 's'}</small>
                 <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
                 <button class="pos-remove-cart-line" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito">🗑</button>
             </div>
@@ -1678,13 +1679,21 @@
         if (!items.length) {
             return null;
         }
+        const customerName = document.getElementById('pos-customer')?.value.trim() || '';
+        const customerPhone = document.getElementById('pos-customer-phone')?.value.trim() || '';
+        if (customerName && customerPhone.replace(/\D+/g, '').length < 8) {
+            toast('Para registrar una venta a nombre de un cliente, ingresá su WhatsApp.');
+            document.getElementById('pos-customer-phone')?.focus();
+            return null;
+        }
         elements.completeSale.disabled = true;
         elements.completeSale.textContent = 'PROCESANDO…';
         try {
             const data = await apiPost({
                 action: 'pos_sale',
                 items,
-                customer_name: document.getElementById('pos-customer')?.value.trim() || 'Consumidor final',
+                customer_name: customerName || 'Consumidor final',
+                customer_phone: customerPhone,
                 payment_method: 'pos',
             });
             const sale = data.order;
@@ -1693,6 +1702,7 @@
             persistPosCart();
             try { localStorage.removeItem(POS_CUSTOMER_STORAGE_KEY); } catch {}
             if (document.getElementById('pos-customer')) document.getElementById('pos-customer').value = '';
+            if (document.getElementById('pos-customer-phone')) document.getElementById('pos-customer-phone').value = '';
             await loadProducts();
             renderPosCart();
             return sale;
@@ -2192,6 +2202,10 @@
     }
 
     function deliveryOrderSummary(order) {
+        return `<tr>${deliveryOrderSummaryCells(order)}</tr>`;
+    }
+
+    function deliveryOrderSummaryCells(order) {
         const items = sortedOrderItems(order.items || []).map(item => {
             const variant = fold(item.variant_name) === 'unica' ? '' : ` · ${item.variant_name || ''}`;
             return `${Number(item.quantity)} × ${item.product_name || 'Producto'}${variant}`;
@@ -2199,13 +2213,13 @@
         const status = order.status === 'cancelled'
             ? 'Cancelada'
             : (statusLabels[order.status] || 'Activa');
-        return `<tr>
+        return `
             <td><strong>${escapeHtml(order.public_number)}</strong></td>
             <td>${escapeHtml(argentinaDateLabel(order.created_at))}</td>
             <td>${items || 'Sin productos'}</td>
             <td><strong>${money(order.total_cents)}</strong></td>
             <td>${escapeHtml(status)}</td>
-        </tr>`;
+        `;
     }
 
     async function deleteDeliverySlot(slotNumber) {
@@ -2217,6 +2231,7 @@
             const data = await apiGet('orders', { limit: 150, include_archived: 0 });
             const matches = (data.orders || []).filter(order => (
                 !order.archived_at
+                && order.status !== 'cancelled'
                 && customer !== ''
                 && isLikelySameDeliveryCustomer(customer, order.customer_name)
             ));
@@ -2232,8 +2247,8 @@
                     <p class="eyebrow">REVISIÓN ANTES DE VACIAR</p>
                     <h2 id="modal-title">¿VACIAR FILA ${Number(slotNumber)}?</h2>
                     <p>Vas a vaciar la fila que contiene a <strong>${escapeHtml(customerLabel)}</strong>.</p>
-                    ${details.length ? `<p>Además, encontramos ${details.length === 1 ? 'una venta activa' : `${details.length} ventas activas`} de esta persona en la Lista de Ventas.</p><div class="delivery-match-table-wrap"><table class="delivery-match-table delivery-delete-orders"><thead><tr><th>VENTA</th><th>FECHA</th><th>PRODUCTOS</th><th>TOTAL</th><th>ESTADO</th></tr></thead><tbody>${details.map(deliveryOrderSummary).join('')}</tbody></table></div>` : '<p class="notice">No encontramos otras ventas abiertas asociadas a esta fila.</p>'}
-                    <p class="notice">Vaciar la fila no archiva ni cancela ventas; solamente las libera de Entregas para que puedas ubicarlas de nuevo.</p>
+                    ${details.length ? `<p>Además, encontramos ${details.length === 1 ? 'una venta activa' : `${details.length} ventas activas`} con un nombre similar en la Lista de Ventas.</p><div class="delivery-match-table-wrap"><table class="delivery-match-table delivery-delete-orders"><thead><tr><th>VENTA</th><th>NOMBRE Y APELLIDO</th><th>FECHA</th><th>PRODUCTOS</th><th>TOTAL</th><th>ESTADO</th></tr></thead><tbody>${details.map(order => `<tr><td><strong>${escapeHtml(order.public_number)}</strong></td><td><strong>${escapeHtml(order.customer_name || '—')}</strong></td>${deliveryOrderSummaryCells(order).replace(/^\s*<td>[\s\S]*?<\/td>/, '')}</tr>`).join('')}</tbody></table></div>` : '<p class="notice">No encontramos otras ventas abiertas asociadas a esta fila.</p>'}
+                    <p class="notice">Vaciar la fila solamente borra sus datos en Entregas. No modifica, reabre ni restaura las ventas originales.</p>
                     <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>VOLVER</button><button class="danger-button" type="button" data-confirm-delete-delivery-slot="${Number(slotNumber)}">VACIAR FILA ${Number(slotNumber)}</button></div>
                 </section>
             `);
@@ -3641,13 +3656,9 @@
         button.disabled = true;
         button.textContent = 'GUARDANDO…';
         try {
-            if (!state.settings) {
-                const current = await apiGet('settings');
-                state.settings = current.settings;
-            }
             const response = await apiPost({
-                action: 'settings_update',
-                settings: { ...state.settings, ...Object.fromEntries(data.entries()) },
+                action: 'contact_update',
+                contact: Object.fromEntries(data.entries()),
             });
             state.settings = response.settings;
             toast('Contacto guardado.');

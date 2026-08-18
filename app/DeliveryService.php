@@ -115,10 +115,8 @@ final class DeliveryService
     {
         $this->assertSlot($slot);
         Database::immediate($this->pdo, static function (PDO $pdo) use ($slot): void {
-            // Vaciar una ubicación devuelve sus ventas a Lista de Ventas: una
-            // orden no puede permanecer archivada si ya no está en Entregas.
-            $pdo->prepare('UPDATE orders SET delivery_slot_number = NULL, delivery_copied_at = NULL, delivery_reopened_at = CURRENT_TIMESTAMP, archived_at = NULL, archived_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE delivery_slot_number = :slot')
-                ->execute(['slot' => $slot]);
+            // Vaciar una fila sólo limpia la planilla física. Las ventas mantienen
+            // intactos su estado, archivo y vínculo histórico con Entregas.
             $pdo->prepare('DELETE FROM delivery_slots WHERE slot_number = :slot')->execute(['slot' => $slot]);
         });
     }
