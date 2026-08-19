@@ -14,6 +14,17 @@ final class DeliveryService
     public function slots(): array
     {
         $slots = $this->pdo->query('SELECT * FROM delivery_slots ORDER BY slot_number')->fetchAll();
+        // La planilla es el estado actual de Entregas, no un historial. Una
+        // venta sólo pertenece visualmente a una fila si su número continúa
+        // escrito en esa misma fila. Así, al vaciarla o reutilizarla no se
+        // recuperan ventas que habían estado allí anteriormente.
+        $numbersBySlot = [];
+        foreach ($slots as $slot) {
+            $numbersBySlot[(int) $slot['slot_number']] = array_values(array_filter(
+                array_map('trim', explode('/', (string) $slot['order_numbers'])),
+                static fn (string $number): bool => $number !== ''
+            ));
+        }
         $orders = $this->pdo->query(
             'SELECT id, public_number, customer_name, customer_phone, total_cents, delivery_slot_number
              FROM orders
@@ -22,7 +33,10 @@ final class DeliveryService
         )->fetchAll();
         $bySlot = [];
         foreach ($orders as $order) {
-            $bySlot[(int) $order['delivery_slot_number']][] = $order;
+            $slotNumber = (int) $order['delivery_slot_number'];
+            if (in_array((string) $order['public_number'], $numbersBySlot[$slotNumber] ?? [], true)) {
+                $bySlot[$slotNumber][] = $order;
+            }
         }
         foreach ($slots as &$slot) {
             $slot['orders'] = $bySlot[(int) $slot['slot_number']] ?? [];

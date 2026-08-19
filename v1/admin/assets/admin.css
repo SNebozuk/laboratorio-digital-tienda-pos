@@ -3303,12 +3303,14 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-table input:hover,.delivery-table input:focus { border-color: #bda4de; background: #fff; outline: none; }
 .delivery-transfer-total { display: block; min-height: 16px; padding: 2px 9px 0; color: #6b537f; font-size: 11px; font-weight: 750; }
 .delivery-table tbody tr.delivery-slot-build { animation:delivery-build-glow 1.25s ease-in-out infinite; position:relative; }
-.delivery-table tbody tr.delivery-slot-build > th,.delivery-table tbody tr.delivery-slot-build > td { background:#c9efd5 !important; color:#123f24; font-weight:850; border-top:2px solid #23834a; border-bottom:2px solid #23834a; }
+.delivery-table tbody tr.delivery-slot-build { background:#c9efd5 !important; }
+.delivery-table tbody tr.delivery-slot-build > th,.delivery-table tbody tr.delivery-slot-build > td { background:#c9efd5 !important; background-clip:padding-box; color:#123f24; font-weight:850; border-color:#23834a; }
 .delivery-table tbody tr.delivery-slot-build > th { box-shadow:inset 9px 0 0 #14713a; font-size:20px; }
 .delivery-table tbody tr.delivery-slot-build > td:last-child { border-right:2px solid #23834a; }
 .delivery-table tbody tr.delivery-slot-build > th:first-child { border-left:2px solid #23834a; }
 .delivery-table tbody tr.delivery-slot-add { animation:delivery-add-glow 1.7s ease-in-out infinite; }
-.delivery-table tbody tr.delivery-slot-add > th,.delivery-table tbody tr.delivery-slot-add > td { background:#f7cfe8 !important; color:#7d1259; font-weight:850; border-bottom-color:#e9a5ce; }
+.delivery-table tbody tr.delivery-slot-add { background:#f7cfe8 !important; }
+.delivery-table tbody tr.delivery-slot-add > th,.delivery-table tbody tr.delivery-slot-add > td { background:#f7cfe8 !important; background-clip:padding-box; color:#7d1259; font-weight:850; border-color:#e9a5ce; }
 .delivery-table tbody tr.delivery-slot-add > th { box-shadow:inset 6px 0 0 #d91976; }
 .delivery-table tbody tr.delivery-slot-build input,.delivery-table tbody tr.delivery-slot-add input { background:transparent !important; color:inherit !important; font-weight:800; }
 .delivery-table tbody tr.delivery-slot-build input { font-size:16px; font-weight:900; }
