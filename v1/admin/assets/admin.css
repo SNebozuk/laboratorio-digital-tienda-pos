@@ -3328,7 +3328,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-delete:hover { background: #f5e3e9; color: #9a3152; }
 .delivery-row-number { display:flex; align-items:center; justify-content:flex-start; gap:7px; white-space:nowrap; }
 .delivery-row-number > span { display:inline-flex; align-items:center; }
-.delivery-flow-actions { display:flex; align-items:center; justify-content:center; gap:6px; min-width:154px; }
+.delivery-table td.delivery-flow-actions { display:table-cell; min-width:154px; text-align:center; white-space:nowrap; }
+.delivery-table td.delivery-flow-actions > button { display:inline-grid; margin:0 3px; vertical-align:middle; }
 .delivery-print,.delivery-return,.delivery-whatsapp { display:grid; width:44px; height:44px; place-items:center; padding:0; border:1px solid #c9b9de; border-radius:9px; background:#faf7ff; color:#4c2574; cursor:pointer; font-size:26px; line-height:1; }
 .delivery-print:hover { background:#694093; border-color:#694093; color:#fff; }
 .delivery-return { border-color:#a8c7df; background:#f3f9ff; color:#20598a; font-size:29px; }
@@ -3402,6 +3403,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .delivery-marker-clear,
 .delivery-place { display:grid; width:32px; height:32px; min-height:32px; place-items:center; padding:0; line-height:1; }
 .delivery-print,.delivery-return,.delivery-whatsapp { width:40px; height:40px; }
+.delivery-print { width:46px; height:46px; font-size:29px; }
 .delivery-whatsapp .whatsapp-logo { width:24px; height:24px; }
 .order-list-whatsapp .whatsapp-logo { width:20px; height:20px; }
 #view-orders .order-list-number strong,#view-orders .order-list-customer strong,#view-orders .order-list-total { font-size:14px; }
