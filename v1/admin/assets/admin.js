@@ -920,7 +920,9 @@
                 ${products.map(product => {
                     const hasVariants = product.variants.length > 1;
                     const single = product.variants[0];
-                    const inlineFields = single ? `<label class="product-inline-field"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
+                    // Un producto con variantes no tiene un único precio ni stock: esos valores
+                    // se muestran únicamente en las filas de cada variante.
+                    const inlineFields = !hasVariants && single ? `<label class="product-inline-field"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
                         <label class="product-inline-field"><input type="number" min="0" step="1" value="${single.price_cents == null ? '' : Number(single.price_cents) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
                     const visible = isProductVisible(product);
                     const featured = state.featuredProductIds.has(Number(product.id));
