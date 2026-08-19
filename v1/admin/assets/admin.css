@@ -3403,7 +3403,8 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .delivery-marker-clear,
 .delivery-place { display:grid; width:32px; height:32px; min-height:32px; place-items:center; padding:0; line-height:1; }
 .delivery-print,.delivery-return,.delivery-whatsapp { width:40px; height:40px; }
-.delivery-print { width:46px; height:46px; font-size:35px; }
+.delivery-print { width:40px; height:40px; font-size:26px; }
+.delivery-print .printer-icon { width:29px; height:29px; }
 .delivery-whatsapp .whatsapp-logo { width:24px; height:24px; }
 .order-list-whatsapp .whatsapp-logo { width:20px; height:20px; }
 #view-orders .order-list-number strong,#view-orders .order-list-customer strong,#view-orders .order-list-total { font-size:14px; }

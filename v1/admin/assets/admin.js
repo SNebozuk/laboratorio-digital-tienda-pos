@@ -1960,7 +1960,7 @@
             const statusAttention = tone === 'delivery-slot-add'
                 ? '<span class="delivery-status-attention delivery-add-attention" role="img" aria-label="Atención: pedido agregado a una fila existente" title="Atención: este pedido se agregó a una fila existente">!</span>'
                 : (tone === 'delivery-slot-build' ? '<span class="delivery-status-attention delivery-build-attention" role="img" aria-label="Atención: pedido pendiente de armar" title="Atención: este pedido está pendiente de armar">!</span>' : '');
-            const printButton = linkedOrders.length ? `<button class="delivery-print" type="button" data-print-delivery-slot="${number}" aria-label="Imprimir ventas de fila ${number}" title="Imprimir ventas de esta fila">⎙</button>` : '';
+            const printButton = linkedOrders.length ? `<button class="delivery-print" type="button" data-print-delivery-slot="${number}" aria-label="Imprimir ventas de fila ${number}" title="Imprimir ventas de esta fila">${printerIconMarkup()}</button>` : '';
             const whatsappOrders = linkedOrders.filter(order => String(order.customer_phone || '').replace(/\D+/g, '').length >= 8);
             const whatsappButton = whatsappOrders.length === 1
                 ? `<button class="delivery-whatsapp" type="button" data-delivery-whatsapp-phone="${String(whatsappOrders[0].customer_phone || '').replace(/\D+/g, '')}" aria-label="Abrir WhatsApp de ${escapeHtml(whatsappOrders[0].customer_name || 'cliente')}" title="Abrir WhatsApp">${whatsappLogoMarkup()}</button>`
@@ -2371,6 +2371,10 @@
 
     function whatsappLogoMarkup() {
         return `<svg class="whatsapp-logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.2a12.7 12.7 0 0 0-10.9 19.2L3.5 28.8l6.6-1.7A12.8 12.8 0 1 0 16 3.2Zm0 23.2a10.4 10.4 0 0 1-5.3-1.5l-.4-.2-3.9 1 1-3.8-.3-.4A10.4 10.4 0 1 1 16 26.4Zm5.7-7.7c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.5 8.5 0 0 1-2.5-1.6 9.3 9.3 0 0 1-1.7-2.2c-.2-.3 0-.5.1-.7l.5-.5c.2-.2.2-.3.3-.5s0-.4 0-.5l-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3 .2.3.2.3a11.7 11.7 0 0 0 4.5 4.1c.6.3 1 .5 1.4.6.6.2 1.2.2 1.6.1.5-.1 1.9-.8 2.1-1.5s.3-1.4.2-1.5-.3-.2-.6-.4Z" fill="currentColor"/></svg>`;
+    }
+
+    function printerIconMarkup() {
+        return '<svg class="printer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17v4h10v-4M6 9H4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h2m12 0h2a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-2M6 13h12v7H6z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 12h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
     }
 
     async function openOrderWhatsapp(orderId) {
