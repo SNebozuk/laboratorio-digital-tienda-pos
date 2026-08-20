@@ -3344,8 +3344,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-delete:hover { background: #694093; border-color:#694093; color:#fff; }
 .delivery-row-number { display:table-cell; vertical-align:middle !important; white-space:nowrap; }
 .delivery-row-number > span { display:inline-flex; align-items:center; justify-content:center; }
-.delivery-table td.delivery-flow-actions { display:table-cell; min-width:154px; text-align:center; white-space:nowrap; }
-.delivery-table td.delivery-flow-actions > button { display:inline-grid; margin:0 3px; vertical-align:middle; }
+.delivery-table td.delivery-flow-actions { display:table-cell; min-width:178px; white-space:nowrap; }
+.delivery-flow-actions-grid { display:grid; grid-template-columns:repeat(4, 40px); justify-content:center; gap:6px; }
+.delivery-flow-actions-grid > span { display:grid; width:40px; height:40px; place-items:center; }
 .delivery-print,.delivery-return,.delivery-whatsapp { display:grid; width:40px; height:40px; place-items:center; padding:0; border:1px solid #c9b9de; border-radius:9px; background:#faf7ff; color:#4c2574; cursor:pointer; font-size:26px; line-height:1; }
 .delivery-print:hover { background:#694093; border-color:#694093; color:#fff; }
 .delivery-return { font-size:29px; }
@@ -3364,7 +3365,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-delete-location span { font-weight:800; }
 .toast.delivery-delivered { position:fixed; top:50%; left:50%; z-index:100; display:flex; align-items:center; gap:14px; width:max-content; max-width:calc(100vw - 32px); padding:20px 26px; border-color:#9dcfb1; background:#f2fbf5; color:#176b3d; font-size:21px; font-weight:400; transform:translate(-50%, -50%); }
 .toast.delivery-delivered > span:first-child { display:grid; width:34px; height:34px; flex:0 0 auto; place-items:center; border-radius:50%; background:#23834a; color:#fff; font-size:22px; font-weight:900; }
-.toast.delivery-delivered > span:last-child { font-weight:400; }
+.toast.delivery-delivered > span:last-child { font-weight:400 !important; }
 .order-list-whatsapp .whatsapp-logo { width:21px; height:21px; }
 .admin-modal-card:has(.whatsapp-action-menu) { width:min(480px, calc(100vw - 28px)); }
 .whatsapp-action-menu { display:grid; gap:15px; width:100%; max-width:430px; margin:0 auto; }
