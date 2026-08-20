@@ -2048,8 +2048,8 @@
                 : (whatsappOrders.length > 1
                     ? `<button class="delivery-whatsapp" type="button" data-open-delivery-whatsapp="${number}" aria-label="Elegir WhatsApp de fila ${number}" title="Elegir WhatsApp">${whatsappLogoMarkup()}</button>`
                     : '');
-            const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">→</button>` : '';
-            const deleteButton = `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button>`;
+            const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">${orderActionIconMarkup('return')}</button>` : '';
+            const deleteButton = `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('cancel')}</button>`;
             return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${deleteButton}${whatsappButton}${returnButton}</td><td>${orderNumbers}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
@@ -2464,6 +2464,7 @@
     function orderActionIconMarkup(kind) {
         const paths = {
             delivery: '<path d="M19 12H6M10 7l-5 5 5 5"/>',
+            return: '<path d="M5 12h13M14 7l5 5-5 5"/>',
             reopen: '<path d="M8 7 4 11l4 4M5 11h9a5 5 0 0 1 0 10h-1"/>',
             print: '<path d="M7 9V4h10v5M7 17H5V10h14v7h-2M7 14h10v6H7z"/>',
             cancel: '<path d="M5 7h14M10 7V5h4v2M8 10v8M12 10v8M16 10v8M7 7l1 13h8l1-13"/>',
