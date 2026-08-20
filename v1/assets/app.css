@@ -1281,7 +1281,7 @@ body.product-detail-mode .catalog-column {
 .tutorial-carousel { position:relative; display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; }
 .tutorial-grid { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(240px,calc((100% - 32px) / 3)); gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
 .tutorial-grid::-webkit-scrollbar { display:none; }
-.tutorial-carousel-arrow { display:grid; width:38px; height:38px; padding:0; place-items:center; border:1px solid var(--line); border-radius:50%; background:var(--panel); color:var(--accent); font:inherit; font-size:22px; font-weight:800; cursor:pointer; }
+.tutorial-carousel-arrow { display:grid; width:52px; height:52px; padding:0; place-items:center; border:1px solid var(--line); border-radius:50%; background:var(--panel); color:var(--accent); font:inherit; font-size:32px; font-weight:800; line-height:1; cursor:pointer; }
 .tutorial-carousel-arrow:hover { border-color:var(--accent); }
 .tutorial-card { padding:0 0 18px; overflow:hidden; border:1px solid var(--line); border-radius:16px; background:var(--panel); color:var(--text); text-align:left; cursor:pointer; display:grid; gap:9px; }
 .tutorial-grid .tutorial-card { scroll-snap-align:start; }

@@ -837,12 +837,12 @@
                     ${tutorials.length ? `<section class="home-tutorials" aria-labelledby="home-tutorials-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">APRENDE</p><h2 id="home-tutorials-title">TUTORIALES</h2></div><span>Ideas y técnicas para crear</span></div>
                         <div class="tutorial-carousel">
-                            <button class="tutorial-carousel-arrow" type="button" data-tutorial-carousel-direction="previous" aria-label="Ver tutorial anterior">←</button>
+                            <button class="tutorial-carousel-arrow" type="button" data-tutorial-carousel-direction="previous" aria-label="Ver tutorial anterior">&lt;</button>
                             <div class="tutorial-grid" data-tutorial-carousel tabindex="0">${tutorials.map(tutorial => `<button class="tutorial-card" type="button" data-open-tutorial="${Number(tutorial.id)}">
                                 ${safeImage(tutorial.image_path) ? `<img src="${escapeHtml(safeImage(tutorial.image_path))}" alt="" loading="lazy">` : '<span class="tutorial-placeholder">APRENDE</span>'}
                                 <strong>${escapeHtml(tutorial.title)}</strong><small>LEER TUTORIAL →</small>
                             </button>`).join('')}</div>
-                            <button class="tutorial-carousel-arrow" type="button" data-tutorial-carousel-direction="next" aria-label="Ver siguiente tutorial">→</button>
+                            <button class="tutorial-carousel-arrow" type="button" data-tutorial-carousel-direction="next" aria-label="Ver siguiente tutorial">&gt;</button>
                         </div>
                     </section>` : ''}
                 </section>`;
