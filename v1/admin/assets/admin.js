@@ -2463,7 +2463,7 @@
 
     function orderActionIconMarkup(kind) {
         const paths = {
-            delivery: '<path d="M5 12h13M14 7l5 5-5 5"/>',
+            delivery: '<path d="M19 12H6M10 7l-5 5 5 5"/>',
             reopen: '<path d="M8 7 4 11l4 4M5 11h9a5 5 0 0 1 0 10h-1"/>',
             print: '<path d="M7 9V4h10v5M7 17H5V10h14v7h-2M7 14h10v6H7z"/>',
             cancel: '<path d="M5 7h14M10 7V5h4v2M8 10v8M12 10v8M16 10v8M7 7l1 13h8l1-13"/>',
@@ -2928,15 +2928,7 @@
     function renderOrders() {
         const matchingOrders = state.orders
             .filter(orderMatchesFilters)
-            .sort((first, second) => {
-                if (state.showArchivedOrders) return Number(second.id) - Number(first.id);
-                const customerComparison = String(first.customer_name || '').localeCompare(
-                    String(second.customer_name || ''),
-                    'es',
-                    { sensitivity: 'base' }
-                );
-                return customerComparison || Number(second.id) - Number(first.id);
-            });
+            .sort((first, second) => Number(second.id) - Number(first.id));
         elements.orderList?.classList.toggle('hide-status-column', !state.showArchivedOrders);
         const actionsBar = document.getElementById('order-actions-bar');
         const selectedCount = selectedOrders().length;
