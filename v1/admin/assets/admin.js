@@ -2461,6 +2461,16 @@
         return `<svg class="whatsapp-logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.2a12.7 12.7 0 0 0-10.9 19.2L3.5 28.8l6.6-1.7A12.8 12.8 0 1 0 16 3.2Zm0 23.2a10.4 10.4 0 0 1-5.3-1.5l-.4-.2-3.9 1 1-3.8-.3-.4A10.4 10.4 0 1 1 16 26.4Zm5.7-7.7c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.5 8.5 0 0 1-2.5-1.6 9.3 9.3 0 0 1-1.7-2.2c-.2-.3 0-.5.1-.7l.5-.5c.2-.2.2-.3.3-.5s0-.4 0-.5l-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3 .2.3.2.3a11.7 11.7 0 0 0 4.5 4.1c.6.3 1 .5 1.4.6.6.2 1.2.2 1.6.1.5-.1 1.9-.8 2.1-1.5s.3-1.4.2-1.5-.3-.2-.6-.4Z" fill="currentColor"/></svg>`;
     }
 
+    function orderActionIconMarkup(kind) {
+        const paths = {
+            delivery: '<path d="M5 12h13M14 7l5 5-5 5"/>',
+            reopen: '<path d="M8 7 4 11l4 4M5 11h9a5 5 0 0 1 0 10h-1"/>',
+            print: '<path d="M7 9V4h10v5M7 17H5V10h14v7h-2M7 14h10v6H7z"/>',
+            cancel: '<path d="M5 7h14M10 7V5h4v2M8 10v8M12 10v8M16 10v8M7 7l1 13h8l1-13"/>',
+        };
+        return `<svg class="order-action-icon" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;
+    }
+
     function printerIconMarkup() {
         return '<svg class="printer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17v4h10v-4M6 9H4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h2m12 0h2a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-2M6 13h12v7H6z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 12h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
     }
@@ -3044,11 +3054,11 @@
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
                         <span><span class="status-pill status-${escapeHtml(order.archived_at ? 'archived' : (inDeliveries ? 'copied' : order.status))}">${escapeHtml(order.archived_at ? 'Archivada' : (inDeliveries ? `EN ENTREGAS · ${deliverySlot}` : (statusLabels[order.status] || order.status)))}</span></span>
-                        <button class="order-list-copy ${order.delivery_reopened_at ? 'order-list-copy-reopened' : ''}" type="button" data-copy-order-delivery="${Number(order.id)}" ${inDeliveries ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="${order.delivery_reopened_at ? 'Volvió desde EDP: mover otra vez a Entregas' : 'Copiar a Entregas'}">${order.delivery_reopened_at ? '↰' : '⇠'}</button>
-                        <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">⎙</button>
+                        <button class="order-list-copy ${order.delivery_reopened_at ? 'order-list-copy-reopened' : ''}" type="button" data-copy-order-delivery="${Number(order.id)}" ${inDeliveries ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="${order.delivery_reopened_at ? 'Volvió desde EDP: mover otra vez a Entregas' : 'Copiar a Entregas'}">${orderActionIconMarkup(order.delivery_reopened_at ? 'reopen' : 'delivery')}</button>
+                        <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">${orderActionIconMarkup('print')}</button>
                         ${String(order.customer_phone || '').replace(/\D+/g, '').length >= 8 ? `<button class="order-list-whatsapp" type="button" data-whatsapp-order="${Number(order.id)}" aria-label="Abrir WhatsApp de ${escapeHtml(order.customer_name)}" title="Abrir WhatsApp">${whatsappLogoMarkup()}</button>` : '<span class="order-list-whatsapp-placeholder" aria-hidden="true"></span>'}
                         ${order.status !== 'cancelled' && !order.archived_at
-                            ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">🗑</button>`
+                            ? `<button class="order-list-delete" type="button" data-cancel-order="${Number(order.id)}" aria-label="Cancelar ${escapeHtml(order.public_number)}" title="Cancelar venta">${orderActionIconMarkup('cancel')}</button>`
                             : '<span class="order-list-delete-placeholder" aria-hidden="true"></span>'}
                         <span class="order-list-date">${escapeHtml(argentinaDateParts(order.created_at).date)}<small>${escapeHtml(argentinaDateParts(order.created_at).time)}</small></span>
                     </div>
