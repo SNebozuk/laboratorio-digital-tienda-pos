@@ -51,13 +51,15 @@ final class DeliveryService
         $this->assertSlot($slot);
         $expected = max(0, (int) ($input['revision'] ?? 0));
         $location = $this->normalizeLocation($input['location'] ?? '');
-        $orders = $this->clean($input['order_numbers'] ?? '');
+        $ordersProvided = array_key_exists('order_numbers', $input);
+        $orders = $ordersProvided ? $this->clean($input['order_numbers']) : null;
         $customer = $this->upper($input['customer_name'] ?? '');
         $transfers = $this->clean($input['transfers'] ?? '');
         $cashDue = $this->clean($input['cash_due'] ?? '');
 
         return Database::immediate($this->pdo, function (PDO $pdo) use ($slot, $expected, $location, $orders, $customer, $transfers, $cashDue, $actorUserId): array {
             $existing = $this->findSlot($pdo, $slot);
+            $orders = $orders ?? $this->clean($existing['order_numbers'] ?? '');
             $revision = (int) ($existing['revision'] ?? 0);
             if ($revision !== $expected) {
                 throw new ConflictException('Esta ubicación fue actualizada por otra persona. Se recargó la información para evitar sobrescribirla.');

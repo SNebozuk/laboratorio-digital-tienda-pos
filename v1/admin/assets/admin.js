@@ -2074,14 +2074,16 @@
         const field = key => row.querySelector(`[data-delivery-field="${key}"]`);
         const revision = Number(source.dataset.deliveryRevision || 0);
         try {
-            const data = await apiPost({
+            const orderNumbers = field('order_numbers');
+            const payload = {
                 action: 'delivery_slot_update', slot_number: Number(slotNumber), revision,
                 location: field('location')?.value || '',
-                order_numbers: field('order_numbers')?.value || '',
                 customer_name: field('customer_name')?.value || '',
                 transfers: field('transfers')?.value || '',
                 cash_due: field('cash_due')?.value || '',
-            });
+            };
+            if (orderNumbers) payload.order_numbers = orderNumbers.value;
+            const data = await apiPost(payload);
             const next = data.slot;
             state.deliverySlots = state.deliverySlots.filter(slot => Number(slot.slot_number) !== Number(slotNumber));
             if (Number(next.revision || 0) > 0) state.deliverySlots.push(next);
