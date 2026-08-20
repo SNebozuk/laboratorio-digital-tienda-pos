@@ -3335,25 +3335,31 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 @keyframes delivery-build-glow { 0%,100% { box-shadow:inset 0 0 0 1px rgba(20,113,58,.3),0 0 0 rgba(35,131,74,0); } 50% { box-shadow:inset 0 0 0 3px rgba(20,113,58,.82),0 0 14px rgba(35,131,74,.38); } }
 @keyframes delivery-attention-bounce { 0%,100% { transform:translateY(0) scale(1); } 50% { transform:translateY(-4px) scale(1.12); } }
 @media (prefers-reduced-motion:reduce) { .delivery-table tbody tr.delivery-slot-add,.delivery-table tbody tr.delivery-slot-build,.delivery-status-attention { animation:none; } }
-.delivery-marker-clear { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #e7f6ed; color: #167544; cursor: pointer; font-size: 18px; font-weight:900; }
-.delivery-marker-clear:hover { background: #23834a; color:#fff; }
+.delivery-marker-clear { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #faf7ff; color: #4c2574; cursor: pointer; font-size: 18px; font-weight:900; }
+.delivery-marker-clear:hover { background: #694093; color:#fff; }
 .delivery-order-total { color: #34214e; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.delivery-delete { display: grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 1px solid #e0c7d0; border-radius: 9px; background: #fff8fa; color: #7c536c; cursor: pointer; font-size: 21px; }
-.delivery-delete:hover { background: #f5e3e9; color: #9a3152; }
-.delivery-row-number { display:flex; align-items:center; justify-content:flex-start; gap:7px; white-space:nowrap; }
-.delivery-row-number > span { display:inline-flex; align-items:center; }
+.delivery-delete { display: grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 1px solid #c9b9de; border-radius: 9px; background: #faf7ff; color: #4c2574; cursor: pointer; font-size: 27px; line-height:1; }
+.delivery-delete:hover { background: #694093; border-color:#694093; color:#fff; }
+.delivery-row-number { display:table-cell; vertical-align:middle !important; white-space:nowrap; }
+.delivery-row-number > span { display:inline-flex; align-items:center; justify-content:center; }
 .delivery-table td.delivery-flow-actions { display:table-cell; min-width:154px; text-align:center; white-space:nowrap; }
 .delivery-table td.delivery-flow-actions > button { display:inline-grid; margin:0 3px; vertical-align:middle; }
 .delivery-print,.delivery-return,.delivery-whatsapp { display:grid; width:40px; height:40px; place-items:center; padding:0; border:1px solid #c9b9de; border-radius:9px; background:#faf7ff; color:#4c2574; cursor:pointer; font-size:26px; line-height:1; }
 .delivery-print:hover { background:#694093; border-color:#694093; color:#fff; }
-.delivery-return { border-color:#a8c7df; background:#f3f9ff; color:#20598a; font-size:29px; }
-.delivery-return:hover { background:#2b6a9e; border-color:#2b6a9e; color:#fff; }
+.delivery-return { font-size:29px; }
+.delivery-return:hover { background:#694093; border-color:#694093; color:#fff; }
 .delivery-whatsapp,.order-list-whatsapp { color:#167544; }
-.delivery-whatsapp { border-color:#9dcfb1; background:#f2fbf5; }
-.delivery-whatsapp:hover { background:#17864b; border-color:#17864b; color:#fff; }
+.delivery-whatsapp { color:#4c2574; }
+.delivery-whatsapp:hover { background:#694093; border-color:#694093; color:#fff; }
 .order-list-whatsapp { display:grid; width:30px; height:30px; place-items:center; padding:0; border:0; border-radius:7px; background:transparent; cursor:pointer; line-height:1; }
 .order-list-whatsapp:hover { background:#e7f6ed; color:#08743b; }
 .delivery-whatsapp .whatsapp-logo { width:27px; height:27px; }
+.delivery-order-links { display:flex; flex-wrap:wrap; align-items:center; gap:5px; min-height:40px; }
+.delivery-order-links button { padding:0; border:0; background:transparent; color:#4c2574; font:inherit; font-weight:850; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.delivery-order-links button:hover,.delivery-order-links button:focus-visible { color:#694093; outline:none; }
+.delivery-delete-location { display:flex; align-items:center; gap:10px; margin:0 0 16px; padding:11px 13px; border:1px solid #c9b9de; border-radius:9px; background:#faf7ff; color:#4c2574; }
+.delivery-delete-location strong { font-size:18px; }
+.delivery-delete-location span { font-weight:800; }
 .order-list-whatsapp .whatsapp-logo { width:21px; height:21px; }
 .admin-modal-card:has(.whatsapp-action-menu) { width:min(480px, calc(100vw - 28px)); }
 .whatsapp-action-menu { display:grid; gap:15px; width:100%; max-width:430px; margin:0 auto; }
