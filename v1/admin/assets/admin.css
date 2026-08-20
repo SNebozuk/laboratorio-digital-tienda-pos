@@ -3326,8 +3326,6 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-table tbody tr.delivery-slot-add > th { box-shadow:inset 6px 0 0 #d91976; }
 .delivery-table tbody tr.delivery-slot-build input,.delivery-table tbody tr.delivery-slot-add input { background:transparent !important; color:inherit !important; font-weight:800; }
 .delivery-table tbody tr.delivery-slot-build input { font-size:16px; font-weight:900; }
-.delivery-table tbody tr.delivery-slot-build .delivery-transfer-total { color:#347044; }
-.delivery-table tbody tr.delivery-slot-add .delivery-transfer-total { color:#74409b; }
 .delivery-status-attention { display:inline-grid; width:23px; height:23px; place-items:center; margin-left:7px; border-radius:50%; color:#fff; font-size:15px; font-weight:950; vertical-align:middle; animation:delivery-attention-bounce .9s ease-in-out infinite; }
 .delivery-add-attention { background:#d91976; box-shadow:0 3px 8px rgba(165,20,88,.28); }
 .delivery-build-attention { background:#23834a; box-shadow:0 3px 8px rgba(25,112,59,.28); }
@@ -3338,6 +3336,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-marker-clear { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #faf7ff; color: #4c2574; cursor: pointer; font-size: 18px; font-weight:900; }
 .delivery-marker-clear:hover { background: #694093; color:#fff; }
 .delivery-order-total { color: #34214e; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.delivery-transfer-status-cell { width:36px; text-align:center !important; }
+.delivery-transfer-status { display:inline-block; width:14px; height:14px; border-radius:50%; vertical-align:middle; }
+.delivery-transfer-status.is-matched { background:#23834a; }
+.delivery-transfer-status.is-unmatched { background:#d13434; }
 .delivery-delete { display: grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 1px solid #c9b9de; border-radius: 9px; background: #faf7ff; color: #4c2574; cursor: pointer; font-size: 27px; line-height:1; }
 .delivery-delete:hover { background: #694093; border-color:#694093; color:#fff; }
 .delivery-row-number { display:table-cell; vertical-align:middle !important; white-space:nowrap; }
@@ -3360,8 +3362,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-delete-location { display:flex; align-items:center; gap:10px; margin:0 0 16px; padding:11px 13px; border:1px solid #c9b9de; border-radius:9px; background:#faf7ff; color:#4c2574; }
 .delivery-delete-location strong { font-size:18px; }
 .delivery-delete-location span { font-weight:800; }
-.toast.delivery-delivered { display:flex; align-items:center; gap:9px; width:max-content; max-width:280px; padding:10px 13px; border-color:#9dcfb1; background:#f2fbf5; color:#176b3d; font-size:13px; font-weight:400; }
-.toast.delivery-delivered > span:first-child { display:grid; width:21px; height:21px; flex:0 0 auto; place-items:center; border-radius:50%; background:#23834a; color:#fff; font-size:14px; font-weight:900; }
+.toast.delivery-delivered { position:fixed; top:50%; left:50%; z-index:100; display:flex; align-items:center; gap:14px; width:max-content; max-width:calc(100vw - 32px); padding:20px 26px; border-color:#9dcfb1; background:#f2fbf5; color:#176b3d; font-size:21px; font-weight:400; transform:translate(-50%, -50%); }
+.toast.delivery-delivered > span:first-child { display:grid; width:34px; height:34px; flex:0 0 auto; place-items:center; border-radius:50%; background:#23834a; color:#fff; font-size:22px; font-weight:900; }
+.toast.delivery-delivered > span:last-child { font-weight:400; }
 .order-list-whatsapp .whatsapp-logo { width:21px; height:21px; }
 .admin-modal-card:has(.whatsapp-action-menu) { width:min(480px, calc(100vw - 28px)); }
 .whatsapp-action-menu { display:grid; gap:15px; width:100%; max-width:430px; margin:0 auto; }

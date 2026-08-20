@@ -1943,11 +1943,6 @@
         return values.length ? values.reduce((total, current) => total + current, 0) : null;
     }
 
-    function transferTotalLabel(value) {
-        const total = transferTotal(value);
-        return total === null ? '' : `Total: ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(total)}`;
-    }
-
     function deliveryCustomerKey(value) {
         return fold(String(value || '')
             .replace(/\b(ARMAR|AGREGAR)\b|📦/gi, '')
@@ -2049,15 +2044,18 @@
                     ? `<button class="delivery-whatsapp" type="button" data-open-delivery-whatsapp="${number}" aria-label="Elegir WhatsApp de fila ${number}" title="Elegir WhatsApp">${whatsappLogoMarkup()}</button>`
                     : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">${orderActionIconMarkup('return')}</button>` : '';
-            const deleteButton = `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('cancel')}</button>`;
             const hasSale = linkedOrders.length > 0 || String(slot.order_numbers || '').trim() !== '';
-            const transfers = hasSale ? `${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small>` : '';
+            const deleteButton = hasSale ? `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('cancel')}</button>` : '';
+            const transferAmount = transferTotal(slot.transfers);
+            const transferMatches = transferAmount !== null && Math.round(transferAmount * 100) === Number(slot.order_total_cents || 0);
+            const transferStatus = hasSale ? `<span class="delivery-transfer-status ${transferMatches ? 'is-matched' : 'is-unmatched'}" data-order-total-cents="${Number(slot.order_total_cents || 0)}" role="img" aria-label="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}" title="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}"></span>` : '';
+            const transfers = hasSale ? field('transfers', 'Transferencias') : '';
             const total = hasSale ? `<span class="delivery-order-total">${money(slot.order_total_cents)}</span>` : '';
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${deleteButton}${whatsappButton}${returnButton}</td><td>${orderNumbers}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${transfers}</td><td>${total}</td></tr>`;
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${deleteButton}${whatsappButton}${returnButton}</td><td>${orderNumbers}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${total}</td><td class="delivery-transfer-status-cell">${transferStatus}</td><td>${transfers}</td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
-            : '<tr><td class="delivery-no-results" colspan="9">No encontramos una fila que coincida con esa búsqueda.</td></tr>';
+            : '<tr><td class="delivery-no-results" colspan="10">No encontramos una fila que coincida con esa búsqueda.</td></tr>';
     }
 
     async function loadDeliverySlots() {
@@ -4770,8 +4768,16 @@
             return;
         }
         if (event.target.matches('[data-delivery-field="transfers"]')) {
-            const total = event.target.closest('td')?.querySelector('.delivery-transfer-total');
-            if (total) total.textContent = transferTotalLabel(event.target.value);
+            const indicator = event.target.closest('[data-delivery-row]')?.querySelector('.delivery-transfer-status');
+            if (indicator) {
+                const amount = transferTotal(event.target.value);
+                const matches = amount !== null && Math.round(amount * 100) === Number(indicator.dataset.orderTotalCents || 0);
+                indicator.classList.toggle('is-matched', matches);
+                indicator.classList.toggle('is-unmatched', !matches);
+                const label = matches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total';
+                indicator.setAttribute('aria-label', label);
+                indicator.title = label;
+            }
         }
         if (event.target.matches('[data-quick-price], [data-quick-stock]')) {
             scheduleQuickUpdate(event.target);
