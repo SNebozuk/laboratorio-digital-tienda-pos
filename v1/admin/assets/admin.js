@@ -248,9 +248,9 @@
         window.setTimeout(() => elements.toast.classList.remove('open'), 3600);
     }
 
-    function toastDeliveryDelivered(slotNumber) {
+    function toastDeliveryDelivered() {
         if (!elements.toast) return;
-        elements.toast.innerHTML = `<span aria-hidden="true">✓</span><strong>Pedido en Fila ${Number(slotNumber)} entregado.</strong>`;
+        elements.toast.innerHTML = '<span aria-hidden="true">✓</span><span>Venta entregada</span>';
         elements.toast.classList.add('delivery-delivered', 'open');
         window.setTimeout(() => {
             elements.toast.classList.remove('open', 'delivery-delivered');
@@ -2050,7 +2050,10 @@
                     : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">${orderActionIconMarkup('return')}</button>` : '';
             const deleteButton = `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('cancel')}</button>`;
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${deleteButton}${whatsappButton}${returnButton}</td><td>${orderNumbers}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td></tr>`;
+            const hasSale = linkedOrders.length > 0 || String(slot.order_numbers || '').trim() !== '';
+            const transfers = hasSale ? `${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small>` : '';
+            const total = hasSale ? `<span class="delivery-order-total">${money(slot.order_total_cents)}</span>` : '';
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${deleteButton}${whatsappButton}${returnButton}</td><td>${orderNumbers}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${transfers}</td><td>${total}</td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
@@ -2181,11 +2184,12 @@
 
     async function copyOrderToDelivery(orderId, slot) { return copyOrdersToDelivery([orderId], slot); }
 
-    async function removeDeliverySlot(slotNumber, notification = `Fila ${slotNumber} vaciada.`) {
+    async function removeDeliverySlot(slotNumber, notification = `Fila ${slotNumber} vaciada.`, delivered = false) {
         try {
             await apiPost({ action: 'delivery_slot_delete', slot_number: Number(slotNumber) });
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
-            if (notification) toast(notification);
+            if (delivered) toastDeliveryDelivered();
+            else if (notification) toast(notification);
         } catch (error) { toast(error.message); }
     }
 
@@ -2324,8 +2328,7 @@
                 && isLikelySameDeliveryCustomer(customer, order.customer_name)
             ));
             if (!matches.length) {
-                await removeDeliverySlot(slotNumber, '');
-                toastDeliveryDelivered(slotNumber);
+                await removeDeliverySlot(slotNumber, '', true);
                 return;
             }
             const details = await Promise.all(matches.map(async order => {
@@ -4465,7 +4468,7 @@
         if (confirmDeleteDelivery) {
             const slotNumber = Number(confirmDeleteDelivery.dataset.confirmDeleteDeliverySlot);
             closeModal();
-            removeDeliverySlot(slotNumber);
+            removeDeliverySlot(slotNumber, '', true);
             return;
         }
         const placeDelivery = event.target.closest('[data-place-delivery-orders]');
