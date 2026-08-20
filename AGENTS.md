@@ -20,6 +20,30 @@
 - No modificar secretos, DNS, credenciales ni configuración privada del servidor sin autorización explícita.
 - Antes de publicar, revisar el diff y preservar los archivos locales/ignorados que no sean parte de la tarea.
 
+## Flujo permanente de trabajo
+
+Para cada pedido seguir este orden:
+
+1. Leer `AGENTS.md`.
+2. Trabajar únicamente sobre lo solicitado y leer solo los archivos relacionados.
+3. Hacer el cambio mínimo necesario, sin refactors ni mejoras no pedidas.
+4. Validar únicamente los archivos modificados con las comprobaciones relevantes.
+5. Si la tarea terminó y la validación fue correcta, revisar solo sus archivos, crear un commit corto y descriptivo, y ejecutar `git push` al remoto y rama actualmente configurados.
+6. No hacer commit ni push si la tarea quedó incompleta, hubo un error de validación importante o el usuario pidió explícitamente no hacerlo.
+7. No cambiar de rama ni de remoto salvo pedido explícito.
+8. Responder muy brevemente indicando qué se modificó, si validó, si se hizo commit y si se hizo push.
+
+Regla permanente: **cambio terminado + validación correcta = commit + push automático**.
+
+Antes del commit, incluir exclusivamente los archivos de la tarea actual. El árbol de trabajo puede contener cambios ajenos del usuario y deben preservarse sin incorporarlos, modificarlos ni descartarlos.
+
+## Modelo preferido
+
+- Usar normalmente `gpt-5.6-terra` con razonamiento `low`; el proyecto también lo fija en `.codex/config.toml` para repositorios de confianza.
+- Aumentar el razonamiento solo cuando la tarea realmente lo necesite.
+- No usar `gpt-5.6-sol` por defecto. Si una tarea parece requerirlo imprescindiblemente, avisar primero y explicar brevemente por qué.
+- Si la interfaz ignora la configuración del proyecto o aplica una selección explícita al chat, elegir manualmente **Terra** y **Low/Bajo** en el control de modelo y razonamiento situado debajo del cuadro de mensaje al iniciar el chat.
+
 ## Propósito y URLs
 
 Laboratorio Digital es un catálogo mayorista con pedidos web, administración interna, punto de venta y una planilla de preparación de entregas.
@@ -108,25 +132,22 @@ Secciones vigentes:
 
 ## Validación mínima
 
-Ejecutar solo lo que corresponda al cambio. Para una modificación transversal:
+PHP 8.4 NTS x64 está instalado de forma persistente en `C:\Users\Sergio\AppData\Local\Programs\PHP-8.4` y agregado al `PATH` del usuario. No reinstalarlo ni volver a comprobar mecanismos de instalación en tareas futuras. Si un proceso ya abierto todavía no recibió el `PATH` actualizado, usar temporalmente la ruta absoluta indicada abajo o abrir un chat nuevo.
+
+Después de modificar archivos PHP, ejecutar únicamente una comprobación sintáctica por cada archivo PHP modificado:
 
 ```powershell
-php -l api.php
-php -l app/OrderService.php
-php -l app/DeliveryService.php
-php -l v1/index.php
-php -l v1/admin/index.php
-node --check v1/assets/store.js
-node --check v1/admin/assets/admin.js
-python tests/test_schema.py
-git diff --check
+php -l ruta/al/archivo-modificado.php
+# Alternativa para procesos cuyo PATH aún no se actualizó:
+& 'C:\Users\Sergio\AppData\Local\Programs\PHP-8.4\php.exe' -l ruta/al/archivo-modificado.php
 ```
 
-En esta computadora puede no estar disponible `php`; en ese caso ejecutar las comprobaciones JavaScript y `git diff --check`. El workflow de validación de GitHub ejecuta la sintaxis PHP y `tests/test_schema.py` al publicar.
+Para otros tipos de archivo, ejecutar solo la comprobación directamente relevante a lo modificado, por ejemplo `node --check` para cada JavaScript modificado. Usar `python tests/test_schema.py` únicamente cuando el cambio afecte el esquema o sus migraciones. Ejecutar `git diff --check` limitado a los archivos de la tarea cuando corresponda. No validar todo el proyecto por rutina.
 
 ## Despliegue
 
-1. Revisar `git status` y el diff; no incluir archivos ajenos a la tarea.
-2. Confirmar validaciones relevantes.
-3. Hacer commit y `git push origin main` solo si corresponde a la solicitud.
-4. Verificar el workflow **Desplegar en DonWeb** en GitHub Actions. Un reintento FTPS puede ser necesario ante un timeout de red.
+1. Revisar el diff de los archivos de la tarea; no incluir archivos ajenos.
+2. Confirmar las validaciones mínimas relevantes.
+3. Si el cambio está completo y validado, hacer commit y ejecutar `git push` sin fijar manualmente otra rama o remoto.
+4. No hacer push en los casos de excepción definidos en el flujo permanente.
+5. Cuando el push active el workflow **Desplegar en DonWeb**, verificar su resultado si las herramientas disponibles lo permiten. Un reintento FTPS puede ser necesario ante un timeout de red.
