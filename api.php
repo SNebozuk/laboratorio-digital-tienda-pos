@@ -24,6 +24,7 @@ try {
                     'products' => $app['products']->publicCatalog(),
                     'categories' => $app['categories']->tree(),
                     'featured_product_ids' => $app['settings']->featuredProductIds(),
+                    'tutorials' => $app['tutorials']->publicList(),
                 ]);
 
             case 'catalog_search':
@@ -58,6 +59,10 @@ try {
             case 'admin_categories':
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'categories' => $app['categories']->tree()]);
+
+            case 'admin_tutorials':
+                $app['auth']->requireAdmin();
+                Http::json(['ok' => true, 'tutorials' => $app['tutorials']->adminList()]);
 
             case 'orders':
                 $app['auth']->requireUser();
@@ -245,6 +250,20 @@ try {
                 (int) $user['id']
             );
             Http::json(['ok' => true, 'product_id' => $productId], 201);
+
+        case 'tutorial_create':
+            $app['auth']->requireAdmin();
+            Http::json(['ok' => true, 'tutorial_id' => $app['tutorials']->create(
+                is_array($input['tutorial'] ?? null) ? $input['tutorial'] : []
+            )], 201);
+
+        case 'tutorial_update':
+            $app['auth']->requireAdmin();
+            $app['tutorials']->update(
+                (int) ($input['tutorial_id'] ?? 0),
+                is_array($input['tutorial'] ?? null) ? $input['tutorial'] : []
+            );
+            Http::json(['ok' => true]);
 
         case 'category_create':
             $app['auth']->requireAdmin();

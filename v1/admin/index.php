@@ -90,8 +90,11 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
-                    <a class="admin-nav-button" href="pos.php">Punto de Venta</a>
+                    <a class="admin-nav-button" href="pos.php" target="laboratorio-pos" rel="opener">Punto de Venta</a>
                     <?php if ($user['role'] === 'admin'): ?>
+                        <button class="admin-nav-button" type="button" data-view="tutorials">
+                            Aprende
+                        </button>
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
                         </button>
@@ -135,6 +138,7 @@ header('Referrer-Policy: same-origin');
                         <option value="deliveries">Entrega de Pedidos</option>
                         <option value="products">Productos</option>
                         <?php if ($user['role'] === 'admin'): ?>
+                            <option value="tutorials">Aprende</option>
                             <option value="categories">Categorías</option>
                             <option value="size-guide">Tabla de Talles</option>
                             <option value="contact">Contacto</option>
@@ -164,6 +168,18 @@ header('Referrer-Policy: same-origin');
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>
+                    <section class="admin-view" id="view-tutorials">
+                        <div class="view-heading">
+                            <div>
+                                <p class="eyebrow">CONTENIDO EDUCATIVO</p>
+                                <h1>APRENDE</h1>
+                                <p>Creá y editá los tutoriales que se muestran en la portada.</p>
+                            </div>
+                            <button class="primary-button fit-button" id="new-tutorial-button" type="button">NUEVO TUTORIAL</button>
+                        </div>
+                        <div id="tutorial-list" class="tutorial-admin-list"></div>
+                    </section>
+
                     <section class="admin-view" id="view-categories">
                         <div class="view-heading">
                             <div>
@@ -277,7 +293,7 @@ header('Referrer-Policy: same-origin');
                         <div class="order-page-actions">
                             <div class="order-quick-links">
                                 <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
-                                <a class="order-quick-link" href="pos.php" target="_blank" rel="opener" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
+                                <a class="order-quick-link" href="pos.php" target="laboratorio-pos" rel="opener" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
                             </div>
                         </div>
                     </div>

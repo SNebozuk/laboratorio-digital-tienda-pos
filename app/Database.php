@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 28;
+    private const CURRENT_MIGRATION_VERSION = 29;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -67,15 +67,14 @@ final class Database
                 return;
             }
 
-            // Las bases ya actualizadas hasta la migración 27 sólo necesitan
-            // agregar la marca de lectura del listado de ventas. Evitamos repetir
+            // Las bases ya actualizadas sólo necesitan la última migración.
             // todas las reparaciones históricas en cada visita pública.
             $previous = $pdo->prepare(
-                'SELECT 1 FROM schema_migrations WHERE version = 27 LIMIT 1'
+                'SELECT 1 FROM schema_migrations WHERE version = 28 LIMIT 1'
             );
             $previous->execute();
             if ($previous->fetchColumn() !== false) {
-                self::migrateOrderNotificationSeen($pdo);
+                self::migrateTutorials($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -121,8 +120,41 @@ final class Database
         self::uppercaseCustomerNames($pdo);
         self::migrateInvitations($pdo);
         self::migrateOrderNotificationSeen($pdo);
+        self::migrateTutorials($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    /** Separa el contenido editorial que antes estaba cargado como productos. */
+    private static function migrateTutorials(PDO $pdo): void
+    {
+        $version = 29;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS tutorials (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL COLLATE NOCASE,
+                content TEXT NOT NULL DEFAULT '',
+                image_path TEXT,
+                active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+                sort_order INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )");
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_tutorials_public ON tutorials(active, sort_order, title)');
+            $pdo->exec("INSERT INTO tutorials(title, content, image_path, active, sort_order)
+                SELECT p.name, p.description, p.image_path, p.active, p.sort_order
+                FROM products p JOIN categories c ON c.id = p.category_id
+                WHERE c.slug = 'aprende' COLLATE NOCASE AND p.deleted_at IS NULL
+                  AND NOT EXISTS (SELECT 1 FROM tutorials t WHERE t.title = p.name COLLATE NOCASE)");
+            $pdo->exec("UPDATE products SET deleted_at = CURRENT_TIMESTAMP, active = 0, updated_at = CURRENT_TIMESTAMP
+                WHERE deleted_at IS NULL AND category_id IN (SELECT id FROM categories WHERE slug = 'aprende' COLLATE NOCASE)");
+            $pdo->exec("UPDATE categories SET active = 0, updated_at = CURRENT_TIMESTAMP WHERE slug = 'aprende' COLLATE NOCASE");
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
     }
 
     /** Solicitudes de invitación a Codex capturadas desde la página pública. */

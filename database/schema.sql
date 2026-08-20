@@ -72,6 +72,19 @@ CREATE INDEX IF NOT EXISTS idx_variants_product
 CREATE INDEX IF NOT EXISTS idx_variants_barcode
     ON product_variants(barcode);
 
+CREATE TABLE IF NOT EXISTS tutorials (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL COLLATE NOCASE,
+    content TEXT NOT NULL DEFAULT '',
+    image_path TEXT,
+    active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tutorials_public ON tutorials(active, sort_order, title);
+
 CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     public_number TEXT NOT NULL UNIQUE,

@@ -5,6 +5,7 @@
     const cartMaintenanceEnabled = app.cart_maintenance_enabled === true || String(app.cart_maintenance_enabled) === '1';
     let products = Array.isArray(app.products) ? app.products : [];
     let categoryTree = Array.isArray(app.categories) ? app.categories : [];
+    let tutorials = Array.isArray(app.tutorials) ? app.tutorials : [];
     let featuredProductIds = Array.isArray(app.featured_product_ids)
         ? app.featured_product_ids.map(Number).filter(Number.isFinite)
         : [];
@@ -230,6 +231,7 @@
             if (Array.isArray(data.categories)) {
                 categoryTree = data.categories;
             }
+            if (Array.isArray(data.tutorials)) tutorials = data.tutorials;
             if (Array.isArray(data.featured_product_ids)) {
                 featuredProductIds = data.featured_product_ids.map(Number).filter(Number.isFinite);
             }
@@ -832,6 +834,13 @@
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
                     </div>
                     <button class="show-all-products" type="button" data-show-all-products>VER TODOS LOS PRODUCTOS <span>→</span></button>
+                    ${tutorials.length ? `<section class="home-tutorials" aria-labelledby="home-tutorials-title">
+                        <div class="home-featured-heading"><div><p class="eyebrow">APRENDE</p><h2 id="home-tutorials-title">TUTORIALES</h2></div><span>Ideas y técnicas para crear</span></div>
+                        <div class="tutorial-grid">${tutorials.map(tutorial => `<button class="tutorial-card" type="button" data-open-tutorial="${Number(tutorial.id)}">
+                            ${safeImage(tutorial.image_path) ? `<img src="${escapeHtml(safeImage(tutorial.image_path))}" alt="" loading="lazy">` : '<span class="tutorial-placeholder">APRENDE</span>'}
+                            <strong>${escapeHtml(tutorial.title)}</strong><small>LEER TUTORIAL →</small>
+                        </button>`).join('')}</div>
+                    </section>` : ''}
                 </section>`;
             return;
         }
@@ -1361,6 +1370,16 @@
     }
 
     document.addEventListener('click', event => {
+        const tutorialButton = event.target.closest('[data-open-tutorial]');
+        if (tutorialButton) {
+            const tutorial = tutorials.find(item => Number(item.id) === Number(tutorialButton.dataset.openTutorial));
+            if (tutorial) openModal(`<article class="tutorial-reader">
+                ${safeImage(tutorial.image_path) ? `<img src="${escapeHtml(safeImage(tutorial.image_path))}" alt="">` : ''}
+                <p class="eyebrow">APRENDE</p><h2 id="modal-title">${escapeHtml(tutorial.title)}</h2>
+                <div>${escapeHtml(tutorial.content).replace(/\n/g, '<br>')}</div>
+            </article>`);
+            return;
+        }
         if (event.target.closest('[data-dismiss-stock-warning]')) {
             state.reducedAvailability.clear();
             renderCatalog();

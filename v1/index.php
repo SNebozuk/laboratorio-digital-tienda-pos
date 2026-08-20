@@ -198,6 +198,7 @@ header('Referrer-Policy: same-origin');
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
             'featured_product_ids' => $featuredProductIds,
+            'tutorials' => $app['tutorials']->publicList(),
             'contact' => [
                 'store_name' => $publicSettings['store_name'] ?? 'Laboratorio Digital',
                 'whatsapp_number' => $whatsappNumber,

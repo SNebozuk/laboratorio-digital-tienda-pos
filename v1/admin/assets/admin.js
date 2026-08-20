@@ -4,6 +4,7 @@
     const app = JSON.parse(document.getElementById('admin-app-data').textContent);
     const state = {
         products: [],
+        tutorials: [],
         featuredProductIds: new Set(),
         categories: [],
         orders: [],
@@ -44,6 +45,7 @@
         customerHistoryName: '',
         customerHistoryChildOpen: false,
         posSaleConfirmationTimer: 0,
+        knownOrderIds: null,
         view: 'orders',
     };
 
@@ -111,6 +113,7 @@
         modalContent: document.getElementById('modal-content'),
         toast: document.getElementById('toast'),
         productList: document.getElementById('admin-product-list'),
+        tutorialList: document.getElementById('tutorial-list'),
         productSearch: document.getElementById('admin-product-search'),
         productSearchShare: document.getElementById('copy-product-search-link'),
         categoryTree: document.getElementById('category-admin-tree'),
@@ -148,6 +151,19 @@
     let productActionsMenuPauseUntil = 0;
     let invitationBadgeRefreshAt = 0;
     let orderBadgeRefreshAt = 0;
+    const notificationSound = new Audio('../assets/sounds/ui-notification.mp3');
+    notificationSound.preload = 'auto';
+    notificationSound.volume = 0.48;
+
+    function playSound() {
+        const sound = notificationSound.cloneNode();
+        sound.volume = notificationSound.volume;
+        sound.play().catch(() => {});
+    }
+
+    const salesChannel = typeof BroadcastChannel === 'function'
+        ? new BroadcastChannel('laboratorio-digital-sales')
+        : null;
 
     async function apiGet(action, parameters = {}) {
         const url = new URL(app.api_url, window.location.href);
@@ -283,11 +299,15 @@
     }
 
     function showView(view) {
-        const availableViews = new Set(['orders', 'deliveries', 'products', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
+        const previousView = state.view;
         state.view = view;
+        if ((previousView === 'orders' && view === 'deliveries') || (previousView === 'deliveries' && view === 'orders')) {
+            playSound();
+        }
         if (!document.querySelector('.pos-page')) {
             const url = new URL(window.location.href);
             url.searchParams.set('view', view);
@@ -306,6 +326,7 @@
         if (view === 'orders') {
             loadOrders().then(markOrdersSeen);
         }
+        if (view === 'tutorials') loadTutorials();
         if (view === 'deliveries') {
             loadDeliverySlots();
         }
@@ -512,6 +533,61 @@
             state.categories = data.categories;
             renderCategories();
         } catch (error) { toast(error.message); }
+    }
+
+    async function loadTutorials() {
+        if (!elements.tutorialList) return;
+        try {
+            const data = await apiGet('admin_tutorials');
+            state.tutorials = data.tutorials || [];
+            renderTutorials();
+        } catch (error) { toast(error.message); }
+    }
+
+    function renderTutorials() {
+        if (!elements.tutorialList) return;
+        elements.tutorialList.innerHTML = state.tutorials.length ? state.tutorials.map(tutorial => `
+            <article class="tutorial-admin-card">
+                ${safeImage(tutorial.image_path) ? `<img src="${escapeHtml(safeImage(tutorial.image_path))}" alt="">` : '<div class="tutorial-admin-placeholder">APRENDE</div>'}
+                <div><strong>${escapeHtml(tutorial.title)}</strong><p>${escapeHtml(tutorial.content)}</p><small>${tutorial.active ? 'VISIBLE EN LA PORTADA' : 'OCULTO'} · ORDEN ${Number(tutorial.sort_order)}</small></div>
+                <button class="small-button" type="button" data-edit-tutorial="${Number(tutorial.id)}">Editar</button>
+            </article>`).join('') : '<p class="empty-copy">Todavía no hay tutoriales.</p>';
+    }
+
+    function showTutorialForm(tutorial = null) {
+        openModal(`
+            <h2 id="modal-title">${tutorial ? 'EDITAR TUTORIAL' : 'NUEVO TUTORIAL'}</h2>
+            <form id="tutorial-form" data-tutorial-id="${Number(tutorial?.id || 0)}">
+                <label>TÍTULO<input name="title" maxlength="180" value="${escapeHtml(tutorial?.title || '')}" required></label>
+                <label>CONTENIDO<textarea name="content" rows="9" required>${escapeHtml(tutorial?.content || '')}</textarea></label>
+                <label>IMAGEN
+                    <input name="image_path" type="hidden" value="${escapeHtml(tutorial?.image_path || '')}">
+                    <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                    <span class="image-drop-zone" data-image-drop>Elegir o arrastrar una imagen</span>
+                    ${safeImage(tutorial?.image_path) ? `<img class="product-editor-image-preview" src="${escapeHtml(safeImage(tutorial.image_path))}" alt="Imagen actual">` : ''}
+                </label>
+                <label>ORDEN<input name="sort_order" type="number" min="0" value="${Number(tutorial?.sort_order || 0)}"></label>
+                <label>VISIBLE<select name="active"><option value="1" ${tutorial?.active !== false ? 'selected' : ''}>Sí</option><option value="0" ${tutorial?.active === false ? 'selected' : ''}>No</option></select></label>
+                <div class="button-row"><button class="primary-button fit-button" type="submit">GUARDAR TUTORIAL</button></div>
+            </form>`);
+    }
+
+    async function saveTutorial(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        try {
+            const file = form.elements.namedItem('image_file')?.files?.[0];
+            let imagePath = form.elements.namedItem('image_path').value;
+            if (file) imagePath = await uploadProductImage(file);
+            const data = new FormData(form);
+            const id = Number(form.dataset.tutorialId || 0);
+            await apiPost({
+                action: id ? 'tutorial_update' : 'tutorial_create',
+                tutorial_id: id || undefined,
+                tutorial: { title: data.get('title'), content: data.get('content'), image_path: imagePath, sort_order: Number(data.get('sort_order') || 0), active: data.get('active') === '1' },
+            });
+            closeModal(); await loadTutorials(); toast('Tutorial guardado.');
+        } catch (error) { toast(error.message); button.disabled = false; }
     }
 
     function flatCategories(nodes = state.categories, depth = 0, rows = []) {
@@ -1704,6 +1780,7 @@
                 payment_method: 'pos',
             });
             const sale = data.order;
+            salesChannel?.postMessage({ type: 'sale-created', orderId: Number(sale.id) });
             state.posStockConflicts.clear();
             state.posCart.clear();
             persistPosCart();
@@ -1838,7 +1915,13 @@
                 limit: 150,
                 include_archived: state.showArchivedOrders ? 1 : 0,
             });
-            state.orders = data.orders;
+            const orders = data.orders || [];
+            const currentOrderIds = new Set(orders.map(order => Number(order.id)));
+            if (state.knownOrderIds && Array.from(currentOrderIds).some(id => !state.knownOrderIds.has(id))) {
+                playSound();
+            }
+            state.knownOrderIds = currentOrderIds;
+            state.orders = orders;
             state.openOrderCount = Number(data.open_count || 0);
             renderOrderBadge();
             const currentIds = new Set(state.orders.map(order => Number(order.id)));
@@ -1969,7 +2052,8 @@
                     ? `<button class="delivery-whatsapp" type="button" data-open-delivery-whatsapp="${number}" aria-label="Elegir WhatsApp de fila ${number}" title="Elegir WhatsApp">${whatsappLogoMarkup()}</button>`
                     : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">→</button>` : '';
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${whatsappButton}${returnButton}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td></tr>`;
+            const deleteButton = `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">🗑</button>`;
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${printButton}${deleteButton}${whatsappButton}${returnButton}</td><td>${field('order_numbers', 'Órdenes')}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${field('transfers', 'Transferencias')}<small class="delivery-transfer-total">${escapeHtml(transferTotalLabel(slot.transfers))}</small></td><td><strong class="delivery-order-total">${money(slot.order_total_cents)}</strong></td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
@@ -2104,6 +2188,7 @@
         try {
             await apiPost({ action: 'delivery_slot_delete', slot_number: Number(slotNumber) });
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
+            playSound();
             toast(`Fila ${slotNumber} vaciada.`);
         } catch (error) { toast(error.message); }
     }
@@ -2242,6 +2327,10 @@
                 && customer !== ''
                 && isLikelySameDeliveryCustomer(customer, order.customer_name)
             ));
+            if (!matches.length) {
+                await removeDeliverySlot(slotNumber);
+                return;
+            }
             const details = await Promise.all(matches.map(async order => {
                 try {
                     return (await apiGet('order', { id: Number(order.id) })).order;
@@ -3973,6 +4062,10 @@
             event.preventDefault();
             saveCategory(event.target).catch(error => toast(error.message));
         }
+        if (event.target.id === 'tutorial-form') {
+            event.preventDefault();
+            saveTutorial(event.target);
+        }
         if (event.target.id === 'order-edit-form') {
             event.preventDefault();
             saveOrderEditor(event.target);
@@ -4038,6 +4131,12 @@
     });
 
     document.addEventListener('click', async event => {
+        const editTutorial = event.target.closest('[data-edit-tutorial]');
+        if (editTutorial) {
+            const tutorial = state.tutorials.find(item => Number(item.id) === Number(editTutorial.dataset.editTutorial));
+            if (tutorial) showTutorialForm(tutorial);
+            return;
+        }
         const copyInvitation = event.target.closest('[data-copy-invitation-email]');
         if (copyInvitation) {
             await copyInvitationEmail(String(copyInvitation.dataset.copyInvitationEmail || ''));
@@ -4677,7 +4776,7 @@
         }
         if (document.getElementById('view-orders') && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
             event.preventDefault();
-            window.open('pos.php', '_blank');
+            window.open('pos.php', 'laboratorio-pos');
             return;
         }
         if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
@@ -4960,10 +5059,19 @@
         state.posCart.clear();
         persistPosCart();
         renderPosCart();
+        playSound();
+    });
+
+    salesChannel?.addEventListener('message', event => {
+        if (event.data?.type === 'sale-created' && !document.querySelector('.pos-page')) {
+            playSound();
+            if (state.view === 'orders') loadOrders(true);
+        }
     });
     document.getElementById('new-product-button')?.addEventListener('click', () => {
         showProductForm();
     });
+    document.getElementById('new-tutorial-button')?.addEventListener('click', () => showTutorialForm());
     document.getElementById('new-user-button')?.addEventListener('click', () => {
         showUserForm();
     });
