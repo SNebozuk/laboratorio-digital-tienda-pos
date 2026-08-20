@@ -252,9 +252,19 @@
         if (!elements.toast) {
             return;
         }
+        elements.toast.classList.remove('delivery-delivered');
         elements.toast.textContent = message;
         elements.toast.classList.add('open');
         window.setTimeout(() => elements.toast.classList.remove('open'), 3600);
+    }
+
+    function toastDeliveryDelivered(slotNumber) {
+        if (!elements.toast) return;
+        elements.toast.innerHTML = `<span aria-hidden="true">✓</span><strong>Pedido en Fila ${Number(slotNumber)} entregado.</strong>`;
+        elements.toast.classList.add('delivery-delivered', 'open');
+        window.setTimeout(() => {
+            elements.toast.classList.remove('open', 'delivery-delivered');
+        }, 3000);
     }
 
     function openModal(html) {
@@ -2187,12 +2197,12 @@
 
     async function copyOrderToDelivery(orderId, slot) { return copyOrdersToDelivery([orderId], slot); }
 
-    async function removeDeliverySlot(slotNumber) {
+    async function removeDeliverySlot(slotNumber, notification = `Fila ${slotNumber} vaciada.`) {
         try {
             await apiPost({ action: 'delivery_slot_delete', slot_number: Number(slotNumber) });
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
             playSound();
-            toast(`Fila ${slotNumber} vaciada.`);
+            if (notification) toast(notification);
         } catch (error) { toast(error.message); }
     }
 
@@ -2330,6 +2340,11 @@
                 && customer !== ''
                 && isLikelySameDeliveryCustomer(customer, order.customer_name)
             ));
+            if (!matches.length) {
+                await removeDeliverySlot(slotNumber, '');
+                toastDeliveryDelivered(slotNumber);
+                return;
+            }
             const details = await Promise.all(matches.map(async order => {
                 try {
                     return (await apiGet('order', { id: Number(order.id) })).order;
