@@ -151,16 +151,6 @@
     let productActionsMenuPauseUntil = 0;
     let invitationBadgeRefreshAt = 0;
     let orderBadgeRefreshAt = 0;
-    const notificationSound = new Audio('../assets/sounds/ui-notification.mp3');
-    notificationSound.preload = 'auto';
-    notificationSound.volume = 0.48;
-
-    function playSound() {
-        const sound = notificationSound.cloneNode();
-        sound.volume = notificationSound.volume;
-        sound.play().catch(() => {});
-    }
-
     const salesChannel = typeof BroadcastChannel === 'function'
         ? new BroadcastChannel('laboratorio-digital-sales')
         : null;
@@ -315,9 +305,6 @@
         }
         const previousView = state.view;
         state.view = view;
-        if ((previousView === 'orders' && view === 'deliveries') || (previousView === 'deliveries' && view === 'orders')) {
-            playSound();
-        }
         if (!document.querySelector('.pos-page')) {
             const url = new URL(window.location.href);
             url.searchParams.set('view', view);
@@ -1927,9 +1914,6 @@
             });
             const orders = data.orders || [];
             const currentOrderIds = new Set(orders.map(order => Number(order.id)));
-            if (state.knownOrderIds && Array.from(currentOrderIds).some(id => !state.knownOrderIds.has(id))) {
-                playSound();
-            }
             state.knownOrderIds = currentOrderIds;
             state.orders = orders;
             state.openOrderCount = Number(data.open_count || 0);
@@ -2201,7 +2185,6 @@
         try {
             await apiPost({ action: 'delivery_slot_delete', slot_number: Number(slotNumber) });
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
-            playSound();
             if (notification) toast(notification);
         } catch (error) { toast(error.message); }
     }
@@ -2935,7 +2918,15 @@
     function renderOrders() {
         const matchingOrders = state.orders
             .filter(orderMatchesFilters)
-            .sort((first, second) => String(second.created_at || '').localeCompare(String(first.created_at || '')));
+            .sort((first, second) => {
+                if (state.showArchivedOrders) return Number(second.id) - Number(first.id);
+                const customerComparison = String(first.customer_name || '').localeCompare(
+                    String(second.customer_name || ''),
+                    'es',
+                    { sensitivity: 'base' }
+                );
+                return customerComparison || Number(second.id) - Number(first.id);
+            });
         elements.orderList?.classList.toggle('hide-status-column', !state.showArchivedOrders);
         const actionsBar = document.getElementById('order-actions-bar');
         const selectedCount = selectedOrders().length;
@@ -3040,7 +3031,7 @@
                     </div>
                 ` : ''}
                 <div class="order-list-head" aria-hidden="true">
-                    <span class="order-select-control"></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span></span><span>FECHA</span>
+                    <span class="order-select-control"></span><span>ORDEN</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span></span><span>FECHA</span>
                 </div>
                 ${matchingOrders.map(order => {
                     const inDeliveries = orderIsInDeliveries(order);
@@ -3070,7 +3061,7 @@
         // "salta" ni cambia de tamaño mientras se escribe una búsqueda.
         elements.orderList.innerHTML = `
             <div class="order-list-head" aria-hidden="true">
-                <span></span><span>VENTA</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span></span><span>FECHA</span>
+                <span></span><span>ORDEN</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
             </div>
             <div class="order-list-empty" role="status">
                 <strong>${state.orders.length ? 'NO HAY COINCIDENCIAS' : 'TODAVÍA NO HAY PEDIDOS'}</strong>
@@ -5079,12 +5070,10 @@
         state.posCart.clear();
         persistPosCart();
         renderPosCart();
-        playSound();
     });
 
     salesChannel?.addEventListener('message', event => {
         if (event.data?.type === 'sale-created' && !document.querySelector('.pos-page')) {
-            playSound();
             if (state.view === 'orders') loadOrders(true);
         }
     });
