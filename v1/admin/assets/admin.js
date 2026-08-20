@@ -19,8 +19,8 @@
         selectedOrderIds: new Set(),
         selectedProductIds: new Set(),
         productCategoryId: '',
-        productAvailability: '',
-        productVisibility: '',
+        productAvailability: [],
+        productVisibility: [],
         showArchivedOrders: false,
         settings: null,
         sizeGuide: { intro: '', rows: [] },
@@ -846,15 +846,17 @@
                 <label>CATEGORÍA
                     <select name="category"><option value="">Todas las categorías</option><option value="__unassigned__" ${state.productCategoryId === '__unassigned__' ? 'selected' : ''}>Sin categoría asignada</option>${flatCategories().map(category => `<option value="${Number(category.id)}" ${Number(state.productCategoryId) === Number(category.id) ? 'selected' : ''}>${'— '.repeat(category.depth)}${escapeHtml(category.name)}</option>`).join('')}</select>
                 </label>
-                <input type="hidden" name="availability" value="${escapeHtml(state.productAvailability)}">
+                <input type="checkbox" name="availability" value="in_stock" ${state.productAvailability.includes('in_stock') ? 'checked' : ''} hidden>
+                <input type="checkbox" name="availability" value="out_of_stock" ${state.productAvailability.includes('out_of_stock') ? 'checked' : ''} hidden>
                 <fieldset class="filter-button-group"><legend>DISPONIBILIDAD</legend><div>
-                    <button type="button" data-product-filter-button="availability:in_stock" class="${state.productAvailability === 'in_stock' ? 'is-selected' : ''}">En stock</button>
-                    <button type="button" data-product-filter-button="availability:out_of_stock" class="${state.productAvailability === 'out_of_stock' ? 'is-selected' : ''}">Fuera de stock</button>
+                    <button type="button" data-product-filter-button="availability:in_stock" class="${state.productAvailability.includes('in_stock') ? 'is-selected' : ''}">En stock</button>
+                    <button type="button" data-product-filter-button="availability:out_of_stock" class="${state.productAvailability.includes('out_of_stock') ? 'is-selected' : ''}">Fuera de stock</button>
                 </div></fieldset>
-                <input type="hidden" name="visibility" value="${escapeHtml(state.productVisibility)}">
+                <input type="checkbox" name="visibility" value="visible" ${state.productVisibility.includes('visible') ? 'checked' : ''} hidden>
+                <input type="checkbox" name="visibility" value="hidden" ${state.productVisibility.includes('hidden') ? 'checked' : ''} hidden>
                 <fieldset class="filter-button-group"><legend>VISIBILIDAD EN LA TIENDA</legend><div>
-                    <button type="button" data-product-filter-button="visibility:visible" class="${state.productVisibility === 'visible' ? 'is-selected' : ''}">Visibles</button>
-                    <button type="button" data-product-filter-button="visibility:hidden" class="${state.productVisibility === 'hidden' ? 'is-selected' : ''}">Ocultos</button>
+                    <button type="button" data-product-filter-button="visibility:visible" class="${state.productVisibility.includes('visible') ? 'is-selected' : ''}">Visibles</button>
+                    <button type="button" data-product-filter-button="visibility:hidden" class="${state.productVisibility.includes('hidden') ? 'is-selected' : ''}">Ocultos</button>
                 </div></fieldset>
                 <div class="filter-modal-actions"><button class="secondary-button" type="button" data-clear-product-filters>LIMPIAR Y CERRAR</button><button class="primary-button" type="submit">APLICAR FILTROS</button></div>
             </form>
@@ -884,8 +886,8 @@
                 ? !product.category?.id
                 : (!state.productCategoryId || Number(product.category?.id) === Number(state.productCategoryId));
             const stock = (product.variants || []).some(variant => Number(variant.stock_on_hand || 0) > 0);
-            const availabilityMatch = !state.productAvailability || (state.productAvailability === 'in_stock' ? stock : !stock);
-            const visibilityMatch = !state.productVisibility || (state.productVisibility === 'visible' ? isProductVisible(product) : !isProductVisible(product));
+            const availabilityMatch = !state.productAvailability.length || state.productAvailability.includes(stock ? 'in_stock' : 'out_of_stock');
+            const visibilityMatch = !state.productVisibility.length || state.productVisibility.includes(isProductVisible(product) ? 'visible' : 'hidden');
             return (!query || productSearchScore(product, query) !== null)
                 && categoryMatch && availabilityMatch && visibilityMatch;
         };
@@ -902,8 +904,7 @@
         const toolbar = `
             <div class="product-bulk-toolbar">
                 <label class="product-select-all"><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''}> <span>Seleccionar todo</span></label>
-                <button class="secondary-button" type="button" data-open-featured-products>DESTACADOS${state.featuredProductIds.size ? ` · ${state.featuredProductIds.size}` : ''}</button>
-                <button class="secondary-button" type="button" data-open-product-filters>FILTRAR${state.productCategoryId || state.productAvailability || state.productVisibility ? ' · ACTIVO' : ''}</button>
+                <div class="product-toolbar-menus"><button class="product-toolbar-text" type="button" data-open-featured-products>Destacados${state.featuredProductIds.size ? ` · ${state.featuredProductIds.size}` : ''}</button><button class="secondary-button product-filter-button" type="button" data-open-product-filters><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8v5l-4 2v-7Z"/></svg> FILTRAR${state.productCategoryId || state.productAvailability.length || state.productVisibility.length ? ' · ACTIVO' : ''}</button></div>
             </div>
             <div class="order-actions-bar product-actions-bar" ${selectedCount ? '' : 'hidden'}>
                 <strong class="selected-orders-count product-selection-count">${selectedCount} ${singularSelection ? 'producto seleccionado' : 'productos seleccionados'}</strong>
@@ -928,8 +929,8 @@
                     const featured = state.featuredProductIds.has(Number(product.id));
                     return `<div class="product-list-row ${visible ? '' : 'is-hidden'}" role="row">
                         <span><input type="checkbox" data-select-product="${Number(product.id)}" ${state.selectedProductIds.has(Number(product.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(product.name)}"></span>
-                        <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong><small>${hasVariants ? `${product.variants.length} variantes · hacé clic para editar` : 'Hacé clic para editar el producto'}</small></span></button>
-                        <span class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}">${visible ? 'Visible' : 'Oculto'}${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</span>
+                        <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong>${hasVariants ? `<small>${product.variants.length} variantes</small>` : ''}</span></button>
+                        <span class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}" title="${visible ? 'Visible' : 'Oculto'}" aria-label="${visible ? 'Visible' : 'Oculto'}"><i aria-hidden="true"></i>${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</span>
                         ${inlineFields}
                         <div class="product-table-actions"><button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace">&#128279;</button><button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button><button class="small-button product-delete-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}">&#128465;</button></div>
                     </div>${hasVariants ? product.variants.map(variant => {
@@ -4012,8 +4013,8 @@
             event.preventDefault();
             const data = new FormData(event.target);
             state.productCategoryId = String(data.get('category') || '');
-            state.productAvailability = String(data.get('availability') || '');
-            state.productVisibility = String(data.get('visibility') || '');
+            state.productAvailability = data.getAll('availability').map(String);
+            state.productVisibility = data.getAll('visibility').map(String);
             closeModal();
             renderProducts();
         }
@@ -4063,10 +4064,10 @@
         if (filterButton) {
             const [field, value] = String(filterButton.dataset.productFilterButton).split(':');
             const form = filterButton.closest('#product-filters-form');
-            const input = form?.elements.namedItem(field);
+            const input = form?.querySelector(`input[name="${field}"][value="${value}"]`);
             if (input) {
-                input.value = input.value === value ? '' : value;
-                form.querySelectorAll(`[data-product-filter-button^="${field}:"]`).forEach(button => button.classList.toggle('is-selected', button === filterButton && input.value === value));
+                input.checked = !input.checked;
+                filterButton.classList.toggle('is-selected', input.checked);
             }
             return;
         }
@@ -4080,8 +4081,8 @@
         }
         if (event.target.closest('[data-clear-product-filters]')) {
             state.productCategoryId = '';
-            state.productAvailability = '';
-            state.productVisibility = '';
+            state.productAvailability = [];
+            state.productVisibility = [];
             closeModal();
             renderProducts();
             return;
@@ -4577,10 +4578,8 @@
             const matching = state.products.filter(product => (
                 productSearchText(product).includes(query)
                 && (state.productCategoryId === '__unassigned__' ? !product.category?.id : (!state.productCategoryId || Number(product.category?.id) === Number(state.productCategoryId)))
-                && (!state.productAvailability || (state.productAvailability === 'in_stock' ? product.variants.some(variant => Number(variant.stock_on_hand || 0) > 0) : !product.variants.some(variant => Number(variant.stock_on_hand || 0) > 0)))
-                && (!state.productVisibility || (state.productVisibility === 'visible'
-                    ? (product.active === true || product.active === 1 || product.active === '1')
-                    : !(product.active === true || product.active === 1 || product.active === '1')))
+                && (!state.productAvailability.length || state.productAvailability.includes(product.variants.some(variant => Number(variant.stock_on_hand || 0) > 0) ? 'in_stock' : 'out_of_stock'))
+                && (!state.productVisibility.length || state.productVisibility.includes((product.active === true || product.active === 1 || product.active === '1') ? 'visible' : 'hidden'))
             ));
             matching.forEach(product => {
                 if (event.target.checked) state.selectedProductIds.add(Number(product.id));
@@ -4595,12 +4594,12 @@
             return;
         }
         if (event.target.matches('[data-product-availability-filter]')) {
-            state.productAvailability = event.target.value;
+            state.productAvailability = event.target.value ? [event.target.value] : [];
             renderProducts();
             return;
         }
         if (event.target.matches('[data-product-visibility-filter]')) {
-            state.productVisibility = event.target.value;
+            state.productVisibility = event.target.value ? [event.target.value] : [];
             renderProducts();
             return;
         }
