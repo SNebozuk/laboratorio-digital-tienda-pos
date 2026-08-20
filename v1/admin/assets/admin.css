@@ -3457,6 +3457,14 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .delivery-whatsapp .whatsapp-logo,
 .delivery-return .order-action-icon,
 .delivery-delete .order-action-icon { width:20px; height:20px; }
+.delivery-return .order-action-icon,
+.delivery-delete .order-action-icon { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+/* Estándar reutilizable para controles con ícono, en todo el panel. */
+.icon-button,
+.icon-action-button { display:inline-grid; width:32px; height:32px; min-height:32px; place-items:center; padding:0; color:currentColor; line-height:1; }
+.icon-button svg,
+.icon-action-button svg { width:20px; height:20px; }
 .product-list-row,.product-variant-inline-row,.category-admin-row,.customer-history-table tbody tr,.size-guide-edit-table tbody tr,.report-card tbody tr { transition:transform .16s ease,box-shadow .16s ease,background .16s ease; }
 .product-list-row:hover,.product-variant-inline-row:hover,.category-admin-row:hover,.customer-history-table tbody tr:hover,.size-guide-edit-table tbody tr:hover,.report-card tbody tr:hover { position:relative; z-index:2; transform:scale(1.008); background:#f4eefb !important; box-shadow:0 6px 17px rgba(58,42,86,.1); }
 .delivery-search { width:min(100%,440px); }

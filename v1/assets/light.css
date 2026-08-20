@@ -1,4 +1,9 @@
 /* Tema claro de Laboratorio Digital. Se carga después de la hoja histórica. */
+:root { --icon-button-size:32px; --icon-glyph-size:20px; }
+.icon-button,
+.icon-action-button { display:inline-grid; width:var(--icon-button-size); height:var(--icon-button-size); min-height:var(--icon-button-size); place-items:center; padding:0; color:currentColor; line-height:1; }
+.icon-button svg,
+.icon-action-button svg { width:var(--icon-glyph-size); height:var(--icon-glyph-size); }
 :root { color-scheme: light; --bg:#f7faf7; --panel:#fff; --panel-2:#eff7f0; --line:#d7e4d9; --line-soft:#e7eee8; --text:#18231b; --muted:#617165; --accent:#168342; --success:#168342; }
 body { background:#f7faf7 !important; color:var(--text) !important; }
 .store-header { background:rgba(255,255,255,.97) !important; border-color:var(--line) !important; box-shadow:0 8px 25px rgba(24,35,27,.08) !important; }
