@@ -91,6 +91,7 @@
     let surpriseUnlocked = false;
     let surpriseChecked = false;
     let klausDiscountUnlocked = Boolean(app.klaus_discount_unlocked);
+    let klausDiscountPending = false;
     let klausReaction = '';
     let klausTimer = null;
     function cartDiscount(subtotal, units) {
@@ -1822,16 +1823,20 @@
 
     window.Klaus?.attach(document, '.klaus', async () => {
         reactKlaus('is-petted');
-        if (rewardOn('reward_klaus_messages_enabled')) toast(rewards.reward_klaus_happy_text || '🐾 ¡Klaus está contento!');
-        if (klausDiscountUnlocked) return;
+        if (klausDiscountUnlocked || klausDiscountPending) return;
+        klausDiscountPending = true;
         try {
             const data = await apiJson({ action: 'reward_klaus' });
             klausDiscountUnlocked = true;
-            renderCart();
-            toast(data.newly_unlocked
-                ? '🎉 ¡Guau! Klaus te regaló 1% de descuento adicional acumulable para toda tu compra.'
-                : '🐾 Klaus ya dejó tu 1% de descuento adicional listo para esta compra.');
+            window.setTimeout(() => {
+                klausDiscountPending = false;
+                renderCart();
+                toast(data.newly_unlocked
+                    ? '🎉 ¡Guau! Klaus te regaló 1% de descuento adicional acumulable para toda tu compra.'
+                    : '🐾 Klaus ya dejó tu 1% de descuento adicional listo para esta compra.');
+            }, 950);
         } catch (_) {
+            klausDiscountPending = false;
             // El gesto y sus animaciones siguen funcionando aunque no pueda validarse el beneficio.
         }
     });
