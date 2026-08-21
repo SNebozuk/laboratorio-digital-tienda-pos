@@ -211,14 +211,14 @@ body.home-mode .catalog-intro p { max-width:720px; margin:9px 0 0; color:#55445f
 .minimal-product-open { width:32px; height:32px; padding:0; border:0; border-radius:7px; background:#7652b8; color:#fff; font-size:22px; cursor:pointer; }
 .minimal-quantity-control { transform:scale(.82); transform-origin:right center; }
 .product-view-chooser { position:relative; isolation:isolate; display:grid; justify-items:center; gap:8px; overflow:hidden; padding:24px; border-radius:14px; text-align:center; }
-.product-view-chooser::before { position:absolute; z-index:-1; inset:0; background:linear-gradient(rgba(255,232,243,.92),rgba(255,242,248,.95)),url('brand/product-view-selection-background.png') center/cover; content:''; }
+.product-view-chooser::before { position:absolute; z-index:-1; inset:0; background:#f8c5db; content:''; }
 .product-view-chooser-icon { color:#7652b8; font-size:30px; }
 .product-view-chooser h2 { margin:0; color:#38234f; font-size:23px; }
 .product-view-chooser > p { margin:0 0 10px; color:#796d80; }
 .product-view-remember { display:flex; align-items:center; gap:7px; color:#55445f; font-size:12px; font-weight:700; }.product-view-remember input { width:16px; height:16px; accent-color:#7652b8; }
 .product-view-chooser > div { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; width:100%; }
 .product-view-chooser button { display:grid; gap:8px; min-height:142px; padding:14px; border:1px solid #ddcdea; border-radius:12px; background:#fff; color:#38234f; text-align:left; cursor:pointer; }
-.product-view-chooser button:first-child { border-color:#9dcfac; background:#f4fbf5; }
+.product-view-chooser button:first-child { border-color:#9dcfac; background:#fff; }
 .product-view-chooser button:hover { border-color:#7652b8; }
 .product-view-chooser button strong { font-size:14px; }.product-view-chooser button small { color:#796d80; font-size:11px; line-height:1.35; }
 body.product-view-list .catalog-menu-button,body.product-view-list .category-panel,body.product-view-list .category-backdrop { display:none !important; }
