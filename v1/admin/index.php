@@ -240,24 +240,44 @@ header('Referrer-Policy: same-origin');
                     <section class="admin-view" id="view-design">
                         <div class="view-heading"><div><p class="eyebrow">PORTADA DE LA TIENDA</p><h1 class="admin-page-title">DISEÑO</h1><p>Modificá los textos, el logo y los enlaces visibles sin tocar el código.</p></div></div>
                         <form id="design-form" class="settings-card">
-                            <div class="settings-grid">
-                                <label>ETIQUETA SUPERIOR<input name="hero_badge" maxlength="120" required></label>
-                                <label>TÍTULO PRINCIPAL<input name="hero_title" maxlength="160" required></label>
-                                <label class="settings-span-two">TEXTO PRINCIPAL<textarea name="hero_text" rows="3" maxlength="500" required></textarea></label>
-                                <label>ENLACE DEL TÍTULO (OPCIONAL)<input name="hero_link" placeholder="https://... o /v1/"></label>
-                                <label>ENLACE DEL LOGO (OPCIONAL)<input name="logo_link" placeholder="https://... o /v1/"></label>
-                                <section class="settings-span-two design-branding" aria-labelledby="design-branding-title">
-                                    <div><strong id="design-branding-title">IDENTIDAD VISUAL · LOGO</strong><small>Este logo se muestra en la cabecera de la tienda. Podés elegir otra imagen cuando quieras.</small></div>
+                            <details class="design-panel" open>
+                                <summary>CONTENIDO PRINCIPAL</summary>
+                                <div class="settings-grid">
+                                    <label>ETIQUETA SUPERIOR<input name="hero_badge" maxlength="120" required></label>
+                                    <label>TÍTULO PRINCIPAL<input name="hero_title" maxlength="160" required></label>
+                                    <label class="settings-span-two">TEXTO PRINCIPAL<textarea name="hero_text" rows="3" maxlength="500" required></textarea></label>
+                                    <label>ENLACE DEL TÍTULO (OPCIONAL)<input name="hero_link" placeholder="https://... o /v1/"></label>
+                                </div>
+                            </details>
+                            <details class="design-panel">
+                                <summary>IDENTIDAD VISUAL</summary>
+                                <div class="design-branding" aria-labelledby="design-branding-title">
+                                    <div><strong id="design-branding-title">LOGO</strong><small>Este logo se muestra en la cabecera de la tienda. Podés elegir otra imagen cuando quieras.</small></div>
+                                    <label>ENLACE DEL LOGO (OPCIONAL)<input name="logo_link" placeholder="https://... o /v1/"></label>
                                     <label>REEMPLAZAR LOGO<input name="logo_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="logo_path" type="hidden"></label>
                                     <div class="design-logo-actions"><button id="restore-default-logo" class="secondary-button" type="button">USAR LOGO LABORATORIO DIGITAL</button><span>Formatos: JPG, PNG o WebP.</span></div>
                                     <img id="design-logo-preview" class="variant-image-preview" alt="Vista previa del logo">
-                                </section>
-                            </div>
-                            <div class="design-published-images"><strong>FOTOS PUBLICADAS EN LA PORTADA</strong><small>Elegí una foto para reemplazarla. Se verá inmediatamente en la vista previa al guardar.</small><div class="design-image-grid">
-                                <label>FOTO 1<input name="hero_1_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_1_path" type="hidden"><img id="design-hero-1-preview" alt="Foto publicada 1"></label>
-                                <label>FOTO 2<input name="hero_2_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_2_path" type="hidden"><img id="design-hero-2-preview" alt="Foto publicada 2"></label>
-                                <label>FOTO 3<input name="hero_3_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_3_path" type="hidden"><img id="design-hero-3-preview" alt="Foto publicada 3"></label>
-                            </div></div>
+                                </div>
+                            </details>
+                            <details class="design-panel">
+                                <summary>FOTOS DE PORTADA</summary>
+                                <div class="design-published-images"><small>Elegí una foto para reemplazarla. Se verá inmediatamente en la vista previa al guardar.</small><div class="design-image-grid">
+                                    <label>FOTO 1<input name="hero_1_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_1_path" type="hidden"><img id="design-hero-1-preview" alt="Foto publicada 1"></label>
+                                    <label>FOTO 2<input name="hero_2_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_2_path" type="hidden"><img id="design-hero-2-preview" alt="Foto publicada 2"></label>
+                                    <label>FOTO 3<input name="hero_3_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_3_path" type="hidden"><img id="design-hero-3-preview" alt="Foto publicada 3"></label>
+                                </div></div>
+                            </details>
+                            <details class="design-panel">
+                                <summary>ORDEN DE LAS SECCIONES</summary>
+                                <p class="design-panel-help">Elegí la posición de cada sección de la portada. Los bloques sin contenido no se mostrarán.</p>
+                                <input name="section_order" type="hidden">
+                                <div class="design-section-order">
+                                    <label>PRODUCTOS DESTACADOS<select data-design-section="featured"><option value="1">1.º</option><option value="2">2.º</option><option value="3">3.º</option><option value="4">4.º</option></select></label>
+                                    <label>FOTOS DE PORTADA<select data-design-section="gallery"><option value="1">1.º</option><option value="2">2.º</option><option value="3">3.º</option><option value="4">4.º</option></select></label>
+                                    <label>CATEGORÍAS<select data-design-section="categories"><option value="1">1.º</option><option value="2">2.º</option><option value="3">3.º</option><option value="4">4.º</option></select></label>
+                                    <label>TUTORIALES<select data-design-section="tutorials"><option value="1">1.º</option><option value="2">2.º</option><option value="3">3.º</option><option value="4">4.º</option></select></label>
+                                </div>
+                            </details>
                             <button class="primary-button fit-button" type="submit">GUARDAR DISEÑO</button>
                         </form>
                     </section>

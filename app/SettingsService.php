@@ -90,6 +90,7 @@ final class SettingsService
             'hero_1_path' => '/v1/assets/brand/hero-1.webp',
             'hero_2_path' => '/v1/assets/brand/hero-2.webp',
             'hero_3_path' => '/v1/assets/brand/hero-3.webp',
+            'section_order' => 'featured,gallery,categories,tutorials',
         ];
         $query = $this->pdo->query("SELECT key, value FROM settings WHERE key LIKE 'design_%'");
         foreach ($query->fetchAll() as $row) {
@@ -182,6 +183,12 @@ final class SettingsService
             if ($image === '' || !str_starts_with($image, '/')) throw new ValidationException('Elegí una imagen válida.');
             $values[$key] = $image;
         }
+        $sectionOrder = array_values(array_filter(array_map('trim', explode(',', (string) ($data['section_order'] ?? $current['section_order'])))));
+        $sections = ['featured', 'gallery', 'categories', 'tutorials'];
+        if (count($sectionOrder) !== count($sections) || array_diff($sectionOrder, $sections) !== [] || array_diff($sections, $sectionOrder) !== []) {
+            throw new ValidationException('Revisá el orden de las secciones de la portada.');
+        }
+        $values['section_order'] = implode(',', $sectionOrder);
         Database::immediate($this->pdo, static function (PDO $pdo) use ($values): void {
             $update = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
             foreach ($values as $key => $value) $update->execute(['key' => 'design_' . $key, 'value' => $value]);

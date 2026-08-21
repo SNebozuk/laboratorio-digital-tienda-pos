@@ -3763,6 +3763,11 @@
                 const image = document.getElementById(`design-hero-${number}-preview`);
                 if (image) image.src = data.design[`hero_${number}_path`];
             });
+            const order = String(data.design.section_order || '').split(',');
+            form.querySelectorAll('[data-design-section]').forEach(select => {
+                const position = order.indexOf(select.dataset.designSection);
+                select.value = String(position >= 0 ? position + 1 : 1);
+            });
         } catch (error) { toast(error.message); }
     }
 
@@ -3779,6 +3784,13 @@
                 const file = form.elements.namedItem(`hero_${number}_file`)?.files?.[0];
                 if (file) form.elements.namedItem(`hero_${number}_path`).value = await uploadProductImage(file);
             }
+            const positions = [...form.querySelectorAll('[data-design-section]')]
+                .map(select => ({ section: select.dataset.designSection, position: Number(select.value) }))
+                .sort((a, b) => a.position - b.position);
+            if (new Set(positions.map(item => item.position)).size !== positions.length) {
+                throw new Error('Cada sección debe tener una posición distinta.');
+            }
+            form.elements.namedItem('section_order').value = positions.map(item => item.section).join(',');
             const data = new FormData(form);
             data.delete('logo_file');
             data.delete('hero_1_file');

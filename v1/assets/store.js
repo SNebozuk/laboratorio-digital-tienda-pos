@@ -810,22 +810,21 @@
             const roots = quickCategorySlugs
                 .map(slug => rootCategories.find(category => category.slug === slug))
                 .filter(Boolean);
-            elements.results.innerHTML = `
-                <section class="store-home" aria-label="Empezar a comprar">
-                    ${featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
+            const homeSections = {
+                featured: featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2 id="featured-products-title">PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div>
                         <div class="featured-product-grid">${featured.map(featuredProductCard).join('')}</div>
-                    </section>` : ''}
-                    <section class="home-people-gallery" aria-label="Lo que podés encontrar en Laboratorio Digital">
+                    </section>` : '',
+                gallery: `<section class="home-people-gallery" aria-label="Lo que podés encontrar en Laboratorio Digital">
                         <img src="${escapeHtml(safeImage(app.design?.hero_1_path) || '/v1/assets/brand/hero-1.webp')}" alt="Productos para personalizar" loading="lazy">
                         <img src="${escapeHtml(safeImage(app.design?.hero_2_path) || '/v1/assets/brand/hero-2.webp')}" alt="Indumentaria personalizada" loading="lazy">
                         <img src="${escapeHtml(safeImage(app.design?.hero_3_path) || '/v1/assets/brand/hero-3.webp')}" alt="Materiales y productos para crear" loading="lazy">
-                    </section>
-                    <div class="quick-categories">
+                    </section>`,
+                categories: `<div class="quick-categories">
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
                     </div>
-                    <button class="show-all-products" type="button" data-show-all-products>VER TODOS LOS PRODUCTOS <span>→</span></button>
-                    ${tutorials.length ? `<section class="home-tutorials" aria-labelledby="home-tutorials-title">
+                    <button class="show-all-products" type="button" data-show-all-products>VER TODOS LOS PRODUCTOS <span>→</span></button>`,
+                tutorials: tutorials.length ? `<section class="home-tutorials" aria-labelledby="home-tutorials-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">APRENDE</p><h2 id="home-tutorials-title">TUTORIALES</h2></div><span>Ideas y técnicas para crear</span></div>
                         <div class="tutorial-carousel">
                             <button class="tutorial-carousel-arrow" type="button" data-tutorial-carousel-direction="previous" aria-label="Ver tutorial anterior">&lt;</button>
@@ -835,8 +834,12 @@
                             </button>`).join('')}</div>
                             <button class="tutorial-carousel-arrow" type="button" data-tutorial-carousel-direction="next" aria-label="Ver siguiente tutorial">&gt;</button>
                         </div>
-                    </section>` : ''}
-                </section>`;
+                    </section>` : '',
+            };
+            const defaultSectionOrder = ['featured', 'gallery', 'categories', 'tutorials'];
+            const sectionOrder = String(app.design?.section_order || '').split(',').filter(section => defaultSectionOrder.includes(section));
+            const orderedSections = sectionOrder.length === defaultSectionOrder.length ? sectionOrder : defaultSectionOrder;
+            elements.results.innerHTML = `<section class="store-home" aria-label="Empezar a comprar">${orderedSections.map(section => homeSections[section]).join('')}</section>`;
             return;
         }
 
