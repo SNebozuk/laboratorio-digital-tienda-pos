@@ -3634,6 +3634,21 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-main small { font-size: 13px; line-height: 1.4; }
 .admin-main table thead th { font-size: 13px !important; }
 
+/* Título estándar de cada sección del menú lateral. Usar esta clase en toda vista nueva. */
+.admin-main .view-heading .admin-page-title {
+    margin: 0;
+    color: #252a3a !important;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: clamp(28px, 2.8vw, 40px);
+    font-weight: 760 !important;
+    line-height: 1.08;
+    letter-spacing: -.045em;
+}
+#view-orders .view-heading .admin-page-title {
+    font-size: clamp(28px, 2.8vw, 40px) !important;
+    font-weight: 760 !important;
+}
+
 @media (max-width:700px) {
     .admin-main :is(p, li, label, legend, dt, dd, .form-hint, .invitation-note,
         .empty-copy, .empty-state, .notice, .status-copy, .order-list-empty span),

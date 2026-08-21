@@ -155,7 +155,7 @@ header('Referrer-Policy: same-origin');
                     <div class="view-heading order-page-heading">
                         <div>
                             <p class="eyebrow">CATÁLOGO Y STOCK</p>
-                            <h1>PRODUCTOS</h1>
+                            <h1 class="admin-page-title">PRODUCTOS</h1>
                             <p>Precio y stock se editan directamente por variante.</p>
                         </div>
                         <div class="order-page-actions product-page-actions"><button class="secondary-button" type="button" data-open-featured-products>DESTACADOS</button><button class="primary-button fit-button" id="new-product-button" type="button">NUEVO PRODUCTO</button></div>
@@ -172,7 +172,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">CONTENIDO EDUCATIVO</p>
-                                <h1>APRENDE</h1>
+                                <h1 class="admin-page-title">APRENDE</h1>
                                 <p>Creá y editá los tutoriales que se muestran en la portada.</p>
                             </div>
                             <button class="primary-button fit-button" id="new-tutorial-button" type="button">NUEVO TUTORIAL</button>
@@ -184,7 +184,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">ORGANIZACIÓN DEL CATÁLOGO</p>
-                                <h1>CATEGORÍAS</h1>
+                                <h1 class="admin-page-title">CATEGORÍAS</h1>
                                 <p>Creá, ordená y mantené categorías y subcategorías.</p>
                             </div>
                             <button class="primary-button fit-button" id="new-category-button" type="button">NUEVA CATEGORÍA</button>
@@ -196,7 +196,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">REFERENCIA PARA CLIENTES</p>
-                                <h1>TABLA DE TALLES</h1>
+                                <h1 class="admin-page-title">TABLA DE TALLES</h1>
                                 <p>Editá la tabla tal como la verá el cliente: escribí directamente en cada celda.</p>
                             </div>
                             <a class="secondary-button fit-button" href="<?= $escape($sizeGuideUrl) ?>" target="_blank" rel="noopener">VER PAGINA</a>
@@ -222,7 +222,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">INFORMACIÓN PARA CLIENTES</p>
-                                <h1>CONTACTO</h1>
+                                <h1 class="admin-page-title">CONTACTO</h1>
                                 <p>Estos datos se muestran en la tienda y alimentan el botón de WhatsApp.</p>
                             </div>
                         </div>
@@ -238,7 +238,7 @@ header('Referrer-Policy: same-origin');
                     </section>
 
                     <section class="admin-view" id="view-design">
-                        <div class="view-heading"><div><p class="eyebrow">PORTADA DE LA TIENDA</p><h1>DISEÑO</h1><p>Modificá los textos, el logo y los enlaces visibles sin tocar el código.</p></div></div>
+                        <div class="view-heading"><div><p class="eyebrow">PORTADA DE LA TIENDA</p><h1 class="admin-page-title">DISEÑO</h1><p>Modificá los textos, el logo y los enlaces visibles sin tocar el código.</p></div></div>
                         <form id="design-form" class="settings-card">
                             <div class="settings-grid">
                                 <label>ETIQUETA SUPERIOR<input name="hero_badge" maxlength="120" required></label>
@@ -266,7 +266,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">AVISOS DE PEDIDOS</p>
-                                <h1>WHATSAPP</h1>
+                                <h1 class="admin-page-title">WHATSAPP</h1>
                                 <p>Prepará mensajes claros para copiar y enviar al cliente según el estado de su venta.</p>
                             </div>
                         </div>
@@ -287,7 +287,7 @@ header('Referrer-Policy: same-origin');
                     <div class="view-heading">
                         <div>
                             <p class="eyebrow">OPERACIÓN DIARIA</p>
-                            <h1>VENTAS <small id="open-orders-count"></small></h1>
+                            <h1 class="admin-page-title">LISTA DE VENTAS <small id="open-orders-count"></small></h1>
                             <p>Consultá, imprimí, archivá o cancelá las ventas de la tienda y del mostrador.</p>
                         </div>
                         <div class="order-page-actions">
@@ -333,7 +333,7 @@ header('Referrer-Policy: same-origin');
                     <div class="view-heading">
                         <div>
                             <p class="eyebrow">ARMADO FÍSICO</p>
-                            <h1>ENTREGA DE PEDIDOS</h1>
+                            <h1 class="admin-page-title">ENTREGA DE PEDIDOS</h1>
                             <p>Las ubicaciones del 1 al 100 son fijas. Editá directamente cada casillero.</p>
                         </div>
                     </div>
@@ -355,7 +355,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">ACCESO INTERNO</p>
-                                <h1>USUARIOS</h1>
+                                <h1 class="admin-page-title">USUARIOS</h1>
                                 <p>Administradores y vendedores autorizados.</p>
                             </div>
                             <button class="primary-button fit-button" id="new-user-button" type="button">
@@ -369,7 +369,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">DATOS DEL COMERCIO</p>
-                                <h1>CONFIGURACIÓN</h1>
+                                <h1 class="admin-page-title">CONFIGURACIÓN</h1>
                                 <p>Datos generales del comercio, contacto y retiro en el local.</p>
                             </div>
                         </div>
@@ -428,7 +428,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading">
                             <div>
                                 <p class="eyebrow">OPERACIÓN DE LA TIENDA</p>
-                                <h1>MANTENIMIENTO</h1>
+                                <h1 class="admin-page-title">MANTENIMIENTO</h1>
                                 <p>Podés pausar temporalmente el carrito sin cerrar el catálogo al público.</p>
                             </div>
                         </div>
