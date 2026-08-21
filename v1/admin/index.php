@@ -349,12 +349,10 @@ header('Referrer-Policy: same-origin');
                 </section>
 
                 <section class="admin-view" id="view-deliveries">
-                    <a href="./?view=orders" class="pos-back-link delivery-back-link">← Administración</a>
                     <div class="view-heading">
                         <div>
                             <p class="eyebrow">ARMADO FÍSICO</p>
                             <h1 class="admin-page-title">ENTREGA DE PEDIDOS</h1>
-                            <p>Las ubicaciones del 1 al 100 son fijas. Editá directamente cada casillero.</p>
                         </div>
                     </div>
                     <div id="delivery-copy-guide" class="delivery-copy-guide" hidden></div>
