@@ -3445,6 +3445,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .product-search-tools button:disabled { opacity:.48; cursor:not-allowed; }
 .admin-search input,.order-filter-search input,.order-toolbar input,.pos-page .pos-search-wrap input,.delivery-search input { font-size:17px !important; }
 #view-products,#view-orders { width:100%; min-width:0; min-height:calc(100vh - 110px); }
+.admin-main:has(#view-products.active) { width:100%; box-sizing:border-box; }
 #view-products .product-search-tools,#view-products #admin-product-list,#view-products .product-list-table { position:relative; inset:auto; width:100%; max-width:none; box-sizing:border-box; transform:none; }
 #view-products #admin-product-list { min-height:260px; }
 #view-orders .order-toolbar { width:100%; min-height:62px; margin-left:0; margin-right:0; }
