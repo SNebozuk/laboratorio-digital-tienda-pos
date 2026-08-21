@@ -328,7 +328,6 @@
         document.querySelectorAll('.admin-view').forEach(section => {
             section.classList.toggle('active', section.id === `view-${view}`);
         });
-        document.querySelector('.admin-shell')?.classList.toggle('delivery-workspace', view === 'deliveries');
         document.querySelectorAll('[data-view]').forEach(button => {
             button.classList.toggle('active', button.dataset.view === view);
         });
