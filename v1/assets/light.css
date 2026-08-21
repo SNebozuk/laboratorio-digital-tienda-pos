@@ -54,9 +54,12 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 .cart-actions .continue-shopping-button,.cart-actions .order-note { display:none !important; }
 .cart-products-divider { order:1; height:1px; margin:12px 0; background:var(--line); }
 .cart-lines { order:2; display:grid; flex:1 1 0; gap:10px; min-height:110px; margin:0; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
-.cart-rewards { order:3; justify-items:end; margin:12px 0 0; }
+.cart-line { font-size:12px; }
+.cart-product-main strong,.cart-line-actions > strong { font-size:12px; }
+.cart-product-main small,.cart-line-bottom small { font-size:10px; }
+.cart-rewards { order:3; justify-items:start; margin:12px 0 0; }
 .cart-rewards .reward-progress { order:0; width:100%; }
-.cart-rewards .klaus { order:1; justify-self:end; justify-content:flex-end; width:auto; min-height:56px; border-bottom:0; }
+.cart-rewards .klaus { order:1; justify-self:start; justify-content:flex-start; width:auto; min-height:56px; border-bottom:0; }
 .cart-rewards .klaus > div { display:none; }
 @media (max-width:760px) { .order-panel.mobile-open { height:100dvh; overflow:hidden; } }
 
