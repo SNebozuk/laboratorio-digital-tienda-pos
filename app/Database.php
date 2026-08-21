@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 29;
+    private const CURRENT_MIGRATION_VERSION = 30;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -75,6 +75,7 @@ final class Database
             $previous->execute();
             if ($previous->fetchColumn() !== false) {
                 self::migrateTutorials($pdo);
+                self::migrateOrderDiscounts($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -123,6 +124,21 @@ final class Database
         self::migrateTutorials($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    private static function migrateOrderDiscounts(PDO $pdo): void
+    {
+        $version = 30;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $names = array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(), 'name');
+            if (!in_array('discount_type', $names, true)) $pdo->exec("ALTER TABLE orders ADD COLUMN discount_type TEXT NOT NULL DEFAULT ''");
+            if (!in_array('discount_percent', $names, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN discount_percent INTEGER NOT NULL DEFAULT 0');
+            if (!in_array('discount_cents', $names, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN discount_cents INTEGER NOT NULL DEFAULT 0');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
     }
 
     /** Separa el contenido editorial que antes estaba cargado como productos. */

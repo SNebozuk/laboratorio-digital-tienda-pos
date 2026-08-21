@@ -19,6 +19,9 @@ final class SettingsService
         'pickup_address',
         'business_hours',
         'cart_maintenance_enabled',
+        'reward_surprise_enabled', 'reward_surprise_percent', 'reward_surprise_probability', 'reward_surprise_text', 'reward_surprise_continue_text',
+        'reward_quantity_enabled', 'reward_quantity_units', 'reward_quantity_percent', 'reward_quantity_pending_text', 'reward_quantity_unlocked_text',
+        'reward_cart_animation_enabled', 'reward_cart_sound_enabled', 'reward_checkout_celebration_enabled', 'reward_checkout_confetti_enabled', 'reward_microinteractions_enabled',
         'whatsapp_message_order_created',
         'whatsapp_message_cash_created',
         'whatsapp_message_ready_pickup',
@@ -47,6 +50,9 @@ final class SettingsService
                 'pickup_address',
                 'business_hours',
                 'cart_maintenance_enabled',
+                'reward_surprise_enabled', 'reward_surprise_percent', 'reward_surprise_probability', 'reward_surprise_text', 'reward_surprise_continue_text',
+                'reward_quantity_enabled', 'reward_quantity_units', 'reward_quantity_percent', 'reward_quantity_pending_text', 'reward_quantity_unlocked_text',
+                'reward_cart_animation_enabled', 'reward_cart_sound_enabled', 'reward_checkout_celebration_enabled', 'reward_checkout_confetti_enabled', 'reward_microinteractions_enabled',
                 'whatsapp_message_order_created', 'whatsapp_message_cash_created',
                 'whatsapp_message_ready_pickup', 'whatsapp_message_cancelled'
              )"
@@ -68,6 +74,9 @@ final class SettingsService
         $values += [
             'business_hours' => 'Lunes a viernes de 9:30 a 17 · Sábados de 9:30 a 12:30',
             'cart_maintenance_enabled' => '0',
+            'reward_surprise_enabled' => '1', 'reward_surprise_percent' => '5', 'reward_surprise_probability' => '10', 'reward_surprise_text' => '🎁 ¡Sorpresa! Ganaste 5% de descuento en este carrito.', 'reward_surprise_continue_text' => 'Tu 5% ya está asegurado. Podés seguir agregando productos y aprovecharlo en todo este pedido.',
+            'reward_quantity_enabled' => '1', 'reward_quantity_units' => '20', 'reward_quantity_percent' => '3', 'reward_quantity_pending_text' => 'Agregá {{faltan}} más y obtené {{porcentaje}}% de descuento.', 'reward_quantity_unlocked_text' => '🎉 ¡Desbloqueaste {{porcentaje}}% de descuento!',
+            'reward_cart_animation_enabled' => '1', 'reward_cart_sound_enabled' => '1', 'reward_checkout_celebration_enabled' => '1', 'reward_checkout_confetti_enabled' => '1', 'reward_microinteractions_enabled' => '1',
             'whatsapp_message_order_created' => 'Hola {{cliente}}! Recibimos tu pedido {{pedido}} por {{total}}. Cuando realices la transferencia, por favor respondé a este chat para que podamos prepararlo. Gracias por elegirnos.',
             'whatsapp_message_cash_created' => 'Hola {{cliente}}! Recibimos tu pedido {{pedido}} por {{total}}. Lo reservamos por 6 horas para que puedas retirarlo y abonarlo en efectivo. Te esperamos!',
             'whatsapp_message_ready_pickup' => 'Hola {{cliente}}! Tu pedido {{pedido}} ya está listo para retirar. Gracias por elegirnos!',
@@ -258,6 +267,18 @@ final class SettingsService
             ['1', 'true', 'on'],
             true
         ) ? '1' : '0';
+        $toggle = static fn (string $key) => in_array((string) ($data[$key] ?? $current[$key] ?? '0'), ['1', 'true', 'on'], true) ? '1' : '0';
+        $integer = function (string $key, int $min, int $max) use ($data, $current): string {
+            $value = filter_var($data[$key] ?? $current[$key] ?? null, FILTER_VALIDATE_INT);
+            if ($value === false || $value < $min || $value > $max) throw new ValidationException('Revisá la configuración de recompensas.');
+            return (string) $value;
+        };
+        $rewardTexts = [];
+        foreach (['reward_surprise_text', 'reward_surprise_continue_text', 'reward_quantity_pending_text', 'reward_quantity_unlocked_text'] as $key) {
+            $value = trim((string) ($data[$key] ?? $current[$key] ?? ''));
+            if ($value === '' || strlen($value) > 400) throw new ValidationException('Revisá los textos de recompensas.');
+            $rewardTexts[$key] = $value;
+        }
 
         /*
         $mailReplyTo = trim((string) ($data['mail_reply_to'] ?? $current['mail_reply_to'] ?? $mailFrom));
@@ -307,6 +328,10 @@ final class SettingsService
             'pickup_address' => $pickupAddress,
             'business_hours' => $businessHours,
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
+            'reward_surprise_enabled' => $toggle('reward_surprise_enabled'), 'reward_surprise_percent' => $integer('reward_surprise_percent', 1, 100), 'reward_surprise_probability' => $integer('reward_surprise_probability', 0, 100),
+            'reward_quantity_enabled' => $toggle('reward_quantity_enabled'), 'reward_quantity_units' => $integer('reward_quantity_units', 1, 10000), 'reward_quantity_percent' => $integer('reward_quantity_percent', 1, 100),
+            'reward_cart_animation_enabled' => $toggle('reward_cart_animation_enabled'), 'reward_cart_sound_enabled' => $toggle('reward_cart_sound_enabled'), 'reward_checkout_celebration_enabled' => $toggle('reward_checkout_celebration_enabled'), 'reward_checkout_confetti_enabled' => $toggle('reward_checkout_confetti_enabled'), 'reward_microinteractions_enabled' => $toggle('reward_microinteractions_enabled'),
+            ...$rewardTexts,
             ...$whatsappMessages,
         ];
 

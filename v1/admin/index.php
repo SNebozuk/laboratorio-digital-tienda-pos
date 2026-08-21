@@ -425,6 +425,26 @@ header('Referrer-Policy: same-origin');
                                 </label>
                                 <input name="payment_window_minutes" type="hidden" value="360">
                             </div>
+                            <section class="settings-subsection">
+                                <p class="eyebrow">EXPERIENCIA DE COMPRA / RECOMPENSAS</p>
+                                <div class="settings-grid">
+                                    <label class="checkbox-setting"><input name="reward_surprise_enabled" type="checkbox" value="1"><span><strong>Sorpresa activa</strong></span></label>
+                                    <label>DESCUENTO SORPRESA (%)<input name="reward_surprise_percent" type="number" min="1" max="100"></label>
+                                    <label>PROBABILIDAD (%)<input name="reward_surprise_probability" type="number" min="0" max="100"></label>
+                                    <label>MENSAJE SORPRESA<textarea name="reward_surprise_text" rows="2"></textarea></label>
+                                    <label>MENSAJE PARA SEGUIR AGREGANDO<textarea name="reward_surprise_continue_text" rows="2"></textarea></label>
+                                    <label class="checkbox-setting"><input name="reward_quantity_enabled" type="checkbox" value="1"><span><strong>Descuento por cantidad activo</strong></span></label>
+                                    <label>UNIDADES MÍNIMAS<input name="reward_quantity_units" type="number" min="1"></label>
+                                    <label>DESCUENTO POR CANTIDAD (%)<input name="reward_quantity_percent" type="number" min="1" max="100"></label>
+                                    <label>TEXTO PREVIO ({{faltan}}, {{porcentaje}})<textarea name="reward_quantity_pending_text" rows="2"></textarea></label>
+                                    <label>TEXTO AL DESBLOQUEAR ({{porcentaje}})<textarea name="reward_quantity_unlocked_text" rows="2"></textarea></label>
+                                    <label class="checkbox-setting"><input name="reward_cart_animation_enabled" type="checkbox" value="1"><span><strong>Animación del carrito</strong></span></label>
+                                    <label class="checkbox-setting"><input name="reward_cart_sound_enabled" type="checkbox" value="1"><span><strong>Sonido del carrito</strong></span></label>
+                                    <label class="checkbox-setting"><input name="reward_checkout_celebration_enabled" type="checkbox" value="1"><span><strong>Celebración al comprar</strong></span></label>
+                                    <label class="checkbox-setting"><input name="reward_checkout_confetti_enabled" type="checkbox" value="1"><span><strong>Confeti</strong></span></label>
+                                    <label class="checkbox-setting"><input name="reward_microinteractions_enabled" type="checkbox" value="1"><span><strong>Microinteracciones</strong></span></label>
+                                </div>
+                            </section>
                             <button class="primary-button fit-button" type="submit">
                                 GUARDAR CONFIGURACIÓN
                             </button>

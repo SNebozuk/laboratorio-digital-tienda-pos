@@ -150,8 +150,9 @@ header('Referrer-Policy: same-origin');
                 <p class="empty-copy">Todavía no agregaste productos.</p>
             </div>
             <p id="cart-summary-meta" class="cart-summary-meta" aria-live="polite">0 productos diferentes · 0 unidades</p>
+            <section id="cart-rewards" class="cart-rewards" aria-live="polite"></section>
             <div class="order-total">
-                <span>Total</span>
+                <span>Subtotal <small id="cart-subtotal"></small><br><small id="cart-discount"></small><br>Total</span>
                 <strong id="cart-total">$ 0</strong>
             </div>
             <button class="primary-button" id="checkout-button" type="button" disabled>
@@ -206,6 +207,7 @@ header('Referrer-Policy: same-origin');
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
+            'rewards' => array_filter($publicSettings, static fn ($key) => str_starts_with((string) $key, 'reward_'), ARRAY_FILTER_USE_KEY),
             'featured_product_ids' => $featuredProductIds,
             'tutorials' => $app['tutorials']->publicList(),
             'contact' => [

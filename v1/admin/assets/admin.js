@@ -3690,7 +3690,11 @@
             Object.entries(data.settings).forEach(([key, value]) => {
                 const field = form.elements.namedItem(key);
                 if (field) {
-                    field.value = value;
+                    if (field.type === 'checkbox') {
+                        field.checked = ['1', 'true', 'on'].includes(String(value));
+                    } else {
+                        field.value = value;
+                    }
                 }
             });
         } catch (error) {
@@ -3838,6 +3842,9 @@
 
     async function saveSettings(form) {
         const data = new FormData(form);
+        form.querySelectorAll('input[type="checkbox"]').forEach(field => {
+            if (!data.has(field.name)) data.set(field.name, '0');
+        });
         const button = form.querySelector('button[type="submit"]');
         button.disabled = true;
         button.textContent = 'GUARDANDO…';

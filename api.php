@@ -208,8 +208,10 @@ try {
                 is_array($input['customer'] ?? null) ? $input['customer'] : [],
                 is_array($input['items'] ?? null) ? $input['items'] : [],
                 (string) ($input['channel'] ?? 'web'),
-                (string) ($input['payment_method'] ?? 'bank_transfer')
+                (string) ($input['payment_method'] ?? 'bank_transfer'),
+                !empty($_SESSION['cart_surprise_unlocked'])
             );
+            if (!is_array($cached)) unset($_SESSION['cart_surprise_unlocked'], $_SESSION['cart_surprise_checked']);
             if ($requestKey !== '') {
                 $_SESSION['web_order_requests'] = array_slice((array) ($_SESSION['web_order_requests'] ?? []) + [$requestKey => $order], -10, null, true);
             }
@@ -224,6 +226,16 @@ try {
                 }
             }
             Http::json(['ok' => true, 'order' => $order], 201);
+
+        case 'reward_surprise':
+            if (!isset($_SESSION['cart_surprise_checked'])) {
+                $_SESSION['cart_surprise_checked'] = true;
+                $settings = $app['settings']->values();
+                $enabled = in_array((string) ($settings['reward_surprise_enabled'] ?? '0'), ['1', 'true', 'on'], true);
+                $probability = max(0, min(100, (int) ($settings['reward_surprise_probability'] ?? 0)));
+                $_SESSION['cart_surprise_unlocked'] = $enabled && random_int(1, 100) <= $probability;
+            }
+            Http::json(['ok' => true, 'unlocked' => !empty($_SESSION['cart_surprise_unlocked'])]);
 
         case 'upload_proof':
             $proof = $app['proofs']->receive(

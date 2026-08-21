@@ -66,6 +66,9 @@
         cartLines: document.getElementById('cart-lines'),
         cartSummaryMeta: document.getElementById('cart-summary-meta'),
         cartTotal: document.getElementById('cart-total'),
+        cartSubtotal: document.getElementById('cart-subtotal'),
+        cartDiscount: document.getElementById('cart-discount'),
+        cartRewards: document.getElementById('cart-rewards'),
         checkout: document.getElementById('checkout-button'),
         mobileCart: document.getElementById('cart-mobile'),
         mobileCartCount: document.getElementById('cart-mobile-count'),
@@ -81,6 +84,18 @@
         currency: 'ARS',
         maximumFractionDigits: 0,
     }).format(cents / 100);
+    const rewards = app.rewards || {};
+    const rewardOn = key => ['1', 'true', 'on', true].includes(rewards[key]);
+    document.body.classList.toggle('reward-cart-animation', rewardOn('reward_cart_animation_enabled') && rewardOn('reward_microinteractions_enabled'));
+    const rewardText = (key, values = {}) => String(rewards[key] || '').replace(/{{(faltan|porcentaje)}}/g, (_, name) => values[name] ?? '');
+    let surpriseUnlocked = false;
+    let surpriseChecked = false;
+    function cartDiscount(subtotal, units) {
+        const quantityPercent = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20) ? Number(rewards.reward_quantity_percent || 3) : 0;
+        const surprisePercent = surpriseUnlocked && rewardOn('reward_surprise_enabled') ? Number(rewards.reward_surprise_percent || 5) : 0;
+        const percent = Math.max(quantityPercent, surprisePercent);
+        return { percent, type: surprisePercent >= quantityPercent && surprisePercent ? 'surprise' : (quantityPercent ? 'quantity' : ''), cents: Math.round(subtotal * percent / 100), quantityPercent };
+    }
 
     const fold = value => String(value || '')
         .normalize('NFD')
@@ -507,6 +522,7 @@
         }
         const max = Number(indexed.variant.available_stock);
         const quantity = Math.max(0, Math.min(max, Number(requestedQuantity) || 0));
+        const wasEmpty = state.cart.size === 0;
         if (quantity > 0) {
             state.cart.set(Number(variantId), quantity);
         } else {
@@ -516,6 +532,35 @@
         persistCart();
         renderCatalog();
         renderCart();
+        if (quantity > 0 && Number(requestedQuantity) > 0) playCartPop();
+        if (quantity > 0 && wasEmpty) checkSurprise();
+    }
+
+    async function checkSurprise() {
+        if (surpriseChecked || !rewardOn('reward_surprise_enabled')) return;
+        surpriseChecked = true;
+        try {
+            const data = await apiJson({ action: 'reward_surprise' });
+            surpriseUnlocked = data.unlocked === true;
+            renderCart();
+            if (surpriseUnlocked) toast(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.');
+        } catch { /* La compra continúa sin beneficio si no se puede verificar. */ }
+    }
+
+    if (state.cart.size) checkSurprise();
+
+    function playCartPop() {
+        if (!rewardOn('reward_cart_sound_enabled') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        try {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.frequency.setValueAtTime(420, context.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(680, context.currentTime + .07);
+            gain.gain.setValueAtTime(.025, context.currentTime);
+            gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .1);
+            oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .1);
+        } catch { /* El feedback visual sigue disponible. */ }
     }
 
     function renderCategories() {
@@ -1029,8 +1074,10 @@
 
     function renderCart() {
         const items = cartItems();
-        const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
+        const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
         const units = items.reduce((sum, item) => sum + item.quantity, 0);
+        const discount = cartDiscount(subtotal, units);
+        const total = subtotal - discount.cents;
         const productLabel = items.length === 1 ? 'producto diferente' : 'productos diferentes';
         const unitLabel = units === 1 ? 'unidad' : 'unidades';
 
@@ -1038,6 +1085,12 @@
         elements.mobileCart.setAttribute('aria-label', `Abrir pedido: ${units} ${unitLabel}`);
         elements.cartSummaryMeta.textContent = `${items.length} ${productLabel} · ${units} ${unitLabel}`;
         elements.cartTotal.textContent = money(total);
+        elements.cartSubtotal.textContent = money(subtotal);
+        elements.cartDiscount.textContent = discount.cents ? `Descuento (${discount.percent}%): -${money(discount.cents)}` : 'Descuento: —';
+        const needed = Math.max(0, Number(rewards.reward_quantity_units || 20) - units);
+        elements.cartRewards.innerHTML = !items.length ? '' : `
+            ${rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong>${units} / ${Number(rewards.reward_quantity_units || 20)} productos</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i></div>` : ''}
+            ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
         elements.checkout.textContent = cartMaintenanceEnabled
             ? 'CARRITO EN MANTENIMIENTO'
@@ -1215,7 +1268,9 @@
             renderCart();
             return;
         }
-        const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
+        const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+        const discount = cartDiscount(subtotal, items.reduce((sum, item) => sum + item.quantity, 0));
+        const total = subtotal - discount.cents;
         const customer = savedCustomer();
         // Crea un paso de historial interno: Atrás cierra el checkout y no
         // abandona la tienda hacia la página anterior del navegador.
@@ -1234,7 +1289,7 @@
                     </div>
                 `).join('')}
             </div>
-            <div class="order-total"><span>Total</span><strong>${money(total)}</strong></div>
+            <div class="order-total"><span>Subtotal<br><small>Descuento (${discount.percent}%): -${money(discount.cents)}<br>Total</small></span><strong>${money(total)}</strong></div>
             <form id="checkout-form" novalidate>
                 <label>
                     Nombre y Apellido
@@ -1397,6 +1452,8 @@
                 })),
             });
             state.order = data.order;
+            surpriseUnlocked = false;
+            surpriseChecked = false;
             const transferWhatsappUrl = whatsappUrl(data.order);
             state.cart.clear();
             persistCart();
@@ -1425,6 +1482,7 @@
         const total = money(Number(order.total_cents));
         openModal(`
             ${checkoutSteps(3)}
+            ${rewardOn('reward_checkout_celebration_enabled') ? `<div class="checkout-celebration" aria-hidden="true">${rewardOn('reward_checkout_confetti_enabled') ? '✦ ✦ ✦' : ''}<b>✓</b></div><p class="checkout-celebration-copy">¡Listo! Recibimos tu compra.</p>` : ''}
             <h2 id="modal-title">¡Gracias por tu pedido!</h2>
             <p class="checkout-lead">Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</p>
             <div class="payment-focus">

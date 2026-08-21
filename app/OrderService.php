@@ -26,7 +26,8 @@ final class OrderService
         array $customer,
         array $items,
         string $channel = 'web',
-        string $paymentMethod = 'bank_transfer'
+        string $paymentMethod = 'bank_transfer',
+        bool $surpriseUnlocked = false
     ): array {
         if (empty($this->config['orders_enabled'])) {
             throw new ConflictException(
@@ -88,22 +89,33 @@ final class OrderService
                 $deadline,
                 $tokenHash,
                 $uploadToken,
-                $paymentMethod
+                $paymentMethod,
+                $surpriseUnlocked
             ): array {
                 $publicNumber = $this->newPublicNumber($pdo);
                 $resolvedItems = $this->resolveItems($pdo, $quantities);
-                $total = array_sum(array_column($resolvedItems, 'line_total_cents'));
+                $subtotal = array_sum(array_column($resolvedItems, 'line_total_cents'));
+                $rewardSettings = $this->rewardSettings($pdo);
+                $units = array_sum($quantities);
+                $quantityPercent = $rewardSettings['quantity_enabled'] && $units >= $rewardSettings['quantity_units']
+                    ? $rewardSettings['quantity_percent'] : 0;
+                $surprisePercent = $surpriseUnlocked && $rewardSettings['surprise_enabled']
+                    ? $rewardSettings['surprise_percent'] : 0;
+                $discountPercent = max($quantityPercent, $surprisePercent);
+                $discountType = $discountPercent === 0 ? '' : ($surprisePercent >= $quantityPercent ? 'surprise' : 'quantity');
+                $discountCents = (int) round($subtotal * $discountPercent / 100);
+                $total = $subtotal - $discountCents;
 
                 $insertOrder = $pdo->prepare(
                     'INSERT INTO orders(
                         public_number, channel, status,
                         customer_name, customer_email, customer_phone,
-                        subtotal_cents, total_cents, payment_method,
+                        subtotal_cents, discount_type, discount_percent, discount_cents, total_cents, payment_method,
                         payment_deadline_at, upload_token_hash
                      ) VALUES(
                         :public_number, :channel, :status,
                         :customer_name, :customer_email, :customer_phone,
-                        :subtotal_cents, :total_cents, :payment_method,
+                        :subtotal_cents, :discount_type, :discount_percent, :discount_cents, :total_cents, :payment_method,
                         :payment_deadline_at, :upload_token_hash
                      )'
                 );
@@ -114,7 +126,10 @@ final class OrderService
                     'customer_name' => $customerName,
                     'customer_email' => $customerEmail,
                     'customer_phone' => $customerPhone,
-                    'subtotal_cents' => $total,
+                    'subtotal_cents' => $subtotal,
+                    'discount_type' => $discountType,
+                    'discount_percent' => $discountPercent,
+                    'discount_cents' => $discountCents,
                     'total_cents' => $total,
                     'payment_method' => $paymentMethod,
                     'payment_deadline_at' => $deadline,
@@ -208,6 +223,21 @@ final class OrderService
         $result['pickup_address'] = $this->stringSetting('pickup_address', '');
 
         return $result;
+    }
+
+    /** @return array{surprise_enabled: bool, surprise_percent: int, quantity_enabled: bool, quantity_units: int, quantity_percent: int} */
+    private function rewardSettings(PDO $pdo): array
+    {
+        $rows = $pdo->query("SELECT key, value FROM settings WHERE key IN ('reward_surprise_enabled', 'reward_surprise_percent', 'reward_quantity_enabled', 'reward_quantity_units', 'reward_quantity_percent')")->fetchAll();
+        $values = [];
+        foreach ($rows as $row) $values[(string) $row['key']] = (string) $row['value'];
+        return [
+            'surprise_enabled' => in_array($values['reward_surprise_enabled'] ?? '1', ['1', 'true', 'on'], true),
+            'surprise_percent' => max(0, min(100, (int) ($values['reward_surprise_percent'] ?? 5))),
+            'quantity_enabled' => in_array($values['reward_quantity_enabled'] ?? '1', ['1', 'true', 'on'], true),
+            'quantity_units' => max(1, (int) ($values['reward_quantity_units'] ?? 20)),
+            'quantity_percent' => max(0, min(100, (int) ($values['reward_quantity_percent'] ?? 3))),
+        ];
     }
 
     /**
@@ -521,13 +551,13 @@ final class OrderService
                 $updateOrder = $pdo->prepare(
                     'UPDATE orders
                      SET subtotal_cents = :subtotal_cents,
-                         total_cents = :total_cents,
+                         discount_cents = ROUND(:subtotal_cents * discount_percent / 100.0),
+                         total_cents = :subtotal_cents - ROUND(:subtotal_cents * discount_percent / 100.0),
                          updated_at = CURRENT_TIMESTAMP
                      WHERE id = :id'
                 );
                 $updateOrder->execute([
                     'subtotal_cents' => $total,
-                    'total_cents' => $total,
                     'id' => $orderId,
                 ]);
 
