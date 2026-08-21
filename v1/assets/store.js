@@ -787,6 +787,7 @@
         const count = showCount ? productResultCount(matches) : '';
         if (productView === 'catalog') return state.category || state.searchActive ? `${count}${catalogProductGrid(matches)}` : catalogCategoryLanding();
         if (productView === 'minimal') return `${count}<div class="minimal-product-list" role="list">${matches.map(minimalProductRow).join('')}</div>`;
+        if (showCount) return productSummaryList(matches, true);
         return completeProductList(matches, showCount);
     }
 
