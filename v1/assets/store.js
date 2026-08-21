@@ -1117,7 +1117,7 @@
             ? (surpriseUnlocked ? rewards.reward_klaus_surprise_text : rewards.reward_klaus_near_text) : '';
         elements.cartRewards.innerHTML = !items.length ? '' : `
             ${klausMarkup(units, klausMessage)}
-            ${rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong>${units} / ${Number(rewards.reward_quantity_units || 20)} productos</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i></div>` : ''}
+            ${rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
         elements.checkout.textContent = cartMaintenanceEnabled
@@ -1788,6 +1788,12 @@
             }
             window.setTimeout(finishOrder, 0);
         }
+    });
+
+    document.addEventListener('pointerdown', event => {
+        if (!event.target.closest('.klaus')) return;
+        reactKlaus('is-reacting');
+        if (rewardOn('reward_klaus_messages_enabled')) toast(rewards.reward_klaus_happy_text || '🐾 ¡Klaus está contento!');
     });
 
     document.addEventListener('change', event => {
