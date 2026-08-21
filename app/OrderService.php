@@ -105,7 +105,13 @@ final class OrderService
                     ? $rewardSettings['surprise_percent'] : 0;
                 $baseDiscountPercent = max($quantityPercent, $surprisePercent);
                 $discountPercent = $baseDiscountPercent + ($klausDiscountUnlocked ? 2 : 0);
-                $discountType = $klausDiscountUnlocked ? 'klaus' : ($discountPercent === 0 ? '' : ($surprisePercent >= $quantityPercent ? 'surprise' : 'quantity'));
+                $baseDiscountType = $baseDiscountPercent === 0
+                    ? ''
+                    : ($surprisePercent >= $quantityPercent ? 'surprise' : 'quantity');
+                $discountType = implode('+', array_filter([
+                    $baseDiscountType,
+                    $klausDiscountUnlocked ? 'klaus' : '',
+                ]));
                 $discountCents = (int) round($subtotal * $discountPercent / 100);
                 $total = $subtotal - $discountCents;
 

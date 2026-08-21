@@ -1789,6 +1789,22 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     font-size: 18px;
 }
 
+.order-detail-total span {
+    display: grid;
+    gap: 2px;
+    text-align: right;
+}
+
+.order-detail-total small {
+    color: #556276;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.order-detail-total b {
+    font-size: 12px;
+}
+
 .order-payment-detail {
     padding: 16px;
     border: 1px solid rgba(93, 155, 255, .28);

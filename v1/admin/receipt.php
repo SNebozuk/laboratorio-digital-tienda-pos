@@ -5,6 +5,11 @@ $app = require dirname(__DIR__, 2) . '/app/container.php';
 if (!$app['auth']->user()) { header('Location: ./'); exit; }
 function receiptText(mixed $value): string { return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 function receiptMoney(int $cents): string { return '$ ' . number_format($cents / 100, 0, ',', '.'); }
+function receiptDiscountSource(mixed $type): string {
+    $labels = ['quantity' => 'por cantidad', 'surprise' => 'sorpresa', 'klaus' => 'premio de Klaus'];
+    $sources = array_filter(explode('+', (string) $type));
+    return implode(' + ', array_map(static fn (string $source): string => $labels[$source] ?? 'promoción', $sources)) ?: 'promoción';
+}
 function receiptArgentinaDate(mixed $value): string {
     $source = trim((string) $value);
     if ($source === '') return '';
@@ -43,5 +48,5 @@ $assetVersion = substr(hash('sha256', (string) @file_get_contents(__DIR__ . '/as
 <section class="receipt-order"><?php if ($batch): ?><h2><?= receiptText($order['public_number']) ?></h2><?php endif; ?><?php if (!empty($order['delivery_slot_number'])): ?><div class="receipt-delivery-slot"><strong><?= (int) $order['delivery_slot_number'] ?></strong><?php if ($deliveryLocation !== ''): ?><span>UBICACIÓN <?= receiptText($deliveryLocation) ?></span><?php endif; ?></div><?php endif; ?>
 <dl><div><dt>Cliente</dt><dd><?= receiptText($order['customer_name']) ?></dd></div><div><dt>Contacto</dt><dd><?= receiptText($order['customer_phone'] ?: 'Sin teléfono informado') ?></dd></div><div><dt>Fecha</dt><dd><?= receiptText(receiptArgentinaDate($order['created_at'])) ?></dd></div></dl>
 <table><thead><tr><th>Cantidad</th><th>Variante</th><th>Producto</th><th>SKU</th><th>Precio</th></tr></thead><tbody><?php foreach ($items as $item): ?><tr><td class="quantity"><?= (int) $item['quantity'] ?></td><td class="receipt-variant"><?= preg_match('/^única$/iu', trim((string) $item['variant_name'])) === 1 ? '—' : receiptText($item['variant_name']) ?></td><td class="receipt-product"><?= receiptText($item['product_name']) ?></td><td class="receipt-sku"><?= receiptText($item['sku']) ?></td><td class="receipt-price"><?= receiptMoney((int) $item['unit_price_cents']) ?></td></tr><?php endforeach; ?></tbody></table>
-<p class="total"><span><?= $unitCount ?> <?= $unitCount === 1 ? 'unidad' : 'unidades' ?> · Subtotal <?= receiptMoney((int) $order['subtotal_cents']) ?><?php if ((int) ($order['discount_cents'] ?? 0) > 0): ?><br>Descuento <?= (int) $order['discount_percent'] ?>%: −<?= receiptMoney((int) $order['discount_cents']) ?><?php endif; ?><br>Total</span><strong><?= receiptMoney((int) $order['total_cents']) ?></strong></p></section>
+<p class="total"><span><?= $unitCount ?> <?= $unitCount === 1 ? 'unidad' : 'unidades' ?> · Subtotal <?= receiptMoney((int) $order['subtotal_cents']) ?><?php if ((int) ($order['discount_cents'] ?? 0) > 0): ?><br>Descuento <?= receiptText(receiptDiscountSource($order['discount_type'] ?? '')) ?> <?= (int) $order['discount_percent'] ?>%: −<?= receiptMoney((int) $order['discount_cents']) ?><?php endif; ?><br>Total</span><strong><?= receiptMoney((int) $order['total_cents']) ?></strong></p></section>
 <?php endforeach; ?><p class="footer">Comprobante interno no fiscal · Retiro en el local</p></main><script src="assets/receipt.js?v=<?= receiptText($assetVersion) ?>"></script></body></html>

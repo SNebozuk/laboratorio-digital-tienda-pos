@@ -56,6 +56,15 @@
         maximumFractionDigits: 0,
     }).format(Number(cents || 0) / 100);
 
+    const discountSourceLabel = type => ({
+        quantity: 'por cantidad',
+        surprise: 'sorpresa',
+        klaus: 'premio de Klaus',
+    });
+    const discountSourceText = type => String(type || '').split('+')
+        .map(source => discountSourceLabel(source) || 'promoción')
+        .join(' + ');
+
     // SQLite guarda los timestamps en UTC. Toda fecha visible se expresa en hora argentina.
     const argentinaDateParts = value => {
         const source = String(value || '').trim();
@@ -2888,7 +2897,7 @@
                                         ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
                                         <span class="order-detail-product-copy">
                                             <strong>${escapeHtml(item.product_name)}</strong>
-                                            <small class="order-detail-sku">SKU: ${escapeHtml(item.sku || 'Sin SKU')}</small>
+                                            <small class="order-detail-sku">${item.sku ? `SKU: ${escapeHtml(item.sku)}` : ''}</small>
                                             ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
                                             <span class="order-detail-quantity">${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>
                                         </span>
@@ -2898,7 +2907,7 @@
                             </div>
                         `).join('')}
                     </div>
-                    <div class="order-detail-total"><span>TOTAL</span><strong>${money(order.total_cents)}</strong></div>
+                    <div class="order-detail-total"><span>${Number(order.discount_cents) > 0 ? `SUBTOTAL ${money(order.subtotal_cents)}<small>DESCUENTO ${discountSourceText(order.discount_type)} (${Number(order.discount_percent)}%): −${money(order.discount_cents)}</small><b>TOTAL</b>` : 'TOTAL'}</span><strong>${money(order.total_cents)}</strong></div>
                     <div class="order-actions order-detail-actions">${orderActions(actionOrder)}</div>
                     <p class="order-print-note">La impresión incluye la compra y el total.</p>
                 </section>
@@ -2930,7 +2939,7 @@
                                     ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
                                     <span class="order-detail-product-copy">
                                         <strong>${escapeHtml(item.product_name)}</strong>
-                                        <small class="order-detail-sku">SKU: ${escapeHtml(item.sku || 'Sin SKU')}</small>
+                                        <small class="order-detail-sku">${item.sku ? `SKU: ${escapeHtml(item.sku)}` : ''}</small>
                                         ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
                                         <span class="order-detail-quantity">${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>
                                     </span>
@@ -2939,7 +2948,7 @@
                             </div>
                         `).join('')}
                     </div>
-                    <div class="order-detail-total"><span>TOTAL</span><strong>${money(order.total_cents)}</strong></div>
+                    <div class="order-detail-total"><span>${Number(order.discount_cents) > 0 ? `SUBTOTAL ${money(order.subtotal_cents)}<small>DESCUENTO ${discountSourceText(order.discount_type)} (${Number(order.discount_percent)}%): −${money(order.discount_cents)}</small><b>TOTAL</b>` : 'TOTAL'}</span><strong>${money(order.total_cents)}</strong></div>
                 </section>
             `);
         } catch (error) {
