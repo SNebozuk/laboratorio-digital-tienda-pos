@@ -89,6 +89,26 @@ final class SettingsService
         return $values;
     }
 
+    public function claimDailySurprise(bool $enabled, int $probability): bool
+    {
+        if (!$enabled || $probability <= 0) return false;
+
+        $today = date('Y-m-d');
+        return Database::immediate($this->pdo, function (PDO $pdo) use ($today, $probability): bool {
+            $lastShown = $pdo->prepare("SELECT value FROM settings WHERE key = 'reward_surprise_last_shown_on'");
+            $lastShown->execute();
+            if ((string) $lastShown->fetchColumn() === $today) return false;
+            if (random_int(1, 100) > $probability) return false;
+
+            $save = $pdo->prepare(
+                "INSERT INTO settings(key, value, updated_at) VALUES('reward_surprise_last_shown_on', :today, CURRENT_TIMESTAMP)
+                 ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP"
+            );
+            $save->execute([':today' => $today]);
+            return true;
+        });
+    }
+
     /** @return array<string, string> */
     public function design(): array
     {

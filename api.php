@@ -246,7 +246,7 @@ try {
                 $settings = $app['settings']->values();
                 $enabled = in_array((string) ($settings['reward_surprise_enabled'] ?? '0'), ['1', 'true', 'on'], true);
                 $probability = max(0, min(100, (int) ($settings['reward_surprise_probability'] ?? 0)));
-                $_SESSION['cart_surprise_unlocked'] = $enabled && random_int(1, 100) <= $probability;
+                $_SESSION['cart_surprise_unlocked'] = $app['settings']->claimDailySurprise($enabled, $probability);
             }
             Http::json(['ok' => true, 'unlocked' => !empty($_SESSION['cart_surprise_unlocked'])]);
 
