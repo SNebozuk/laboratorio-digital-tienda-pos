@@ -791,9 +791,9 @@
                 <h2 id="product-view-chooser-title">¿Cómo preferís ver los productos?</h2>
                 <p>Podés cambiarlo cuando quieras.</p>
                 <div>
-                    <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos, organizados para recorrerlos.</small></button>
-                    <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Fotos grandes y productos agrupados por categoría.</small></button>
-                    <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Una lista compacta para comprar rápido.</small></button>
+                    <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos ordenados por categoría y subcategoría.</small></button>
+                    <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
+                    <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Menos espacio y controles directos para comprar rápido.</small></button>
                 </div>
             </section>
         `);
