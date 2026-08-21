@@ -783,10 +783,17 @@
         `;
     }
 
+    function minimalCategoryPrompt() {
+        return `<div class="empty-state">
+            <h2>ELEGÍ UNA CATEGORÍA</h2>
+            <p>Usá el menú para mostrar únicamente los productos de esa sección.</p>
+        </div>`;
+    }
+
     function productViewContent(matches, showCount = false) {
         const count = showCount ? productResultCount(matches) : '';
         if (productView === 'catalog') return state.category || state.searchActive ? `${count}${catalogProductGrid(matches)}` : catalogCategoryLanding();
-        if (productView === 'minimal') return `${count}<div class="minimal-product-list" role="list">${matches.map(minimalProductRow).join('')}</div>`;
+        if (productView === 'minimal') return state.category || state.searchActive ? productSummaryList(matches, showCount) : minimalCategoryPrompt();
         if (showCount) return productSummaryList(matches, true);
         return completeProductList(matches, showCount);
     }
@@ -825,7 +832,7 @@
                 <div>
                     <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos ordenados por categoría y subcategoría.</small></button>
                     <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
-                    <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Menos espacio y controles directos para comprar rápido.</small></button>
+                    <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Elegí una categoría desde el menú para ver solo esa sección.</small></button>
                 </div>
             </section>
         `);
