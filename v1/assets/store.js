@@ -1856,18 +1856,17 @@
         if (klausDiscountUnlocked || klausDiscountPending) return;
         const playClink = prepareKlausClink();
         const rewardAt = Date.now() + 6000;
+        const showReward = () => window.setTimeout(() => {
+            klausDiscountPending = false;
+            renderCart();
+            playClink();
+            showKlausRewardDialog();
+        }, Math.max(0, rewardAt - Date.now()));
         klausDiscountPending = true;
         try {
-            const data = await apiJson({ action: 'reward_klaus' });
+            await apiJson({ action: 'reward_klaus' });
             klausDiscountUnlocked = true;
-            window.setTimeout(() => {
-                klausDiscountPending = false;
-                renderCart();
-                if (data.newly_unlocked) {
-                    playClink();
-                    showKlausRewardDialog();
-                }
-            }, Math.max(0, rewardAt - Date.now()));
+            showReward();
         } catch (_) {
             klausDiscountPending = false;
             // El gesto y sus animaciones siguen funcionando aunque no pueda validarse el beneficio.
