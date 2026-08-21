@@ -3048,6 +3048,17 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-add-products-link > b { color: #1769e0; font-size: 30px; }
 .pos-add-products-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 10px; background: #1769e0; color: #fff; font-size: 26px; }
 .pos-sale-details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, auto); gap: 18px; align-items: end; margin-top: 18px; padding: 22px; border: 1px solid #dce2ed; border-radius: 14px; background: #fff; box-shadow: 0 4px 18px rgba(30, 40, 70, .035); }
+.pos-klaus { display:flex; align-items:center; gap:8px; color:#6b4a22; }
+.pos-klaus svg { width:104px; height:70px; overflow:visible; filter:drop-shadow(0 4px 3px rgba(105,68,28,.14)); }
+.pos-klaus g { fill:#d4a15f; stroke:#68411d; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+.pos-klaus-tail,.pos-klaus-line,.pos-klaus-collar { fill:none; }
+.pos-klaus-ear { fill:#ad743b; }
+.pos-klaus-chest,.pos-klaus-muzzle { fill:#efcc98; }
+.pos-klaus-muzzle,.pos-klaus-dark { stroke:none; }
+.pos-klaus-dark { fill:#322015; }
+.pos-klaus-collar { stroke:#7652b8; stroke-width:4; }
+.pos-klaus-tag { fill:#f2c84b; stroke:#8b6918; stroke-width:1.2; }
+.pos-klaus span { font-size:11px; font-weight:800; letter-spacing:.12em; }
 .pos-customer-checkout input { font-size: 16px; }
 .pos-customer-checkout { display: grid; gap: 12px; margin-top: auto; padding-top: 18px; }
 .pos-customer-checkout input { background: #fff; color: #111827; }

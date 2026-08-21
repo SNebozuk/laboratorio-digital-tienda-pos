@@ -54,6 +54,10 @@ header('Referrer-Policy: same-origin');
                     <b>›</b>
                 </a>
                 <section class="pos-sale-details">
+                    <div class="pos-klaus" aria-label="Klaus, la mascota de Laboratorio Digital">
+                        <svg viewBox="0 0 180 120" role="img" aria-hidden="true"><g><path class="pos-klaus-tail" d="M134 78c21-17 32-4 23 10-4 6-10 9-16 9"/><path d="M54 79c1-23 18-37 46-37 28 0 45 14 46 37l-9 23H57z"/><path class="pos-klaus-chest" d="M84 55c10 2 19 11 21 24l-7 23H73l5-23c1-11 2-19 6-24z"/><path d="M36 31c10-19 39-22 53-4 10 12 7 34-6 45-15 13-40 8-50-8-7-11-4-24 3-33z"/><path class="pos-klaus-ear" d="M40 33C20 34 18 52 29 68c6 8 17 5 20-6l4-23z"/><path class="pos-klaus-ear" d="M79 34c18-9 27 8 21 24-4 11-14 14-20 5l-5-17z"/><path class="pos-klaus-line" d="M45 46c4-3 8-3 11-1M68 44c4-3 8-2 10 1"/><ellipse class="pos-klaus-muzzle" cx="61" cy="63" rx="18" ry="13"/><circle class="pos-klaus-dark" cx="51" cy="51" r="3"/><circle class="pos-klaus-dark" cx="74" cy="50" r="3"/><path class="pos-klaus-dark" d="M57 59q5-4 10 0l-5 5z"/><path class="pos-klaus-line" d="M61 65c3 5 9 6 13 0M67 96v13M122 96v13"/><path class="pos-klaus-collar" d="M45 75c11 8 29 8 41-1"/><circle class="pos-klaus-tag" cx="65" cy="80" r="3"/></g></svg>
+                        <span>KLAUS</span>
+                    </div>
                     <div class="pos-main-total"><span>TOTAL</span><strong id="pos-total">$ 0</strong></div>
                 </section>
             </div>
