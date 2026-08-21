@@ -690,14 +690,6 @@
         if (normalized.includes(token)) {
             return weight + 35;
         }
-        const tolerance = /\d/.test(token)
-            ? 0
-            : (token.length >= 7 ? 2 : token.length >= 4 ? 1 : 0);
-        if (tolerance && words.some(word => (
-            limitedEditDistance(token, word, tolerance) <= tolerance
-        ))) {
-            return weight + 15;
-        }
         return -1;
     }
 

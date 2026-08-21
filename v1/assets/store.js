@@ -322,15 +322,6 @@
             return weight + 35;
         }
 
-        // Un código o una medida debe coincidir literalmente: 20.1 no es 24.1.
-        const tolerance = /\d/.test(token)
-            ? 0
-            : (token.length >= 7 ? 2 : token.length >= 4 ? 1 : 0);
-        if (tolerance && words.some(word => (
-            limitedEditDistance(token, word, tolerance) <= tolerance
-        ))) {
-            return weight + 15;
-        }
         return -1;
     }
 
