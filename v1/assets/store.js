@@ -101,7 +101,7 @@
         const quantityPercent = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20) ? Number(rewards.reward_quantity_percent || 3) : 0;
         const surprisePercent = surpriseUnlocked && rewardOn('reward_surprise_enabled') ? Number(rewards.reward_surprise_percent || 5) : 0;
         const basePercent = Math.max(quantityPercent, surprisePercent);
-        const percent = basePercent + (klausDiscountUnlocked ? 1 : 0);
+        const percent = basePercent + (klausDiscountUnlocked ? 2 : 0);
         return { percent, type: klausDiscountUnlocked ? 'klaus' : (surprisePercent >= quantityPercent && surprisePercent ? 'surprise' : (quantityPercent ? 'quantity' : '')), cents: Math.round(subtotal * percent / 100), quantityPercent };
     }
 
@@ -146,7 +146,7 @@
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-modal', 'true');
         dialog.setAttribute('aria-label', 'Regalo de Klaus');
-        dialog.innerHTML = '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p>Ganaste <b>1% de descuento adicional</b>, acumulable en toda tu compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
+        dialog.innerHTML = '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p>Ganaste <b>2% de descuento adicional</b>, acumulable en toda tu compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
         const close = () => {
             klausDiscountAcknowledged = true;
             dialog.remove();
@@ -1181,7 +1181,7 @@
         elements.cartSubtotal.textContent = money(subtotal);
         elements.cartDiscount.textContent = discount.cents
             ? `Descuento (${discount.percent}%): -${money(discount.cents)}`
-            : (klausDiscountUnlocked ? 'Descuento (1%): se aplicará al agregar productos' : 'Descuento: —');
+            : (klausDiscountUnlocked ? 'Descuento (2%): se aplicará al agregar productos' : 'Descuento: —');
         const needed = Math.max(0, Number(rewards.reward_quantity_units || 20) - units);
         const klausNearReward = rewardOn('reward_quantity_enabled') && units >= Math.max(1, Number(rewards.reward_quantity_units || 20) - 3);
         const klausReachedReward = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20);
@@ -1192,7 +1192,7 @@
             ${items.length && rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
         if (klausDiscountAcknowledged) {
-            elements.cartRewards.insertAdjacentHTML('beforeend', '<div class="reward-surprise"><strong>🐾 Premio de Klaus: 1% de descuento adicional.</strong><span>Se acumula con los demás descuentos de tu compra.</span></div>');
+            elements.cartRewards.insertAdjacentHTML('beforeend', '<div class="reward-surprise"><strong>🐾 Premio de Klaus: 2% de descuento adicional.</strong><span>Se acumula con los demás descuentos de tu compra.</span></div>');
         }
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
         elements.checkout.textContent = cartMaintenanceEnabled
