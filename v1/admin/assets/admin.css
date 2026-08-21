@@ -3325,6 +3325,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-match-table .small-button { width:100%; white-space:normal; }
 .delivery-match-choice { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px; border:1px solid #d9c8e9; border-radius:9px; background:#fbf8ff; color:#55416a; font-size:13px; }
 .delivery-match-choice .secondary-button { flex:0 0 auto; white-space:nowrap; }
+.admin-body button.delivery-confirm-add { min-height:46px !important; padding:0 18px !important; border:1px solid #1769e0 !important; border-radius:10px !important; background:#1769e0 !important; box-shadow:none !important; color:#fff !important; }
+.admin-body button.delivery-confirm-add:hover { border-color:#1459bd !important; background:#1459bd !important; color:#fff !important; }
 @media (max-width:640px) { .delivery-match-choice { align-items:stretch; flex-direction:column; } .delivery-match-choice .secondary-button { width:100%; } }
 .delivery-search { display: grid; gap: 5px; width: min(100%, 360px); margin: 0 0 16px; }
 .delivery-search span { color: #667085; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
