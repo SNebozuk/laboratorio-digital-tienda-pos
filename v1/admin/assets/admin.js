@@ -3431,8 +3431,24 @@
             const data = await apiGet('statistics');
             renderStatistics(data.statistics || {}, data.deliveries || {});
         } catch (error) {
-            elements.statisticsContent.innerHTML = '<p class="empty-copy">No pudimos cargar las estadísticas.</p>';
+            elements.statisticsContent.innerHTML = `
+                <section class="statistics-lock">
+                    <span>🔒</span><div><p class="eyebrow">ACCESO PROTEGIDO</p><h2>Confirmá tu contraseña</h2><p>Usá la misma contraseña con la que ingresaste al administrador.</p></div>
+                    <form id="statistics-unlock-form"><input name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required><button class="primary-button fit-button" type="submit">VER ESTADÍSTICAS</button></form>
+                </section>
+            `;
+        }
+    }
+
+    async function unlockStatistics(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        try {
+            await apiPost({ action: 'statistics_unlock', password: form.elements.password.value });
+            await loadStatistics();
+        } catch (error) {
             toast(error.message);
+            button.disabled = false;
         }
     }
 
@@ -4220,6 +4236,10 @@
         if (event.target.id === 'setup-form') {
             event.preventDefault();
             authenticate(event.target, 'setup_admin');
+        }
+        if (event.target.id === 'statistics-unlock-form') {
+            event.preventDefault();
+            unlockStatistics(event.target);
         }
         if (event.target.id === 'product-form') {
             event.preventDefault();

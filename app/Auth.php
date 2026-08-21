@@ -58,6 +58,28 @@ final class Auth
         return $user;
     }
 
+    public function unlockStatistics(string $password): void
+    {
+        $user = $this->requireUser();
+        $query = $this->pdo->prepare(
+            'SELECT password_hash FROM users WHERE id = :id AND active = 1'
+        );
+        $query->execute(['id' => $user['id']]);
+        $hash = $query->fetchColumn();
+        if (!is_string($hash) || !password_verify($password, $hash)) {
+            throw new AuthorizationException('La contraseña no es correcta.');
+        }
+        $_SESSION['statistics_access_user_id'] = (int) $user['id'];
+    }
+
+    public function requireStatisticsAccess(): void
+    {
+        $user = $this->requireUser();
+        if ((int) ($_SESSION['statistics_access_user_id'] ?? 0) !== (int) $user['id']) {
+            throw new AuthorizationException('Ingresá tu contraseña para ver Estadísticas.');
+        }
+    }
+
     /** @return array<string, mixed> */
     public function login(string $email, string $password): array
     {

@@ -87,7 +87,7 @@ try {
                 Http::json(['ok' => true, 'slots' => $app['deliveries']->slots()]);
 
             case 'statistics':
-                $app['auth']->requireUser();
+                $app['auth']->requireStatisticsAccess();
                 Http::json([
                     'ok' => true,
                     'statistics' => $app['orders']->statistics(),
@@ -208,6 +208,10 @@ try {
                 'ok' => true,
                 'csrf_token' => $_SESSION['csrf_token'],
             ]);
+
+        case 'statistics_unlock':
+            $app['auth']->unlockStatistics((string) ($input['password'] ?? ''));
+            Http::json(['ok' => true]);
 
         case 'create_order':
             $requestKey = trim((string) ($input['request_key'] ?? ''));
