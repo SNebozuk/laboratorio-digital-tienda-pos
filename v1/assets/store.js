@@ -587,6 +587,26 @@
         } catch { /* El feedback visual sigue disponible. */ }
     }
 
+    function playKlausBark() {
+        if (!rewardOn('reward_cart_sound_enabled')) return;
+        try {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            [0, .16].forEach((delay, index) => {
+                const oscillator = context.createOscillator();
+                const gain = context.createGain();
+                const start = context.currentTime + delay;
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(index ? 205 : 175, start);
+                oscillator.frequency.exponentialRampToValueAtTime(index ? 115 : 95, start + .12);
+                gain.gain.setValueAtTime(.001, start);
+                gain.gain.exponentialRampToValueAtTime(.035, start + .012);
+                gain.gain.exponentialRampToValueAtTime(.001, start + .14);
+                oscillator.connect(gain).connect(context.destination);
+                oscillator.start(start); oscillator.stop(start + .15);
+            });
+        } catch { /* El saludo visual sigue disponible. */ }
+    }
+
     function renderCategories() {
         const fallback = new Map();
         products.forEach(product => {
@@ -1792,7 +1812,8 @@
 
     document.addEventListener('pointerdown', event => {
         if (!event.target.closest('.klaus')) return;
-        reactKlaus('is-reacting');
+        playKlausBark();
+        reactKlaus('is-petted');
         if (rewardOn('reward_klaus_messages_enabled')) toast(rewards.reward_klaus_happy_text || '🐾 ¡Klaus está contento!');
     });
 
