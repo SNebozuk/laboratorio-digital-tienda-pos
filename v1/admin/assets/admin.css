@@ -3059,6 +3059,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-klaus-collar { stroke:#7652b8; stroke-width:4; }
 .pos-klaus-tag { fill:#f2c84b; stroke:#8b6918; stroke-width:1.2; }
 .pos-klaus span { font-size:11px; font-weight:800; letter-spacing:.12em; }
+.pos-klaus { cursor:pointer; }.pos-klaus.is-petted svg { animation:pos-klaus-pet .52s ease-in-out 2; }.pos-klaus.is-petted .pos-klaus-tail { transform-box:fill-box; transform-origin:center; animation:pos-klaus-tail .12s ease-in-out 8 alternate; }.pos-klaus.is-petted::after { align-self:flex-start; padding:3px 7px; border-radius:999px; background:#fff0f6; color:#a51a71; content:'♥ ♥ ♥'; font-size:10px; font-weight:900; }
+@keyframes pos-klaus-pet { 30% { transform:translateY(-15px) rotate(-7deg) scale(1.13); } 58% { transform:translateY(3px) rotate(5deg) scale(.95); } } @keyframes pos-klaus-tail { to { transform:rotate(25deg); } }
+@media (prefers-reduced-motion: reduce) { .pos-klaus * { animation:none !important; } }
 .pos-customer-checkout input { font-size: 16px; }
 .pos-customer-checkout { display: grid; gap: 12px; margin-top: auto; padding-top: 18px; }
 .pos-customer-checkout input { background: #fff; color: #111827; }

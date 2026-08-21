@@ -1816,8 +1816,7 @@
         }
     });
 
-    document.addEventListener('pointerdown', event => {
-        if (!event.target.closest('.klaus')) return;
+    window.Klaus?.attach(document, '.klaus', () => {
         reactKlaus('is-petted');
         if (rewardOn('reward_klaus_messages_enabled')) toast(rewards.reward_klaus_happy_text || '🐾 ¡Klaus está contento!');
     });

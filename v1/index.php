@@ -13,6 +13,7 @@ $assetPath = $storePath . '/assets';
 $assetVersion = substr(hash('sha256',
     (string) @file_get_contents(__DIR__ . '/assets/app.css')
     . (string) @file_get_contents(__DIR__ . '/assets/light.css')
+    . (string) @file_get_contents(__DIR__ . '/assets/klaus.js')
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
 ), 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
@@ -220,6 +221,7 @@ header('Referrer-Policy: same-origin');
             'design' => $design,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
+    <script src="<?= $escape($assetPath) ?>/klaus.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>

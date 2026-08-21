@@ -5269,6 +5269,7 @@
         // marcarlas explícitamente permite capturar escaneos desde cualquier foco.
         if (document.querySelector('.pos-page')) {
             state.view = 'pos';
+            window.Klaus?.attach(document, '.pos-klaus');
         }
         restorePosCustomer();
         loadProducts();
