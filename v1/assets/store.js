@@ -43,6 +43,18 @@
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
     const CART_HISTORY_KEY = 'laboratorio-digital:mobile-cart-open';
+    const PRODUCT_VIEW_STORAGE_KEY = 'laboratorio-digital:product-view';
+    const PRODUCT_VIEWS = new Set(['list', 'catalog', 'minimal']);
+    let hasSavedProductView = false;
+    let productView = (() => {
+        try {
+            const saved = window.localStorage.getItem(PRODUCT_VIEW_STORAGE_KEY);
+            hasSavedProductView = PRODUCT_VIEWS.has(saved);
+            return PRODUCT_VIEWS.has(saved) ? saved : 'list';
+        } catch (_) {
+            return 'list';
+        }
+    })();
     const isMobileStorefront = () => window.matchMedia('(max-width: 900px)').matches;
 
     const elements = {
@@ -55,6 +67,7 @@
         search: document.getElementById('product-search'),
         closeSearch: document.getElementById('search-close'),
         results: document.getElementById('catalog-results'),
+        productViewSwitcher: document.getElementById('product-view-switcher'),
         cartLines: document.getElementById('cart-lines'),
         cartSummaryMeta: document.getElementById('cart-summary-meta'),
         cartTotal: document.getElementById('cart-total'),
@@ -683,6 +696,98 @@
         `;
     }
 
+    function productResultCount(matches) {
+        return `<div class="search-result-count" role="status">${matches.length} ${matches.length === 1 ? 'producto encontrado' : 'productos encontrados'}</div>`;
+    }
+
+    function catalogProductCard(product) {
+        const hasVariants = product.variants.length > 1;
+        const singleVariant = product.variants[0];
+        return `
+            <article class="catalog-view-card">
+                <div class="catalog-view-image">${productImage(product, 'catalog-view-photo')}</div>
+                <div class="catalog-view-copy">
+                    <button type="button" data-open-product="${Number(product.id)}"><strong>${escapeHtml(product.name)}</strong></button>
+                    <small>${escapeHtml(variantDisplayName(product, singleVariant) || product.category?.name || '')}</small>
+                    <strong>${priceRange(product)}</strong>
+                    <span class="catalog-view-stock">${hasVariants ? `${product.variants.length} variantes` : exactAvailableLabel(visibleAvailable(singleVariant))}</span>
+                </div>
+                ${hasVariants
+                    ? `<button class="catalog-view-options" type="button" data-open-product="${Number(product.id)}">VER OPCIONES</button>`
+                    : quantityControl(product, singleVariant, 'catalog-view-quantity')}
+            </article>
+        `;
+    }
+
+    function catalogProductGrid(matches) {
+        const groups = new Map();
+        matches.forEach(product => {
+            const name = product.category?.name || 'Otros productos';
+            if (!groups.has(name)) groups.set(name, []);
+            groups.get(name).push(product);
+        });
+        return `<div class="catalog-view-groups">${Array.from(groups, ([name, productsInCategory]) => `
+            <section class="catalog-view-group" aria-label="${escapeHtml(name)}">
+                <h2>${escapeHtml(name)}</h2>
+                <div class="catalog-view-grid">${productsInCategory.map(catalogProductCard).join('')}</div>
+            </section>
+        `).join('')}</div>`;
+    }
+
+    function minimalProductRow(product) {
+        const hasVariants = product.variants.length > 1;
+        const singleVariant = product.variants[0];
+        return `
+            <article class="minimal-product-row" role="listitem">
+                <div>${productImage(product, 'minimal-product-image')}</div>
+                <button type="button" data-open-product="${Number(product.id)}"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(hasVariants ? `${product.variants.length} variantes` : variantDisplayName(product, singleVariant) || product.category?.name || '')}</small></button>
+                <strong>${priceRange(product)}</strong>
+                <span class="minimal-product-stock">${hasVariants ? 'Ver opciones' : exactAvailableLabel(visibleAvailable(singleVariant))}</span>
+                ${hasVariants
+                    ? `<button class="minimal-product-open" type="button" data-open-product="${Number(product.id)}" aria-label="Abrir opciones de ${escapeHtml(product.name)}">›</button>`
+                    : quantityControl(product, singleVariant, 'minimal-quantity-control')}
+            </article>
+        `;
+    }
+
+    function productViewContent(matches, showCount = false) {
+        const count = showCount ? productResultCount(matches) : '';
+        if (productView === 'catalog') return `${count}${catalogProductGrid(matches)}`;
+        if (productView === 'minimal') return `${count}<div class="minimal-product-list" role="list">${matches.map(minimalProductRow).join('')}</div>`;
+        return productSummaryList(matches, showCount);
+    }
+
+    function syncProductViewSwitcher() {
+        elements.productViewSwitcher?.querySelectorAll('[data-product-view]').forEach(button => {
+            const selected = button.dataset.productView === productView;
+            button.classList.toggle('active', selected);
+            button.setAttribute('aria-pressed', String(selected));
+        });
+    }
+
+    function setProductView(view) {
+        if (!PRODUCT_VIEWS.has(view)) return;
+        productView = view;
+        try { window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view); } catch (_) { /* La vista funciona aunque el navegador no permita guardar preferencias. */ }
+        syncProductViewSwitcher();
+        renderCatalog();
+    }
+
+    function showProductViewChooser() {
+        openModal(`
+            <section class="product-view-chooser" aria-labelledby="product-view-chooser-title">
+                <span class="product-view-chooser-icon" aria-hidden="true">◉</span>
+                <h2 id="product-view-chooser-title">¿Cómo preferís ver los productos?</h2>
+                <p>Podés cambiarlo cuando quieras.</p>
+                <div>
+                    <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos, organizados para recorrerlos.</small></button>
+                    <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Fotos grandes y productos agrupados por categoría.</small></button>
+                    <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Una lista compacta para comprar rápido.</small></button>
+                </div>
+            </section>
+        `);
+    }
+
     function featuredProductCard(product) {
         const hasVariants = product.variants.length > 1;
         const singleVariant = product.variants[0];
@@ -777,12 +882,13 @@
                     <div><strong>RESULTADOS PARA “${escapeHtml(query)}”</strong><span>Encontramos productos en todo el catálogo, sin importar la categoría.</span></div>
                     <button class="search-share-link" type="button" data-copy-search-link="${escapeHtml(searchShareUrl(query))}" title="Copiar enlace de estos resultados">COPIAR ENLACE</button>
                 </div>
-                ${productSummaryList(matches, true)}
+                ${productViewContent(matches, true)}
             </section>
         `;
     }
 
     function renderCatalog() {
+        syncProductViewSwitcher();
         document.body.classList.toggle('search-mode', state.searchActive);
         const isHome = !state.searchActive && !state.category && !state.showAll;
         document.body.classList.toggle('home-mode', isHome);
@@ -856,7 +962,7 @@
             return;
         }
 
-        elements.results.innerHTML = productSummaryList(matches);
+        elements.results.innerHTML = productViewContent(matches);
     }
 
     function cartItems() {
@@ -1387,6 +1493,12 @@
             </article>`);
             return;
         }
+        const productViewButton = event.target.closest('[data-product-view]');
+        if (productViewButton) {
+            setProductView(productViewButton.dataset.productView);
+            if (productViewButton.closest('.product-view-chooser')) closeModal();
+            return;
+        }
         if (event.target.closest('[data-dismiss-stock-warning]')) {
             state.reducedAvailability.clear();
             renderCatalog();
@@ -1728,6 +1840,7 @@
     renderCategories();
     renderCatalog();
     renderCart();
+    if (!hasSavedProductView) window.setTimeout(showProductViewChooser, 350);
     // La portada puede mostrarse sin descargar cientos de productos. El
     // catálogo completo se obtiene al buscar, abrir una categoría o pedir el
     // listado; esto acelera la primera carga en equipos de escritorio.
