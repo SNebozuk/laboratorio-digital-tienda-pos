@@ -2247,7 +2247,12 @@
         try {
             await apiPost({ action: 'delivery_slot_delete', slot_number: Number(slotNumber) });
             await Promise.all([loadDeliverySlots(), loadOrders(true)]);
-            if (delivered) toastDeliveryDelivered();
+            if (delivered) {
+                toastDeliveryDelivered();
+                state.deliveryQuery = '';
+                if (elements.deliverySearch) elements.deliverySearch.value = '';
+                renderDeliverySlots();
+            }
             else if (notification) toast(notification);
         } catch (error) { toast(error.message); }
     }
