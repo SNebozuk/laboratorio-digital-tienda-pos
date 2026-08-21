@@ -90,11 +90,27 @@
     const rewardText = (key, values = {}) => String(rewards[key] || '').replace(/{{(faltan|porcentaje)}}/g, (_, name) => values[name] ?? '');
     let surpriseUnlocked = false;
     let surpriseChecked = false;
+    let klausReaction = '';
+    let klausTimer = null;
     function cartDiscount(subtotal, units) {
         const quantityPercent = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20) ? Number(rewards.reward_quantity_percent || 3) : 0;
         const surprisePercent = surpriseUnlocked && rewardOn('reward_surprise_enabled') ? Number(rewards.reward_surprise_percent || 5) : 0;
         const percent = Math.max(quantityPercent, surprisePercent);
         return { percent, type: surprisePercent >= quantityPercent && surprisePercent ? 'surprise' : (quantityPercent ? 'quantity' : ''), cents: Math.round(subtotal * percent / 100), quantityPercent };
+    }
+
+    function klausMarkup(units, message = '') {
+        if (!rewardOn('reward_klaus_enabled')) return '';
+        const mood = units >= Number(rewards.reward_quantity_units || 20) ? 'is-thrilled' : units > 0 ? 'is-happy' : '';
+        return `<section class="klaus ${mood} ${klausReaction}" aria-label="Klaus, la mascota de Laboratorio Digital"><svg viewBox="0 0 180 120" role="img" aria-hidden="true"><g class="klaus-dog"><path class="klaus-tail" d="M137 77c24-12 30 7 17 17"/><path class="klaus-body" d="M49 79c2-23 19-36 47-35 31 1 48 14 47 38l-10 22H54z"/><path class="klaus-head" d="M38 28c14-17 43-11 53 6 7 13 0 37-13 45-17 10-41 0-46-17-4-13-2-25 6-34z"/><path class="klaus-ear" d="M37 36C19 34 16 55 28 65c8 7 18-2 21-13zM79 35c20-6 26 12 19 27-5 11-17 8-21-2z"/><ellipse class="klaus-muzzle" cx="56" cy="63" rx="15" ry="11"/><circle class="klaus-eye" cx="50" cy="48" r="3"/><circle class="klaus-eye" cx="72" cy="48" r="3"/><path class="klaus-nose" d="M57 59h7l-3 4z"/><path class="klaus-smile" d="M60 65c3 5 8 5 11 0"/><path class="klaus-leg" d="M64 94v14M116 94v14"/></g></svg><div><strong>KLAUS</strong>${message ? `<span>${escapeHtml(message)}</span>` : '<span>Tu compañero de carrito</span>'}</div></section>`;
+    }
+
+    function reactKlaus(kind = '') {
+        if (!rewardOn('reward_klaus_enabled') || !rewardOn('reward_klaus_animations_enabled') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        klausReaction = kind || 'is-reacting';
+        window.clearTimeout(klausTimer);
+        klausTimer = window.setTimeout(() => { klausReaction = ''; renderCart(); }, 850);
+        renderCart();
     }
 
     const fold = value => String(value || '')
@@ -533,6 +549,11 @@
         renderCatalog();
         renderCart();
         if (quantity > 0 && Number(requestedQuantity) > 0) playCartPop();
+        if (quantity > 0 && Number(requestedQuantity) > 0) {
+            const units = Array.from(state.cart.values()).reduce((sum, value) => sum + Number(value), 0);
+            const celebration = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20);
+            reactKlaus(celebration ? 'is-celebrating' : '');
+        }
         if (quantity > 0 && wasEmpty) checkSurprise();
     }
 
@@ -543,7 +564,10 @@
             const data = await apiJson({ action: 'reward_surprise' });
             surpriseUnlocked = data.unlocked === true;
             renderCart();
-            if (surpriseUnlocked) toast(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.');
+            if (surpriseUnlocked) {
+                toast(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.');
+                reactKlaus('is-celebrating');
+            }
         } catch { /* La compra continúa sin beneficio si no se puede verificar. */ }
     }
 
@@ -1088,7 +1112,11 @@
         elements.cartSubtotal.textContent = money(subtotal);
         elements.cartDiscount.textContent = discount.cents ? `Descuento (${discount.percent}%): -${money(discount.cents)}` : 'Descuento: —';
         const needed = Math.max(0, Number(rewards.reward_quantity_units || 20) - units);
+        const klausNearReward = rewardOn('reward_quantity_enabled') && units >= Math.max(1, Number(rewards.reward_quantity_units || 20) - 3);
+        const klausMessage = rewardOn('reward_klaus_messages_enabled') && items.length && (klausNearReward || surpriseUnlocked)
+            ? (surpriseUnlocked ? rewards.reward_klaus_surprise_text : rewards.reward_klaus_near_text) : '';
         elements.cartRewards.innerHTML = !items.length ? '' : `
+            ${klausMarkup(units, klausMessage)}
             ${rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong>${units} / ${Number(rewards.reward_quantity_units || 20)} productos</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i></div>` : ''}
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
@@ -1482,7 +1510,7 @@
         const total = money(Number(order.total_cents));
         openModal(`
             ${checkoutSteps(3)}
-            ${rewardOn('reward_checkout_celebration_enabled') ? `<div class="checkout-celebration" aria-hidden="true">${rewardOn('reward_checkout_confetti_enabled') ? '✦ ✦ ✦' : ''}<b>✓</b></div><p class="checkout-celebration-copy">¡Listo! Recibimos tu compra.</p>` : ''}
+            ${rewardOn('reward_checkout_celebration_enabled') ? `<div class="checkout-celebration" aria-hidden="true">${rewardOn('reward_checkout_confetti_enabled') ? '✦ ✦ ✦' : ''}<b>✓</b></div><p class="checkout-celebration-copy">¡Listo! Recibimos tu compra.</p>${klausMarkup(999, rewardOn('reward_klaus_messages_enabled') ? (rewards.reward_klaus_complete_text || '🎉 ¡Compra lista!') : '')}` : ''}
             <h2 id="modal-title">¡Gracias por tu pedido!</h2>
             <p class="checkout-lead">Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</p>
             <div class="payment-focus">

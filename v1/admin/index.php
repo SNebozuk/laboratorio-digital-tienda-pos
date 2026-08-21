@@ -443,6 +443,13 @@ header('Referrer-Policy: same-origin');
                                     <label class="checkbox-setting"><input name="reward_checkout_celebration_enabled" type="checkbox" value="1"><span><strong>Celebración al comprar</strong></span></label>
                                     <label class="checkbox-setting"><input name="reward_checkout_confetti_enabled" type="checkbox" value="1"><span><strong>Confeti</strong></span></label>
                                     <label class="checkbox-setting"><input name="reward_microinteractions_enabled" type="checkbox" value="1"><span><strong>Microinteracciones</strong></span></label>
+                                    <label class="checkbox-setting"><input name="reward_klaus_enabled" type="checkbox" value="1"><span><strong>Mostrar a Klaus en el carrito</strong></span></label>
+                                    <label class="checkbox-setting"><input name="reward_klaus_animations_enabled" type="checkbox" value="1"><span><strong>Animaciones de Klaus</strong></span></label>
+                                    <label class="checkbox-setting"><input name="reward_klaus_messages_enabled" type="checkbox" value="1"><span><strong>Mensajes de Klaus</strong></span></label>
+                                    <label>MENSAJE FELIZ<textarea name="reward_klaus_happy_text" rows="2"></textarea></label>
+                                    <label>MENSAJE CERCA DE LA RECOMPENSA<textarea name="reward_klaus_near_text" rows="2"></textarea></label>
+                                    <label>MENSAJE SORPRESA<textarea name="reward_klaus_surprise_text" rows="2"></textarea></label>
+                                    <label>MENSAJE COMPRA LISTA<textarea name="reward_klaus_complete_text" rows="2"></textarea></label>
                                 </div>
                             </section>
                             <button class="primary-button fit-button" type="submit">
