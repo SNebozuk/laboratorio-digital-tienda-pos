@@ -38,8 +38,18 @@
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
     const CART_HISTORY_KEY = 'laboratorio-digital:mobile-cart-open';
+    const PRODUCT_VIEW_STORAGE_KEY = 'laboratorio-digital:product-view';
     const PRODUCT_VIEWS = new Set(['list', 'catalog', 'minimal']);
-    let productView = 'list';
+    let alwaysUseProductView = false;
+    let productView = (() => {
+        try {
+            const saved = window.localStorage.getItem(PRODUCT_VIEW_STORAGE_KEY);
+            alwaysUseProductView = PRODUCT_VIEWS.has(saved);
+            return alwaysUseProductView ? saved : 'list';
+        } catch (_) {
+            return 'list';
+        }
+    })();
     const isMobileStorefront = () => window.matchMedia('(max-width: 900px)').matches;
 
     const elements = {
@@ -746,6 +756,17 @@
         `).join('')}</div>`;
     }
 
+    function catalogCategoryLanding() {
+        const categories = categoryTree.filter(category => category.active !== false);
+        if (!categories.length) return '<div class="empty-state"><h2>AÚN NO HAY CATEGORÍAS</h2><p>Probá con la Lista completa para recorrer los productos.</p></div>';
+        return `<section class="catalog-category-landing" aria-labelledby="catalog-category-landing-title">
+            <div><p class="eyebrow">CATÁLOGO</p><h2 id="catalog-category-landing-title">ELEGÍ UNA CATEGORÍA</h2><p>Recorré cada categoría para ver sus productos.</p></div>
+            <div class="catalog-category-grid">${categories.map(category => `
+                <button type="button" data-category="${escapeHtml(category.slug)}"><strong>${escapeHtml(category.name)}</strong><small>${(category.children || []).filter(child => child.active !== false).length ? 'Ver subcategorías y productos' : 'Ver productos'}</small><span aria-hidden="true">→</span></button>
+            `).join('')}</div>
+        </section>`;
+    }
+
     function minimalProductRow(product) {
         const hasVariants = product.variants.length > 1;
         const singleVariant = product.variants[0];
@@ -764,7 +785,7 @@
 
     function productViewContent(matches, showCount = false) {
         const count = showCount ? productResultCount(matches) : '';
-        if (productView === 'catalog') return `${count}${catalogProductGrid(matches)}`;
+        if (productView === 'catalog') return state.category || state.searchActive ? `${count}${catalogProductGrid(matches)}` : catalogCategoryLanding();
         if (productView === 'minimal') return `${count}<div class="minimal-product-list" role="list">${matches.map(minimalProductRow).join('')}</div>`;
         return completeProductList(matches, showCount);
     }
@@ -777,9 +798,18 @@
         });
     }
 
-    function setProductView(view) {
+    function setProductView(view, useAlways = alwaysUseProductView) {
         if (!PRODUCT_VIEWS.has(view)) return;
         productView = view;
+        alwaysUseProductView = useAlways;
+        try {
+            if (alwaysUseProductView) {
+                window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view);
+            } else {
+                window.localStorage.removeItem(PRODUCT_VIEW_STORAGE_KEY);
+            }
+        } catch (_) { /* La vista funciona aunque el navegador no permita guardar la preferencia. */ }
+        if (productView === 'list') setCategoryMenuOpen(false);
         syncProductViewSwitcher();
         renderCatalog();
     }
@@ -790,6 +820,7 @@
                 <span class="product-view-chooser-icon" aria-hidden="true">◉</span>
                 <h2 id="product-view-chooser-title">¿Cómo preferís ver los productos?</h2>
                 <p>Podés cambiarlo cuando quieras.</p>
+                <label class="product-view-remember"><input type="checkbox" data-use-product-view-always> Usar siempre la vista elegida</label>
                 <div>
                     <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos ordenados por categoría y subcategoría.</small></button>
                     <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
@@ -900,6 +931,7 @@
 
     function renderCatalog() {
         syncProductViewSwitcher();
+        document.body.classList.toggle('product-view-list', productView === 'list');
         document.body.classList.toggle('search-mode', state.searchActive);
         const isHome = !state.searchActive && !state.category && !state.showAll;
         document.body.classList.toggle('home-mode', isHome);
@@ -1506,8 +1538,11 @@
         }
         const productViewButton = event.target.closest('[data-product-view]');
         if (productViewButton) {
-            setProductView(productViewButton.dataset.productView);
-            if (productViewButton.closest('.product-view-chooser')) closeModal();
+            const chooser = productViewButton.closest('.product-view-chooser');
+            setProductView(productViewButton.dataset.productView, chooser
+                ? Boolean(chooser.querySelector('[data-use-product-view-always]')?.checked)
+                : alwaysUseProductView);
+            if (chooser) closeModal();
             return;
         }
         if (event.target.closest('[data-dismiss-stock-warning]')) {
@@ -1851,7 +1886,7 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    window.setTimeout(showProductViewChooser, 350);
+    if (!alwaysUseProductView) window.setTimeout(showProductViewChooser, 350);
     // La lista completa es la vista inicial, por lo que el catálogo se carga
     // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();
