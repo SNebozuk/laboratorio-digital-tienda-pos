@@ -17,7 +17,7 @@ final class MailService
     }
 
     /** @return array{sent:int,retried:int,failed:int,disabled:bool} */
-    public function process(int $limit = 20): array
+    public function process(int $limit = 20, ?int $orderId = null): array
     {
         if (empty($this->config['mail_enabled'])) {
             return ['sent' => 0, 'retried' => 0, 'failed' => 0, 'disabled' => true];
@@ -29,12 +29,19 @@ final class MailService
             "UPDATE mail_queue SET status = 'pending'
              WHERE status = 'sending' AND available_at <= CURRENT_TIMESTAMP"
         );
-        $messages = $this->pdo->query(
-            "SELECT * FROM mail_queue
-             WHERE status = 'pending' AND available_at <= CURRENT_TIMESTAMP
-               AND attempts < 5
-             ORDER BY id LIMIT " . $limit
-        )->fetchAll();
+        $query = "SELECT * FROM mail_queue
+                  WHERE status = 'pending' AND available_at <= CURRENT_TIMESTAMP
+                    AND attempts < 5";
+        if ($orderId !== null) {
+            $query .= ' AND order_id = :order_id';
+        }
+        $query .= ' ORDER BY id LIMIT ' . $limit;
+        $statement = $this->pdo->prepare($query);
+        if ($orderId !== null) {
+            $statement->bindValue(':order_id', $orderId, PDO::PARAM_INT);
+        }
+        $statement->execute();
+        $messages = $statement->fetchAll();
         $result = ['sent' => 0, 'retried' => 0, 'failed' => 0, 'disabled' => false];
 
         foreach ($messages as $message) {
