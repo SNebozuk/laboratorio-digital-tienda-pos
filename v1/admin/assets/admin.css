@@ -3121,12 +3121,12 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-page-title { margin-bottom: 18px; }
 .pos-page-title h1 { margin: 3px 0 0; color: #252a3a; font-size: 30px; letter-spacing: -.04em; }
 .pos-page .pos-search-wrap { margin-bottom: 18px; }
-.pos-page .pos-search-wrap input { min-height: 54px; font-size: 16px; }
+.pos-page .pos-search-wrap input { min-height: 54px; font-size: 16px; font-weight: 400; }
 .pos-page-cart { position: sticky; top: 20px; align-self: start; min-height: 440px; }
 .pos-page-cart .cart-lines { gap: 8px; }
 .pos-page-cart .pos-cart-detail-row { display: grid; grid-template-columns: minmax(220px, 1fr) auto minmax(105px, auto) minmax(100px, auto) 34px; align-items: center; gap: 16px; padding: 13px 0; background: transparent !important; border-width: 0 0 1px !important; border-radius: 0; box-shadow: none !important; }
 .pos-cart-product { min-width: 0; }
-.pos-cart-product strong { display: block; overflow: hidden; color: #252a3a; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.pos-cart-product strong { display: block; overflow: hidden; color: #252a3a; font-size: 13px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 .pos-cart-product small { display: block; overflow: hidden; margin-top: 3px; color: #667087; text-overflow: ellipsis; white-space: nowrap; }
 .pos-cart-subtotal { color: #252a3a; font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .pos-cart-available { color: #46536b; font-size: 13px; font-variant-numeric: tabular-nums; text-align: center; white-space: nowrap; }
