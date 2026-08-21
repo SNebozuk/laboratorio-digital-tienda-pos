@@ -2,6 +2,13 @@
     'use strict';
 
     const timers = new WeakMap();
+    const barkScript = document.currentScript?.src || 'assets/klaus.js';
+    const bark = new Audio(barkScript.replace(/klaus\.js(?:\?.*)?$/, 'klaus-bark.mp3'));
+
+    const barkOnce = () => {
+        bark.currentTime = 0;
+        bark.play().catch(() => {});
+    };
 
     const pet = element => {
         if (!element || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -17,6 +24,7 @@
             const element = event.target.closest(selector);
             if (!element) return;
             pet(element);
+            barkOnce();
             onPet?.(element);
         });
     };
