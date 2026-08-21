@@ -45,6 +45,7 @@
         customerHistoryName: '',
         customerHistoryChildOpen: false,
         posSaleConfirmationTimer: 0,
+        posKlausTimer: 0,
         knownOrderIds: null,
         view: 'orders',
     };
@@ -122,6 +123,7 @@
         posProducts: document.getElementById('pos-products'),
         posCartLines: document.getElementById('pos-cart-lines'),
         posTotal: document.getElementById('pos-total'),
+        posKlaus: document.getElementById('pos-klaus'),
         posClearCart: document.getElementById('pos-clear-cart'),
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
@@ -246,6 +248,17 @@
         elements.toast.textContent = message;
         elements.toast.classList.add('open');
         window.setTimeout(() => elements.toast.classList.remove('open'), 3600);
+    }
+
+    function petPosKlaus() {
+        const klaus = elements.posKlaus;
+        if (!klaus) return;
+        klaus.classList.remove('is-petted');
+        void klaus.offsetWidth;
+        klaus.classList.add('is-petted');
+        window.clearTimeout(state.posKlausTimer);
+        state.posKlausTimer = window.setTimeout(() => klaus.classList.remove('is-petted'), 1100);
+        toast('🐾 ¡Klaus está contento!');
     }
 
     function toastDeliveryDelivered() {
@@ -5140,6 +5153,7 @@
         }
     });
     elements.completeSale?.addEventListener('click', finishPosSaleDirectly);
+    elements.posKlaus?.addEventListener('click', petPosKlaus);
     elements.categoryTree?.addEventListener('dragstart', event => {
         const row = event.target.closest('[data-category-row]');
         if (!row) return;
