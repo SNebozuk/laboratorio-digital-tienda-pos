@@ -539,6 +539,7 @@
         const max = Number(indexed.variant.available_stock);
         const quantity = Math.max(0, Math.min(max, Number(requestedQuantity) || 0));
         const wasEmpty = state.cart.size === 0;
+        const unitsBefore = Array.from(state.cart.values()).reduce((sum, value) => sum + Number(value), 0);
         if (quantity > 0) {
             state.cart.set(Number(variantId), quantity);
         } else {
@@ -551,7 +552,12 @@
         if (quantity > 0 && Number(requestedQuantity) > 0) playCartPop();
         if (quantity > 0 && Number(requestedQuantity) > 0) {
             const units = Array.from(state.cart.values()).reduce((sum, value) => sum + Number(value), 0);
-            const celebration = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20);
+            const target = Number(rewards.reward_quantity_units || 20);
+            const celebration = rewardOn('reward_quantity_enabled') && units >= target && unitsBefore < target;
+            if (celebration) {
+                playRewardFanfare();
+                toast('🎉 ¡Siii, lo lograste! Desbloqueaste tu descuento.');
+            }
             reactKlaus(celebration ? 'is-celebrating' : (wasEmpty ? 'is-waking' : ''));
         }
         if (quantity > 0 && wasEmpty) checkSurprise();
@@ -585,6 +591,25 @@
             gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .1);
             oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .1);
         } catch { /* El feedback visual sigue disponible. */ }
+    }
+
+    function playRewardFanfare() {
+        if (!rewardOn('reward_cart_sound_enabled') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        try {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            [523, 659, 784, 1047].forEach((frequency, index) => {
+                const oscillator = context.createOscillator();
+                const gain = context.createGain();
+                const start = context.currentTime + index * .11;
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(frequency, start);
+                gain.gain.setValueAtTime(.001, start);
+                gain.gain.exponentialRampToValueAtTime(.06, start + .015);
+                gain.gain.exponentialRampToValueAtTime(.001, start + .28);
+                oscillator.connect(gain).connect(context.destination);
+                oscillator.start(start); oscillator.stop(start + .3);
+            });
+        } catch { /* La celebración visual sigue disponible. */ }
     }
 
     function renderCategories() {
@@ -1113,8 +1138,9 @@
         elements.cartDiscount.textContent = discount.cents ? `Descuento (${discount.percent}%): -${money(discount.cents)}` : 'Descuento: —';
         const needed = Math.max(0, Number(rewards.reward_quantity_units || 20) - units);
         const klausNearReward = rewardOn('reward_quantity_enabled') && units >= Math.max(1, Number(rewards.reward_quantity_units || 20) - 3);
+        const klausReachedReward = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20);
         const klausMessage = rewardOn('reward_klaus_messages_enabled') && items.length && (klausNearReward || surpriseUnlocked)
-            ? (surpriseUnlocked ? rewards.reward_klaus_surprise_text : rewards.reward_klaus_near_text) : '';
+            ? (klausReachedReward ? '🎉 ¡Siii, lo lograste!' : (surpriseUnlocked ? rewards.reward_klaus_surprise_text : rewards.reward_klaus_near_text)) : '';
         elements.cartRewards.innerHTML = `
             ${klausMarkup(units, klausMessage)}
             ${items.length && rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
