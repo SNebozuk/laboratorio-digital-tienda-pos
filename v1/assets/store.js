@@ -127,15 +127,16 @@
         return () => {
             const oscillator = context.createOscillator();
             const gain = context.createGain();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(1350, context.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(840, context.currentTime + .18);
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(1047, context.currentTime);
+            oscillator.frequency.setValueAtTime(1319, context.currentTime + .12);
+            oscillator.frequency.setValueAtTime(1568, context.currentTime + .24);
             gain.gain.setValueAtTime(.001, context.currentTime);
-            gain.gain.exponentialRampToValueAtTime(.16, context.currentTime + .015);
-            gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .28);
+            gain.gain.exponentialRampToValueAtTime(.18, context.currentTime + .015);
+            gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .48);
             oscillator.connect(gain).connect(context.destination);
             oscillator.start();
-            oscillator.stop(context.currentTime + .3);
+            oscillator.stop(context.currentTime + .5);
         };
     }
 
@@ -1178,7 +1179,9 @@
         elements.cartSummaryMeta.textContent = `${items.length} ${productLabel} · ${units} ${unitLabel}`;
         elements.cartTotal.textContent = money(total);
         elements.cartSubtotal.textContent = money(subtotal);
-        elements.cartDiscount.textContent = discount.cents ? `Descuento (${discount.percent}%): -${money(discount.cents)}` : 'Descuento: —';
+        elements.cartDiscount.textContent = discount.cents
+            ? `Descuento (${discount.percent}%): -${money(discount.cents)}`
+            : (klausDiscountUnlocked ? 'Descuento (1%): se aplicará al agregar productos' : 'Descuento: —');
         const needed = Math.max(0, Number(rewards.reward_quantity_units || 20) - units);
         const klausNearReward = rewardOn('reward_quantity_enabled') && units >= Math.max(1, Number(rewards.reward_quantity_units || 20) - 3);
         const klausReachedReward = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20);
@@ -1868,7 +1871,7 @@
         reactKlaus('is-petted');
         if (klausRewardShown || klausDiscountPending) return;
         const playClink = prepareKlausClink();
-        const rewardAt = Date.now() + 6000;
+        const rewardAt = Date.now() + 4000;
         const showReward = () => window.setTimeout(() => {
             klausDiscountPending = false;
             klausRewardShown = true;
