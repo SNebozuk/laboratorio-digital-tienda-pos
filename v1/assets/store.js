@@ -35,6 +35,7 @@
     let catalogLoading = null;
     const collapsedCategories = new Set();
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
+    const KLAUS_REWARD_SHOWN_STORAGE_KEY = 'laboratorio-digital:klaus-reward-shown:v1';
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
     const CART_HISTORY_KEY = 'laboratorio-digital:mobile-cart-open';
@@ -92,6 +93,7 @@
     let surpriseChecked = false;
     let klausDiscountUnlocked = Boolean(app.klaus_discount_unlocked);
     let klausDiscountAcknowledged = false;
+    let klausRewardShown = window.sessionStorage.getItem(KLAUS_REWARD_SHOWN_STORAGE_KEY) === '1';
     let klausDiscountPending = false;
     let klausReaction = '';
     let klausTimer = null;
@@ -1552,6 +1554,8 @@
             surpriseChecked = false;
             klausDiscountUnlocked = false;
             klausDiscountAcknowledged = false;
+            klausRewardShown = false;
+            window.sessionStorage.removeItem(KLAUS_REWARD_SHOWN_STORAGE_KEY);
             const transferWhatsappUrl = whatsappUrl(data.order);
             state.cart.clear();
             persistCart();
@@ -1862,15 +1866,22 @@
 
     window.Klaus?.attach(document, '.klaus', async () => {
         reactKlaus('is-petted');
-        if (klausDiscountUnlocked || klausDiscountPending) return;
+        if (klausRewardShown || klausDiscountPending) return;
         const playClink = prepareKlausClink();
         const rewardAt = Date.now() + 6000;
         const showReward = () => window.setTimeout(() => {
             klausDiscountPending = false;
+            klausRewardShown = true;
+            window.sessionStorage.setItem(KLAUS_REWARD_SHOWN_STORAGE_KEY, '1');
             renderCart();
             playClink();
             showKlausRewardDialog();
         }, Math.max(0, rewardAt - Date.now()));
+        if (klausDiscountUnlocked) {
+            klausDiscountPending = true;
+            showReward();
+            return;
+        }
         klausDiscountPending = true;
         try {
             await apiJson({ action: 'reward_klaus' });
