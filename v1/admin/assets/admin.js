@@ -2619,10 +2619,6 @@
             <p class="empty-copy">Vas a cancelar ${cancellable.length} ${cancellable.length === 1 ? 'venta' : 'ventas'} seleccionada${cancellable.length === 1 ? '' : 's'}.</p>
             ${skipped ? `<p class="notice">${skipped} venta${skipped === 1 ? '' : 's'} ya cancelada${skipped === 1 ? '' : 's'} quedará sin cambios.</p>` : ''}
             <label class="order-confirm-option">
-                <input id="cancel-notify-customer" type="checkbox" checked>
-                <span><strong>Abrir WhatsApp para avisar al cliente</strong><small>Se abrirá el mensaje de cancelación listo para revisar y enviar.</small></span>
-            </label>
-            <label class="order-confirm-option">
                 <input id="cancel-restore-stock" type="checkbox" checked>
                 <span><strong>Reponer stock</strong><small>Marcado: las unidades vuelven a estar disponibles. Sin marcar: la venta se cancela sin devolverlas al inventario.</small></span>
             </label>
@@ -2633,7 +2629,7 @@
         `);
     }
 
-    async function cancelOrders(orderIds, notifyCustomer, restoreStock = true) {
+    async function cancelOrders(orderIds, restoreStock = true) {
         try {
             for (const orderId of orderIds) {
                 await apiPost({
@@ -2642,7 +2638,6 @@
                     notify_customer: false,
                     restore_stock: restoreStock,
                 });
-                if (notifyCustomer) await openOrderWhatsapp(Number(orderId));
             }
             closeModal();
             state.selectedOrderIds.clear();
@@ -4503,7 +4498,7 @@
                 .split(',')
                 .map(Number)
                 .filter(Number.isFinite);
-            cancelOrders(ids, Boolean(document.getElementById('cancel-notify-customer')?.checked), Boolean(document.getElementById('cancel-restore-stock')?.checked));
+            cancelOrders(ids, Boolean(document.getElementById('cancel-restore-stock')?.checked));
             return;
         }
         const cancelOrder = event.target.closest('[data-cancel-order]');
