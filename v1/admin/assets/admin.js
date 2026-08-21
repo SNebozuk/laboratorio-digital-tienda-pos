@@ -599,7 +599,7 @@
         if (!elements.categoryTree) return;
         const rows = flatCategories();
         const namesById = new Map(rows.map(item => [Number(item.id), item.name]));
-        elements.categoryTree.innerHTML = rows.length ? `<p class="category-sort-help"><strong>ORDENAR CATEGORÍAS</strong><span>Arrastrá una fila y soltala sobre la línea azul. También podés moverla a otro grupo.</span></p>${rows.map(category => `
+        elements.categoryTree.innerHTML = rows.length ? `<p class="category-sort-help"><strong>ORDENAR CATEGORÍAS</strong><span>Arrastrá una fila y soltala en la banda azul que aparece entre las categorías.</span></p>${rows.map(category => `
             <article class="category-admin-row" draggable="true" data-category-row="${Number(category.id)}" data-category-parent="${category.parent_id === null ? '' : Number(category.parent_id)}" style="--category-depth:${Number(category.depth)}">
                 <span class="category-drag-handle" aria-hidden="true" title="Arrastrar para ordenar">⋮⋮</span>
                 <div><strong>${Number(category.depth) > 0 ? '↳ ' : ''}${escapeHtml(category.name)}</strong><small><span class="category-level-badge">${category.parent_id ? 'SUBCATEGORÍA' : 'PRINCIPAL'}</span>${category.parent_id ? ` de ${escapeHtml(namesById.get(Number(category.parent_id)) || 'otra categoría')} · ` : ' · '}${Number(category.product_count)} productos${category.active ? '' : ' · inactiva'}</small></div>
@@ -5130,6 +5130,7 @@
         const row = event.target.closest('[data-category-row]');
         if (!row) return;
         state.draggedCategoryId = Number(row.dataset.categoryRow);
+        elements.categoryTree.classList.add('is-sorting-categories');
         row.classList.add('is-dragging');
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', String(state.draggedCategoryId));
@@ -5147,6 +5148,7 @@
     elements.categoryTree?.addEventListener('drop', async event => {
         const row = event.target.closest('[data-category-row]');
         event.preventDefault();
+        elements.categoryTree.classList.remove('is-sorting-categories');
         elements.categoryTree.querySelectorAll('.is-drop-target, .is-drop-after').forEach(item => item.classList.remove('is-drop-target', 'is-drop-after'));
         if (!row || !state.draggedCategoryId) return;
         const draggedId = Number(state.draggedCategoryId);
@@ -5160,6 +5162,7 @@
     });
     elements.categoryTree?.addEventListener('dragend', () => {
         state.draggedCategoryId = null;
+        elements.categoryTree.classList.remove('is-sorting-categories');
         elements.categoryTree.querySelectorAll('.is-dragging, .is-drop-target, .is-drop-after').forEach(item => item.classList.remove('is-dragging', 'is-drop-target', 'is-drop-after'));
     });
     elements.posClearCart?.addEventListener('click', () => {
