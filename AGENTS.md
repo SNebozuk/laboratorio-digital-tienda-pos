@@ -20,6 +20,7 @@
 - No modificar secretos, DNS, credenciales ni configuración privada del servidor sin autorización explícita.
 - Antes de publicar, revisar el diff y preservar los archivos locales/ignorados que no sean parte de la tarea.
 - Botones con ícono: usar el estándar visual `32×32 px` para el botón y `20×20 px` para SVG; centrarlo, usar `currentColor` y trazos de `1.8` con extremos/uniones redondeados. Aplicar las clases reutilizables `icon-button` o `icon-action-button`.
+- Botones físicos: aplicar el formato del botón principal del PDV (fondo azul, borde y radio de 10 px, altura de 46 px). Si el pedido indica “botón de texto”, usar una acción sin caja visual.
 
 ## Flujo permanente de trabajo
 

@@ -1736,7 +1736,7 @@
     // catálogo completo se obtiene al buscar, abrir una categoría o pedir el
     // listado; esto acelera la primera carga en equipos de escritorio.
     const loadCatalogWhenIdle = () => refreshCatalog();
-    if (linkedProductId) {
+    if (linkedProductId || state.searchActive) {
         loadCatalogWhenIdle();
     }
     try {
