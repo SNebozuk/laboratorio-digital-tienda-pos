@@ -86,6 +86,26 @@ header('Referrer-Policy: same-origin');
                     <span>Podés recorrer el catálogo con normalidad; el carrito estará disponible nuevamente muy pronto.</span>
                 </section>
             <?php endif; ?>
+            <div class="search-wrap">
+                <label for="product-search">Buscar productos</label>
+                <div class="search-field">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                        <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path>
+                    </svg>
+                    <input
+                        id="product-search"
+                        type="search"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        aria-autocomplete="none"
+                        inputmode="search"
+                        enterkeyhint="search"
+                        placeholder="Buscar por nombre, descripción, variante o código"
+                    >
+                </div>
+            </div>
             <div class="catalog-intro">
                 <h1 id="catalog-title">Insumos para sublimación y DTF en Rosario</h1>
                 <p>Papeles, indumentaria, sublimables y todo para personalizar. Precios mayoristas y retiro en el local.</p>
@@ -106,27 +126,6 @@ header('Referrer-Policy: same-origin');
             <div class="search-mode-head" id="search-mode-head">
                 <h2>PRODUCTOS</h2>
                 <button id="search-close" type="button" aria-label="Cerrar buscador">×</button>
-            </div>
-
-            <div class="search-wrap">
-                <label for="product-search">Buscar productos</label>
-                <div class="search-field">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
-                        <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path>
-                    </svg>
-                    <input
-                        id="product-search"
-                        type="search"
-                        autocomplete="off"
-                        autocorrect="off"
-                        autocapitalize="none"
-                        spellcheck="false"
-                        aria-autocomplete="none"
-                        inputmode="search"
-                        enterkeyhint="search"
-                        placeholder="Buscar por nombre, descripción, variante o código"
-                    >
-                </div>
             </div>
 
             <nav class="product-view-switcher" id="product-view-switcher" aria-label="Vista de productos">
