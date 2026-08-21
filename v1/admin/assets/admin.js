@@ -923,9 +923,44 @@
                     <button type="button" data-product-filter-button="visibility:visible" class="${state.productVisibility.includes('visible') ? 'is-selected' : ''}">Visibles</button>
                     <button type="button" data-product-filter-button="visibility:hidden" class="${state.productVisibility.includes('hidden') ? 'is-selected' : ''}">Ocultos</button>
                 </div></fieldset>
-                <div class="filter-modal-actions"><button class="secondary-button" type="button" data-clear-product-filters>LIMPIAR Y CERRAR</button><button class="primary-button" type="submit">APLICAR FILTROS</button></div>
+                <div class="filter-modal-actions"><button class="secondary-button filter-clear-button" type="button" data-clear-product-filters>LIMPIAR FILTROS</button><button class="primary-button filter-apply-button" type="submit">APLICAR FILTROS</button></div>
             </form>
         `);
+    }
+
+    function adjustedPriceCents(priceCents, percentage, roundingPesos) {
+        const roundingCents = Number(roundingPesos) * 100;
+        return Math.max(0, Math.round((Number(priceCents) * (1 + Number(percentage) / 100)) / roundingCents) * roundingCents);
+    }
+
+    function renderPriceAdjustmentPreview(form) {
+        const preview = form?.querySelector('[data-price-adjustment-preview]');
+        if (!preview) return;
+        const percentage = Number(form.elements.percentage.value || 0);
+        const rounding = Number(form.elements.rounding.value || 100);
+        const products = selectedProducts().slice(0, 10);
+        preview.innerHTML = products.map(product => {
+            const prices = product.variants.filter(variant => variant.price_cents !== null && variant.price_cents !== undefined).map(variant => Number(variant.price_cents));
+            if (!prices.length) return '';
+            const current = Math.min(...prices);
+            return `<div><span>${escapeHtml(product.name)}</span><strong>${money(current)} <i>→</i> ${money(adjustedPriceCents(current, percentage, rounding))}</strong></div>`;
+        }).join('') || '<p class="empty-copy">Los productos seleccionados no tienen precios para ajustar.</p>';
+    }
+
+    function showPriceAdjustment() {
+        const products = selectedProducts();
+        if (!products.length) return;
+        openModal(`
+            <h2 id="modal-title">CAMBIAR PRECIO</h2>
+            <p class="checkout-lead">El ajuste se aplicará a todas las variantes con precio de los ${products.length} producto${products.length === 1 ? '' : 's'} seleccionado${products.length === 1 ? '' : 's'}.</p>
+            <form id="price-adjustment-form" class="settings-card price-adjustment-form">
+                <label>AJUSTE PORCENTUAL<input name="percentage" type="number" step="0.1" inputmode="decimal" value="0" data-price-adjustment-input></label>
+                <label>REDONDEAR AL MÚLTIPLO DE<select name="rounding" data-price-adjustment-input><option value="100">$100</option><option value="1000">$1.000</option></select></label>
+                <div class="price-adjustment-preview"><strong>VISTA PREVIA · HASTA 10 PRODUCTOS</strong><div data-price-adjustment-preview></div></div>
+                <div class="filter-modal-actions"><button class="secondary-button filter-clear-button" type="button" data-close-modal>CANCELAR</button><button class="primary-button filter-apply-button" type="submit">APLICAR CAMBIO</button></div>
+            </form>
+        `);
+        renderPriceAdjustmentPreview(document.getElementById('price-adjustment-form'));
     }
 
     function showFeaturedProducts() {
@@ -966,17 +1001,25 @@
         const singularSelection = selectedCount === 1;
         const visibleSelectedCount = products.filter(product => state.selectedProductIds.has(Number(product.id))).length;
         const allSelected = products.length > 0 && visibleSelectedCount === products.length;
+        const activeFilters = [
+            state.productCategoryId && (state.productCategoryId === '__unassigned__'
+                ? ['category', 'Sin categoría']
+                : ['category', flatCategories().find(category => Number(category.id) === Number(state.productCategoryId))?.name]),
+            state.productAvailability[0] && ['availability', state.productAvailability[0] === 'in_stock' ? 'En stock' : 'Sin stock'],
+            state.productVisibility[0] && ['visibility', state.productVisibility[0] === 'visible' ? 'Visibles' : 'Ocultos'],
+        ].filter(Boolean).filter(([, label]) => Boolean(label));
         const toolbar = `
             <div class="product-bulk-toolbar">
                 <label class="product-select-all"><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''}> <span>Seleccionar todo</span></label>
                 <div class="product-toolbar-menus"><button class="product-toolbar-text" type="button" data-open-product-filters>FILTRAR${state.productCategoryId || state.productAvailability.length || state.productVisibility.length ? ' · ACTIVO' : ''}</button></div>
             </div>
+            ${activeFilters.length ? `<div class="product-active-filters" aria-label="Filtros aplicados"><span>FILTROS APLICADOS:</span>${activeFilters.map(([field, label]) => `<button type="button" data-remove-product-filter="${field}" aria-label="Quitar filtro ${escapeHtml(label)}">${escapeHtml(label)} <b aria-hidden="true">×</b></button>`).join('')}</div>` : ''}
             <div class="order-actions-bar product-actions-bar" ${selectedCount ? '' : 'hidden'}>
                 <strong class="selected-orders-count product-selection-count">${selectedCount} ${singularSelection ? 'producto seleccionado' : 'productos seleccionados'}</strong>
                 <label class="bulk-actions-control product-bulk-actions-control">
                     <span>ACCIONES SOBRE ${singularSelection ? 'EL PRODUCTO SELECCIONADO' : 'LOS PRODUCTOS SELECCIONADOS'}</span>
                     <select data-bulk-product-action aria-label="Acciones sobre ${singularSelection ? 'el producto seleccionado' : 'los productos seleccionados'}">
-                        <option value="">Acciones</option><option value="show">Mostrar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="hide">Ocultar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="delete">Eliminar ${singularSelection ? 'Producto' : 'Productos'}</option>
+                        <option value="">Acciones</option><option value="price">Cambiar precio</option><option value="show">Mostrar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="hide">Ocultar ${singularSelection ? 'Producto' : 'Productos'}</option><option value="delete">Eliminar ${singularSelection ? 'Producto' : 'Productos'}</option>
                     </select>
                 </label>
             </div>`;
@@ -4122,6 +4165,24 @@
             closeModal();
             renderProducts();
         }
+        if (event.target.id === 'price-adjustment-form') {
+            event.preventDefault();
+            const form = event.target;
+            const percentage = Number(form.elements.percentage.value);
+            const rounding = Number(form.elements.rounding.value);
+            if (!Number.isFinite(percentage) || ![100, 1000].includes(rounding)) {
+                toast('Revisá el porcentaje y el redondeo.');
+                return;
+            }
+            try {
+                const response = await apiPost({ action: 'products_price_adjust', product_ids: selectedProducts().map(product => Number(product.id)), percentage, rounding_pesos: rounding });
+                closeModal();
+                await loadProducts();
+                toast(`${Number(response.updated_variants || 0)} variantes con precio actualizado.`);
+            } catch (error) {
+                toast(error.message);
+            }
+        }
         if (event.target.id === 'featured-products-form') {
             event.preventDefault();
             const ids = Array.from(new FormData(event.target).getAll('product_ids')).map(Number);
@@ -4176,13 +4237,26 @@
             const form = filterButton.closest('#product-filters-form');
             const input = form?.querySelector(`input[name="${field}"][value="${value}"]`);
             if (input) {
-                input.checked = !input.checked;
-                filterButton.classList.toggle('is-selected', input.checked);
+                const wasChecked = input.checked;
+                form.querySelectorAll(`input[name="${field}"]`).forEach(item => { item.checked = false; });
+                input.checked = !wasChecked;
+                form.querySelectorAll(`[data-product-filter-button^="${field}:"]`).forEach(button => {
+                    button.classList.toggle('is-selected', button === filterButton && input.checked);
+                });
             }
             return;
         }
         if (event.target.closest('[data-open-product-filters]')) {
             showProductFilters();
+            return;
+        }
+        const removeProductFilter = event.target.closest('[data-remove-product-filter]');
+        if (removeProductFilter) {
+            const field = removeProductFilter.dataset.removeProductFilter;
+            if (field === 'category') state.productCategoryId = '';
+            if (field === 'availability') state.productAvailability = [];
+            if (field === 'visibility') state.productVisibility = [];
+            renderProducts();
             return;
         }
         if (event.target.closest('[data-open-featured-products]')) {
@@ -4677,6 +4751,10 @@
     });
 
     document.addEventListener('change', event => {
+        if (event.target.matches('[data-price-adjustment-input]')) {
+            renderPriceAdjustmentPreview(event.target.closest('#price-adjustment-form'));
+            return;
+        }
         if (event.target.matches('[data-delivery-field]')) {
             saveDeliverySlot(Number(event.target.dataset.deliverySlot), event.target);
             return;
@@ -4723,6 +4801,7 @@
             const ids = selectedProducts().map(product => Number(product.id));
             event.target.value = '';
             if (!ids.length) return;
+            if (action === 'price') showPriceAdjustment();
             if (action === 'show') setProductsVisibility(ids, true).catch(error => toast(error.message));
             if (action === 'hide') setProductsVisibility(ids, false).catch(error => toast(error.message));
             if (action === 'delete') deleteProducts(ids).catch(error => toast(error.message));
@@ -4763,6 +4842,10 @@
     });
 
     document.addEventListener('input', event => {
+        if (event.target.matches('[data-price-adjustment-input]')) {
+            renderPriceAdjustmentPreview(event.target.closest('#price-adjustment-form'));
+            return;
+        }
         if (event.target === elements.deliverySearch) {
             state.deliveryQuery = event.target.value;
             renderDeliverySlots();

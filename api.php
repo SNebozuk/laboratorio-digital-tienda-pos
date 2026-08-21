@@ -314,6 +314,18 @@ try {
             );
             Http::json(['ok' => true, 'active' => $isVisible]);
 
+        case 'products_price_adjust':
+            $user = $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'updated_variants' => $app['products']->adjustPrices(
+                    is_array($input['product_ids'] ?? null) ? $input['product_ids'] : [],
+                    (float) ($input['percentage'] ?? 0),
+                    (int) ($input['rounding_pesos'] ?? 0),
+                    (int) $user['id']
+                ),
+            ]);
+
         case 'featured_products_update':
             $app['auth']->requireAdmin();
             Http::json([

@@ -99,6 +99,33 @@ final class ProductService
         );
     }
 
+    /** @param list<int|string> $productIds */
+    public function adjustPrices(array $productIds, float $percentage, int $roundingPesos, int $actorUserId): int
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $productIds), static fn (int $id): bool => $id > 0)));
+        if ($ids === [] || !is_finite($percentage) || !in_array($roundingPesos, [100, 1000], true)) {
+            throw new ValidationException('Datos inválidos para el cambio de precios.');
+        }
+        $factor = 1 + ($percentage / 100);
+        if ($factor < 0) {
+            throw new ValidationException('El ajuste no puede dejar precios negativos.');
+        }
+
+        return Database::immediate($this->pdo, function (PDO $pdo) use ($ids, $factor, $roundingPesos): int {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $select = $pdo->prepare("SELECT id, price_cents FROM product_variants WHERE product_id IN ($placeholders) AND price_specified = 1");
+            $select->execute($ids);
+            $update = $pdo->prepare('UPDATE product_variants SET price_cents = :price_cents, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+            $count = 0;
+            foreach ($select->fetchAll() as $variant) {
+                $priceCents = max(0, (int) (round(((int) $variant['price_cents'] * $factor) / ($roundingPesos * 100)) * ($roundingPesos * 100)));
+                $update->execute(['price_cents' => $priceCents, 'id' => (int) $variant['id']]);
+                $count++;
+            }
+            return $count;
+        });
+    }
+
     /** @return list<array<string, mixed>> */
     public function adminCatalog(): array
     {
