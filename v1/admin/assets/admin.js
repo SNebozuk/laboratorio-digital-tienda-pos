@@ -243,9 +243,7 @@
         if (!preview) {
             preview = document.createElement('img');
             preview.dataset.imagePreview = '1';
-            preview.className = input.classList.contains('variant-image-file')
-                ? 'variant-image-preview'
-                : 'product-editor-image-preview';
+            preview.className = 'product-editor-image-preview';
             container?.appendChild(preview);
         }
         preview.src = URL.createObjectURL(file);
@@ -953,22 +951,28 @@
         `);
     }
 
-    function adjustedPriceCents(priceCents, percentage, roundingPesos) {
+    function adjustedPriceCents(priceCents, adjustmentType, adjustment, roundingPesos) {
         const roundingCents = Number(roundingPesos) * 100;
-        return Math.max(0, Math.round((Number(priceCents) * (1 + Number(percentage) / 100)) / roundingCents) * roundingCents);
+        const adjusted = adjustmentType === 'fixed'
+            ? Number(priceCents) + Number(adjustment) * 100
+            : Number(priceCents) * (1 + Number(adjustment) / 100);
+        return Math.max(0, Math.round(adjusted / roundingCents) * roundingCents);
     }
 
     function renderPriceAdjustmentPreview(form) {
         const preview = form?.querySelector('[data-price-adjustment-preview]');
         if (!preview) return;
-        const percentage = Number(form.elements.percentage.value || 0);
+        const adjustmentType = String(form.elements.adjustment_type.value || 'percentage');
+        const adjustment = Number(form.elements.adjustment.value || 0);
         const rounding = Number(form.elements.rounding.value || 100);
+        const adjustmentLabel = form.querySelector('[data-price-adjustment-label]');
+        if (adjustmentLabel) adjustmentLabel.textContent = adjustmentType === 'fixed' ? 'MONTO FIJO ($)' : 'AJUSTE PORCENTUAL';
         const products = selectedProducts().slice(0, 10);
         preview.innerHTML = products.map(product => {
             const prices = product.variants.filter(variant => variant.price_cents !== null && variant.price_cents !== undefined).map(variant => Number(variant.price_cents));
             if (!prices.length) return '';
             const current = Math.min(...prices);
-            return `<div><span>${escapeHtml(product.name)}</span><strong>${money(current)} <i>→</i> ${money(adjustedPriceCents(current, percentage, rounding))}</strong></div>`;
+            return `<div><span>${escapeHtml(product.name)}</span><strong>${money(current)} <i>→</i> ${money(adjustedPriceCents(current, adjustmentType, adjustment, rounding))}</strong></div>`;
         }).join('') || '<p class="empty-copy">Los productos seleccionados no tienen precios para ajustar.</p>';
     }
 
@@ -979,7 +983,8 @@
             <h2 id="modal-title">CAMBIAR PRECIO</h2>
             <p class="checkout-lead">El ajuste se aplicará a todas las variantes con precio de los ${products.length} producto${products.length === 1 ? '' : 's'} seleccionado${products.length === 1 ? '' : 's'}.</p>
             <form id="price-adjustment-form" class="settings-card price-adjustment-form">
-                <label>AJUSTE PORCENTUAL<input name="percentage" type="number" step="0.1" inputmode="decimal" value="0" data-price-adjustment-input></label>
+                <label>TIPO DE AJUSTE<select name="adjustment_type" data-price-adjustment-input><option value="percentage">Porcentaje (%)</option><option value="fixed">Monto fijo ($)</option></select></label>
+                <label><span data-price-adjustment-label>AJUSTE PORCENTUAL</span><input name="adjustment" type="number" step="0.1" inputmode="decimal" value="0" data-price-adjustment-input></label>
                 <label>REDONDEAR AL MÚLTIPLO DE<select name="rounding" data-price-adjustment-input><option value="100">$100</option><option value="1000">$1.000</option></select></label>
                 <div class="price-adjustment-preview"><strong>VISTA PREVIA · HASTA 10 PRODUCTOS</strong><div data-price-adjustment-preview></div></div>
                 <div class="filter-modal-actions"><button class="secondary-button filter-clear-button" type="button" data-close-modal>CANCELAR</button><button class="primary-button filter-apply-button" type="submit">APLICAR CAMBIO</button></div>
@@ -1101,12 +1106,6 @@
                     <input class="variant-stock" type="number" min="0" value="${variant.stock_on_hand == null ? '' : Number(variant.stock_on_hand)}" placeholder="Opcional">
                 </label>
                 <button class="small-button danger-button" type="button" data-remove-variant>Quitar</button>
-                <label class="variant-image-field">
-                    FOTO DE ESTA VARIANTE
-                    <input class="variant-image-file" type="file" accept="image/jpeg,image/png,image/webp">
-                    <input class="variant-image-path" type="hidden" value="${escapeHtml(variant.image_path || '')}">
-                    ${variant.image_path ? `<img class="variant-image-preview" data-image-preview src="${escapeHtml(variant.image_path)}" alt="Foto actual de la variante">` : '<small>Opcional: si no cargás una, se usa la foto del producto.</small>'}
-                </label>
                 <label class="variant-barcode-field">
                     CÓDIGO DE BARRAS
                     <input class="variant-barcode" value="${escapeHtml(variant.barcode || '')}" placeholder="Opcional">
@@ -1185,7 +1184,6 @@
             name: row.querySelector('.variant-name').value.trim(),
             sku: row.querySelector('.variant-sku').value.trim(),
             barcode: row.querySelector('.variant-barcode').value.trim(),
-            image_path: row.querySelector('.variant-image-path').value.trim(),
             price_cents: row.querySelector('.variant-price').value.trim() === '' ? null : Math.round(Number(row.querySelector('.variant-price').value) * 100),
             stock_on_hand: row.querySelector('.variant-stock').value.trim() === '' ? null : Number(row.querySelector('.variant-stock').value),
             reset_stock_reservations: row.querySelector('.variant-stock').value.trim() !== '' && Number(row.querySelector('.variant-stock').value)
@@ -1218,13 +1216,6 @@
             if (imageFile) {
                 button.textContent = 'SUBIENDO FOTO…';
                 product.image_path = await uploadProductImage(imageFile);
-            }
-            const variantRows = Array.from(form.querySelectorAll('[data-variant-row]'));
-            for (let index = 0; index < variantRows.length; index += 1) {
-                const file = variantRows[index].querySelector('.variant-image-file').files[0];
-                if (!file) continue;
-                button.textContent = `SUBIENDO FOTO ${index + 1}/${variantRows.length}…`;
-                product.variants[index].image_path = await uploadProductImage(file);
             }
             button.textContent = 'GUARDANDO…';
             await apiPost({
@@ -1311,7 +1302,7 @@
     async function duplicateProduct(productId) {
         try {
             const copyImages = window.confirm(
-                '¿Querés duplicar también la foto del producto y las fotos de sus variantes?\n\nAceptar: duplicar con fotos.\nCancelar: duplicar sin fotos.'
+                '¿Querés duplicar también la foto del producto?\n\nAceptar: duplicar con foto.\nCancelar: duplicar sin foto.'
             );
             await apiPost({
                 action: 'product_duplicate',
@@ -4313,14 +4304,15 @@
         if (event.target.id === 'price-adjustment-form') {
             event.preventDefault();
             const form = event.target;
-            const percentage = Number(form.elements.percentage.value);
+            const adjustmentType = String(form.elements.adjustment_type.value || '');
+            const adjustment = Number(form.elements.adjustment.value);
             const rounding = Number(form.elements.rounding.value);
-            if (!Number.isFinite(percentage) || ![100, 1000].includes(rounding)) {
-                toast('Revisá el porcentaje y el redondeo.');
+            if (!['percentage', 'fixed'].includes(adjustmentType) || !Number.isFinite(adjustment) || ![100, 1000].includes(rounding)) {
+                toast('Revisá el tipo de ajuste, el importe y el redondeo.');
                 return;
             }
             try {
-                const response = await apiPost({ action: 'products_price_adjust', product_ids: selectedProducts().map(product => Number(product.id)), percentage, rounding_pesos: rounding });
+                const response = await apiPost({ action: 'products_price_adjust', product_ids: selectedProducts().map(product => Number(product.id)), adjustment_type: adjustmentType, adjustment, rounding_pesos: rounding });
                 closeModal();
                 await loadProducts();
                 toast(`${Number(response.updated_variants || 0)} variantes con precio actualizado.`);
@@ -5064,7 +5056,7 @@
         } catch (error) { toast(error.message); }
     });
     document.addEventListener('change', async event => {
-        if (!event.target.matches('[name="image_file"], .variant-image-file')) return;
+        if (!event.target.matches('[name="image_file"]')) return;
         const file = event.target.files?.[0];
         if (!file) return;
         try {

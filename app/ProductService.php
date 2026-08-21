@@ -24,7 +24,7 @@ final class ProductService
                 p.id AS product_id,
                 p.name AS product_name,
                 p.description,
-                p.image_path,
+                COALESCE(NULLIF(p.image_path, ""), NULLIF(v.image_path, "")) AS image_path,
                 c.name AS category_name,
                 c.slug AS category_slug,
                 v.id AS variant_id,
@@ -100,25 +100,28 @@ final class ProductService
     }
 
     /** @param list<int|string> $productIds */
-    public function adjustPrices(array $productIds, float $percentage, int $roundingPesos, int $actorUserId): int
+    public function adjustPrices(array $productIds, string $adjustmentType, float $adjustment, int $roundingPesos, int $actorUserId): int
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $productIds), static fn (int $id): bool => $id > 0)));
-        if ($ids === [] || !is_finite($percentage) || !in_array($roundingPesos, [100, 1000], true)) {
+        if ($ids === [] || !in_array($adjustmentType, ['percentage', 'fixed'], true) || !is_finite($adjustment) || !in_array($roundingPesos, [100, 1000], true)) {
             throw new ValidationException('Datos inválidos para el cambio de precios.');
         }
-        $factor = 1 + ($percentage / 100);
-        if ($factor < 0) {
+        $factor = 1 + ($adjustment / 100);
+        if ($adjustmentType === 'percentage' && $factor < 0) {
             throw new ValidationException('El ajuste no puede dejar precios negativos.');
         }
 
-        return Database::immediate($this->pdo, function (PDO $pdo) use ($ids, $factor, $roundingPesos): int {
+        return Database::immediate($this->pdo, function (PDO $pdo) use ($ids, $adjustmentType, $adjustment, $factor, $roundingPesos): int {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
             $select = $pdo->prepare("SELECT id, price_cents FROM product_variants WHERE product_id IN ($placeholders) AND price_specified = 1");
             $select->execute($ids);
             $update = $pdo->prepare('UPDATE product_variants SET price_cents = :price_cents, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
             $count = 0;
             foreach ($select->fetchAll() as $variant) {
-                $priceCents = max(0, (int) (round(((int) $variant['price_cents'] * $factor) / ($roundingPesos * 100)) * ($roundingPesos * 100)));
+                $adjustedCents = $adjustmentType === 'fixed'
+                    ? (int) $variant['price_cents'] + (int) round($adjustment * 100)
+                    : (int) round((int) $variant['price_cents'] * $factor);
+                $priceCents = max(0, (int) (round($adjustedCents / ($roundingPesos * 100)) * ($roundingPesos * 100)));
                 $update->execute(['price_cents' => $priceCents, 'id' => (int) $variant['id']]);
                 $count++;
             }
@@ -134,7 +137,7 @@ final class ProductService
                 p.id AS product_id,
                 p.name AS product_name,
                 p.description,
-                p.image_path,
+                COALESCE(NULLIF(p.image_path, ""), NULLIF(v.image_path, "")) AS image_path,
                 p.active AS product_active,
                 c.id AS category_id,
                 c.name AS category_name,
@@ -291,7 +294,7 @@ final class ProductService
                          SET name = :name,
                              sku = :sku,
                              barcode = :barcode,
-                             image_path = :image_path,
+                             image_path = NULL,
                              price_cents = :price_cents,
                              price_specified = :price_specified,
                              stock_on_hand = :stock_on_hand,
@@ -307,7 +310,6 @@ final class ProductService
                         'name' => $variant['name'],
                         'sku' => $variant['sku'],
                         'barcode' => $variant['barcode'],
-                        'image_path' => $variant['image_path'],
                         'price_cents' => $variant['price_cents'],
                         'price_specified' => $variant['price_specified'] ? 1 : 0,
                         'stock_on_hand' => $variant['stock_on_hand'],
@@ -656,7 +658,7 @@ final class ProductService
                             'name' => $variant['name'],
                             'sku' => $newSku,
                             'barcode' => null,
-                            'image_path' => $copyImages ? $variant['image_path'] : null,
+                            'image_path' => null,
                             'price_cents' => (int) $variant['price_cents'],
                             'price_specified' => (bool) ($variant['price_specified'] ?? true),
                             'stock_on_hand' => 0,
@@ -709,7 +711,6 @@ final class ProductService
             $variant = [
                 'id' => (int) $row['variant_id'],
                 'name' => $row['variant_name'],
-                'image_path' => $row['variant_image_path'] ?? null,
                 'price_cents' => !empty($row['price_specified']) ? (int) $row['price_cents'] : null,
                 'available_stock' => !empty($row['stock_specified']) ? (int) $row['available_stock'] : null,
             ];
@@ -795,20 +796,12 @@ final class ProductService
                 }
                 $seenBarcodes[$barcodeKey] = true;
             }
-            $variantImagePath = trim((string) ($variant['image_path'] ?? ''));
-            if (
-                $variantImagePath !== ''
-                && !str_starts_with($variantImagePath, '/')
-            ) {
-                throw new ValidationException('La foto de una variante debe estar alojada en este sitio.');
-            }
-
             $validatedVariants[] = [
                 'id' => isset($variant['id']) ? (int) $variant['id'] : null,
                 'name' => $variantName,
                 'sku' => $sku !== '' ? $sku : '__AUTO__' . bin2hex(random_bytes(12)),
                 'barcode' => $barcode !== '' ? $barcode : null,
-                'image_path' => $variantImagePath ?: null,
+                'image_path' => null,
                 'price_cents' => $price,
                 'price_specified' => $priceSpecified,
                 'stock_on_hand' => $stock,

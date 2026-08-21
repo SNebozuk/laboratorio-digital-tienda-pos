@@ -350,7 +350,8 @@ try {
                 'ok' => true,
                 'updated_variants' => $app['products']->adjustPrices(
                     is_array($input['product_ids'] ?? null) ? $input['product_ids'] : [],
-                    (float) ($input['percentage'] ?? 0),
+                    (string) ($input['adjustment_type'] ?? ''),
+                    (float) ($input['adjustment'] ?? 0),
                     (int) ($input['rounding_pesos'] ?? 0),
                     (int) $user['id']
                 ),
