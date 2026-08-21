@@ -78,6 +78,9 @@ final class Auth
         if ((int) ($_SESSION['statistics_access_user_id'] ?? 0) !== (int) $user['id']) {
             throw new AuthorizationException('Ingresá tu contraseña para ver Estadísticas.');
         }
+        // La autorización se consume al entregar los datos: cada nuevo ingreso
+        // a la sección vuelve a requerir la contraseña del usuario activo.
+        unset($_SESSION['statistics_access_user_id']);
     }
 
     /** @return array<string, mixed> */
