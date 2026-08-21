@@ -148,6 +148,8 @@
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
     const quickUpdateTimers = new Map();
+    const quickStockSaved = new Set();
+    const quickStockSavedTimers = new Map();
     let automaticRefreshRunning = false;
     let quickUpdateInFlight = 0;
     let productActionsMenuPauseUntil = 0;
@@ -1044,7 +1046,7 @@
                     const single = product.variants[0];
                     // Un producto con variantes no tiene un único precio ni stock: esos valores
                     // se muestran únicamente en las filas de cada variante.
-                    const inlineFields = !hasVariants && single ? `<label class="product-inline-field"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
+                    const inlineFields = !hasVariants && single ? `<label class="product-inline-field ${quickStockSaved.has(Number(single.id)) ? 'is-saved' : ''}"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
                         <label class="product-inline-field"><input type="number" min="0" step="1" value="${single.price_cents == null ? '' : Number(single.price_cents) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
                     const visible = isProductVisible(product);
                     const featured = state.featuredProductIds.has(Number(product.id));
@@ -1060,7 +1062,7 @@
                             <span></span>
                             <span class="product-inline-variant-name"><strong>${escapeHtml(name || 'Variante única')}</strong><small>${escapeHtml(variant.sku || '')}</small></span>
                             <span></span>
-                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${variant.stock_on_hand == null ? '' : Number(variant.stock_on_hand)}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
+                            <label class="product-inline-field ${quickStockSaved.has(Number(variant.id)) ? 'is-saved' : ''}"><input type="number" min="0" step="1" value="${variant.stock_on_hand == null ? '' : Number(variant.stock_on_hand)}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
                             <label class="product-inline-field"><input type="number" min="0" step="1" value="${variant.price_cents == null ? '' : Number(variant.price_cents) / 100}" data-quick-price="${Number(variant.id)}" aria-label="Precio de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
                             <span></span>
                         </div>`;
@@ -1265,6 +1267,15 @@
                     reset_stock_reservations: Boolean(input.dataset.quickStock),
                 },
             });
+            if (input.dataset.quickStock) {
+                quickStockSaved.add(variantId);
+                window.clearTimeout(quickStockSavedTimers.get(variantId));
+                quickStockSavedTimers.set(variantId, window.setTimeout(() => {
+                    quickStockSaved.delete(variantId);
+                    quickStockSavedTimers.delete(variantId);
+                    renderProducts();
+                }, 2200));
+            }
             await loadProducts();
             toast('Variante actualizada.');
         } catch (error) {
