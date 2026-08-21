@@ -491,7 +491,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-variant-stock { color: #667087; font-size: 14px; font-weight: 750; white-space: nowrap; }
 .pos-variant-price { color: #252a3a; font-size: 16px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pos-variant-meta { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
-.pos-variant-quantity { display: block; width: 54px; height: 34px; padding: 0 3px; border: 1px solid #c9d3e0; border-radius: 7px; background: #fff; color: #315fa9; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 32px; text-align: center; }
+.pos-variant-quantity { display: block; width: 54px; height: 34px; padding: 0 3px; border: 1px solid #c9d3e0; border-radius: 7px; background: #fff; color: #315fa9; font-size: 16px; font-weight: 400; font-variant-numeric: tabular-nums; line-height: 32px; text-align: center; }
 .pos-variant-quantity::-webkit-inner-spin-button, .pos-variant-quantity::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
 .pos-variant-quantity { appearance: textfield; -moz-appearance: textfield; }
 .pos-variant-quantity-placeholder { display: block; width: 30px; height: 30px; }
@@ -3076,7 +3076,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-inline-quantity button { display: grid; width: 34px; height: 34px; place-items: center; padding: 0 0 2px; border: 1px solid #1769e0; border-radius: 8px; background: transparent; color: #1769e0; font-family: Arial, sans-serif; font-size: 23px; line-height: 1; cursor: pointer; }
 .pos-inline-quantity button:hover { background: #1769e0; color: #fff; }
 .pos-inline-quantity button:disabled { opacity: .35; cursor: default; }
-.pos-inline-quantity input { width: 54px; height: 34px; padding: 0 3px; border: 1px solid #c9d3e0; border-radius: 8px; background: #fff; color: #252a3a; font: inherit; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; appearance: textfield; -moz-appearance: textfield; }
+.pos-inline-quantity input { width: 54px; height: 34px; padding: 0 3px; border: 1px solid #c9d3e0; border-radius: 8px; background: #fff; color: #252a3a; font: inherit; font-size: 16px; font-weight: 400; font-variant-numeric: tabular-nums; text-align: center; appearance: textfield; -moz-appearance: textfield; }
 .pos-inline-quantity input::-webkit-inner-spin-button, .pos-inline-quantity input::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
 .pos-page .quantity-control button, .pos-search-page .quantity-control button { display: grid; place-items: center; padding: 0 0 3px; font-family: Arial, sans-serif; font-size: 22px; line-height: 1; }
 .pos-result-variants { grid-column: 2 / -1; }
