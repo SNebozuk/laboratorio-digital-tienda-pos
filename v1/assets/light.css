@@ -55,8 +55,11 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 .cart-products-divider { order:1; height:1px; margin:12px 0; background:var(--line); }
 .cart-lines { order:2; display:grid; flex:1 1 0; gap:10px; min-height:110px; margin:0; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
 .cart-line { font-size:12px; }
-.cart-product-main strong,.cart-line-actions > strong { font-size:12px; }
+.cart-product-main strong { font-size:13px; }
 .cart-product-main small,.cart-line-bottom small { font-size:10px; }
+.cart-line-bottom { gap:8px; }
+.cart-line-subtotal { margin-left:auto; font-size:12px; white-space:nowrap; }
+.cart-remove svg { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .cart-rewards { order:3; justify-items:start; margin:12px 0 0; }
 .cart-rewards .reward-progress { order:0; width:100%; }
 .cart-rewards .klaus { order:1; justify-self:start; justify-content:flex-start; width:auto; min-height:56px; border-bottom:0; }

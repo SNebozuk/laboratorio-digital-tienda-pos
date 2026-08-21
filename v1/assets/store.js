@@ -1176,16 +1176,6 @@
                                 : ''}
                         </div>
                     </div>
-                    <div class="cart-line-actions">
-                        <strong>${money(item.lineTotal)}</strong>
-                        <button
-                            class="cart-remove"
-                            type="button"
-                            data-remove-item="${Number(item.variant.id)}"
-                            aria-label="Quitar ${escapeHtml(item.product.name)} del pedido"
-                            title="Quitar del pedido"
-                        ><span aria-hidden="true">🗑</span></button>
-                    </div>
                 </div>
                 <div class="cart-line-bottom">
                     <div class="quantity-control">
@@ -1210,6 +1200,14 @@
                         >+</button>
                     </div>
                     <small>${money(Number(item.variant.price_cents))} c/u</small>
+                    <strong class="cart-line-subtotal">${money(item.lineTotal)}</strong>
+                    <button
+                        class="cart-remove icon-action-button"
+                        type="button"
+                        data-remove-item="${Number(item.variant.id)}"
+                        aria-label="Quitar ${escapeHtml(item.product.name)} del pedido"
+                        title="Quitar del pedido"
+                    ><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button>
                 </div>
             </div>
         `).join('') : '<p class="empty-copy">Todavía no agregaste productos.</p>');
