@@ -38,7 +38,7 @@
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
     const CART_HISTORY_KEY = 'laboratorio-digital:mobile-cart-open';
-    const PRODUCT_VIEW_STORAGE_KEY = 'laboratorio-digital:product-view';
+    const PRODUCT_VIEW_STORAGE_KEY = 'laboratorio-digital:product-view:v2';
     const PRODUCT_VIEWS = new Set(['list', 'catalog', 'minimal']);
     let alwaysUseProductView = false;
     let productView = (() => {
