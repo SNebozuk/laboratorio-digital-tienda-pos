@@ -17,7 +17,7 @@
     const initialSearchQuery = String(initialUrl.searchParams.get('buscar') || '').trim();
     const state = {
         category: '',
-        showAll: false,
+        showAll: true,
         query: initialSearchQuery,
         searchActive: initialSearchQuery.length >= 3,
         openedProductId: linkedProductId,
@@ -33,28 +33,13 @@
     let codeSearchTimer = null;
     let catalogLoaded = products.length > 0;
     let catalogLoading = null;
-    // El menú arranca compacto: cada rama se abre con el indicador ›.
-    const collapsedCategories = new Set(
-        categoryTree
-            .filter(category => Array.isArray(category.children) && category.children.some(child => child.active !== false))
-            .map(category => category.slug)
-    );
+    const collapsedCategories = new Set();
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
     const CART_HISTORY_KEY = 'laboratorio-digital:mobile-cart-open';
-    const PRODUCT_VIEW_STORAGE_KEY = 'laboratorio-digital:product-view';
     const PRODUCT_VIEWS = new Set(['list', 'catalog', 'minimal']);
-    let hasSavedProductView = false;
-    let productView = (() => {
-        try {
-            const saved = window.localStorage.getItem(PRODUCT_VIEW_STORAGE_KEY);
-            hasSavedProductView = PRODUCT_VIEWS.has(saved);
-            return PRODUCT_VIEWS.has(saved) ? saved : 'list';
-        } catch (_) {
-            return 'list';
-        }
-    })();
+    let productView = 'list';
     const isMobileStorefront = () => window.matchMedia('(max-width: 900px)').matches;
 
     const elements = {
@@ -696,6 +681,33 @@
         `;
     }
 
+    function completeProductList(matches, showCount = false) {
+        const byCategory = new Map();
+        matches.forEach(product => {
+            const slug = product.category?.slug || 'sin-categoria';
+            if (!byCategory.has(slug)) byCategory.set(slug, []);
+            byCategory.get(slug).push(product);
+        });
+        const renderedSlugs = new Set();
+        const renderNode = (node, depth = 0) => {
+            if (node.active === false) return '';
+            const ownProducts = byCategory.get(node.slug) || [];
+            const children = (node.children || []).map(child => renderNode(child, depth + 1)).join('');
+            if (!ownProducts.length && !children) return '';
+            renderedSlugs.add(node.slug);
+            const heading = depth === 0 ? 'h2' : 'h3';
+            return `<section class="complete-list-category complete-list-depth-${Math.min(depth, 3)}">
+                <${heading}>${escapeHtml(node.name)}</${heading}>
+                ${ownProducts.length ? `<div class="catalog-summary-list" role="list">${ownProducts.map(productSummary).join('')}</div>` : ''}
+                ${children}
+            </section>`;
+        };
+        const tree = categoryTree.length ? categoryTree : [];
+        const sections = tree.map(node => renderNode(node)).join('');
+        const remaining = matches.filter(product => !renderedSlugs.has(product.category?.slug || 'sin-categoria'));
+        return `${showCount ? productResultCount(matches) : ''}<div class="complete-product-list">${sections}${remaining.length ? `<section class="complete-list-category complete-list-depth-0"><h2>Otros productos</h2><div class="catalog-summary-list" role="list">${remaining.map(productSummary).join('')}</div></section>` : ''}</div>`;
+    }
+
     function productResultCount(matches) {
         return `<div class="search-result-count" role="status">${matches.length} ${matches.length === 1 ? 'producto encontrado' : 'productos encontrados'}</div>`;
     }
@@ -754,7 +766,7 @@
         const count = showCount ? productResultCount(matches) : '';
         if (productView === 'catalog') return `${count}${catalogProductGrid(matches)}`;
         if (productView === 'minimal') return `${count}<div class="minimal-product-list" role="list">${matches.map(minimalProductRow).join('')}</div>`;
-        return productSummaryList(matches, showCount);
+        return completeProductList(matches, showCount);
     }
 
     function syncProductViewSwitcher() {
@@ -768,7 +780,6 @@
     function setProductView(view) {
         if (!PRODUCT_VIEWS.has(view)) return;
         productView = view;
-        try { window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view); } catch (_) { /* La vista funciona aunque el navegador no permita guardar preferencias. */ }
         syncProductViewSwitcher();
         renderCatalog();
     }
@@ -1840,14 +1851,11 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    if (!hasSavedProductView) window.setTimeout(showProductViewChooser, 350);
-    // La portada puede mostrarse sin descargar cientos de productos. El
-    // catálogo completo se obtiene al buscar, abrir una categoría o pedir el
-    // listado; esto acelera la primera carga en equipos de escritorio.
+    window.setTimeout(showProductViewChooser, 350);
+    // La lista completa es la vista inicial, por lo que el catálogo se carga
+    // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();
-    if (linkedProductId || state.searchActive) {
-        loadCatalogWhenIdle();
-    }
+    loadCatalogWhenIdle();
     try {
         const completedOrder = JSON.parse(
             sessionStorage.getItem(ORDER_COMPLETE_STORAGE_KEY) || 'null'
