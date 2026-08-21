@@ -1512,7 +1512,7 @@
                 </div>
                 <small class="pos-cart-available">Stock disponible: ${Math.max(0, Number(item.variant.available_stock) - item.quantity)}</small>
                 <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
-                <button class="pos-remove-cart-line" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito">🗑</button>
+                <button class="pos-remove-cart-line icon-action-button" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
             </div>
         `).join('') : '<p class="empty-copy">Sin productos.</p>');
     }
