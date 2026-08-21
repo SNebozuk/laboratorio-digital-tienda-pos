@@ -91,6 +91,7 @@
     let surpriseUnlocked = false;
     let surpriseChecked = false;
     let klausDiscountUnlocked = Boolean(app.klaus_discount_unlocked);
+    let klausDiscountAcknowledged = false;
     let klausDiscountPending = false;
     let klausReaction = '';
     let klausTimer = null;
@@ -143,7 +144,11 @@
         dialog.setAttribute('aria-modal', 'true');
         dialog.setAttribute('aria-label', 'Regalo de Klaus');
         dialog.innerHTML = '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p>Ganaste <b>1% de descuento adicional</b>, acumulable en toda tu compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
-        const close = () => dialog.remove();
+        const close = () => {
+            klausDiscountAcknowledged = true;
+            dialog.remove();
+            renderCart();
+        };
         dialog.querySelector('button')?.addEventListener('click', close);
         document.body.append(dialog);
         dialog.querySelector('button')?.focus();
@@ -1181,6 +1186,9 @@
             ${klausMarkup(units, klausMessage)}
             ${items.length && rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
+        if (klausDiscountAcknowledged) {
+            elements.cartRewards.insertAdjacentHTML('beforeend', '<div class="reward-surprise"><strong>🐾 Premio de Klaus: 1% de descuento adicional.</strong><span>Se acumula con los demás descuentos de tu compra.</span></div>');
+        }
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
         elements.checkout.textContent = cartMaintenanceEnabled
             ? 'CARRITO EN MANTENIMIENTO'
@@ -1543,6 +1551,7 @@
             surpriseUnlocked = false;
             surpriseChecked = false;
             klausDiscountUnlocked = false;
+            klausDiscountAcknowledged = false;
             const transferWhatsappUrl = whatsappUrl(data.order);
             state.cart.clear();
             persistCart();
