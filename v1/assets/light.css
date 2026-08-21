@@ -211,7 +211,7 @@ body.home-mode .catalog-intro p { max-width:720px; margin:9px 0 0; color:#55445f
 .minimal-product-open { width:32px; height:32px; padding:0; border:0; border-radius:7px; background:#7652b8; color:#fff; font-size:22px; cursor:pointer; }
 .minimal-quantity-control { transform:scale(.82); transform-origin:right center; }
 .product-view-chooser { position:relative; isolation:isolate; display:grid; justify-items:center; gap:8px; overflow:hidden; padding:24px; border-radius:14px; text-align:center; }
-.product-view-chooser::before { position:absolute; z-index:-1; inset:0; background:linear-gradient(rgba(255,255,255,.91),rgba(255,255,255,.94)),url('brand/product-view-selection-background.png') center/cover; content:''; }
+.product-view-chooser::before { position:absolute; z-index:-1; inset:0; background:linear-gradient(rgba(255,232,243,.92),rgba(255,242,248,.95)),url('brand/product-view-selection-background.png') center/cover; content:''; }
 .product-view-chooser-icon { color:#7652b8; font-size:30px; }
 .product-view-chooser h2 { margin:0; color:#38234f; font-size:23px; }
 .product-view-chooser > p { margin:0 0 10px; color:#796d80; }
