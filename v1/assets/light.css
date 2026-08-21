@@ -48,9 +48,13 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 .order-panel { display:flex; flex-direction:column; }
 .order-panel-head,.cart-rewards,.cart-products-divider,.cart-actions { flex:0 0 auto; }
 .cart-rewards { order:0; }
-.cart-actions { order:1; padding-top:10px; background:#fbe4ed; }
+.cart-actions { order:1; padding-top:6px; background:#fbe4ed; }
+.cart-actions .cart-summary-meta { margin:0 0 4px; }
+.cart-actions .order-total { padding:8px 0; font-size:14px; }
+.cart-actions .order-total strong { font-size:20px; }
+.cart-actions .continue-shopping-button,.cart-actions .order-note { display:none !important; }
 .cart-products-divider { order:2; height:1px; margin:12px 0; background:var(--line); }
-.cart-lines { order:3; display:grid; flex:1 1 0; gap:10px; min-height:0; margin:0; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
+.cart-lines { order:3; display:grid; flex:1 1 0; gap:10px; min-height:110px; margin:0; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
 @media (max-width:760px) { .order-panel.mobile-open { height:100dvh; overflow:hidden; } }
 
 /* Checkout claro y legible en teléfonos. */
