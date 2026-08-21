@@ -1726,7 +1726,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 .order-detail-variants { margin-top: 8px; }
 .order-detail-variant { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto minmax(82px, .25fr); gap: 10px; align-items: baseline; padding: 4px 0 4px 5px; }
-.order-detail-quantity { font-size: 25px; font-weight: 400; line-height: .9; text-align: center; }
+.order-detail-quantity { font-size: 21px; font-weight: 400; line-height: .9; text-align: center; }
 .order-detail-variant-name { font-size: 14px; font-weight: 400; text-transform: uppercase; overflow-wrap: anywhere; }
 .order-detail-variant-details { color: var(--muted); font-size: 10px; font-weight: 400; white-space: nowrap; }
 .order-detail-line-total { font-size: 12px; font-weight: 400; text-align: right; white-space: nowrap; }
@@ -1870,7 +1870,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     }
 
     .order-detail-variant { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 7px; }
-    .order-detail-quantity { font-size: 22px; }
+    .order-detail-quantity { font-size: 19px; }
     .order-detail-variant-name { font-size: 13px; }
     .order-detail-variant-details { grid-column: 2; font-size: 9px; }
     .order-detail-line-total { grid-column: 3; grid-row: 1 / span 2; }
