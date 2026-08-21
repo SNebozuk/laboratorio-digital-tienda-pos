@@ -46,15 +46,11 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 
 /* Klaus y el beneficio permanecen arriba; solo la lista de productos se desplaza. */
 .order-panel { display:flex; flex-direction:column; }
-.order-panel-head,.cart-rewards,.cart-products-divider,.cart-summary-meta,.order-total,.order-panel > .primary-button,.order-panel > .continue-shopping-button,.order-panel > .order-note { flex:0 0 auto; }
+.order-panel-head,.cart-rewards,.cart-products-divider,.cart-actions { flex:0 0 auto; }
 .cart-rewards { order:0; }
 .cart-products-divider { order:1; height:1px; margin:0 0 12px; background:var(--line); }
 .cart-lines { order:2; display:grid; flex:1 1 0; gap:10px; min-height:0; margin:12px 0 22px; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
-.cart-summary-meta { order:3; }
-.order-total { order:4; }
-.order-panel > .primary-button { order:5; }
-.order-panel > .continue-shopping-button { order:6; }
-.order-panel > .order-note { order:7; }
+.cart-actions { order:3; padding-top:10px; border-top:1px solid var(--line); background:#fbe4ed; }
 @media (max-width:760px) { .order-panel.mobile-open { height:100dvh; overflow:hidden; } }
 
 /* Checkout claro y legible en teléfonos. */

@@ -151,20 +151,22 @@ header('Referrer-Policy: same-origin');
             <div id="cart-lines" class="cart-lines">
                 <p class="empty-copy">Todavía no agregaste productos.</p>
             </div>
-            <p id="cart-summary-meta" class="cart-summary-meta" aria-live="polite">0 productos diferentes · 0 unidades</p>
-            <div class="order-total">
-                <span>Subtotal <small id="cart-subtotal"></small><br><small id="cart-discount"></small><br>Total</span>
-                <strong id="cart-total">$ 0</strong>
+            <div class="cart-actions">
+                <p id="cart-summary-meta" class="cart-summary-meta" aria-live="polite">0 productos diferentes · 0 unidades</p>
+                <div class="order-total">
+                    <span>Subtotal <small id="cart-subtotal"></small><br><small id="cart-discount"></small><br>Total</span>
+                    <strong id="cart-total">$ 0</strong>
+                </div>
+                <button class="primary-button" id="checkout-button" type="button" disabled>
+                    CONTINUAR PEDIDO
+                </button>
+                <button class="continue-shopping-button" id="continue-shopping-button" type="button">
+                    SEGUIR AGREGANDO PRODUCTOS
+                </button>
+                <p class="order-note">
+                    Transferencia bancaria · Retiro únicamente en el local
+                </p>
             </div>
-            <button class="primary-button" id="checkout-button" type="button" disabled>
-                CONTINUAR PEDIDO
-            </button>
-            <button class="continue-shopping-button" id="continue-shopping-button" type="button">
-                SEGUIR AGREGANDO PRODUCTOS
-            </button>
-            <p class="order-note">
-                Transferencia bancaria · Retiro únicamente en el local
-            </p>
         </aside>
     </main>
 
