@@ -116,6 +116,39 @@
         renderCart();
     }
 
+    function prepareKlausClink() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return () => {};
+        const context = new AudioContext();
+        context.resume().catch(() => {});
+        return () => {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(1350, context.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(840, context.currentTime + .18);
+            gain.gain.setValueAtTime(.001, context.currentTime);
+            gain.gain.exponentialRampToValueAtTime(.16, context.currentTime + .015);
+            gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .28);
+            oscillator.connect(gain).connect(context.destination);
+            oscillator.start();
+            oscillator.stop(context.currentTime + .3);
+        };
+    }
+
+    function showKlausRewardDialog() {
+        const dialog = document.createElement('section');
+        dialog.className = 'klaus-reward-dialog';
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-label', 'Regalo de Klaus');
+        dialog.innerHTML = '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p>Ganaste <b>1% de descuento adicional</b>, acumulable en toda tu compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
+        const close = () => dialog.remove();
+        dialog.querySelector('button')?.addEventListener('click', close);
+        document.body.append(dialog);
+        dialog.querySelector('button')?.focus();
+    }
+
     const fold = value => String(value || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -1821,6 +1854,8 @@
     window.Klaus?.attach(document, '.klaus', async () => {
         reactKlaus('is-petted');
         if (klausDiscountUnlocked || klausDiscountPending) return;
+        const playClink = prepareKlausClink();
+        const rewardAt = Date.now() + 6000;
         klausDiscountPending = true;
         try {
             const data = await apiJson({ action: 'reward_klaus' });
@@ -1828,10 +1863,11 @@
             window.setTimeout(() => {
                 klausDiscountPending = false;
                 renderCart();
-                toast(data.newly_unlocked
-                    ? '🎉 ¡Guau! Klaus te regaló 1% de descuento adicional acumulable para toda tu compra.'
-                    : '🐾 Klaus ya dejó tu 1% de descuento adicional listo para esta compra.');
-            }, 950);
+                if (data.newly_unlocked) {
+                    playClink();
+                    showKlausRewardDialog();
+                }
+            }, Math.max(0, rewardAt - Date.now()));
         } catch (_) {
             klausDiscountPending = false;
             // El gesto y sus animaciones siguen funcionando aunque no pueda validarse el beneficio.
