@@ -101,8 +101,8 @@
 
     function klausMarkup(units, message = '') {
         if (!rewardOn('reward_klaus_enabled')) return '';
-        const mood = units >= Number(rewards.reward_quantity_units || 20) ? 'is-thrilled' : units > 0 ? 'is-happy' : '';
-        return `<section class="klaus ${mood} ${klausReaction}" aria-label="Klaus, la mascota de Laboratorio Digital"><svg viewBox="0 0 180 120" role="img" aria-hidden="true"><g class="klaus-dog"><path class="klaus-tail" d="M134 78c21-17 32-4 23 10-4 6-10 9-16 9"/><path class="klaus-body" d="M54 79c1-23 18-37 46-37 28 0 45 14 46 37l-9 23H57z"/><path class="klaus-chest" d="M84 55c10 2 19 11 21 24l-7 23H73l5-23c1-11 2-19 6-24z"/><path class="klaus-head" d="M36 31c10-19 39-22 53-4 10 12 7 34-6 45-15 13-40 8-50-8-7-11-4-24 3-33z"/><path class="klaus-ear klaus-ear-left" d="M40 33C20 34 18 52 29 68c6 8 17 5 20-6l4-23z"/><path class="klaus-ear klaus-ear-right" d="M79 34c18-9 27 8 21 24-4 11-14 14-20 5l-5-17z"/><path class="klaus-brow" d="M45 46c4-3 8-3 11-1M68 44c4-3 8-2 10 1"/><ellipse class="klaus-muzzle" cx="61" cy="63" rx="18" ry="13"/><circle class="klaus-eye" cx="51" cy="51" r="3"/><circle class="klaus-eye" cx="74" cy="50" r="3"/><path class="klaus-happy-eye" d="M46 51q5 6 10 0M69 50q5 6 10 0"/><path class="klaus-nose" d="M57 59q5-4 10 0l-5 5z"/><path class="klaus-smile" d="M61 65c3 5 9 6 13 0"/><path class="klaus-tongue" d="M64 67c1 10 9 11 11 2v-3"/><path class="klaus-leg" d="M67 96v13M122 96v13"/><path class="klaus-collar" d="M45 75c11 8 29 8 41-1"/><circle class="klaus-tag" cx="65" cy="80" r="3"/></g></svg><div><strong>KLAUS</strong>${message ? `<span>${escapeHtml(message)}</span>` : '<span>Tu compañero de carrito</span>'}</div></section>`;
+        const mood = units >= Number(rewards.reward_quantity_units || 20) ? 'is-thrilled' : units > 0 ? 'is-happy' : 'is-sleeping';
+        return `<section class="klaus ${mood} ${klausReaction}" aria-label="Klaus, la mascota de Laboratorio Digital"><svg viewBox="0 0 180 120" role="img" aria-hidden="true"><g class="klaus-dog"><path class="klaus-tail" d="M134 78c21-17 32-4 23 10-4 6-10 9-16 9"/><path class="klaus-body" d="M54 79c1-23 18-37 46-37 28 0 45 14 46 37l-9 23H57z"/><path class="klaus-chest" d="M84 55c10 2 19 11 21 24l-7 23H73l5-23c1-11 2-19 6-24z"/><path class="klaus-head" d="M36 31c10-19 39-22 53-4 10 12 7 34-6 45-15 13-40 8-50-8-7-11-4-24 3-33z"/><path class="klaus-ear klaus-ear-left" d="M40 33C20 34 18 52 29 68c6 8 17 5 20-6l4-23z"/><path class="klaus-ear klaus-ear-right" d="M79 34c18-9 27 8 21 24-4 11-14 14-20 5l-5-17z"/><path class="klaus-brow" d="M45 46c4-3 8-3 11-1M68 44c4-3 8-2 10 1"/><ellipse class="klaus-muzzle" cx="61" cy="63" rx="18" ry="13"/><circle class="klaus-eye" cx="51" cy="51" r="3"/><circle class="klaus-eye" cx="74" cy="50" r="3"/><path class="klaus-happy-eye" d="M46 51q5 6 10 0M69 50q5 6 10 0"/><path class="klaus-nose" d="M57 59q5-4 10 0l-5 5z"/><path class="klaus-smile" d="M61 65c3 5 9 6 13 0"/><path class="klaus-tongue" d="M64 67c1 10 9 11 11 2v-3"/><path class="klaus-leg" d="M67 96v13M122 96v13"/><path class="klaus-collar" d="M45 75c11 8 29 8 41-1"/><circle class="klaus-tag" cx="65" cy="80" r="3"/></g></svg>${units === 0 ? '<b class="klaus-zzz" aria-hidden="true">Zzz</b>' : ''}<div><strong>KLAUS</strong>${message ? `<span>${escapeHtml(message)}</span>` : `<span>${units === 0 ? 'Durmiendo hasta tu primer producto' : 'Tu compañero de carrito'}</span>`}</div></section>`;
     }
 
     function reactKlaus(kind = '') {
@@ -552,7 +552,7 @@
         if (quantity > 0 && Number(requestedQuantity) > 0) {
             const units = Array.from(state.cart.values()).reduce((sum, value) => sum + Number(value), 0);
             const celebration = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20);
-            reactKlaus(celebration ? 'is-celebrating' : '');
+            reactKlaus(celebration ? 'is-celebrating' : (wasEmpty ? 'is-waking' : ''));
         }
         if (quantity > 0 && wasEmpty) checkSurprise();
     }
@@ -585,26 +585,6 @@
             gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .1);
             oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .1);
         } catch { /* El feedback visual sigue disponible. */ }
-    }
-
-    function playKlausBark() {
-        if (!rewardOn('reward_cart_sound_enabled')) return;
-        try {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            [0, .16].forEach((delay, index) => {
-                const oscillator = context.createOscillator();
-                const gain = context.createGain();
-                const start = context.currentTime + delay;
-                oscillator.type = 'square';
-                oscillator.frequency.setValueAtTime(index ? 205 : 175, start);
-                oscillator.frequency.exponentialRampToValueAtTime(index ? 115 : 95, start + .12);
-                gain.gain.setValueAtTime(.001, start);
-                gain.gain.exponentialRampToValueAtTime(.035, start + .012);
-                gain.gain.exponentialRampToValueAtTime(.001, start + .14);
-                oscillator.connect(gain).connect(context.destination);
-                oscillator.start(start); oscillator.stop(start + .15);
-            });
-        } catch { /* El saludo visual sigue disponible. */ }
     }
 
     function renderCategories() {
@@ -1135,9 +1115,9 @@
         const klausNearReward = rewardOn('reward_quantity_enabled') && units >= Math.max(1, Number(rewards.reward_quantity_units || 20) - 3);
         const klausMessage = rewardOn('reward_klaus_messages_enabled') && items.length && (klausNearReward || surpriseUnlocked)
             ? (surpriseUnlocked ? rewards.reward_klaus_surprise_text : rewards.reward_klaus_near_text) : '';
-        elements.cartRewards.innerHTML = !items.length ? '' : `
+        elements.cartRewards.innerHTML = `
             ${klausMarkup(units, klausMessage)}
-            ${rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
+            ${items.length && rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
         elements.checkout.textContent = cartMaintenanceEnabled
@@ -1812,7 +1792,6 @@
 
     document.addEventListener('pointerdown', event => {
         if (!event.target.closest('.klaus')) return;
-        playKlausBark();
         reactKlaus('is-petted');
         if (rewardOn('reward_klaus_messages_enabled')) toast(rewards.reward_klaus_happy_text || '🐾 ¡Klaus está contento!');
     });
