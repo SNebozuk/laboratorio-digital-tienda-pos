@@ -3049,19 +3049,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-add-products-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 10px; background: #1769e0; color: #fff; font-size: 26px; }
 .pos-sale-details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, auto); gap: 18px; align-items: end; margin-top: 18px; padding: 22px; border: 1px solid #dce2ed; border-radius: 14px; background: #fff; box-shadow: 0 4px 18px rgba(30, 40, 70, .035); }
 .pos-klaus { display:flex; align-items:center; gap:8px; padding:0; border:0; background:transparent; color:#6b4a22; color-scheme:only light; cursor:pointer; forced-color-adjust:none; }
-.pos-klaus-figure { display:block; transform:scaleX(-1); }
-.pos-klaus svg { width:104px; height:70px; overflow:visible; filter:drop-shadow(0 4px 3px rgba(105,68,28,.14)); }
-.pos-klaus g { fill:#d4a15f; stroke:#68411d; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
-.pos-klaus-tail,.pos-klaus-line,.pos-klaus-collar { fill:none; }
-.pos-klaus-ear { fill:#ad743b; }
-.pos-klaus-chest,.pos-klaus-muzzle { fill:#efcc98; }
-.pos-klaus-muzzle,.pos-klaus-dark { stroke:none; }
-.pos-klaus-dark { fill:#322015; }
-.pos-klaus-collar { stroke:#7652b8; stroke-width:4; }
-.pos-klaus-tag { fill:#f2c84b; stroke:#8b6918; stroke-width:1.2; }
+.pos-klaus-image { display:block; width:116px; height:78px; object-fit:contain; filter:drop-shadow(0 4px 3px rgba(105,68,28,.14)); }
 .pos-klaus-label { font-size:11px; font-weight:800; letter-spacing:.12em; }
-.pos-klaus.is-petted svg { animation:pos-klaus-pet .52s ease-in-out 2; }.pos-klaus.is-petted .pos-klaus-tail { transform-box:fill-box; transform-origin:center; animation:pos-klaus-tail .12s ease-in-out 8 alternate; }.pos-klaus.is-petted::after { align-self:flex-start; padding:3px 7px; border-radius:999px; background:#fff0f6; color:#a51a71; content:'♥ ♥ ♥'; font-size:10px; font-weight:900; }
-@keyframes pos-klaus-pet { 30% { transform:translateY(-15px) rotate(-7deg) scale(1.13); } 58% { transform:translateY(3px) rotate(5deg) scale(.95); } } @keyframes pos-klaus-tail { to { transform:rotate(25deg); } }
+.pos-klaus.is-petted .pos-klaus-image { animation:pos-klaus-pet .52s ease-in-out 2; }.pos-klaus.is-petted::after { align-self:flex-start; padding:3px 7px; border-radius:999px; background:#fff0f6; color:#a51a71; content:'♥ ♥ ♥'; font-size:10px; font-weight:900; }
+@keyframes pos-klaus-pet { 30% { transform:translateY(-15px) rotate(-7deg) scale(1.13); } 58% { transform:translateY(3px) rotate(5deg) scale(.95); } }
 @media (prefers-reduced-motion: reduce) { .pos-klaus * { animation:none !important; } }
 .pos-customer-checkout input { font-size: 16px; }
 .pos-customer-checkout { display: grid; gap: 12px; margin-top: auto; padding-top: 18px; }
