@@ -71,6 +71,7 @@
         cartSubtotal: document.getElementById('cart-subtotal'),
         cartDiscount: document.getElementById('cart-discount'),
         cartRewards: document.getElementById('cart-rewards'),
+        mobileKlausHost: document.getElementById('mobile-klaus-host'),
         checkout: document.getElementById('checkout-button'),
         mobileCart: document.getElementById('cart-mobile'),
         mobileCartCount: document.getElementById('cart-mobile-count'),
@@ -1194,6 +1195,7 @@
             ${klausMarkup(units, klausMessage)}
             ${items.length && rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
+        if (elements.mobileKlausHost) elements.mobileKlausHost.innerHTML = klausMarkup(units, klausMessage);
         if (klausDiscountAcknowledged) {
             elements.cartRewards.insertAdjacentHTML('beforeend', '<div class="reward-surprise"><strong>🐾 Premio de Klaus: 2% de descuento adicional.</strong><span>Se acumula con los demás descuentos de tu compra.</span></div>');
         }

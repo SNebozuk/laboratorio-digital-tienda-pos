@@ -168,6 +168,7 @@ header('Referrer-Policy: same-origin');
             </div>
         </aside>
     </main>
+    <div id="mobile-klaus-host" class="mobile-klaus-host" aria-live="polite"></div>
 
     <footer class="store-footer" id="contacto">
         <button class="footer-contact-button" id="contact-button" type="button">
