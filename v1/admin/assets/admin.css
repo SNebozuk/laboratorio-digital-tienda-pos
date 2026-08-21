@@ -3463,7 +3463,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .delivery-delete .order-action-icon { width:20px; height:20px; }
 .delivery-return .order-action-icon,
 .delivery-delete .order-action-icon { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.order-status-indicator { display:inline-grid; width:20px; height:20px; place-items:center; border-radius:50%; color:#fff; font-size:12px; line-height:1; }
+.order-status-indicator { display:inline-grid; width:20px; height:20px; margin-inline:6px; place-items:center; border-radius:50%; color:#fff; font-size:12px; line-height:1; }
 .order-status-indicator-archived { background:#21864b; }
 .order-status-indicator-cancelled { background:#b93131; }
 
