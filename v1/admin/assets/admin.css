@@ -3029,6 +3029,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-customer-checkout input { font-size: 16px; }
 .pos-customer-checkout { display: grid; gap: 12px; margin-top: auto; padding-top: 18px; }
 .pos-customer-checkout input { background: #fff; color: #111827; }
+#complete-sale-button { min-height: 46px; border: 1px solid #1769e0; border-radius: 10px; background: #1769e0 !important; box-shadow: none; color: #fff !important; font-size: 13px; font-weight: 700; }
+#complete-sale-button:hover:not(:disabled) { border-color: #1459bd; background: #1459bd !important; }
+#complete-sale-button:disabled { border-color: #dce2ed; background: #dce2ed !important; color: #8997aa !important; }
 .pos-main-total { display: grid; min-width: 220px; justify-items: end; gap: 7px; padding-left: 22px; border-left: 1px solid #e4e8f0; color: #7a8294; font-size: 10px; font-weight: 850; letter-spacing: .14em; }
 .pos-main-total strong { color: #252a3a; font-size: clamp(32px, 3.4vw, 48px); font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -.04em; }
 .pos-cart-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
