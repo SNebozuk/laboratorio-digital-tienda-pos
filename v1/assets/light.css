@@ -25,7 +25,7 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 /* Escritorio: carrito siempre visible junto al catálogo. */
 @media (min-width:761px){
   .store-shell{grid-template-columns:minmax(0,1fr) minmax(330px,380px) !important;align-items:start;}
-  .order-panel{position:static;z-index:5;top:auto;right:auto;width:auto;height:auto;max-height:none;min-height:0;transform:none;overflow:visible;box-shadow:0 10px 28px rgba(62,38,91,.13) !important;}
+  .order-panel{position:sticky;z-index:5;top:12px;right:auto;width:auto;height:calc(100vh - 24px);max-height:calc(100vh - 24px);min-height:0;transform:none;overflow:hidden;box-shadow:0 10px 28px rgba(62,38,91,.13) !important;}
   .order-panel.mobile-open{transform:none;}
   .cart-mobile{display:none !important;}.order-panel .icon-button{display:none;}
   .cart-mobile{align-items:center;gap:7px;border:1px solid var(--accent) !important;border-radius:9px;background:var(--accent) !important;color:#fff !important;}
@@ -44,17 +44,18 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
   .category-panel{z-index:41;}
 }
 
-/* Klaus y el progreso encabezan el carrito; el listado crece hacia abajo. */
+/* Klaus y el beneficio permanecen arriba; solo la lista de productos se desplaza. */
 .order-panel { display:flex; flex-direction:column; }
+.order-panel-head,.cart-rewards,.cart-products-divider,.cart-summary-meta,.order-total,.order-panel > .primary-button,.order-panel > .continue-shopping-button,.order-panel > .order-note { flex:0 0 auto; }
 .cart-rewards { order:0; }
 .cart-products-divider { order:1; height:1px; margin:0 0 12px; background:var(--line); }
-.cart-lines { order:2; display:grid; gap:10px; min-height:0; margin:12px 0 22px; overflow:visible; padding-right:0; }
+.cart-lines { order:2; display:grid; flex:1 1 0; gap:10px; min-height:0; margin:12px 0 22px; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
 .cart-summary-meta { order:3; }
 .order-total { order:4; }
 .order-panel > .primary-button { order:5; }
 .order-panel > .continue-shopping-button { order:6; }
 .order-panel > .order-note { order:7; }
-@media (max-width:760px) { .order-panel.mobile-open { height:100dvh; overflow-y:auto; } }
+@media (max-width:760px) { .order-panel.mobile-open { height:100dvh; overflow:hidden; } }
 
 /* Checkout claro y legible en teléfonos. */
 @media (max-width:760px){.modal{padding:0 !important;align-items:end !important;}.modal.open{place-items:end stretch !important;}.modal-backdrop{background:rgba(24,35,27,.3) !important;}.modal-card{width:100% !important;max-height:calc(100vh - 42px) !important;padding:22px 18px 28px !important;border-radius:18px 18px 0 0 !important;background:#fff !important;color:var(--text) !important;box-shadow:0 -14px 40px rgba(24,35,27,.16) !important;}.modal-card p,.modal-card small,.checkout-footnote{color:var(--muted) !important;}.modal-close{background:#fff !important;color:var(--text) !important;}.payment-focus,.cash-confirmation,.cash-expiry-explanation,.payment-instructions,.bank-details{background:#f0f7f1 !important;border-color:#c7dec9 !important;color:var(--text) !important;}.payment-focus span,.cash-confirmation span,.payment-instructions span,.cash-expiry-explanation p,.bank-details dt{color:var(--muted) !important;}.payment-focus strong,.cash-confirmation strong,.bank-details dd{color:var(--text) !important;}.button-link{display:block;text-align:center;text-decoration:none;}}
@@ -262,11 +263,11 @@ body.home-mode .catalog-intro p { max-width:720px; margin:9px 0 0; color:#55445f
 @media (max-width:700px) { .klaus { min-height:56px; }.klaus svg { width:74px; height:52px; }.klaus span { font-size:11px; } }
 body.product-view-list .catalog-menu-button,body.product-view-list .category-panel,body.product-view-list .category-backdrop { display:none !important; }
 @media (min-width:1100px) {
-  .store-shell { grid-template-columns:220px minmax(0,1fr) minmax(330px,380px) !important; height:auto; min-height:calc(100dvh - 74px); overflow:visible; }
+  .store-shell { grid-template-columns:220px minmax(0,1fr) minmax(330px,380px) !important; height:calc(100dvh - 74px); min-height:0; overflow:hidden; }
   .category-panel { position:relative !important; top:auto !important; right:auto !important; display:block !important; visibility:visible !important; width:auto !important; height:100% !important; max-height:none !important; box-sizing:border-box; padding:20px !important; border-radius:0 !important; transform:none !important; overflow-y:auto !important; pointer-events:auto !important; }
-  .catalog-column { height:auto; overflow:visible; }
+  .catalog-column { height:100%; overflow-y:auto; overscroll-behavior:contain; }
   .catalog-column > .search-wrap { position:sticky; top:0; z-index:17; margin:0 0 18px; padding:12px 0; background:#f8c5db; }
-  .order-panel { height:auto; max-height:none !important; overflow:visible !important; }
+  .order-panel { position:static; height:100%; max-height:none !important; overflow:hidden !important; }
   .order-panel .cart-rewards { position:static; margin-top:0; padding-top:12px; background:#fbe4ed; box-shadow:none; }
   body.product-view-list .store-shell { grid-template-columns:minmax(0,1fr) minmax(330px,380px) !important; }
 }
