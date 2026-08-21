@@ -2825,6 +2825,43 @@
         });
     }
 
+    function groupedOrderItems(items) {
+        return sortedOrderItems(items).reduce((groups, item) => {
+            const productName = String(item.product_name || 'Producto');
+            const group = groups.find(candidate => candidate.name === productName);
+            if (group) {
+                group.items.push(item);
+            } else {
+                groups.push({ name: productName, items: [item] });
+            }
+            return groups;
+        }, []);
+    }
+
+    function orderDetailItemsMarkup(items) {
+        return groupedOrderItems(items).map(group => {
+            const firstItem = group.items[0];
+            return `
+                <section class="order-detail-product-group">
+                    <div class="order-detail-product">
+                        ${safeImage(firstItem.image_path) ? `<img src="${escapeHtml(safeImage(firstItem.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
+                        <span class="order-detail-product-copy"><span class="order-detail-product-name">${escapeHtml(group.name)}</span></span>
+                    </div>
+                    <div class="order-detail-variants">
+                        ${group.items.map(item => `
+                            <div class="order-detail-variant">
+                                <span class="order-detail-quantity">${Number(item.quantity)}</span>
+                                <span class="order-detail-variant-name">${fold(item.variant_name) === 'unica' ? 'Sin variante' : escapeHtml(item.variant_name || 'Sin variante')}</span>
+                                <span class="order-detail-variant-details">${item.sku ? `SKU: ${escapeHtml(item.sku)} · ` : ''}${money(item.unit_price_cents)}</span>
+                                <span class="order-detail-line-total">${money(item.line_total_cents)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+            `;
+        }).join('');
+    }
+
     async function showCustomerHistory(customerName) {
         const name = String(customerName || '').trim();
         state.customerHistoryName = name;
@@ -2892,22 +2929,7 @@
                         <div><span>FECHA</span><strong>${escapeHtml(argentinaDateLabel(order.created_at))}</strong><small>${escapeHtml(order.archived_at ? 'Venta archivada' : (order.status === 'cancelled' ? 'Venta cancelada' : 'Venta activa'))}</small></div>
                     </div>
                     <div class="order-detail-lines">
-                        ${sortedOrderItems(order.items).map(item => `
-                            <div class="order-detail-line">
-                                <div>
-                                    <div class="order-detail-product">
-                                        ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
-                                        <span class="order-detail-product-copy">
-                                            <strong>${escapeHtml(item.product_name)}</strong>
-                                            <small class="order-detail-sku">${item.sku ? `SKU: ${escapeHtml(item.sku)}` : ''}</small>
-                                            ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
-                                            <span class="order-detail-quantity">${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>
-                                        </span>
-                                    </div>
-                                </div>
-                                <strong>${money(item.line_total_cents)}</strong>
-                            </div>
-                        `).join('')}
+                        ${orderDetailItemsMarkup(order.items)}
                     </div>
                     <div class="order-detail-total"><span>${Number(order.discount_cents) > 0 ? `SUBTOTAL ${money(order.subtotal_cents)}<small>DESCUENTO ${discountSourceText(order.discount_type)} (${Number(order.discount_percent)}%): −${money(order.discount_cents)}</small><b>TOTAL</b>` : 'TOTAL'}</span><strong>${money(order.total_cents)}</strong></div>
                     <div class="order-actions order-detail-actions">${orderActions(actionOrder)}</div>
@@ -2935,20 +2957,7 @@
                         ${historyName ? `<button class="customer-history-back" type="button" data-customer-history="${escapeHtml(historyName)}">← Volver al historial</button>` : ''}
                     </header>
                     <div class="order-detail-lines">
-                        ${sortedOrderItems(order.items).map(item => `
-                            <div class="order-detail-line">
-                                <div class="order-detail-product">
-                                    ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
-                                    <span class="order-detail-product-copy">
-                                        <strong>${escapeHtml(item.product_name)}</strong>
-                                        <small class="order-detail-sku">${item.sku ? `SKU: ${escapeHtml(item.sku)}` : ''}</small>
-                                        ${fold(item.variant_name) === 'unica' ? '' : `<small>${escapeHtml(item.variant_name || '')}</small>`}
-                                        <span class="order-detail-quantity">${Number(item.quantity)} &times; ${money(item.unit_price_cents)}</span>
-                                    </span>
-                                </div>
-                                <strong>${money(item.line_total_cents)}</strong>
-                            </div>
-                        `).join('')}
+                        ${orderDetailItemsMarkup(order.items)}
                     </div>
                     <div class="order-detail-total"><span>${Number(order.discount_cents) > 0 ? `SUBTOTAL ${money(order.subtotal_cents)}<small>DESCUENTO ${discountSourceText(order.discount_type)} (${Number(order.discount_percent)}%): −${money(order.discount_cents)}</small><b>TOTAL</b>` : 'TOTAL'}</span><strong>${money(order.total_cents)}</strong></div>
                 </section>
