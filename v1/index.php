@@ -86,14 +86,16 @@ header('Referrer-Policy: same-origin');
                 </section>
             <?php endif; ?>
             <div class="catalog-intro">
-                <h1 id="catalog-title">Tus ideas merecen hacerse realidad.</h1>
-                <p>Insumos para sublimación, papeles, indumentaria y productos para personalizar.</p>
+                <h1 id="catalog-title">Insumos para sublimación y DTF en Rosario</h1>
+                <p>Papeles, indumentaria, sublimables y todo para personalizar. Precios mayoristas y retiro en el local.</p>
+                <p class="catalog-slogan">Tus ideas merecen hacerse realidad.</p>
             </div>
 
             <div class="trust-strip" aria-label="Información de compra">
                 <span>Pago por transferencia</span>
                 <span>Retiro en el local</span>
                 <span>Ayuda por WhatsApp</span>
+                <span>Local físico en Rosario · Desde 2005</span>
             </div>
 
             <nav class="catalog-breadcrumb" id="category-breadcrumb" aria-label="Ubicación actual">

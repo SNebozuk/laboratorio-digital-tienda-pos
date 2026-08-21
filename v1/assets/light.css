@@ -160,4 +160,5 @@ body { background:#fbf8ff !important; }
 body.home-mode .catalog-intro { display:grid; justify-items:start; min-height:112px; padding:25px clamp(20px,5vw,64px); text-align:left; }
 body.home-mode .catalog-intro h1 { max-width:840px; margin:0; color:#9c317d !important; font-size:clamp(33px,4.1vw,54px); line-height:1.03; letter-spacing:-.06em; }
 body.home-mode .catalog-intro p { max-width:720px; margin:9px 0 0; color:#55445f !important; font-size:15px; font-weight:650; }
+.catalog-intro .catalog-slogan { color:#796d80 !important; font-size:13px; font-weight:500; }
 @media (max-width:700px) { body.home-mode .catalog-intro { min-height:112px; padding:23px 20px; } body.home-mode .catalog-intro h1 { font-size:35px; } body.home-mode .catalog-intro p { font-size:13px; line-height:1.4; } }

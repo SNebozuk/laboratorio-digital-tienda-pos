@@ -3,7 +3,10 @@ DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteCond %{HTTP_HOST} ^(?:www\.)?(?:artjet\.com\.ar|laboratorio-digital\.com\.ar)$ [NC,OR]
+  RewriteCond %{HTTP_HOST} ^(?:www\.)?artjet\.com\.ar$ [NC]
+  RewriteRule ^ https://laboratoriodigital.com.ar/ [R=301,L,NE]
+
+  RewriteCond %{HTTP_HOST} ^(?:www\.)?laboratorio-digital\.com\.ar$ [NC,OR]
   RewriteCond %{HTTP_HOST} ^www\.laboratoriodigital\.com\.ar$ [NC]
   RewriteRule ^ https://laboratoriodigital.com.ar%{REQUEST_URI} [R=301,L,NE]
 

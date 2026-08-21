@@ -807,9 +807,11 @@
             const rootCategories = (categoryTree.length ? categoryTree : [])
                 .filter(node => node.active !== false);
             const quickCategorySlugs = ['sublimables', 'accesorios', 'remeras', 'papeles'];
-            const roots = quickCategorySlugs
+            const preferredRoots = quickCategorySlugs
                 .map(slug => rootCategories.find(category => category.slug === slug))
                 .filter(Boolean);
+            const roots = [...preferredRoots, ...rootCategories.filter(category => !preferredRoots.includes(category))]
+                .slice(0, 4);
             const homeSections = {
                 featured: featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2 id="featured-products-title">PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div>
