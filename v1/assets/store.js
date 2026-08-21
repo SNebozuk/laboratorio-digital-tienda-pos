@@ -1874,7 +1874,7 @@
     window.Klaus?.attach(document, '.klaus', async () => {
         klausAwake = true;
         window.sessionStorage.setItem(KLAUS_AWAKE_STORAGE_KEY, '1');
-        reactKlaus('is-petted');
+        reactKlaus('is-petted is-celebrating');
         if (klausRewardShown || klausDiscountPending) return;
         const playClink = prepareKlausClink();
         const rewardAt = Date.now() + 4000;
