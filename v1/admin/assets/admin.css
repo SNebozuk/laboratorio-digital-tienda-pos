@@ -3443,6 +3443,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .statistics-discount > i { display:block; height:6px; margin-top:8px; overflow:hidden; border-radius:999px; background:#e2e6ed; }
 .statistics-discount > i > b { display:block; height:100%; border-radius:inherit; background:#695ee5; }
 .statistics-discount-klaus > i > b { background:#e39128; }.statistics-discount-surprise > i > b { background:#d35f91; }
+.statistics-beneficiaries { display:flex; flex-wrap:wrap; gap:4px; margin-top:10px; }.statistics-beneficiaries b,.statistics-beneficiaries em { max-width:100%; overflow:hidden; padding:3px 6px; border-radius:999px; background:#e8ebf1; color:#59667a; font-size:9px; font-style:normal; line-height:1.15; text-overflow:ellipsis; white-space:nowrap; }.statistics-beneficiaries em { background:transparent; padding-left:0; }
 @media (max-width:700px) { .statistics-periods,.statistics-grid,.statistics-discounts { grid-template-columns:1fr; }.statistics-card { min-height:0; }.statistics-discount > small { min-height:0; }.statistics-lock { grid-template-columns:1fr; }.statistics-lock form { grid-column:auto; flex-direction:column; } }
 .product-search-tools { display:flex; align-items:stretch; gap:9px; }
 .product-search-tools { width:min(100%,760px); min-height:46px; margin:0 auto 18px 0; flex:none; box-sizing:border-box; }

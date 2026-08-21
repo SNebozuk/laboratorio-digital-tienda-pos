@@ -3470,9 +3470,9 @@
         ].map(([key, label, detail]) => ({ key, label, detail, ...(statistics.archived?.[key] || {}) }));
         const maximum = Math.max(1, ...periods.map(period => Number(period.total_cents || 0)));
         const discounts = [
-            ['🐾', 'Premio de Klaus', Number(statistics.discounts?.klaus || 0), 'klaus'],
-            ['↗', 'Barra de avance', Number(statistics.discounts?.quantity || 0), 'quantity'],
-            ['🎁', 'Caja sorpresa', Number(statistics.discounts?.surprise || 0), 'surprise'],
+            ['🐾', 'Premio de Klaus', Number(statistics.discounts?.klaus || 0), 'klaus', statistics.beneficiaries?.klaus || []],
+            ['↗', 'Barra de avance', Number(statistics.discounts?.quantity || 0), 'quantity', statistics.beneficiaries?.quantity || []],
+            ['🎁', 'Caja sorpresa', Number(statistics.discounts?.surprise || 0), 'surprise', statistics.beneficiaries?.surprise || []],
         ];
         const discountMaximum = Math.max(1, ...discounts.map(([, , count]) => count));
         elements.statisticsContent.innerHTML = `
@@ -3497,10 +3497,13 @@
                 <section class="statistics-card">
                     <p class="eyebrow">DESCUENTOS EN VENTAS ARCHIVADAS</p>
                     <div class="statistics-discounts">
-                        ${discounts.map(([icon, label, count, tone]) => `
+                        ${discounts.map(([icon, label, count, tone, beneficiaries]) => `
                             <div class="statistics-discount statistics-discount-${tone}">
                                 <span>${icon}</span><strong>${count}</strong><small>${label}</small>
                                 <i><b style="width:${Math.round(count / discountMaximum * 100)}%"></b></i>
+                                <div class="statistics-beneficiaries">${beneficiaries.length
+                                    ? `${beneficiaries.slice(0, 4).map(name => `<b>${escapeHtml(name)}</b>`).join('')}${beneficiaries.length > 4 ? `<b>+${beneficiaries.length - 4}</b>` : ''}`
+                                    : '<em>Sin beneficiarios</em>'}</div>
                             </div>
                         `).join('')}
                     </div>

@@ -908,7 +908,30 @@ final class OrderService
              FROM orders WHERE archived_at IS NOT NULL"
         )->fetch();
 
-        return ['archived' => $archived, 'discounts' => $discounts ?: []];
+        $beneficiaries = ['klaus' => [], 'quantity' => [], 'surprise' => []];
+        $rows = $this->pdo->query(
+            "SELECT customer_name, discount_type
+             FROM orders
+             WHERE archived_at IS NOT NULL AND discount_cents > 0
+             ORDER BY archived_at DESC, id DESC"
+        )->fetchAll();
+        foreach ($rows as $row) {
+            $name = trim((string) $row['customer_name']);
+            if ($name === '') continue;
+            foreach ($beneficiaries as $type => &$names) {
+                if (str_contains((string) $row['discount_type'], $type)) {
+                    $names[$name] = ($names[$name] ?? 0) + 1;
+                }
+            }
+            unset($names);
+        }
+        foreach ($beneficiaries as &$names) {
+            arsort($names);
+            $names = array_keys($names);
+        }
+        unset($names);
+
+        return ['archived' => $archived, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries];
     }
 
     /** @return array<string, mixed> */
