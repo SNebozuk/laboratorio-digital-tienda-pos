@@ -141,7 +141,6 @@ header('Referrer-Policy: same-origin');
         <aside class="order-panel" id="order-panel" aria-labelledby="order-title">
             <div class="order-panel-head">
                 <div>
-                    <p class="eyebrow">RESUMEN</p>
                     <h2 id="order-title">TU PEDIDO</h2>
                 </div>
                 <button class="icon-button" id="close-cart-mobile" type="button" aria-label="Cerrar pedido">×</button>
