@@ -147,10 +147,6 @@ header('Referrer-Policy: same-origin');
                 <button class="icon-button" id="close-cart-mobile" type="button" aria-label="Cerrar pedido">×</button>
             </div>
             <section id="cart-rewards" class="cart-rewards" aria-live="polite"></section>
-            <div class="cart-products-divider" aria-hidden="true"></div>
-            <div id="cart-lines" class="cart-lines">
-                <p class="empty-copy">Todavía no agregaste productos.</p>
-            </div>
             <div class="cart-actions">
                 <p id="cart-summary-meta" class="cart-summary-meta" aria-live="polite">0 productos diferentes · 0 unidades</p>
                 <div class="order-total">
@@ -166,6 +162,10 @@ header('Referrer-Policy: same-origin');
                 <p class="order-note">
                     Transferencia bancaria · Retiro únicamente en el local
                 </p>
+            </div>
+            <div class="cart-products-divider" aria-hidden="true"></div>
+            <div id="cart-lines" class="cart-lines">
+                <p class="empty-copy">Todavía no agregaste productos.</p>
             </div>
         </aside>
     </main>
