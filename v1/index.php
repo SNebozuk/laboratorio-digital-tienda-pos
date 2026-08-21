@@ -209,6 +209,7 @@ header('Referrer-Policy: same-origin');
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
+            'klaus_discount_unlocked' => !empty($_SESSION['cart_klaus_discount_unlocked']),
             'rewards' => array_filter($publicSettings, static fn ($key) => str_starts_with((string) $key, 'reward_'), ARRAY_FILTER_USE_KEY),
             'featured_product_ids' => $featuredProductIds,
             'tutorials' => $app['tutorials']->publicList(),

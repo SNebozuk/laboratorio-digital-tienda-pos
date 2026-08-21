@@ -27,7 +27,8 @@ final class OrderService
         array $items,
         string $channel = 'web',
         string $paymentMethod = 'bank_transfer',
-        bool $surpriseUnlocked = false
+        bool $surpriseUnlocked = false,
+        bool $klausDiscountUnlocked = false
     ): array {
         if (empty($this->config['orders_enabled'])) {
             throw new ConflictException(
@@ -90,7 +91,8 @@ final class OrderService
                 $tokenHash,
                 $uploadToken,
                 $paymentMethod,
-                $surpriseUnlocked
+                $surpriseUnlocked,
+                $klausDiscountUnlocked
             ): array {
                 $publicNumber = $this->newPublicNumber($pdo);
                 $resolvedItems = $this->resolveItems($pdo, $quantities);
@@ -101,8 +103,9 @@ final class OrderService
                     ? $rewardSettings['quantity_percent'] : 0;
                 $surprisePercent = $surpriseUnlocked && $rewardSettings['surprise_enabled']
                     ? $rewardSettings['surprise_percent'] : 0;
-                $discountPercent = max($quantityPercent, $surprisePercent);
-                $discountType = $discountPercent === 0 ? '' : ($surprisePercent >= $quantityPercent ? 'surprise' : 'quantity');
+                $baseDiscountPercent = max($quantityPercent, $surprisePercent);
+                $discountPercent = $baseDiscountPercent + ($klausDiscountUnlocked ? 1 : 0);
+                $discountType = $klausDiscountUnlocked ? 'klaus' : ($discountPercent === 0 ? '' : ($surprisePercent >= $quantityPercent ? 'surprise' : 'quantity'));
                 $discountCents = (int) round($subtotal * $discountPercent / 100);
                 $total = $subtotal - $discountCents;
 

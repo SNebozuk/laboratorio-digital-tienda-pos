@@ -90,13 +90,15 @@
     const rewardText = (key, values = {}) => String(rewards[key] || '').replace(/{{(faltan|porcentaje)}}/g, (_, name) => values[name] ?? '');
     let surpriseUnlocked = false;
     let surpriseChecked = false;
+    let klausDiscountUnlocked = Boolean(app.klaus_discount_unlocked);
     let klausReaction = '';
     let klausTimer = null;
     function cartDiscount(subtotal, units) {
         const quantityPercent = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20) ? Number(rewards.reward_quantity_percent || 3) : 0;
         const surprisePercent = surpriseUnlocked && rewardOn('reward_surprise_enabled') ? Number(rewards.reward_surprise_percent || 5) : 0;
-        const percent = Math.max(quantityPercent, surprisePercent);
-        return { percent, type: surprisePercent >= quantityPercent && surprisePercent ? 'surprise' : (quantityPercent ? 'quantity' : ''), cents: Math.round(subtotal * percent / 100), quantityPercent };
+        const basePercent = Math.max(quantityPercent, surprisePercent);
+        const percent = basePercent + (klausDiscountUnlocked ? 1 : 0);
+        return { percent, type: klausDiscountUnlocked ? 'klaus' : (surprisePercent >= quantityPercent && surprisePercent ? 'surprise' : (quantityPercent ? 'quantity' : '')), cents: Math.round(subtotal * percent / 100), quantityPercent };
     }
 
     function klausMarkup(units, message = '') {
@@ -1145,6 +1147,9 @@
             ${klausMarkup(units, klausMessage)}
             ${items.length && rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
+        if (klausDiscountUnlocked) {
+            elements.cartRewards.insertAdjacentHTML('beforeend', '<div class="reward-surprise"><strong>🐾 Klaus te regaló 1% de descuento adicional.</strong><span>Se acumula con los demás descuentos de tu compra.</span></div>');
+        }
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
         elements.checkout.textContent = cartMaintenanceEnabled
             ? 'CARRITO EN MANTENIMIENTO'
@@ -1506,6 +1511,7 @@
             state.order = data.order;
             surpriseUnlocked = false;
             surpriseChecked = false;
+            klausDiscountUnlocked = false;
             const transferWhatsappUrl = whatsappUrl(data.order);
             state.cart.clear();
             persistCart();
@@ -1814,9 +1820,20 @@
         }
     });
 
-    window.Klaus?.attach(document, '.klaus', () => {
+    window.Klaus?.attach(document, '.klaus', async () => {
         reactKlaus('is-petted');
         if (rewardOn('reward_klaus_messages_enabled')) toast(rewards.reward_klaus_happy_text || '🐾 ¡Klaus está contento!');
+        if (klausDiscountUnlocked) return;
+        try {
+            const data = await apiJson({ action: 'reward_klaus' });
+            klausDiscountUnlocked = true;
+            renderCart();
+            toast(data.newly_unlocked
+                ? '🎉 ¡Guau! Klaus te regaló 1% de descuento adicional acumulable para toda tu compra.'
+                : '🐾 Klaus ya dejó tu 1% de descuento adicional listo para esta compra.');
+        } catch (_) {
+            // El gesto y sus animaciones siguen funcionando aunque no pueda validarse el beneficio.
+        }
     });
 
     document.addEventListener('change', event => {

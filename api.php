@@ -209,9 +209,10 @@ try {
                 is_array($input['items'] ?? null) ? $input['items'] : [],
                 (string) ($input['channel'] ?? 'web'),
                 (string) ($input['payment_method'] ?? 'bank_transfer'),
-                !empty($_SESSION['cart_surprise_unlocked'])
+                !empty($_SESSION['cart_surprise_unlocked']),
+                !empty($_SESSION['cart_klaus_discount_unlocked'])
             );
-            if (!is_array($cached)) unset($_SESSION['cart_surprise_unlocked'], $_SESSION['cart_surprise_checked']);
+            if (!is_array($cached)) unset($_SESSION['cart_surprise_unlocked'], $_SESSION['cart_surprise_checked'], $_SESSION['cart_klaus_discount_unlocked']);
             if ($requestKey !== '') {
                 $_SESSION['web_order_requests'] = array_slice((array) ($_SESSION['web_order_requests'] ?? []) + [$requestKey => $order], -10, null, true);
             }
@@ -236,6 +237,11 @@ try {
                 $_SESSION['cart_surprise_unlocked'] = $enabled && random_int(1, 100) <= $probability;
             }
             Http::json(['ok' => true, 'unlocked' => !empty($_SESSION['cart_surprise_unlocked'])]);
+
+        case 'reward_klaus':
+            $newlyUnlocked = empty($_SESSION['cart_klaus_discount_unlocked']);
+            $_SESSION['cart_klaus_discount_unlocked'] = true;
+            Http::json(['ok' => true, 'newly_unlocked' => $newlyUnlocked]);
 
         case 'upload_proof':
             $proof = $app['proofs']->receive(
