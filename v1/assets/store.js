@@ -114,11 +114,12 @@
     }
 
     function reactKlaus(kind = '') {
-        if (!rewardOn('reward_klaus_enabled') || !rewardOn('reward_klaus_animations_enabled') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (!rewardOn('reward_klaus_enabled') || !rewardOn('reward_klaus_animations_enabled')) return false;
         klausReaction = kind || 'is-reacting';
         window.clearTimeout(klausTimer);
-        klausTimer = window.setTimeout(() => { klausReaction = ''; renderCart(); }, 850);
+        klausTimer = window.setTimeout(() => { klausReaction = ''; renderCart(); }, 1400);
         renderCart();
+        return true;
     }
 
     function prepareKlausClink() {
@@ -1874,7 +1875,7 @@
     window.Klaus?.attach(document, '.klaus', async () => {
         klausAwake = true;
         window.sessionStorage.setItem(KLAUS_AWAKE_STORAGE_KEY, '1');
-        reactKlaus('is-petted is-celebrating');
+        if (!reactKlaus('is-petted is-celebrating')) renderCart();
         if (klausRewardShown || klausDiscountPending) return;
         const playClink = prepareKlausClink();
         const rewardAt = Date.now() + 4000;
