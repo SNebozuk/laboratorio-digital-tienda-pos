@@ -45,6 +45,19 @@ final class DeliveryService
         return $slots;
     }
 
+    /** @return array{sale_count: int, total_cents: int} */
+    public function summary(): array
+    {
+        $orders = [];
+        foreach ($this->slots() as $slot) {
+            foreach ($slot['orders'] as $order) $orders[] = $order;
+        }
+        return [
+            'sale_count' => count($orders),
+            'total_cents' => array_sum(array_map(static fn (array $order): int => (int) $order['total_cents'], $orders)),
+        ];
+    }
+
     /** @return array<string, mixed> */
     public function saveSlot(int $slot, array $input, int $actorUserId): array
     {

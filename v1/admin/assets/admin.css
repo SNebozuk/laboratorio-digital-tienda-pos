@@ -3448,9 +3448,34 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 /* Reservar el ancho de la barra vertical evita que los buscadores "salten"
    hacia el centro cuando una búsqueda deja la página sin resultados. */
 html { overflow-y: scroll; scrollbar-gutter: stable; }
-.admin-sidebar { padding:22px 10px 15px; background:#f1f3f5; border-right-color:#dde1e6; }
+.admin-sidebar { padding:22px 10px 15px; background:#d9dde2; border-right-color:#c4c9d0; }
 .admin-sidebar .admin-nav-button { color:#4f596b; }
 .admin-sidebar .admin-nav-button:hover,.admin-sidebar .admin-nav-button.active { background:#e6e9ed; color:#3d356f; }
+.statistics-content { display:grid; gap:18px; max-width:1060px; }
+.statistics-periods { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.statistics-period-card,.statistics-card { position:relative; overflow:hidden; padding:20px; border:1px solid #dce2ea; border-radius:16px; background:#fff; box-shadow:0 5px 18px rgba(34,47,70,.05); }
+.statistics-period-card > span,.statistics-card .eyebrow { display:block; margin:0; color:#657086; font-size:11px; font-weight:850; letter-spacing:.1em; }
+.statistics-period-card > strong { display:block; margin-top:9px; color:#303c55; font-size:36px; line-height:1; font-variant-numeric:tabular-nums; }
+.statistics-period-card > small,.statistics-period-card > em,.statistics-card > small,.statistics-card > span { display:block; margin-top:5px; color:#6c778b; font-size:12px; font-style:normal; }
+.statistics-period-card > b { display:block; margin-top:13px; color:#25314a; font-size:18px; }
+.statistics-period-card > i { display:block; width:var(--statistics-size); height:7px; margin-top:12px; border-radius:999px; background:linear-gradient(90deg,#665be7,#a49cff); }
+.statistics-period-card > em { margin-top:8px; }
+.statistics-grid { display:grid; grid-template-columns:minmax(240px,.8fr) minmax(0,1.5fr); gap:14px; }
+.statistics-card { min-height:218px; }
+.statistics-edp-card { background:linear-gradient(145deg,#edf6ff,#fff 62%); }
+.statistics-edp-card > div { display:flex; align-items:center; gap:10px; }
+.statistics-icon { display:grid !important; width:38px; height:38px; margin:0 !important; place-items:center; border-radius:12px; background:#d8edff; font-size:20px !important; }
+.statistics-edp-card > strong { display:block; margin-top:20px; color:#176193; font-size:48px; line-height:1; font-variant-numeric:tabular-nums; }
+.statistics-edp-card > b { display:block; margin-top:15px; color:#25314a; font-size:21px; }
+.statistics-discounts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:18px; }
+.statistics-discount { min-width:0; padding:13px; border-radius:12px; background:#f7f8fb; }
+.statistics-discount > span { display:block; font-size:22px; }
+.statistics-discount > strong { display:block; margin-top:6px; color:#303c55; font-size:27px; line-height:1; }
+.statistics-discount > small { display:block; min-height:30px; margin-top:5px; color:#667186; font-size:11px; font-weight:700; }
+.statistics-discount > i { display:block; height:6px; margin-top:8px; overflow:hidden; border-radius:999px; background:#e2e6ed; }
+.statistics-discount > i > b { display:block; height:100%; border-radius:inherit; background:#695ee5; }
+.statistics-discount-klaus > i > b { background:#e39128; }.statistics-discount-surprise > i > b { background:#d35f91; }
+@media (max-width:700px) { .statistics-periods,.statistics-grid,.statistics-discounts { grid-template-columns:1fr; }.statistics-card { min-height:0; }.statistics-discount > small { min-height:0; } }
 .product-search-tools { display:flex; align-items:stretch; gap:9px; }
 .product-search-tools { width:min(100%,760px); min-height:46px; margin:0 auto 18px 0; flex:none; box-sizing:border-box; }
 .product-search-tools input { flex:1 1 auto; min-width:0; }

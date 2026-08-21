@@ -885,6 +885,33 @@ final class OrderService
     }
 
     /** @return array<string, mixed> */
+    public function statistics(): array
+    {
+        $periods = [
+            'daily' => "date(archived_at, 'localtime') = date('now', 'localtime')",
+            'weekly' => "date(archived_at, 'localtime') >= date('now', '-6 days', 'weekday 1', 'localtime')",
+            'monthly' => "strftime('%Y-%m', archived_at, 'localtime') = strftime('%Y-%m', 'now', 'localtime')",
+        ];
+        $archived = [];
+        foreach ($periods as $period => $dateFilter) {
+            $archived[$period] = $this->pdo->query(
+                "SELECT COUNT(*) AS sale_count, COALESCE(SUM(total_cents), 0) AS total_cents
+                 FROM orders WHERE archived_at IS NOT NULL AND {$dateFilter}"
+            )->fetch();
+        }
+
+        $discounts = $this->pdo->query(
+            "SELECT
+                COALESCE(SUM(CASE WHEN discount_type LIKE '%klaus%' THEN 1 ELSE 0 END), 0) AS klaus,
+                COALESCE(SUM(CASE WHEN discount_type LIKE '%quantity%' THEN 1 ELSE 0 END), 0) AS quantity,
+                COALESCE(SUM(CASE WHEN discount_type LIKE '%surprise%' THEN 1 ELSE 0 END), 0) AS surprise
+             FROM orders WHERE archived_at IS NOT NULL"
+        )->fetch();
+
+        return ['archived' => $archived, 'discounts' => $discounts ?: []];
+    }
+
+    /** @return array<string, mixed> */
     public function orderDetail(int $orderId): array
     {
         $query = $this->pdo->prepare('SELECT * FROM orders WHERE id = :id');

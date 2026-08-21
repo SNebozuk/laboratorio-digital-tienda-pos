@@ -153,6 +153,7 @@
         invitationList: document.getElementById('invitation-list'),
         invitationsBadge: document.getElementById('invitations-badge'),
         ordersBadge: document.getElementById('orders-badge'),
+        statisticsContent: document.getElementById('statistics-content'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -323,7 +324,7 @@
     }
 
     function showView(view) {
-        const availableViews = new Set(['orders', 'deliveries', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -350,6 +351,7 @@
         if (view === 'deliveries') {
             loadDeliverySlots();
         }
+        if (view === 'statistics') loadStatistics();
         if (view === 'settings') {
             loadSettings();
         }
@@ -3420,6 +3422,66 @@
         url.searchParams.set('ids', ids.join(','));
         url.searchParams.set('layout', layout === 'individual' ? 'individual' : 'grouped');
         window.open(url.href, '_blank', 'noopener');
+    }
+
+    async function loadStatistics() {
+        if (!elements.statisticsContent) return;
+        elements.statisticsContent.innerHTML = '<p class="empty-copy">Calculando estadísticas…</p>';
+        try {
+            const data = await apiGet('statistics');
+            renderStatistics(data.statistics || {}, data.deliveries || {});
+        } catch (error) {
+            elements.statisticsContent.innerHTML = '<p class="empty-copy">No pudimos cargar las estadísticas.</p>';
+            toast(error.message);
+        }
+    }
+
+    function renderStatistics(statistics, deliveries) {
+        if (!elements.statisticsContent) return;
+        const periods = [
+            ['daily', 'HOY', 'Ventas archivadas hoy'],
+            ['weekly', 'SEMANA', 'Desde el lunes'],
+            ['monthly', 'MES', 'Mes en curso'],
+        ].map(([key, label, detail]) => ({ key, label, detail, ...(statistics.archived?.[key] || {}) }));
+        const maximum = Math.max(1, ...periods.map(period => Number(period.total_cents || 0)));
+        const discounts = [
+            ['🐾', 'Premio de Klaus', Number(statistics.discounts?.klaus || 0), 'klaus'],
+            ['↗', 'Barra de avance', Number(statistics.discounts?.quantity || 0), 'quantity'],
+            ['🎁', 'Caja sorpresa', Number(statistics.discounts?.surprise || 0), 'surprise'],
+        ];
+        const discountMaximum = Math.max(1, ...discounts.map(([, , count]) => count));
+        elements.statisticsContent.innerHTML = `
+            <div class="statistics-periods">
+                ${periods.map(period => `
+                    <article class="statistics-period-card">
+                        <span>${period.label}</span>
+                        <strong>${Number(period.sale_count || 0)}</strong>
+                        <small>ventas archivadas</small>
+                        <b>${money(period.total_cents)}</b>
+                        <i style="--statistics-size:${Math.max(8, Math.round(Number(period.total_cents || 0) / maximum * 100))}%"></i>
+                        <em>${period.detail}</em>
+                    </article>
+                `).join('')}
+            </div>
+            <div class="statistics-grid">
+                <section class="statistics-card statistics-edp-card">
+                    <div><span class="statistics-icon">📦</span><p class="eyebrow">EN EDP AHORA</p></div>
+                    <strong>${Number(deliveries.sale_count || 0)}</strong><span>ventas unitarias en la planilla</span>
+                    <b>${money(deliveries.total_cents)}</b><small>importe total de Entrega de pedidos</small>
+                </section>
+                <section class="statistics-card">
+                    <p class="eyebrow">DESCUENTOS EN VENTAS ARCHIVADAS</p>
+                    <div class="statistics-discounts">
+                        ${discounts.map(([icon, label, count, tone]) => `
+                            <div class="statistics-discount statistics-discount-${tone}">
+                                <span>${icon}</span><strong>${count}</strong><small>${label}</small>
+                                <i><b style="width:${Math.round(count / discountMaximum * 100)}%"></b></i>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+            </div>
+        `;
     }
 
     async function loadReports() {

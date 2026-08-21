@@ -87,6 +87,7 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button active admin-nav-orders" type="button" data-view="orders">Lista de Ventas <b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
                         <button class="admin-nav-button" type="button" data-view="deliveries">Entrega de pedidos</button>
                     </div>
+                    <button class="admin-nav-button" type="button" data-view="statistics">Estadísticas</button>
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
@@ -136,6 +137,7 @@ header('Referrer-Policy: same-origin');
                     <select id="mobile-view">
                         <option value="orders">Lista de Ventas</option>
                         <option value="deliveries">Entrega de Pedidos</option>
+                        <option value="statistics">Estadísticas</option>
                         <option value="products">Productos</option>
                         <?php if ($user['role'] === 'admin'): ?>
                             <option value="tutorials">Aprende</option>
@@ -366,6 +368,17 @@ header('Referrer-Policy: same-origin');
                             <tbody id="delivery-slots"></tbody>
                         </table>
                     </div>
+                </section>
+
+                <section class="admin-view" id="view-statistics">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">PULSO DEL NEGOCIO</p>
+                            <h1 class="admin-page-title">ESTADÍSTICAS</h1>
+                            <p>Una mirada simple a las ventas archivadas, Entregas y beneficios usados.</p>
+                        </div>
+                    </div>
+                    <div id="statistics-content" class="statistics-content"><p class="empty-copy">Calculando estadísticas…</p></div>
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>

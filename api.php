@@ -86,6 +86,14 @@ try {
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'slots' => $app['deliveries']->slots()]);
 
+            case 'statistics':
+                $app['auth']->requireUser();
+                Http::json([
+                    'ok' => true,
+                    'statistics' => $app['orders']->statistics(),
+                    'deliveries' => $app['deliveries']->summary(),
+                ]);
+
             case 'invitations':
                 $app['auth']->requireAdmin();
                 Http::json(['ok' => true] + $app['invitations']->all());
