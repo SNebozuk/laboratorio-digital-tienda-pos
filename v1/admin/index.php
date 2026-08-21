@@ -313,7 +313,7 @@ header('Referrer-Policy: same-origin');
                         <div class="order-page-actions">
                             <div class="order-quick-links">
                                 <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
-                                <a class="order-quick-link" href="pos.php" target="laboratorio-pos" rel="opener" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
+                                <a class="order-quick-link order-quick-link-pos" href="pos.php" target="laboratorio-pos" rel="opener" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
                             </div>
                         </div>
                     </div>
