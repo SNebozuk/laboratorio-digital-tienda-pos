@@ -23,6 +23,12 @@ final class BackupService
     /** @return array<string, mixed> */
     public function create(int $actorUserId, string $kind = 'manual'): array
     {
+        return $this->withBackupLock(fn (): array => $this->createUnlocked($actorUserId, $kind));
+    }
+
+    /** @return array<string, mixed> */
+    private function createUnlocked(int $actorUserId, string $kind): array
+    {
         $root = $this->backupRoot();
         if (!is_dir($root) && !mkdir($root, 0770, true) && !is_dir($root)) {
             throw new \RuntimeException('No se pudo crear la carpeta de respaldos.');
@@ -40,6 +46,7 @@ final class BackupService
             $databasePath = $directory . DIRECTORY_SEPARATOR . 'app.sqlite';
             $escapedPath = str_replace("'", "''", $databasePath);
             $this->pdo->exec("VACUUM INTO '" . $escapedPath . "'");
+            $this->verifyDatabase($databasePath);
 
             $proofStats = $this->copyProofs(
                 $this->storageRoot() . DIRECTORY_SEPARATOR . 'proofs',
@@ -58,6 +65,7 @@ final class BackupService
                 'database_file' => 'app.sqlite',
                 'database_bytes' => (int) filesize($databasePath),
                 'database_sha256' => hash_file('sha256', $databasePath),
+                'database_integrity' => 'ok',
                 'proof_file_count' => $proofStats['file_count'],
                 'proof_bytes' => $proofStats['bytes'],
                 'product_image_file_count' => $productImageStats['file_count'],
@@ -87,15 +95,17 @@ final class BackupService
     /** Crea una copia diaria como máximo una vez por fecha y conserva las últimas 30 automáticas. */
     public function createDailyIfDue(): ?array
     {
-        $today = (new DateTimeImmutable())->format('Y-m-d');
-        foreach ($this->recent(60) as $backup) {
-            if (($backup['kind'] ?? 'manual') === 'automatic' && str_starts_with((string) ($backup['created_at'] ?? ''), $today)) {
-                return null;
+        return $this->withBackupLock(function (): ?array {
+            $today = (new DateTimeImmutable())->format('Y-m-d');
+            foreach ($this->recent(60) as $backup) {
+                if (($backup['kind'] ?? 'manual') === 'automatic' && str_starts_with((string) ($backup['created_at'] ?? ''), $today)) {
+                    return null;
+                }
             }
-        }
-        $backup = $this->create(0, 'automatic');
-        $this->pruneAutomaticBackups(30);
-        return $backup;
+            $backup = $this->createUnlocked(0, 'automatic');
+            $this->pruneAutomaticBackups(30);
+            return $backup;
+        });
     }
 
     /** @return list<array<string, mixed>> */
@@ -214,6 +224,39 @@ final class BackupService
             if ($name !== '' && preg_match('/^[A-Za-z0-9-]+$/', $name)) {
                 $this->removeDirectory($this->backupRoot() . DIRECTORY_SEPARATOR . $name);
             }
+        }
+    }
+
+    private function verifyDatabase(string $databasePath): void
+    {
+        $backup = new PDO('sqlite:' . $databasePath, null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        ]);
+        $integrity = (string) $backup->query('PRAGMA integrity_check')->fetchColumn();
+        if ($integrity !== 'ok') {
+            throw new \RuntimeException('La copia de la base no superó la verificación de integridad.');
+        }
+    }
+
+    /** @template T @param callable(): T $operation @return T */
+    private function withBackupLock(callable $operation): mixed
+    {
+        $root = $this->backupRoot();
+        if (!is_dir($root) && !mkdir($root, 0770, true) && !is_dir($root)) {
+            throw new \RuntimeException('No se pudo crear la carpeta de respaldos.');
+        }
+        $lock = fopen($root . DIRECTORY_SEPARATOR . '.backup.lock', 'c');
+        if ($lock === false) {
+            throw new \RuntimeException('No se pudo bloquear la tarea de respaldo.');
+        }
+        try {
+            if (!flock($lock, LOCK_EX)) {
+                throw new \RuntimeException('No se pudo bloquear la tarea de respaldo.');
+            }
+            return $operation();
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
         }
     }
 

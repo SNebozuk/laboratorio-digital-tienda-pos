@@ -459,7 +459,7 @@ header('Referrer-Policy: same-origin');
                         <section class="settings-card backup-card">
                             <p class="eyebrow">RESPALDOS</p>
                             <h2>Copias seguras</h2>
-                            <p>Se genera una copia automática diaria de la base y las fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
+                            <p>La tarea programada genera una copia automática diaria, verificada, de la base, comprobantes y fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
                             <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
                         </section>
                         <form id="ses-test-form" class="settings-card backup-card">

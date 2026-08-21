@@ -41,11 +41,13 @@ subirse a GitHub.
 9. Rechazar un comprobante de ensayo y verificar que el nuevo enlace recibido
    por email permita cargar otro archivo sin duplicar la reserva.
 10. Crear un respaldo desde Reportes.
-11. Programar por cron cada minuto para cancelar con precisión las reservas en efectivo:
+11. Programar por cron cada minuto la tarea de mantenimiento. Además de cancelar con precisión las reservas y procesar correos, crea un respaldo automático diario (base SQLite consistente, comprobantes y fotos). Usar la ruta privada real del hosting:
 
 ```text
 php /ruta/privada/al/proyecto/tasks/maintenance.php
 ```
+
+   La tarea se puede ejecutar varias veces: el respaldo se bloquea para evitar duplicados y sólo crea uno por día. Conserva las últimas 30 copias automáticas. Las copias quedan en el almacenamiento privado del servidor; activar además los snapshots o respaldos externos de DonWeb para cubrir una pérdida total de la cuenta de hosting.
 
 12. Crear y validar la casilla de ventas, SPF y DKIM. Configurar en `config.local.php` el servidor SMTP, puerto, cifrado, usuario y contraseña de la casilla.
 13. Activar `mail_enabled` y comprobar recepción real. La misma tarea procesa la cola de correo; para una prueba inmediata se puede ejecutar manualmente `php tasks/maintenance.php`.
