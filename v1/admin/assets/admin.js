@@ -839,8 +839,8 @@
                     </button>
                     <strong class="product-admin-price">${adminProductPrice(product)}</strong>
                     <div class="product-admin-actions">
-                        <button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace del producto" aria-label="Copiar enlace de ${escapeHtml(product.name)}">&#128279;</button>
-                        <button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button>
+                        <button class="small-button icon-action-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace del producto" aria-label="Copiar enlace de ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15"/></svg></button>
+                        <button class="small-button icon-action-button" type="button" data-duplicate-product="${Number(product.id)}" title="Duplicar producto" aria-label="Duplicar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="1"/><path d="M15 9V6a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/></svg></button>
                     </div>
                 </header>
                 <div>
@@ -977,7 +977,7 @@
         const toolbar = `
             <div class="product-bulk-toolbar">
                 <label class="product-select-all"><input type="checkbox" id="select-all-products" ${allSelected ? 'checked' : ''}> <span>Seleccionar todo</span></label>
-                <div class="product-toolbar-menus"><button class="product-toolbar-text" type="button" data-open-featured-products>Destacados${state.featuredProductIds.size ? ` · ${state.featuredProductIds.size}` : ''}</button><button class="secondary-button product-filter-button" type="button" data-open-product-filters><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8v5l-4 2v-7Z"/></svg> FILTRAR${state.productCategoryId || state.productAvailability.length || state.productVisibility.length ? ' · ACTIVO' : ''}</button></div>
+                <div class="product-toolbar-menus"><button class="product-toolbar-text" type="button" data-open-product-filters>FILTRAR${state.productCategoryId || state.productAvailability.length || state.productVisibility.length ? ' · ACTIVO' : ''}</button></div>
             </div>
             <div class="order-actions-bar product-actions-bar" ${selectedCount ? '' : 'hidden'}>
                 <strong class="selected-orders-count product-selection-count">${selectedCount} ${singularSelection ? 'producto seleccionado' : 'productos seleccionados'}</strong>
@@ -1005,7 +1005,7 @@
                         <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong>${hasVariants ? `<small>${product.variants.length} variantes</small>` : ''}</span></button>
                         <span class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}" title="${visible ? 'Visible' : 'Oculto'}" aria-label="${visible ? 'Visible' : 'Oculto'}"><i aria-hidden="true"></i>${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</span>
                         ${inlineFields}
-                        <div class="product-table-actions"><button class="small-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace">&#128279;</button><button class="small-button" type="button" data-duplicate-product="${Number(product.id)}">Duplicar</button><button class="small-button product-delete-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}">&#128465;</button></div>
+                        <div class="product-table-actions"><button class="small-button icon-action-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace" aria-label="Copiar enlace de ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15"/></svg></button><button class="small-button icon-action-button" type="button" data-duplicate-product="${Number(product.id)}" title="Duplicar producto" aria-label="Duplicar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="1"/><path d="M15 9V6a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/></svg></button><button class="small-button icon-action-button product-delete-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button></div>
                     </div>${hasVariants ? product.variants.map(variant => {
                         const name = variantDisplayName(product, variant);
                         return `<div class="product-variant-inline-row ${product.active && variant.active ? '' : 'is-hidden'}" role="row">

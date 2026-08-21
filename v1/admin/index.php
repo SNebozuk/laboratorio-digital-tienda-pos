@@ -158,7 +158,7 @@ header('Referrer-Policy: same-origin');
                             <h1>PRODUCTOS</h1>
                             <p>Precio y stock se editan directamente por variante.</p>
                         </div>
-                        <div class="order-page-actions"><button class="primary-button fit-button" id="new-product-button" type="button">NUEVO PRODUCTO</button></div>
+                        <div class="order-page-actions product-page-actions"><button class="secondary-button" type="button" data-open-featured-products>DESTACADOS</button><button class="primary-button fit-button" id="new-product-button" type="button">NUEVO PRODUCTO</button></div>
                     </div>
                     <div class="admin-search product-search-tools">
                         <input id="admin-product-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" placeholder="Buscar por título, variante, SKU o código">
