@@ -57,39 +57,13 @@ dd {
     margin: 4px 0 0;
 }
 
-table {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-}
-
-th,
-td {
-    padding: 8px 7px;
-    border-bottom: 1px solid #b8bec4;
-    text-align: left;
-    vertical-align: middle;
-}
-
-th {
-    background: #d9dde1;
-    font-size: 9px;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-}
-tbody tr:nth-child(even) { background: #e9ecef; }
-tbody tr:nth-child(odd) { background: #fff; }
-th:nth-child(1), td:nth-child(1) { width: 10%; text-align: center; }
-th:nth-child(2), td:nth-child(2) { width: 16%; }
-th:nth-child(3), td:nth-child(3) { width: 46%; }
-th:nth-child(4), td:nth-child(4) { width: 15%; }
-th:nth-child(5), td:nth-child(5) { width: 13%; text-align: right; }
-.quantity { font-size: 20px; font-weight: 900; line-height: 1; }
-.receipt-variant { font-family: "Arial Narrow", Arial, sans-serif; font-size: 13px; font-weight: 850; text-transform: uppercase; overflow-wrap: anywhere; }
-.receipt-product { font-family: "Arial Narrow", Arial, sans-serif; font-size: 13px; font-weight: 850; letter-spacing: -.01em; text-transform: uppercase; white-space: normal; overflow-wrap: anywhere; }
-.receipt-product-long { font-size: 10px; letter-spacing: -.025em; }
-.receipt-product-very-long { font-size: 8px; letter-spacing: -.035em; }
-.receipt-sku, .receipt-price { color: #4f555b; font-size: 9px; font-weight: 650; overflow-wrap: anywhere; }
+.receipt-items { border-top: 1px solid #111; }
+.receipt-product-group { margin: 0; padding: 12px 0 10px; border-bottom: 1px solid #b8bec4; }
+.receipt-product-group h3 { margin: 0 0 7px; font-family: "Arial Narrow", Arial, sans-serif; font-size: 17px; font-weight: 400; letter-spacing: .01em; text-transform: uppercase; overflow-wrap: anywhere; }
+.receipt-item { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 9px; align-items: baseline; padding: 3px 0 3px 4px; }
+.quantity { font-size: 28px; font-weight: 400; line-height: .9; text-align: center; }
+.receipt-variant { font-family: "Arial Narrow", Arial, sans-serif; font-size: 15px; font-weight: 400; text-transform: uppercase; overflow-wrap: anywhere; }
+.receipt-item-details { color: #4f555b; font-size: 10px; font-weight: 400; text-align: right; white-space: nowrap; }
 
 small,
 .footer {
@@ -128,10 +102,11 @@ small,
     .receipt-logo-text strong { font-size: 11px; }
     .receipt-logo-text span { font-size: 8px; }
 
-    th, td { padding: 7px 5px; }
-    .receipt-product, .receipt-variant { font-size: 11px; }
-    .receipt-product-long { font-size: 9px; }
-    .receipt-product-very-long { font-size: 8px; }
+    .receipt-product-group h3 { font-size: 15px; }
+    .receipt-item { grid-template-columns: 34px minmax(0, 1fr); gap: 7px; }
+    .quantity { font-size: 24px; }
+    .receipt-variant { font-size: 13px; }
+    .receipt-item-details { grid-column: 2; font-size: 9px; text-align: left; }
 }
 
 @media print {
@@ -158,10 +133,7 @@ small,
         page-break-inside: avoid;
     }
 
-    thead { display: table-header-group; }
-    tr { break-inside: avoid; page-break-inside: avoid; }
-    tbody tr:nth-child(even) { background: #e9ecef !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    th { background: #d9dde1 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .receipt-product-group { break-inside: avoid; page-break-inside: avoid; }
     .receipt-individual .receipt-order { break-before: page; page-break-before: always; }
     .receipt-individual .receipt-order:first-of-type { break-before: auto; page-break-before: auto; }
 }
