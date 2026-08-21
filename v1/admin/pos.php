@@ -64,8 +64,8 @@ header('Referrer-Policy: same-origin');
                 </div>
                 <div id="pos-cart-lines" class="cart-lines"></div>
                 <div class="pos-customer-checkout">
-                    <label class="pos-customer-field">NOMBRE Y APELLIDO DEL CLIENTE · OPCIONAL<input id="pos-customer" value="" placeholder="Dejar vacío para Consumidor final" autocomplete="name"></label>
-                    <label class="pos-customer-field">WHATSAPP DEL CLIENTE<input id="pos-customer-phone" value="" inputmode="tel" placeholder="Obligatorio si informás un nombre" autocomplete="tel"></label>
+                    <input id="pos-customer" value="" placeholder="Nombre y apellido (opcional)" autocomplete="name" aria-label="Nombre y apellido del cliente, opcional">
+                    <input id="pos-customer-phone" value="" inputmode="tel" placeholder="WhatsApp" autocomplete="tel" aria-label="WhatsApp del cliente">
                 </div>
                 <button class="primary-button" id="complete-sale-button" type="button" disabled>FINALIZAR VENTA</button>
             </aside>
