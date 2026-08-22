@@ -201,11 +201,11 @@ body.home-mode .catalog-intro p { max-width:720px; margin:9px 0 0; color:#55445f
 @media (max-width:700px) { body.home-mode .catalog-intro { min-height:112px; padding:23px 20px; } body.home-mode .catalog-intro h1 { font-size:35px; } body.home-mode .catalog-intro p { font-size:13px; line-height:1.4; } }
 
 /* Vistas de productos */
-.product-view-switcher { position:sticky; top:8px; z-index:16; display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin:0 0 18px; padding:9px; border:1px solid #ddcdea; border-radius:12px; background:rgba(255,255,255,.97); box-shadow:0 7px 18px rgba(62,38,91,.09); }
+.product-view-switcher { position:sticky; top:8px; z-index:16; display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin:0 0 18px; padding:11px; border:1px solid #ddcdea; border-radius:12px; background:rgba(255,255,255,.97); box-shadow:0 7px 18px rgba(62,38,91,.09); }
 .product-view-switcher > span { margin:0 4px; color:#796d80; font-size:10px; font-weight:850; letter-spacing:.06em; }
-.product-view-switcher button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:34px; padding:7px 11px; border:1px solid transparent; border-radius:8px; background:transparent; color:#55445f; font:inherit; font-size:12px; font-weight:750; cursor:pointer; }
-.product-view-switcher button:hover { background:#f7f0ff; }
-.product-view-switcher button.active { border-color:#cdb3e8; background:#f0e9fa; color:#7652b8; }
+.product-view-switcher button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:9px 14px; border:1px solid #e2b3ca; border-radius:10px; background:#fff; color:#55445f; box-shadow:0 3px 9px rgba(165,26,113,.09); font:inherit; font-size:12px; font-weight:750; cursor:pointer; transition:transform .16s ease,background .16s ease,box-shadow .16s ease; }
+.product-view-switcher button:hover { transform:translateY(-2px); border-color:#c45b8d; background:#fff1f7; box-shadow:0 7px 14px rgba(165,26,113,.16); }
+.product-view-switcher button.active { border-color:#b33f77; background:#f8c5db; color:#8f145f; box-shadow:0 5px 12px rgba(165,26,113,.16); }
 .product-view-switcher svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .catalog-view-groups { display:grid; gap:28px; }
 .catalog-view-group h2 { margin:0 0 12px; color:#38234f; font-size:20px; }
