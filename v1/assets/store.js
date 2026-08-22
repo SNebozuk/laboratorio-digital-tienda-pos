@@ -144,13 +144,15 @@
         };
     }
 
-    function showKlausRewardDialog() {
+    function showKlausRewardDialog(alreadyUnlocked = false) {
         const dialog = document.createElement('section');
         dialog.className = 'klaus-reward-dialog';
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-modal', 'true');
         dialog.setAttribute('aria-label', 'Regalo de Klaus');
-        dialog.innerHTML = '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p>Ganaste <b>2% de descuento adicional</b>, acumulable en toda tu compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
+        dialog.innerHTML = alreadyUnlocked
+            ? '<div><span aria-hidden="true">🐾</span><strong>¡Klaus recuerda su regalo!</strong><p>Tu <b>2% de descuento adicional</b> ya está activo en esta compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>'
+            : '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p>Ganaste <b>2% de descuento adicional</b>, acumulable en toda tu compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
         const close = () => {
             klausDiscountAcknowledged = true;
             dialog.remove();
@@ -1878,16 +1880,17 @@
         klausAwake = true;
         window.sessionStorage.setItem(KLAUS_AWAKE_STORAGE_KEY, '1');
         if (!reactKlaus('is-petted is-celebrating')) renderCart();
-        if (klausRewardShown || klausDiscountPending) return;
+        if (klausDiscountPending) return;
         const playClink = prepareKlausClink();
-        const rewardAt = Date.now() + 4000;
+        const alreadyUnlocked = klausDiscountUnlocked;
+        const rewardAt = Date.now() + 700;
         const showReward = () => window.setTimeout(() => {
             klausDiscountPending = false;
             klausRewardShown = true;
             window.sessionStorage.setItem(KLAUS_REWARD_SHOWN_STORAGE_KEY, '1');
             renderCart();
             playClink();
-            showKlausRewardDialog();
+            showKlausRewardDialog(alreadyUnlocked);
         }, Math.max(0, rewardAt - Date.now()));
         if (klausDiscountUnlocked) {
             klausDiscountPending = true;
