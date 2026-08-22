@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 31;
+    private const CURRENT_MIGRATION_VERSION = 32;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -77,6 +77,7 @@ final class Database
                 self::migrateTutorials($pdo);
                 self::migrateOrderDiscounts($pdo);
                 self::migrateStoreVisits($pdo);
+                self::migratePulgaSettings($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -124,8 +125,23 @@ final class Database
         self::migrateOrderNotificationSeen($pdo);
         self::migrateTutorials($pdo);
         self::migrateStoreVisits($pdo);
+        self::migratePulgaSettings($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    private static function migratePulgaSettings(PDO $pdo): void
+    {
+        $version = 32;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        $insert = $pdo->prepare('INSERT OR IGNORE INTO settings(key, value) VALUES(:key, :value)');
+        foreach (['pulga_enabled' => '1', 'pulga_frequency_seconds' => '75', 'pulga_animations_enabled' => '1'] as $key => $value) {
+            $insert->execute(['key' => $key, 'value' => $value]);
+        }
+        $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
     }
 
     private static function migrateOrderDiscounts(PDO $pdo): void
@@ -862,6 +878,9 @@ final class Database
             'key' => 'business_hours',
             'value' => 'Lunes a viernes de 9 a 17 h',
         ]);
+        foreach (['pulga_enabled' => '1', 'pulga_frequency_seconds' => '75', 'pulga_animations_enabled' => '1'] as $key => $value) {
+            $insertSetting->execute(['key' => $key, 'value' => $value]);
+        }
         $pdo->exec(
             'INSERT OR IGNORE INTO schema_migrations(version) VALUES(3)'
         );

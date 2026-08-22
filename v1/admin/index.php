@@ -463,6 +463,14 @@ header('Referrer-Policy: same-origin');
                                     <label>MENSAJE COMPRA LISTA<textarea name="reward_klaus_complete_text" rows="2"></textarea></label>
                                 </div>
                             </section>
+                            <section class="settings-subsection">
+                                <p class="eyebrow">PULGA / MASCOTA AMBIENTAL</p>
+                                <div class="settings-grid">
+                                    <label class="checkbox-setting"><input name="pulga_enabled" type="checkbox" value="1"><span><strong>Activar a Pulga</strong></span></label>
+                                    <label>FRECUENCIA DE APARICIÓN (SEGUNDOS)<input name="pulga_frequency_seconds" type="number" min="45" max="120"></label>
+                                    <label class="checkbox-setting"><input name="pulga_animations_enabled" type="checkbox" value="1"><span><strong>Activar animaciones de Pulga</strong></span></label>
+                                </div>
+                            </section>
                             <button class="primary-button fit-button" type="submit">
                                 GUARDAR CONFIGURACIÓN
                             </button>

@@ -28,6 +28,7 @@ $assetVersion = substr(hash('sha256',
     (string) @file_get_contents(__DIR__ . '/assets/app.css')
     . (string) @file_get_contents(__DIR__ . '/assets/light.css')
     . (string) @file_get_contents(__DIR__ . '/assets/klaus.js')
+    . (string) @file_get_contents(__DIR__ . '/assets/pulga.js')
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
 ), 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
@@ -232,6 +233,11 @@ header('Referrer-Policy: same-origin');
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
             'klaus_discount_unlocked' => !empty($_SESSION['cart_klaus_discount_unlocked']),
             'rewards' => array_filter($publicSettings, static fn ($key) => str_starts_with((string) $key, 'reward_'), ARRAY_FILTER_USE_KEY),
+            'pulga' => [
+                'enabled' => $publicSettings['pulga_enabled'] ?? '1',
+                'frequency_seconds' => $publicSettings['pulga_frequency_seconds'] ?? '75',
+                'animations_enabled' => $publicSettings['pulga_animations_enabled'] ?? '1',
+            ],
             'featured_product_ids' => $featuredProductIds,
             'tutorials' => $app['tutorials']->publicList(),
             'contact' => [
@@ -245,6 +251,7 @@ header('Referrer-Policy: same-origin');
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
     <script src="<?= $escape($assetPath) ?>/klaus.js?v=<?= $escape($assetVersion) ?>" defer></script>
+    <script src="<?= $escape($assetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>
