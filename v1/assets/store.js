@@ -1466,7 +1466,7 @@
         // abandona la tienda hacia la página anterior del navegador.
         window.history.pushState({ catalogCheckout: true }, '', window.location.href);
         openModal(`
-            <button class="klaus-checkout" type="button" aria-label="Acariciar a Klaus"><img class="klaus-image" src="${escapeHtml(app.asset_url)}/klaus_checkout_sitting.png" alt=""></button>
+            <div class="klaus-checkout" aria-hidden="true"><img class="klaus-image" src="${escapeHtml(app.asset_url)}/klaus_checkout_sitting.png" alt=""></div>
             <h2 id="modal-title">TUS DATOS</h2>
             ${checkoutSteps(1)}
             <p class="checkout-lead">Solo necesitamos estos datos para identificar tu pedido.</p>
@@ -2013,12 +2013,6 @@
             window.Klaus?.pant(3600);
         }, 950);
         window.setTimeout(() => window.Klaus?.pose(klaus, 'home_petting_prompt'), 4800);
-    });
-
-    window.Klaus?.attach(document, '.klaus-checkout', (klaus) => {
-        window.Klaus?.pose(klaus, 'touch_bark_hearts');
-        window.setTimeout(() => { window.Klaus?.pose(klaus, 'after_touch_happy_tailwag'); window.Klaus?.pant(3200); }, 950);
-        window.setTimeout(() => window.Klaus?.pose(klaus, 'checkout_sitting'), 4300);
     });
 
     ['pointerdown', 'scroll', 'keydown'].forEach(type => document.addEventListener(type, keepKlausAwake, { passive: true }));
