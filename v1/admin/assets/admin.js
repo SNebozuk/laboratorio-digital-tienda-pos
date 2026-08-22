@@ -3463,6 +3463,12 @@
             ['monthly', 'MES', 'Mes en curso'],
         ].map(([key, label, detail]) => ({ key, label, detail, ...(statistics.archived?.[key] || {}) }));
         const maximum = Math.max(1, ...periods.map(period => Number(period.total_cents || 0)));
+        const visits = [
+            ['HOY', Number(statistics.visits?.daily || 0)],
+            ['SEMANA', Number(statistics.visits?.weekly || 0)],
+            ['MES', Number(statistics.visits?.monthly || 0)],
+            ['AÑO', Number(statistics.visits?.yearly || 0)],
+        ];
         const discounts = [
             ['🐾', 'Premio de Klaus', Number(statistics.discounts?.klaus || 0), 'klaus', statistics.beneficiaries?.klaus || []],
             ['↗', 'Barra de avance', Number(statistics.discounts?.quantity || 0), 'quantity', statistics.beneficiaries?.quantity || []],
@@ -3483,6 +3489,11 @@
                 `).join('')}
             </div>
             <div class="statistics-grid">
+                <section class="statistics-card statistics-visits-card">
+                    <div><span class="statistics-icon">◉</span><p class="eyebrow">VISITAS ÚNICAS · TIENDA ONLINE</p></div>
+                    <p>Personas distintas que visitaron el catálogo. No incluye sesiones de administración.</p>
+                    <div class="statistics-visits">${visits.map(([label, count]) => `<span><small>${label}</small><strong>${count}</strong></span>`).join('')}</div>
+                </section>
                 <section class="statistics-card statistics-edp-card">
                     <div><span class="statistics-icon">📦</span><p class="eyebrow">EN EDP AHORA</p></div>
                     <strong>${Number(deliveries.sale_count || 0)}</strong><span>ventas unitarias en la planilla</span>

@@ -931,7 +931,25 @@ final class OrderService
         }
         unset($names);
 
-        return ['archived' => $archived, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries];
+        $today = new \DateTimeImmutable('now', new \DateTimeZone('America/Argentina/Buenos_Aires'));
+        $visitPeriods = [
+            'daily' => $today->format('Y-m-d'),
+            'weekly' => $today->modify('monday this week')->format('Y-m-d'),
+            'monthly' => $today->format('Y-m'),
+            'yearly' => $today->format('Y'),
+        ];
+        $visits = [
+            'daily' => $this->pdo->prepare('SELECT COUNT(*) FROM store_visits WHERE visit_day = :value'),
+            'weekly' => $this->pdo->prepare('SELECT COUNT(DISTINCT visitor_hash) FROM store_visits WHERE visit_day >= :value'),
+            'monthly' => $this->pdo->prepare("SELECT COUNT(DISTINCT visitor_hash) FROM store_visits WHERE substr(visit_day, 1, 7) = :value"),
+            'yearly' => $this->pdo->prepare("SELECT COUNT(DISTINCT visitor_hash) FROM store_visits WHERE substr(visit_day, 1, 4) = :value"),
+        ];
+        foreach ($visits as $period => $query) {
+            $query->execute(['value' => $visitPeriods[$period]]);
+            $visits[$period] = (int) $query->fetchColumn();
+        }
+
+        return ['archived' => $archived, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries, 'visits' => $visits];
     }
 
     /** @return array<string, mixed> */

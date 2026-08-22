@@ -3,6 +3,20 @@ declare(strict_types=1);
 
 $app = require dirname(__DIR__) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
+if ($app['auth']->user() === null) {
+    $visitorId = (string) ($_COOKIE['laboratorio_store_visitor'] ?? '');
+    if (!preg_match('/^[a-f0-9]{64}$/', $visitorId)) {
+        $visitorId = bin2hex(random_bytes(32));
+        setcookie('laboratorio_store_visitor', $visitorId, [
+            'expires' => time() + 60 * 60 * 24 * 400,
+            'path' => '/',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+    }
+    $app['store_visits']->record($visitorId);
+}
 $catalog = []; // El catálogo se solicita luego de pintar la portada.
 $categoryTree = $app['categories']->tree();
 $publicSettings = $app['settings']->values();

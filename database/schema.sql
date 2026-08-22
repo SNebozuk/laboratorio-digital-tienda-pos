@@ -132,6 +132,15 @@ CREATE INDEX IF NOT EXISTS idx_orders_deadlines
 CREATE INDEX IF NOT EXISTS idx_orders_archived_created
     ON orders(archived_at, created_at);
 
+CREATE TABLE IF NOT EXISTS store_visits (
+    visitor_hash TEXT NOT NULL,
+    visit_day TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (visitor_hash, visit_day)
+);
+
+CREATE INDEX IF NOT EXISTS idx_store_visits_day ON store_visits(visit_day);
+
 CREATE TABLE IF NOT EXISTS delivery_slots (
     slot_number INTEGER PRIMARY KEY CHECK (slot_number BETWEEN 1 AND 100),
     location TEXT NOT NULL DEFAULT '',

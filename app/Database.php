@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 30;
+    private const CURRENT_MIGRATION_VERSION = 31;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -76,6 +76,7 @@ final class Database
             if ($previous->fetchColumn() !== false) {
                 self::migrateTutorials($pdo);
                 self::migrateOrderDiscounts($pdo);
+                self::migrateStoreVisits($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -122,6 +123,7 @@ final class Database
         self::migrateInvitations($pdo);
         self::migrateOrderNotificationSeen($pdo);
         self::migrateTutorials($pdo);
+        self::migrateStoreVisits($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
@@ -137,6 +139,24 @@ final class Database
             if (!in_array('discount_type', $names, true)) $pdo->exec("ALTER TABLE orders ADD COLUMN discount_type TEXT NOT NULL DEFAULT ''");
             if (!in_array('discount_percent', $names, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN discount_percent INTEGER NOT NULL DEFAULT 0');
             if (!in_array('discount_cents', $names, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN discount_cents INTEGER NOT NULL DEFAULT 0');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateStoreVisits(PDO $pdo): void
+    {
+        $version = 31;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS store_visits (
+                visitor_hash TEXT NOT NULL,
+                visit_day TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (visitor_hash, visit_day)
+            )");
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_store_visits_day ON store_visits(visit_day)');
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }
