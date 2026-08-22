@@ -232,6 +232,7 @@ header('Referrer-Policy: same-origin');
             'orders_enabled' => (bool) ($app['config']['orders_enabled'] ?? false),
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
             'klaus_discount_unlocked' => !empty($_SESSION['cart_klaus_discount_unlocked']),
+            'klaus_reward_checked' => !empty($_SESSION['cart_klaus_reward_checked']),
             'rewards' => array_filter($publicSettings, static fn ($key) => str_starts_with((string) $key, 'reward_'), ARRAY_FILTER_USE_KEY),
             'pulga' => [
                 'enabled' => $publicSettings['pulga_enabled'] ?? '1',

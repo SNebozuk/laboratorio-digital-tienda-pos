@@ -94,6 +94,7 @@
     let surpriseUnlocked = false;
     let surpriseChecked = false;
     let klausDiscountUnlocked = Boolean(app.klaus_discount_unlocked);
+    let klausRewardChecked = Boolean(app.klaus_reward_checked);
     let klausDiscountAcknowledged = false;
     let klausRewardShown = window.sessionStorage.getItem(KLAUS_REWARD_SHOWN_STORAGE_KEY) === '1';
     let klausAwake = window.sessionStorage.getItem(KLAUS_AWAKE_STORAGE_KEY) === '1';
@@ -1651,6 +1652,7 @@
             klausAwake = false;
             window.sessionStorage.removeItem(KLAUS_REWARD_SHOWN_STORAGE_KEY);
             window.sessionStorage.removeItem(KLAUS_AWAKE_STORAGE_KEY);
+            klausRewardChecked = false;
             const transferWhatsappUrl = whatsappUrl(data.order);
             state.cart.clear();
             persistCart();
@@ -1976,7 +1978,7 @@
             setKlausPose('after_touch_happy_tailwag', 4000);
             window.Klaus?.pant(3600);
         }, 950);
-        if (klausDiscountPending || klausRewardShown) return;
+        if (klausDiscountPending || klausRewardShown || klausRewardChecked) return;
         const playClink = prepareKlausClink();
         const rewardAt = Date.now() + 700;
         const showReward = () => window.setTimeout(() => {
@@ -1994,9 +1996,14 @@
         }
         klausDiscountPending = true;
         try {
-            await apiJson({ action: 'reward_klaus' });
-            klausDiscountUnlocked = true;
-            showReward();
+            const reward = await apiJson({ action: 'reward_klaus' });
+            klausRewardChecked = true;
+            if (reward.unlocked === true) {
+                klausDiscountUnlocked = true;
+                showReward();
+            } else {
+                klausDiscountPending = false;
+            }
         } catch (_) {
             klausDiscountPending = false;
             // El gesto y sus animaciones siguen funcionando aunque no pueda validarse el beneficio.
