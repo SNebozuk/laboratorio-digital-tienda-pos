@@ -524,6 +524,7 @@ header('Referrer-Policy: same-origin');
         </section>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <?php if ($user): ?><button class="admin-klaus" id="admin-klaus" type="button" aria-label="Acariciar a Klaus"><img class="admin-klaus-image" src="<?= $escape($storeAssetPath) ?>/klaus_checkout_sitting.png" alt=""></button><?php endif ?>
 
     <script id="admin-app-data" type="application/json"><?=
         json_encode([
@@ -540,7 +541,7 @@ header('Referrer-Policy: same-origin');
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
-    <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script><?php endif ?>
+    <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script><script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($assetVersion) ?>" defer></script><?php endif ?>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>

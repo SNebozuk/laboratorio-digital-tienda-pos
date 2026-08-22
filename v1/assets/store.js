@@ -100,6 +100,25 @@
     let klausDiscountPending = false;
     let klausReaction = '';
     let klausTimer = null;
+    const KLAUS_NORMAL_POSES = ['browsing_play_ball', 'browsing_play_bow', 'browsing_roll_over'];
+    let klausPose = 'browsing_play_bow';
+    let klausPoseTimer = 0;
+    let klausSleepTimer = 0;
+
+    function setKlausPose(pose, duration = 0) {
+        klausPose = pose;
+        window.clearTimeout(klausPoseTimer);
+        renderCart();
+        if (duration) {
+            klausPoseTimer = window.setTimeout(() => setKlausPose(KLAUS_NORMAL_POSES[Math.floor(Math.random() * KLAUS_NORMAL_POSES.length)]), duration);
+        }
+    }
+
+    function keepKlausAwake() {
+        window.clearTimeout(klausSleepTimer);
+        if (klausPose === 'idle_sleeping') setKlausPose('browsing_play_bow');
+        klausSleepTimer = window.setTimeout(() => setKlausPose('idle_sleeping'), 25000);
+    }
     function cartDiscount(subtotal, units) {
         const quantityPercent = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20) ? Number(rewards.reward_quantity_percent || 3) : 0;
         const surprisePercent = surpriseUnlocked && rewardOn('reward_surprise_enabled') ? Number(rewards.reward_surprise_percent || 5) : 0;
@@ -140,10 +159,14 @@
         root.querySelectorAll('.klaus').forEach((klaus) => {
             const prompt = klaus.querySelector('.klaus-pet-prompt');
             if (prompt) prompt.innerHTML = 'Hola. soy Klaus<br>me haces mimitos?';
-            if (klaus.querySelector('.klaus-image')) return;
+            const currentImage = klaus.querySelector('.klaus-image');
+            if (currentImage) {
+                currentImage.src = `${app.asset_url}/klaus_${klausPose}.png`;
+                return;
+            }
             const image = document.createElement('img');
             image.className = 'klaus-image';
-            image.src = `${app.asset_url}/klaus.svg`;
+            image.src = `${app.asset_url}/klaus_${klausPose}.png`;
             image.alt = '';
             image.setAttribute('aria-hidden', 'true');
             klaus.insertBefore(image, klaus.firstChild);
@@ -153,6 +176,9 @@
     function reactKlaus(kind = '') {
         if (!rewardOn('reward_klaus_enabled') || !rewardOn('reward_klaus_animations_enabled')) return false;
         klausReaction = kind || 'is-reacting';
+        if (kind.includes('petted')) setKlausPose('touch_bark_hearts');
+        else if (kind.includes('celebrating')) setKlausPose('progress_celebrate_20_products', 2200);
+        else if (kind) setKlausPose('cart_add_jump', 1000);
         window.clearTimeout(klausTimer);
         klausTimer = window.setTimeout(() => { klausReaction = ''; renderCart(); }, 1400);
         renderCart();
@@ -642,7 +668,12 @@
                 playRewardFanfare();
                 showQuantityRewardDialog(units, target);
             }
-            reactKlaus(celebration ? 'is-celebrating' : (wasEmpty ? 'is-waking' : ''));
+            if (celebration) {
+                reactKlaus('is-celebrating');
+            } else {
+                setKlausPose('cart_add_jump', 1000);
+                reactKlaus(wasEmpty ? 'is-waking' : 'is-reacting');
+            }
         }
         if (quantity > 0 && wasEmpty) checkSurprise();
     }
@@ -1030,6 +1061,7 @@
                     <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
                     <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Elegí una categoría desde el menú para ver solo esa sección.</small></button>
                 </div>
+                <button class="klaus-welcome" type="button" aria-label="Hacerle mimitos a Klaus"><img class="klaus-image" src="${escapeHtml(app.asset_url)}/klaus_home_petting_prompt.png" alt=""><span>Hacéle mimitos a Klaus 🐾</span></button>
             </section>
         `);
     }
@@ -1320,6 +1352,7 @@
 
     function openModal(html) {
         elements.modalContent.innerHTML = html;
+        protectKlausFromDarkReader(elements.modalContent);
         elements.modal.classList.add('open');
         elements.modal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
@@ -1643,6 +1676,7 @@
         const alias = order.bank?.alias || 'Pendiente de configurar';
         const holder = order.bank?.holder || 'Laboratorio Digital';
         const total = money(Number(order.total_cents));
+        klausPose = 'checkout_sitting';
         openModal(`
             ${checkoutSteps(3)}
             ${rewardOn('reward_checkout_celebration_enabled') ? `<div class="checkout-celebration" aria-hidden="true">${rewardOn('reward_checkout_confetti_enabled') ? '✦ ✦ ✦' : ''}<b>✓</b></div><p class="checkout-celebration-copy">¡Listo! Recibimos tu compra.</p>${klausMarkup(999, rewardOn('reward_klaus_messages_enabled') ? (rewards.reward_klaus_complete_text || '🎉 ¡Compra lista!') : '')}` : ''}
@@ -1929,6 +1963,10 @@
         klausAwake = true;
         window.sessionStorage.setItem(KLAUS_AWAKE_STORAGE_KEY, '1');
         if (!reactKlaus('is-petted is-celebrating')) renderCart();
+        window.setTimeout(() => {
+            setKlausPose('after_touch_happy_tailwag', 4000);
+            window.Klaus?.pant(3600);
+        }, 950);
         if (klausDiscountPending || klausRewardShown) return;
         const playClink = prepareKlausClink();
         const rewardAt = Date.now() + 700;
@@ -1955,6 +1993,23 @@
             // El gesto y sus animaciones siguen funcionando aunque no pueda validarse el beneficio.
         }
     });
+
+    window.Klaus?.attach(document, '.klaus-welcome', (klaus) => {
+        window.Klaus?.pose(klaus, 'touch_bark_hearts');
+        window.setTimeout(() => {
+            window.Klaus?.pose(klaus, 'after_touch_happy_tailwag');
+            window.Klaus?.pant(3600);
+        }, 950);
+        window.setTimeout(() => window.Klaus?.pose(klaus, 'home_petting_prompt'), 4800);
+    });
+
+    ['pointerdown', 'scroll', 'keydown'].forEach(type => document.addEventListener(type, keepKlausAwake, { passive: true }));
+    keepKlausAwake();
+    window.setInterval(() => {
+        if (KLAUS_NORMAL_POSES.includes(klausPose)) {
+            setKlausPose(KLAUS_NORMAL_POSES[Math.floor(Math.random() * KLAUS_NORMAL_POSES.length)]);
+        }
+    }, 6000);
 
     document.addEventListener('change', event => {
         if (event.target.matches('[data-quantity-input]')) {

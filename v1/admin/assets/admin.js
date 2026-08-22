@@ -133,6 +133,7 @@
         posCartLines: document.getElementById('pos-cart-lines'),
         posTotal: document.getElementById('pos-total'),
         posKlaus: document.getElementById('pos-klaus'),
+        adminKlaus: document.getElementById('admin-klaus'),
         posClearCart: document.getElementById('pos-clear-cart'),
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
@@ -263,11 +264,17 @@
     function petPosKlaus() {
         const klaus = elements.posKlaus;
         if (!klaus) return;
+        window.Klaus?.pose(klaus, 'touch_bark_hearts');
         klaus.classList.remove('is-petted');
         void klaus.offsetWidth;
         klaus.classList.add('is-petted');
         window.clearTimeout(state.posKlausTimer);
-        state.posKlausTimer = window.setTimeout(() => klaus.classList.remove('is-petted'), 1100);
+        state.posKlausTimer = window.setTimeout(() => {
+            klaus.classList.remove('is-petted');
+            window.Klaus?.pose(klaus, 'after_touch_happy_tailwag');
+            window.Klaus?.pant(3200);
+        }, 1100);
+        window.setTimeout(() => window.Klaus?.pose(klaus, 'checkout_sitting'), 4500);
         toast('🐾 ¡Klaus está contento!');
     }
 
@@ -1871,6 +1878,9 @@
     }
 
     function showPosSaleFinished(sale) {
+        window.Klaus?.pose(elements.posKlaus, 'cart_add_jump');
+        window.setTimeout(() => window.Klaus?.pose(elements.posKlaus, 'after_touch_happy_tailwag'), 1000);
+        window.setTimeout(() => window.Klaus?.pose(elements.posKlaus, 'checkout_sitting'), 3800);
         openModal(`
             <div class="pos-checkout-menu">
                 <p class="eyebrow">VENTA REGISTRADA</p>
@@ -5278,6 +5288,11 @@
     });
     elements.completeSale?.addEventListener('click', finishPosSaleDirectly);
     elements.posKlaus?.addEventListener('click', petPosKlaus);
+    window.Klaus?.attach(document, '.admin-klaus', (klaus) => {
+        window.Klaus?.pose(klaus, 'touch_bark_hearts');
+        window.setTimeout(() => { window.Klaus?.pose(klaus, 'after_touch_happy_tailwag'); window.Klaus?.pant(3200); }, 950);
+        window.setTimeout(() => window.Klaus?.pose(klaus, 'checkout_sitting'), 4300);
+    });
     elements.categoryTree?.addEventListener('dragstart', event => {
         const row = event.target.closest('[data-category-row]');
         if (!row) return;

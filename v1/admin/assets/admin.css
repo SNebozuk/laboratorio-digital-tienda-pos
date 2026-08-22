@@ -3031,7 +3031,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-add-products-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 10px; background: #1769e0; color: #fff; font-size: 26px; }
 .pos-sale-details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, auto); gap: 18px; align-items: end; margin-top: 18px; padding: 22px; border: 1px solid #dce2ed; border-radius: 14px; background: #fff; box-shadow: 0 4px 18px rgba(30, 40, 70, .035); }
 .pos-klaus { display:flex; align-items:center; gap:8px; padding:0; border:0; background:transparent; color:#6b4a22; color-scheme:only light; cursor:pointer; forced-color-adjust:none; }
-.pos-klaus-image { display:block; width:116px; height:78px; object-fit:contain; filter:drop-shadow(0 4px 3px rgba(105,68,28,.14)); }
+.pos-klaus-image { display:block; width:94px; height:78px; object-fit:contain; filter:drop-shadow(0 4px 3px rgba(105,68,28,.14)); }
+.admin-klaus { position:fixed; z-index:50; right:14px; bottom:14px; width:76px; height:76px; padding:0; border:0; background:transparent; cursor:pointer; }.admin-klaus-image { width:100%; height:100%; object-fit:contain; }.admin-klaus.is-petted .admin-klaus-image { animation:pos-klaus-pet .52s ease-in-out 2; }
 .pos-klaus-label { font-size:11px; font-weight:800; letter-spacing:.12em; }
 .pos-klaus.is-petted .pos-klaus-image { animation:pos-klaus-pet .52s ease-in-out 2; }.pos-klaus.is-petted::after { align-self:flex-start; padding:3px 7px; border-radius:999px; background:#fff0f6; color:#a51a71; content:'♥ ♥ ♥'; font-size:10px; font-weight:900; }
 @keyframes pos-klaus-pet { 30% { transform:translateY(-15px) rotate(-7deg) scale(1.13); } 58% { transform:translateY(3px) rotate(5deg) scale(.95); } }

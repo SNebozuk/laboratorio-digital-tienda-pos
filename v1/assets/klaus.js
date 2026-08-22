@@ -1,17 +1,43 @@
 (() => {
     'use strict';
 
+    const scriptUrl = document.currentScript?.src || 'assets/klaus.js';
+    const assetUrl = name => scriptUrl.replace(/klaus\.js(?:\?.*)?$/, name);
+    const bark = new Audio(assetUrl('klaus-bark.mp3'));
+    const panting = new Audio(assetUrl('klaus_happy_pantin.mp3'));
     const timers = new WeakMap();
-    const barkScript = document.currentScript?.src || 'assets/klaus.js';
-    const bark = new Audio(barkScript.replace(/klaus\.js(?:\?.*)?$/, 'klaus-bark.mp3'));
+    let lastBarkAt = 0;
+
+    bark.volume = .38;
+    panting.volume = .22;
+
+    const play = (audio, restart = true) => {
+        if (restart) audio.currentTime = 0;
+        audio.play().catch(() => {});
+    };
 
     const barkOnce = () => {
-        bark.currentTime = 0;
-        bark.play().catch(() => {});
+        if (Date.now() - lastBarkAt < 7000) return false;
+        lastBarkAt = Date.now();
+        play(bark);
+        return true;
+    };
+
+    const pant = (duration = 3800) => {
+        panting.currentTime = 0;
+        play(panting, false);
+        window.setTimeout(() => { panting.pause(); panting.currentTime = 0; }, duration);
+    };
+
+    const pose = (element, name) => {
+        const image = element?.querySelector?.('.klaus-image, .pos-klaus-image, .admin-klaus-image');
+        if (!image) return;
+        image.src = assetUrl(`klaus_${name}.png`);
+        image.dataset.klausPose = name;
     };
 
     const pet = element => {
-        if (!element || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (!element) return;
         window.clearTimeout(timers.get(element));
         element.classList.remove('is-petted');
         void element.offsetWidth;
@@ -29,5 +55,5 @@
         });
     };
 
-    window.Klaus = Object.freeze({ pet, attach });
+    window.Klaus = Object.freeze({ assetUrl, barkOnce, pant, pet, pose, attach });
 })();
