@@ -36,6 +36,7 @@
     const collapsedCategories = new Set();
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
     const KLAUS_REWARD_SHOWN_STORAGE_KEY = 'laboratorio-digital:klaus-reward-shown:v1';
+    const KLAUS_REWARD_DRAWN_STORAGE_KEY = 'laboratorio-digital:klaus-reward-drawn:v1';
     const KLAUS_AWAKE_STORAGE_KEY = 'laboratorio-digital:klaus-awake:v1';
     const CUSTOMER_STORAGE_KEY = 'laboratorio-digital:checkout-customer:v1';
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
@@ -94,7 +95,9 @@
     let surpriseUnlocked = false;
     let surpriseChecked = false;
     let klausDiscountUnlocked = Boolean(app.klaus_discount_unlocked);
-    let klausRewardChecked = Boolean(app.klaus_reward_checked);
+    let klausRewardChecked = Boolean(app.klaus_reward_checked) || (() => {
+        try { return window.localStorage.getItem(KLAUS_REWARD_DRAWN_STORAGE_KEY) === '1'; } catch (_) { return false; }
+    })();
     let klausDiscountAcknowledged = false;
     let klausRewardShown = window.sessionStorage.getItem(KLAUS_REWARD_SHOWN_STORAGE_KEY) === '1';
     let klausAwake = window.sessionStorage.getItem(KLAUS_AWAKE_STORAGE_KEY) === '1';
@@ -1652,6 +1655,7 @@
             klausAwake = false;
             window.sessionStorage.removeItem(KLAUS_REWARD_SHOWN_STORAGE_KEY);
             window.sessionStorage.removeItem(KLAUS_AWAKE_STORAGE_KEY);
+            try { window.localStorage.removeItem(KLAUS_REWARD_DRAWN_STORAGE_KEY); } catch (_) { /* El pedido sigue funcionando sin almacenamiento local. */ }
             klausRewardChecked = false;
             const transferWhatsappUrl = whatsappUrl(data.order);
             state.cart.clear();
@@ -1998,6 +2002,7 @@
         try {
             const reward = await apiJson({ action: 'reward_klaus' });
             klausRewardChecked = true;
+            try { window.localStorage.setItem(KLAUS_REWARD_DRAWN_STORAGE_KEY, '1'); } catch (_) { /* El servidor mantiene el bloqueo del carrito. */ }
             if (reward.unlocked === true) {
                 klausDiscountUnlocked = true;
                 showReward();
