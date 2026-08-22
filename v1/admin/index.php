@@ -467,7 +467,7 @@ header('Referrer-Policy: same-origin');
                                 <p class="eyebrow">PULGA / MASCOTA AMBIENTAL</p>
                                 <div class="settings-grid">
                                     <label class="checkbox-setting"><input name="pulga_enabled" type="checkbox" value="1"><span><strong>Activar a Pulga</strong></span></label>
-                                    <label>FRECUENCIA DE APARICIÓN (SEGUNDOS)<input name="pulga_frequency_seconds" type="number" min="45" max="120"></label>
+                                    <label>MÁXIMO DE ESPERA (30 A 45 SEGUNDOS)<input name="pulga_frequency_seconds" type="number" min="30" max="45"></label>
                                     <label class="checkbox-setting"><input name="pulga_animations_enabled" type="checkbox" value="1"><span><strong>Activar animaciones de Pulga</strong></span></label>
                                 </div>
                             </section>

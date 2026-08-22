@@ -325,7 +325,7 @@ INSERT OR IGNORE INTO settings(key, value) VALUES
     ('pickup_address', ''),
     ('business_hours', 'Lunes a viernes de 9 a 17 h'),
     ('pulga_enabled', '1'),
-    ('pulga_frequency_seconds', '75'),
+    ('pulga_frequency_seconds', '45'),
     ('pulga_animations_enabled', '1'),
     ('size_guide_intro', 'Las medidas son aproximadas. Si necesitas ayuda para elegir, escribinos por WhatsApp.'),
     ('size_guide_json', '[]');
