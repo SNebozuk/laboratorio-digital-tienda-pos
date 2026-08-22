@@ -135,6 +135,16 @@
         return `<section class="klaus ${mood} ${klausReaction}" aria-label="Klaus, la mascota de Laboratorio Digital"><svg viewBox="0 0 180 120" role="img" aria-hidden="true"><g class="klaus-dog"><path class="klaus-tail" d="M134 78c21-17 32-4 23 10-4 6-10 9-16 9"/><path class="klaus-body" d="M54 79c1-23 18-37 46-37 28 0 45 14 46 37l-9 23H57z"/><path class="klaus-chest" d="M84 55c10 2 19 11 21 24l-7 23H73l5-23c1-11 2-19 6-24z"/><path class="klaus-head" d="M36 31c10-19 39-22 53-4 10 12 7 34-6 45-15 13-40 8-50-8-7-11-4-24 3-33z"/><path class="klaus-ear klaus-ear-left" d="M40 33C20 34 18 52 29 68c6 8 17 5 20-6l4-23z"/><path class="klaus-ear klaus-ear-right" d="M79 34c18-9 27 8 21 24-4 11-14 14-20 5l-5-17z"/><path class="klaus-brow" d="M45 46c4-3 8-3 11-1M68 44c4-3 8-2 10 1"/><ellipse class="klaus-muzzle" cx="61" cy="63" rx="18" ry="13"/><circle class="klaus-eye" cx="51" cy="51" r="3"/><circle class="klaus-eye" cx="74" cy="50" r="3"/><path class="klaus-happy-eye" d="M46 51q5 6 10 0M69 50q5 6 10 0"/><path class="klaus-nose" d="M57 59q5-4 10 0l-5 5z"/><path class="klaus-smile" d="M61 65c3 5 9 6 13 0"/><path class="klaus-tongue" d="M64 67c1 10 9 11 11 2v-3"/><path class="klaus-leg" d="M67 96v13M122 96v13"/><path class="klaus-collar" d="M45 75c11 8 29 8 41-1"/><circle class="klaus-tag" cx="65" cy="80" r="3"/></g></svg><span class="klaus-pet-effects" aria-hidden="true"><b>♥</b><b>✿</b><b>♥</b><b>✿</b><b>♥</b><b>✿</b><b>♥</b><b>✿</b></span><span class="klaus-pet-prompt" aria-hidden="true">¿Me hacés mimito?</span>${units === 0 && !klausAwake ? '<b class="klaus-zzz" aria-hidden="true">Zzz</b>' : ''}<div><strong>KLAUS</strong>${message ? `<span>${escapeHtml(message)}</span>` : `<span>${units === 0 && !klausAwake ? 'Durmiendo hasta tu primer producto' : 'Tu compañero de carrito'}</span>`}</div></section>`;
     }
 
+    function protectKlausFromDarkReader(root) {
+        if (!root) return;
+        root.querySelectorAll('.klaus, .klaus svg, .klaus svg *').forEach((element) => {
+            element.classList.add('darkreader-ignore');
+            element.setAttribute('data-darkreader-ignore', '');
+            element.setAttribute('data-darkreader-inline-fill', '');
+            element.setAttribute('data-darkreader-inline-stroke', '');
+        });
+    }
+
     function reactKlaus(kind = '') {
         if (!rewardOn('reward_klaus_enabled') || !rewardOn('reward_klaus_animations_enabled')) return false;
         klausReaction = kind || 'is-reacting';
@@ -1235,6 +1245,8 @@
             ${rewardOn('reward_quantity_enabled') ? `<div class="reward-progress"><div><strong><b>${units}</b> / ${Number(rewards.reward_quantity_units || 20)} unidades</strong><span>${needed ? escapeHtml(rewardText('reward_quantity_pending_text', { faltan: needed, porcentaje: rewards.reward_quantity_percent || 3 })) : escapeHtml(rewardText('reward_quantity_unlocked_text', { porcentaje: rewards.reward_quantity_percent || 3 }))}</span></div><i aria-label="${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% completado"><b style="width:${Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100)}%"></b></i><small>${Math.round(Math.min(100, units / Number(rewards.reward_quantity_units || 20) * 100))}% del beneficio</small></div>` : ''}
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
         if (elements.mobileKlausHost) elements.mobileKlausHost.innerHTML = klausMarkup(units, klausMessage);
+        protectKlausFromDarkReader(elements.cartRewards);
+        protectKlausFromDarkReader(elements.mobileKlausHost);
         if (klausDiscountAcknowledged) {
             elements.cartRewards.insertAdjacentHTML('beforeend', '<div class="reward-surprise"><strong>🐾 Klaus te regala un 2% de descuento en toda tu compra.</strong><span>Es acumulable con otras promociones.</span></div>');
         }
