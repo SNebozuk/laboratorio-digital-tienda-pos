@@ -139,7 +139,7 @@
         if (!root) return;
         root.querySelectorAll('.klaus').forEach((klaus) => {
             const prompt = klaus.querySelector('.klaus-pet-prompt');
-            if (prompt) prompt.innerHTML = 'Hola, soy Klaus<br>¿Me hacés mimitos?';
+            if (prompt) prompt.innerHTML = 'Hola. soy Klaus<br>me haces mimitos?';
             if (klaus.querySelector('.klaus-image')) return;
             const image = document.createElement('img');
             image.className = 'klaus-image';
