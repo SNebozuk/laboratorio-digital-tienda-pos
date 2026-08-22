@@ -138,6 +138,15 @@
     function protectKlausFromDarkReader(root) {
         if (!root) return;
         root.querySelectorAll('.klaus').forEach((klaus) => {
+            const prompt = klaus.querySelector('.klaus-pet-prompt');
+            if (prompt) prompt.textContent = '¿Me hacés mimitos?';
+            if (!klaus.querySelector('.klaus-greeting')) {
+                const greeting = document.createElement('span');
+                greeting.className = 'klaus-greeting';
+                greeting.textContent = 'Hola. Soy Klaus';
+                greeting.setAttribute('aria-hidden', 'true');
+                klaus.append(greeting);
+            }
             if (klaus.querySelector('.klaus-image')) return;
             const image = document.createElement('img');
             image.className = 'klaus-image';
@@ -178,15 +187,13 @@
         };
     }
 
-    function showKlausRewardDialog(alreadyUnlocked = false) {
+    function showKlausRewardDialog() {
         const dialog = document.createElement('section');
         dialog.className = 'klaus-reward-dialog';
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-modal', 'true');
         dialog.setAttribute('aria-label', 'Regalo de Klaus');
-        dialog.innerHTML = alreadyUnlocked
-            ? '<div><span aria-hidden="true">🐾</span><strong>¡Klaus recuerda su regalo!</strong><p>Tu <b>2% de descuento adicional</b> ya está activo en esta compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>'
-            : '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p><b>Klaus te regala un 2% de descuento en toda tu compra.</b><br>Es acumulable con otras promociones.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
+        dialog.innerHTML = '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p><b>Klaus te regala un 2% de descuento en toda tu compra.</b><br>Es acumulable con otras promociones.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
         const close = () => {
             klausDiscountAcknowledged = true;
             dialog.remove();
@@ -1929,9 +1936,8 @@
         klausAwake = true;
         window.sessionStorage.setItem(KLAUS_AWAKE_STORAGE_KEY, '1');
         if (!reactKlaus('is-petted is-celebrating')) renderCart();
-        if (klausDiscountPending) return;
+        if (klausDiscountPending || klausRewardShown) return;
         const playClink = prepareKlausClink();
-        const alreadyUnlocked = klausDiscountUnlocked;
         const rewardAt = Date.now() + 700;
         const showReward = () => window.setTimeout(() => {
             klausDiscountPending = false;
@@ -1939,7 +1945,7 @@
             window.sessionStorage.setItem(KLAUS_REWARD_SHOWN_STORAGE_KEY, '1');
             renderCart();
             playClink();
-            showKlausRewardDialog(alreadyUnlocked);
+            showKlausRewardDialog();
         }, Math.max(0, rewardAt - Date.now()));
         if (klausDiscountUnlocked) {
             klausDiscountPending = true;
