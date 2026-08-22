@@ -227,7 +227,7 @@ final class OrderService
         $result['bank'] = [
             'holder' => $this->stringSetting('bank_holder', 'Laboratorio Digital'),
             'alias' => $this->stringSetting('bank_alias', ''),
-            'cbu' => $this->stringSetting('bank_cbu', ''),
+            'cbu' => $this->stringSetting('bank_cbu', '0070146030004048890954'),
         ];
         $result['pickup_address'] = $this->stringSetting('pickup_address', '');
 

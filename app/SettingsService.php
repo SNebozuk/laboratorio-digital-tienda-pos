@@ -68,6 +68,9 @@ final class SettingsService
         if (empty($values['bank_alias'])) {
             $values['bank_alias'] = 'labdigital';
         }
+        if (empty($values['bank_cbu'])) {
+            $values['bank_cbu'] = '0070146030004048890954';
+        }
         if (empty($values['bank_holder']) || $values['bank_holder'] === 'Laboratorio Digital') {
             $values['bank_holder'] = 'Allessandra Lear · Banco Galicia';
         }

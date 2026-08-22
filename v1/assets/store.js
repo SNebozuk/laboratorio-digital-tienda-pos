@@ -1520,7 +1520,7 @@
     function checkoutSteps(activeStep) {
         return `
             <ol class="checkout-steps" aria-label="Progreso del pedido">
-                ${['Tus datos', 'Transferencia', 'Confirmación'].map((label, index) => {
+                ${['Tus datos', 'Transferencia'].map((label, index) => {
                     const step = index + 1;
                     const stateClass = step < activeStep ? 'done' : (step === activeStep ? 'active' : '');
                     return `<li class="${stateClass}"><span>${step}</span>${label}</li>`;
@@ -1675,29 +1675,31 @@
 
     function showTransferConfirmation(order, whatsapp) {
         const alias = order.bank?.alias || 'Pendiente de configurar';
+        const cbu = order.bank?.cbu || '0070146030004048890954';
         const holder = order.bank?.holder || 'Laboratorio Digital';
         const total = money(Number(order.total_cents));
         klausPose = 'checkout_sitting';
         openModal(`
-            ${checkoutSteps(3)}
+            ${checkoutSteps(2)}
             ${rewardOn('reward_checkout_celebration_enabled') ? `<div class="checkout-celebration" aria-hidden="true">${rewardOn('reward_checkout_confetti_enabled') ? '✦ ✦ ✦' : ''}<b>✓</b></div><p class="checkout-celebration-copy">¡Listo! Recibimos tu compra.</p>${klausMarkup(999, rewardOn('reward_klaus_messages_enabled') ? (rewards.reward_klaus_complete_text || '🎉 ¡Compra lista!') : '')}` : ''}
             <h2 id="modal-title">¡Gracias por tu pedido!</h2>
             <p class="checkout-lead">Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</p>
-            <section class="transfer-ready" aria-live="polite"><span aria-hidden="true">✨</span><div><strong>¿Podés hacer la transferencia ahora?</strong><p>Te dejamos los datos listos para que sea súper simple.</p></div></section>
+            <section class="transfer-ready" aria-live="polite"><span aria-hidden="true">✨</span><div><strong>Ya está casi listo</strong><p>Transferí el total con estos datos y después avisános por WhatsApp.</p></div></section>
             <div class="payment-focus">
                 <span>Para confirmarlo, transferí</span>
                 <strong class="payment-amount">${total}</strong>
                 <span>a nombre de ${escapeHtml(holder)}</span>
             </div>
             <dl class="bank-details">
-                <div><dt>Alias</dt><dd>${escapeHtml(alias)} <button class="copy-button" type="button" data-copy-bank="${escapeHtml(alias)}" aria-label="Copiar alias">⧉</button></dd></div>
+                <div><dt>Alias</dt><dd>${escapeHtml(alias)} <button class="copy-button" type="button" data-copy-bank="${escapeHtml(alias)}">COPIAR</button></dd></div>
+                <div><dt>CBU</dt><dd>${escapeHtml(cbu)} <button class="copy-button" type="button" data-copy-bank="${escapeHtml(cbu)}">COPIAR</button></dd></div>
             </dl>
+            <p class="copy-bank-help">Tocá <strong>COPIAR</strong> y el dato se guarda en el portapapeles para pegarlo en tu banco.</p>
             <div class="payment-instructions">
-                <strong>Un último paso, muy simple</strong>
-                <span>Cuando hagas la transferencia, escribinos por WhatsApp para avisarnos.</span>
+                <strong>Cuando la hagas, avisános por WhatsApp</strong>
+                <span>Así preparamos tu pedido apenas veamos la transferencia.</span>
             </div>
-            <div class="transfer-choice"><button class="primary-button" type="button" data-transfer-ready>Sí, la hago ahora</button><button class="secondary-button" type="button" data-transfer-later>La haré más tarde</button></div>
-            <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener" data-whatsapp-order-complete>AVISAR TRANSFERENCIA POR WHATSAPP</a>
+            <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener" data-whatsapp-order-complete>AVISAR POR WHATSAPP</a>
             <button class="secondary-button" type="button" data-finish-order>VOLVER A LA TIENDA</button>
         `);
     }
@@ -1819,9 +1821,14 @@
         }
         const copyBank = event.target.closest('[data-copy-bank]');
         if (copyBank) {
-            navigator.clipboard.writeText(copyBank.dataset.copyBank)
-                .then(() => toast('Dato bancario copiado.'))
-                .catch(() => window.prompt('Copiá este dato:', copyBank.dataset.copyBank));
+            const bankValue = copyBank.dataset.copyBank;
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(bankValue)
+                    .then(() => toast('Dato bancario copiado.'))
+                    .catch(() => window.prompt('Copiá este dato:', bankValue));
+            } else {
+                window.prompt('Copiá este dato:', bankValue);
+            }
             return;
         }
         const copySearchLink = event.target.closest('[data-copy-search-link]');
@@ -1945,15 +1952,6 @@
 
         if (event.target.closest('[data-finish-order]')) {
             finishOrder();
-            return;
-        }
-
-        if (event.target.closest('[data-transfer-ready], [data-transfer-later]')) {
-            const ready = event.target.closest('[data-transfer-ready]');
-            const panel = elements.modalContent.querySelector('.transfer-ready');
-            if (panel) panel.innerHTML = ready
-                ? '<span aria-hidden="true">💜</span><div><strong>¡Perfecto!</strong><p>Usá los datos de abajo y después avisános por WhatsApp.</p></div>'
-                : '<span aria-hidden="true">🕒</span><div><strong>¡No hay problema!</strong><p>Guardamos tu pedido. Los datos quedan acá cuando estés lista.</p></div>';
             return;
         }
 
