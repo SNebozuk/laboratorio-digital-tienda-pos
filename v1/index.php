@@ -223,6 +223,7 @@ header('Referrer-Policy: same-origin');
     <script id="app-data" type="application/json"><?=
         json_encode([
             'api_url' => $apiUrl,
+            'asset_url' => $assetPath,
             'csrf_token' => $app['csrf_token'],
             'products' => $catalog,
             'categories' => $categoryTree,

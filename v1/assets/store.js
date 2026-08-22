@@ -137,11 +137,14 @@
 
     function protectKlausFromDarkReader(root) {
         if (!root) return;
-        root.querySelectorAll('.klaus, .klaus svg, .klaus svg *').forEach((element) => {
-            element.classList.add('darkreader-ignore');
-            element.setAttribute('data-darkreader-ignore', '');
-            element.setAttribute('data-darkreader-inline-fill', '');
-            element.setAttribute('data-darkreader-inline-stroke', '');
+        root.querySelectorAll('.klaus').forEach((klaus) => {
+            if (klaus.querySelector('.klaus-image')) return;
+            const image = document.createElement('img');
+            image.className = 'klaus-image';
+            image.src = `${app.asset_url}/klaus.svg`;
+            image.alt = '';
+            image.setAttribute('aria-hidden', 'true');
+            klaus.insertBefore(image, klaus.firstChild);
         });
     }
 
