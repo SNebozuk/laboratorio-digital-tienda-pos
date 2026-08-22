@@ -519,7 +519,6 @@ header('Referrer-Policy: same-origin');
     <div class="modal" id="modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
         <section class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-            <button class="modal-close" type="button" data-close-modal aria-label="Cerrar">×</button>
             <div id="modal-content"></div>
         </section>
     </div>
