@@ -627,7 +627,7 @@
             const celebration = rewardOn('reward_quantity_enabled') && units >= target && unitsBefore < target;
             if (celebration) {
                 playRewardFanfare();
-                toast('🎉 ¡Siii, lo lograste! Desbloqueaste tu descuento.');
+                showQuantityRewardDialog(units, target);
             }
             reactKlaus(celebration ? 'is-celebrating' : (wasEmpty ? 'is-waking' : ''));
         }
@@ -681,6 +681,24 @@
                 oscillator.start(start); oscillator.stop(start + .3);
             });
         } catch { /* La celebración visual sigue disponible. */ }
+    }
+
+    function showQuantityRewardDialog(units, target) {
+        const percent = Number(rewards.reward_quantity_percent || 3);
+        openModal(`
+            <section class="quantity-reward-dialog" aria-labelledby="quantity-reward-title">
+                <span aria-hidden="true">🎉</span>
+                <h2 id="quantity-reward-title">¡Siii, lo lograste!</h2>
+                <p>Desbloqueaste <strong>${percent}% de descuento</strong> por sumar ${target} unidades.</p>
+                <div class="reward-progress is-complete">
+                    <div><strong><b>${Math.max(units, target)}</b> / ${target} unidades</strong><span>Beneficio desbloqueado</span></div>
+                    <i aria-label="100% completado"><b style="width:100%"></b></i>
+                    <small>100% del beneficio</small>
+                </div>
+                <button class="primary-button" type="button" data-close-modal>OK</button>
+            </section>
+        `);
+        window.setTimeout(() => elements.modalContent.querySelector('[data-close-modal]')?.focus(), 0);
     }
 
     function renderCategories() {
