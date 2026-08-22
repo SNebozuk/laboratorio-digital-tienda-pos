@@ -22,13 +22,14 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 .modal-card .cash-reservation-warning { background:#edf7ef !important; border-color:#9fcfa8 !important; color:#1a3522 !important; font-weight:600; }
 .modal-card .cash-reservation-warning strong { color:#0d4c24 !important; font-weight:850; }
 
-/* Escritorio: carrito siempre visible junto al catálogo. */
+/* El carrito se abre desde el acceso superior; los beneficios permanecen visibles aparte. */
 @media (min-width:761px){
-  .store-shell{grid-template-columns:minmax(0,1fr) minmax(330px,380px) !important;align-items:start;}
-  .order-panel{position:sticky;z-index:5;top:12px;right:auto;width:auto;height:calc(100vh - 24px);max-height:calc(100vh - 24px);min-height:0;transform:none;overflow:hidden;box-shadow:0 10px 28px rgba(62,38,91,.13) !important;}
-  .order-panel.mobile-open{transform:none;}
-  .cart-mobile{display:none !important;}.order-panel .icon-button{display:none;}
-  .cart-mobile{align-items:center;gap:7px;border:1px solid var(--accent) !important;border-radius:9px;background:var(--accent) !important;color:#fff !important;}
+  .store-shell{grid-template-columns:minmax(0,1fr) minmax(260px,300px) !important;align-items:start;}
+  body.cart-open{overflow:hidden;}
+  .order-panel{position:fixed;z-index:80;top:74px;right:0;width:min(420px,100vw);height:calc(100dvh - 74px);max-height:none;min-height:0;transform:translateX(105%);transition:transform .22s ease;overflow:hidden;box-shadow:-20px 0 70px rgba(62,38,91,.24) !important;}
+  .order-panel.mobile-open{transform:translateX(0);}
+  .cart-mobile{display:inline-flex !important;align-items:center;justify-content:center;gap:7px;min-width:46px;height:46px;padding:0 12px !important;border:1px solid var(--accent) !important;border-radius:10px;background:var(--accent) !important;color:#fff !important;}
+  .order-panel .icon-button{display:inline-grid;}
   .cart-mobile span{display:grid;min-width:22px;height:22px;place-items:center;border-radius:50%;background:#fff;color:var(--accent);font-size:11px;font-weight:850;}
   .icon-button{border:0;background:transparent;color:var(--text);font-size:28px;}
   .catalog-product-summary.unified-product-row{grid-template-columns:76px minmax(180px,1.75fr) minmax(118px,.5fr) minmax(160px,.55fr) 42px;min-height:88px;padding-block:8px;}
@@ -43,6 +44,12 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
   .category-backdrop{z-index:40;}
   .category-panel{z-index:41;}
 }
+
+.cart-benefits-panel { margin:18px; padding:16px; border:1px solid #decdeb; border-radius:14px; background:#f7effd; color:#38234f; box-shadow:0 8px 22px rgba(118,82,184,.1); }
+.cart-benefits-panel h2 { margin:0; color:#7652b8; font-size:13px; letter-spacing:.07em; }
+.cart-benefits-panel > p { margin:5px 0 10px; color:#685d76; font-size:12px; font-weight:700; line-height:1.35; }
+.cart-benefits-panel .cart-rewards { margin:0; }
+@media (min-width:761px) { .cart-benefits-panel { position:sticky; top:86px; margin:12px; } }
 
 /* Los productos se muestran arriba; Klaus queda compacto al pie del panel. */
 .order-panel { display:flex; flex-direction:column; }
@@ -278,12 +285,11 @@ body.home-mode .catalog-intro p { max-width:720px; margin:9px 0 0; color:#55445f
 @media (max-width:700px) { .klaus { min-height:56px; }.klaus svg { width:74px; height:52px; }.klaus span { font-size:11px; } }
 body.product-view-list .catalog-menu-button,body.product-view-list .category-panel,body.product-view-list .category-backdrop { display:none !important; }
 @media (min-width:1100px) {
-  .store-shell { grid-template-columns:220px minmax(0,1fr) minmax(330px,380px) !important; height:calc(100dvh - 74px); min-height:0; overflow:hidden; }
+  .store-shell { grid-template-columns:220px minmax(0,1fr) minmax(260px,300px) !important; height:calc(100dvh - 74px); min-height:0; overflow:hidden; }
   .category-panel { position:relative !important; top:auto !important; right:auto !important; display:block !important; visibility:visible !important; width:auto !important; height:100% !important; max-height:none !important; box-sizing:border-box; padding:20px !important; border-radius:0 !important; transform:none !important; overflow-y:auto !important; pointer-events:auto !important; }
   .catalog-column { height:100%; overflow-y:auto; overscroll-behavior:contain; }
   .catalog-column > .search-wrap { position:sticky; top:0; z-index:17; margin:0 0 18px; padding:12px 0; background:#f8c5db; }
-  .order-panel { position:static; height:100%; max-height:none !important; overflow:hidden !important; }
-  .order-panel .cart-rewards { position:static; margin-top:0; padding-top:12px; background:#fbe4ed; box-shadow:none; }
-  body.product-view-list .store-shell { grid-template-columns:minmax(0,1fr) minmax(330px,380px) !important; }
+  .order-panel { position:fixed; top:74px; right:0; height:calc(100dvh - 74px); max-height:none !important; overflow:hidden !important; }
+  body.product-view-list .store-shell { grid-template-columns:minmax(0,1fr) minmax(260px,300px) !important; }
 }
 @media (max-width:700px) { .product-view-switcher { top:4px; gap:4px; padding:6px; }.product-view-switcher > span { display:none; }.product-view-switcher button { flex:1; padding:7px 5px; font-size:10px; }.product-view-switcher svg { width:16px; height:16px; }.complete-product-list { gap:25px; }.complete-list-category h2 { font-size:21px; }.complete-list-category h3 { font-size:16px; }.complete-list-depth-1 { margin-left:8px; padding-left:11px; }.complete-list-depth-2,.complete-list-depth-3 { margin-left:8px; padding-left:10px; }.catalog-view-grid,.catalog-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }.catalog-view-copy { padding:10px; }.catalog-view-quantity { transform:scale(.86); transform-origin:left center; margin-bottom:7px; }.minimal-product-row { grid-template-columns:36px minmax(0,1fr) auto; gap:8px; }.minimal-product-row img,.minimal-product-row [class$="-placeholder"] { width:36px; height:36px; }.minimal-product-stock { display:none; }.minimal-product-row > strong { grid-column:3; grid-row:1; }.minimal-product-row .quantity-control,.minimal-product-open { grid-column:3; grid-row:2; }.minimal-product-row > button:not(.minimal-product-open) { grid-row:1 / span 2; }.product-view-chooser > div { grid-template-columns:1fr; }.product-view-chooser button { min-height:0; }.product-view-chooser h2 { font-size:20px; } }

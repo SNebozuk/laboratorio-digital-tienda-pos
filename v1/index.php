@@ -152,6 +152,12 @@ header('Referrer-Policy: same-origin');
             <div id="catalog-results" class="catalog-results"></div>
         </section>
 
+        <aside class="cart-benefits-panel" aria-labelledby="cart-benefits-title">
+            <h2 id="cart-benefits-title">BENEFICIOS DE TU COMPRA</h2>
+            <p>Sumá unidades para completar el beneficio de tu pedido.</p>
+            <section id="cart-rewards" class="cart-rewards" aria-live="polite"></section>
+        </aside>
+
         <aside class="order-panel" id="order-panel" aria-labelledby="order-title">
             <div class="order-panel-head">
                 <div>
@@ -159,7 +165,6 @@ header('Referrer-Policy: same-origin');
                 </div>
                 <button class="icon-button" id="close-cart-mobile" type="button" aria-label="Cerrar pedido">×</button>
             </div>
-            <section id="cart-rewards" class="cart-rewards" aria-live="polite"></section>
             <div class="cart-actions">
                 <p id="cart-summary-meta" class="cart-summary-meta" aria-live="polite">0 productos diferentes · 0 unidades</p>
                 <div class="order-total">
