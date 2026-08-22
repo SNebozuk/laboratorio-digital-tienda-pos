@@ -1061,7 +1061,7 @@
                     <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
                     <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Elegí una categoría desde el menú para ver solo esa sección.</small></button>
                 </div>
-                <button class="klaus-welcome" type="button" aria-label="Hacerle mimitos a Klaus"><img class="klaus-image" src="${escapeHtml(app.asset_url)}/klaus_home_petting_prompt.png" alt=""><span>Hacéle mimitos a Klaus 🐾</span></button>
+                <button class="klaus-welcome" type="button" aria-label="Acariciar a Klaus"><img class="klaus-image" src="${escapeHtml(app.asset_url)}/klaus_home_petting_prompt.png" alt=""><span>Bienvenida<br>soy <strong>Klaus</strong></span></button>
             </section>
         `);
     }
