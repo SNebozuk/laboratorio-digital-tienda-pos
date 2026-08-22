@@ -1678,10 +1678,9 @@
         const cbu = order.bank?.cbu || '0070146030004048890954';
         const holder = order.bank?.holder || 'Laboratorio Digital';
         const total = money(Number(order.total_cents));
-        klausPose = 'checkout_sitting';
         openModal(`
             ${checkoutSteps(2)}
-            ${rewardOn('reward_checkout_celebration_enabled') ? `<div class="checkout-celebration" aria-hidden="true">${rewardOn('reward_checkout_confetti_enabled') ? '✦ ✦ ✦' : ''}<b>✓</b></div><p class="checkout-celebration-copy">¡Listo! Recibimos tu compra.</p>${klausMarkup(999, rewardOn('reward_klaus_messages_enabled') ? (rewards.reward_klaus_complete_text || '🎉 ¡Compra lista!') : '')}` : ''}
+            ${rewardOn('reward_checkout_celebration_enabled') ? `<div class="checkout-celebration" aria-hidden="true">${rewardOn('reward_checkout_confetti_enabled') ? '✦ ✦ ✦' : ''}<b>✓</b></div><p class="checkout-celebration-copy">¡Listo! Recibimos tu compra.</p>` : ''}
             <h2 id="modal-title">¡Gracias por tu pedido!</h2>
             <p class="checkout-lead">Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</p>
             <section class="transfer-ready" aria-live="polite"><span aria-hidden="true">✨</span><div><strong>Ya está casi listo</strong><p>Transferí el total con estos datos y después avisános por WhatsApp.</p></div></section>
