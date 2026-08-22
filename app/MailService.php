@@ -65,7 +65,7 @@ final class MailService
                 $this->send(
                     (string) $message['recipient'],
                     (string) $message['subject'],
-                    $this->renderOrder($payload)
+                    $this->renderOrderText($payload)
                 );
                 $update = $this->pdo->prepare(
                     "UPDATE mail_queue SET status = 'sent', sent_at = CURRENT_TIMESTAMP,
@@ -101,7 +101,7 @@ final class MailService
         $this->send(
             $recipient,
             'Prueba de correo · Laboratorio Digital',
-            '<!doctype html><html lang="es"><body style="margin:0;background:#f5f3f8;color:#24202a;font:16px Arial,sans-serif"><div style="max-width:620px;margin:auto;padding:28px"><div style="background:#fff;border:1px solid #e3dfea;border-radius:14px;padding:26px"><p style="margin:0 0 12px;color:#72569a;font-size:12px;font-weight:bold;letter-spacing:.08em">LABORATORIO DIGITAL</p><h1 style="margin:0 0 12px;font-size:24px">Amazon SES está conectado</h1><p style="margin:0">Esta es una prueba enviada por la tienda. Si la recibiste, el remitente, Reply-To y la conexión SMTP con Amazon SES están funcionando correctamente.</p></div></div></body></html>'
+            "LABORATORIO DIGITAL\n\nAmazon SES está conectado.\n\nEsta es una prueba enviada por la tienda. Si la recibiste, el remitente, Reply-To y la conexión SMTP con Amazon SES están funcionando correctamente."
         );
     }
 
@@ -125,7 +125,7 @@ final class MailService
         }
     }
 
-    private function send(string $recipient, string $subject, string $html): void
+    private function send(string $recipient, string $subject, string $text): void
     {
         if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
             throw new \RuntimeException('El destinatario de correo no es válido.');
@@ -133,7 +133,7 @@ final class MailService
         $from = (string) $this->config['mail_from'];
         $transport = (string) ($this->config['mail_transport'] ?? 'ses_smtp');
         if ($transport === 'native') {
-            $this->sendNative($recipient, $subject, $html);
+            $this->sendNative($recipient, $subject, $text);
             return;
         }
 
@@ -150,7 +150,7 @@ final class MailService
             }
             // En algunos planes compartidos el servidor bloquea conexiones SMTP
             // hacia sí mismo. El MTA local de Ferozo mantiene el mismo remitente.
-            $this->sendNative($recipient, $subject, $html);
+            $this->sendNative($recipient, $subject, $text);
             return;
         }
         stream_set_timeout($socket, 20);
@@ -178,12 +178,12 @@ final class MailService
                 'To: <' . $recipient . '>',
                 'Subject: ' . $encodedSubject,
                 'MIME-Version: 1.0',
-                'Content-Type: text/html; charset=UTF-8',
+                'Content-Type: text/plain; charset=UTF-8',
                 'From: ' . $this->headerText((string) ($this->config['mail_from_name'] ?? 'Laboratorio Digital')) . ' <' . $from . '>',
                 'Reply-To: ' . (string) ($this->config['mail_reply_to'] ?? $from),
                 'X-Mailer: Laboratorio Digital',
             ];
-            $body = str_replace("\r\n", "\n", $html);
+            $body = str_replace("\r\n", "\n", $text);
             $body = str_replace("\n.", "\n..", $body);
             $message = implode("\r\n", $headers) . "\r\n\r\n"
                 . str_replace("\n", "\r\n", $body);
@@ -194,18 +194,18 @@ final class MailService
         }
     }
 
-    private function sendNative(string $recipient, string $subject, string $html): void
+    private function sendNative(string $recipient, string $subject, string $text): void
     {
         $from = (string) $this->config['mail_from'];
         $cleanSubject = trim(str_replace(["\r", "\n"], '', $subject));
         $headers = [
             'MIME-Version: 1.0',
-            'Content-Type: text/html; charset=UTF-8',
+            'Content-Type: text/plain; charset=UTF-8',
             'From: ' . $this->headerText((string) ($this->config['mail_from_name'] ?? 'Laboratorio Digital')) . ' <' . $from . '>',
             'Reply-To: ' . (string) ($this->config['mail_reply_to'] ?? $from),
             'X-Mailer: Laboratorio Digital',
         ];
-        if (!@mail($recipient, $cleanSubject, $html, implode("\r\n", $headers), '-f' . $from)) {
+        if (!@mail($recipient, $cleanSubject, $text, implode("\r\n", $headers), '-f' . $from)) {
             throw new \RuntimeException('El servidor no pudo entregar el aviso interno.');
         }
     }
@@ -234,40 +234,31 @@ final class MailService
     }
 
     /** @param array<string, mixed> $payload */
-    private function renderOrder(array $payload): string
+    private function renderOrderText(array $payload): string
     {
-        $rows = '';
+        $lines = [];
         foreach ((array) ($payload['items'] ?? []) as $item) {
             if (!is_array($item)) continue;
             $variant = trim((string) ($item['variant_name'] ?? ''));
             if (preg_match('/^única$/iu', $variant) === 1) $variant = '';
-            $rows .= '<tr><td style="padding:10px;border-bottom:1px solid #e8e5ee"><strong>'
-                . $this->escape((string) ($item['product_name'] ?? '')) . '</strong>'
-                . ($variant !== '' ? '<br><span>' . $this->escape($variant) . '</span>' : '')
-                . '</td><td style="padding:10px;text-align:center;border-bottom:1px solid #e8e5ee">'
-                . (int) ($item['quantity'] ?? 0) . '</td><td style="padding:10px;text-align:right;border-bottom:1px solid #e8e5ee">'
-                . $this->money((int) ($item['line_total_cents'] ?? 0)) . '</td></tr>';
+            $lines[] = '- ' . (string) ($item['product_name'] ?? '')
+                . ($variant !== '' ? ' (' . $variant . ')' : '')
+                . ' x' . (int) ($item['quantity'] ?? 0)
+                . ' — ' . $this->money((int) ($item['line_total_cents'] ?? 0));
         }
 
         $customerCopy = ($payload['audience'] ?? '') === 'customer';
-        $heading = $customerCopy
-            ? '¡Gracias por tu pedido! ' . $this->escape((string) ($payload['public_number'] ?? ''))
-            : 'Nueva venta ' . $this->escape((string) ($payload['public_number'] ?? ''));
-        $intro = $customerCopy
-            ? '<p>Hola ' . $this->escape((string) ($payload['customer_name'] ?? '')) . '. Recibimos correctamente tu compra. Este es el detalle:</p>'
-            : '<p><strong>Cliente:</strong> ' . $this->escape((string) ($payload['customer_name'] ?? ''))
-                . '<br><strong>WhatsApp:</strong> ' . $this->escape((string) ($payload['customer_phone'] ?? ''))
-                . (($payload['customer_email'] ?? '') !== '' ? '<br><strong>Email:</strong> ' . $this->escape((string) $payload['customer_email']) : '') . '</p>';
+        $heading = $customerCopy ? '¡Gracias por tu pedido!' : 'Nueva venta';
+        $details = $customerCopy
+            ? 'Hola ' . (string) ($payload['customer_name'] ?? '') . '. Recibimos correctamente tu compra.'
+            : 'Cliente: ' . (string) ($payload['customer_name'] ?? '')
+                . "\nWhatsApp: " . (string) ($payload['customer_phone'] ?? '')
+                . (($payload['customer_email'] ?? '') !== '' ? "\nEmail: " . (string) $payload['customer_email'] : '');
 
-        return '<!doctype html><html lang="es"><body style="margin:0;background:#f5f3f8;color:#24202a;font:15px Arial,sans-serif">'
-            . '<div style="max-width:680px;margin:auto;padding:24px"><div style="background:#fff;border:1px solid #e3dfea;border-radius:14px;padding:24px">'
-            . '<p style="color:#72569a;font-size:12px;font-weight:bold;letter-spacing:.08em">LABORATORIO DIGITAL</p>'
-            . '<h1 style="margin:0 0 8px">' . $heading . '</h1>' . $intro
-            . '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:10px">Producto</th><th style="padding:10px">Cantidad</th><th style="text-align:right;padding:10px">Importe</th></tr></thead><tbody>'
-            . $rows . '</tbody></table><p style="font-size:20px;text-align:right"><strong>Total: '
-            . $this->money((int) ($payload['total_cents'] ?? 0)) . '</strong></p>'
-            . ($customerCopy ? '<p style="margin-top:22px">Nos comunicaremos por WhatsApp para coordinar tu compra. Muchas gracias.</p>' : '')
-            . '</div></div></body></html>';
+        return "LABORATORIO DIGITAL\n\n" . $heading . ' ' . (string) ($payload['public_number'] ?? '')
+            . "\n\n" . $details . "\n\nDetalle:\n" . implode("\n", $lines)
+            . "\n\nTotal: " . $this->money((int) ($payload['total_cents'] ?? 0))
+            . ($customerCopy ? "\n\nNos comunicaremos por WhatsApp para coordinar tu compra. Muchas gracias." : '');
     }
 
     private function money(int $cents): string
