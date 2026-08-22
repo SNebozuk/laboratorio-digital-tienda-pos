@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const app = JSON.parse(document.getElementById('app-data')?.textContent || '{}');
+    const app = JSON.parse((document.getElementById('app-data') || document.getElementById('admin-app-data'))?.textContent || '{}');
     const settings = app.pulga || {};
     const enabled = ['1', 'true', 'on'].includes(String(settings.enabled || '1'));
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');

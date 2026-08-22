@@ -8,8 +8,10 @@ $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'),
 $storePath = $storePath === '/' ? '' : $storePath;
 $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
+$publicSettings = $app['settings']->values();
 $assetVersion = substr(hash('sha256',
     (string) @file_get_contents(dirname(__DIR__) . '/assets/app.css')
+    . (string) @file_get_contents(dirname(__DIR__) . '/assets/pulga.js')
     . (string) @file_get_contents(__DIR__ . '/assets/admin.css')
     . (string) @file_get_contents(__DIR__ . '/assets/admin.js')
 ), 0, 12);
@@ -531,8 +533,14 @@ header('Referrer-Policy: same-origin');
             'setup_required' => $setupRequired,
             'size_guide_url' => $sizeGuideUrl,
             'store_url' => $storeUrl,
+            'pulga' => [
+                'enabled' => $publicSettings['pulga_enabled'] ?? '1',
+                'frequency_seconds' => $publicSettings['pulga_frequency_seconds'] ?? '45',
+                'animations_enabled' => $publicSettings['pulga_animations_enabled'] ?? '1',
+            ],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
+    <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script><?php endif ?>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>
