@@ -23,7 +23,7 @@
         return true;
     };
 
-    const pant = (duration = 3800) => {
+    const pant = (duration = 1900) => {
         panting.currentTime = 0;
         play(panting, false);
         window.setTimeout(() => { panting.pause(); panting.currentTime = 0; }, duration);

@@ -1980,7 +1980,7 @@
         if (!reactKlaus('is-petted is-celebrating')) renderCart();
         window.setTimeout(() => {
             setKlausPose('after_touch_happy_tailwag', 4000);
-            window.Klaus?.pant(3600);
+            window.Klaus?.pant(1800);
         }, 950);
         if (klausDiscountPending || klausRewardShown || klausRewardChecked) return;
         const playClink = prepareKlausClink();
@@ -1993,7 +1993,7 @@
             playClink();
             showKlausRewardDialog();
         }, Math.max(0, rewardAt - Date.now()));
-        if (klausDiscountUnlocked) {
+        if (klausDiscountUnlocked && klausRewardChecked) {
             klausDiscountPending = true;
             showReward();
             return;
@@ -2019,7 +2019,7 @@
         window.Klaus?.pose(klaus, 'touch_bark_hearts');
         window.setTimeout(() => {
             window.Klaus?.pose(klaus, 'after_touch_happy_tailwag');
-            window.Klaus?.pant(3600);
+            window.Klaus?.pant(1800);
         }, 950);
         window.setTimeout(() => window.Klaus?.pose(klaus, 'home_petting_prompt'), 4800);
     });

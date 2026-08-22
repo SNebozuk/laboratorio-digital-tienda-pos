@@ -272,7 +272,7 @@
         state.posKlausTimer = window.setTimeout(() => {
             klaus.classList.remove('is-petted');
             window.Klaus?.pose(klaus, 'after_touch_happy_tailwag');
-            window.Klaus?.pant(3200);
+            window.Klaus?.pant(1600);
         }, 1100);
         window.setTimeout(() => window.Klaus?.pose(klaus, 'checkout_sitting'), 4500);
         toast('🐾 ¡Klaus está contento!');
@@ -5290,7 +5290,7 @@
     elements.posKlaus?.addEventListener('click', petPosKlaus);
     window.Klaus?.attach(document, '.admin-klaus', (klaus) => {
         window.Klaus?.pose(klaus, 'touch_bark_hearts');
-        window.setTimeout(() => { window.Klaus?.pose(klaus, 'after_touch_happy_tailwag'); window.Klaus?.pant(3200); }, 950);
+        window.setTimeout(() => { window.Klaus?.pose(klaus, 'after_touch_happy_tailwag'); window.Klaus?.pant(1600); }, 950);
         window.setTimeout(() => window.Klaus?.pose(klaus, 'checkout_sitting'), 4300);
     });
     elements.categoryTree?.addEventListener('dragstart', event => {
