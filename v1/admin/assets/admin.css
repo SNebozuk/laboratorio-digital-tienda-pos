@@ -2805,7 +2805,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-modal-card {
     width: min(760px, calc(100vw - 32px));
     max-height: min(850px, calc(100vh - 32px));
-    border-color: #e9a7c8;
+    border-color: #e2e6ef;
     border-radius: 16px;
     background: #fff;
     color: #252a3a;
