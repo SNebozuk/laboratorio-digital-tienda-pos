@@ -173,7 +173,7 @@
         dialog.setAttribute('aria-label', 'Regalo de Klaus');
         dialog.innerHTML = alreadyUnlocked
             ? '<div><span aria-hidden="true">🐾</span><strong>¡Klaus recuerda su regalo!</strong><p>Tu <b>2% de descuento adicional</b> ya está activo en esta compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>'
-            : '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p>Ganaste <b>2% de descuento adicional</b>, acumulable en toda tu compra.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
+            : '<div><span aria-hidden="true">🐾</span><strong>¡Klaus te hizo un regalo!</strong><p><b>Klaus te regala un 2% de descuento en toda tu compra.</b><br>Es acumulable con otras promociones.</p><button type="button" aria-label="Gracias, Klaus">✓ <small>GRACIAS, KLAUS</small></button></div>';
         const close = () => {
             klausDiscountAcknowledged = true;
             dialog.remove();
@@ -1236,7 +1236,7 @@
             ${surpriseUnlocked ? `<div class="reward-surprise"><strong>${escapeHtml(rewards.reward_surprise_text || '🎁 ¡Sorpresa! Ganaste un descuento en este carrito.')}</strong><span>${escapeHtml(rewards.reward_surprise_continue_text || '')}</span></div>` : ''}`;
         if (elements.mobileKlausHost) elements.mobileKlausHost.innerHTML = klausMarkup(units, klausMessage);
         if (klausDiscountAcknowledged) {
-            elements.cartRewards.insertAdjacentHTML('beforeend', '<div class="reward-surprise"><strong>🐾 Premio de Klaus: 2% de descuento adicional.</strong><span>Se acumula con los demás descuentos de tu compra.</span></div>');
+            elements.cartRewards.insertAdjacentHTML('beforeend', '<div class="reward-surprise"><strong>🐾 Klaus te regala un 2% de descuento en toda tu compra.</strong><span>Es acumulable con otras promociones.</span></div>');
         }
         elements.checkout.disabled = items.length === 0 || !app.orders_enabled || cartMaintenanceEnabled;
         elements.checkout.textContent = cartMaintenanceEnabled
