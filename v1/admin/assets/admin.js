@@ -345,6 +345,9 @@
         if (view === 'orders') {
             loadOrders().then(markOrdersSeen);
         }
+        if (view === 'products') {
+            loadProducts();
+        }
         if (view === 'tutorials') loadTutorials();
         if (view === 'deliveries') {
             loadDeliverySlots();
@@ -5391,15 +5394,16 @@
     if (app.user) {
         // Las páginas independientes del PDV no usan la navegación del admin;
         // marcarlas explícitamente permite capturar escaneos desde cualquier foco.
-        if (document.querySelector('.pos-page')) {
+        const isPosPage = Boolean(document.querySelector('.pos-page'));
+        if (isPosPage) {
             state.view = 'pos';
             window.Klaus?.attach(document, '.pos-klaus');
+            restorePosCustomer();
+            loadProducts();
+            renderPosCart();
         }
-        restorePosCustomer();
-        loadProducts();
         if (elements.invitationsBadge) loadInvitations();
         if (elements.ordersBadge) loadOrderNotifications();
-        renderPosCart();
         if (document.getElementById('view-orders')) {
             const requestedView = new URL(window.location.href).searchParams.get('view') || 'orders';
             showView(requestedView);
