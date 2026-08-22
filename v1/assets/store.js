@@ -105,7 +105,28 @@
         const surprisePercent = surpriseUnlocked && rewardOn('reward_surprise_enabled') ? Number(rewards.reward_surprise_percent || 5) : 0;
         const basePercent = Math.max(quantityPercent, surprisePercent);
         const percent = basePercent + (klausDiscountUnlocked ? 2 : 0);
-        return { percent, type: klausDiscountUnlocked ? 'klaus' : (surprisePercent >= quantityPercent && surprisePercent ? 'surprise' : (quantityPercent ? 'quantity' : '')), cents: Math.round(subtotal * percent / 100), quantityPercent };
+        const cents = Math.round(subtotal * percent / 100);
+        const klausCents = klausDiscountUnlocked ? Math.round(subtotal * 2 / 100) : 0;
+        const baseCents = Math.max(0, cents - klausCents);
+        const breakdown = [];
+        if (klausCents) breakdown.push({ type: 'klaus', label: 'Regalo de Klaus (2%)', cents: klausCents });
+        if (baseCents && quantityPercent >= surprisePercent) breakdown.push({ type: 'quantity', label: `Por completar ${Number(rewards.reward_quantity_units || 20)} productos (${quantityPercent}%)`, cents: baseCents });
+        if (baseCents && surprisePercent > quantityPercent) breakdown.push({ type: 'surprise', label: `Sorpresa del carrito (${surprisePercent}%)`, cents: baseCents });
+        return { percent, type: klausDiscountUnlocked ? 'klaus' : (surprisePercent >= quantityPercent && surprisePercent ? 'surprise' : (quantityPercent ? 'quantity' : '')), cents, quantityPercent, breakdown };
+    }
+
+    function klausGiftIconMarkup() {
+        return '<svg class="klaus-gift-icon" aria-hidden="true" viewBox="0 0 42 32"><path d="M8 17c0-9 7-14 14-14s13 5 13 14l-3 10H11z" fill="#d4a15f" stroke="#68411d" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 10C3 10 4 20 10 22l4-11zM29 10c8-5 10 5 5 11l-5-8z" fill="#ad743b" stroke="#68411d" stroke-width="1.7" stroke-linejoin="round"/><ellipse cx="21" cy="21" rx="7" ry="5" fill="#efcc98"/><circle cx="17" cy="16" r="1.3" fill="#322015"/><circle cx="25" cy="16" r="1.3" fill="#322015"/><path d="M19 20h4l-2 2z" fill="#322015"/></svg>';
+    }
+
+    function discountSummaryMarkup(discount) {
+        if (discount.cents) {
+            const lines = discount.breakdown.map(item => `${item.type === 'klaus' ? klausGiftIconMarkup() : ''}${item.label}: -${money(item.cents)}`);
+            return `${lines.join('<br>')}<br><b class="discount-total">Te ganaste ${money(discount.cents)} en total de descuento</b>`;
+        }
+        return klausDiscountUnlocked
+            ? `${klausGiftIconMarkup()}Regalo de Klaus (2%): se aplicará al agregar productos`
+            : 'Descuento: —';
     }
 
     function klausMarkup(units, message = '') {
@@ -1185,9 +1206,7 @@
         elements.cartSummaryMeta.textContent = `${items.length} ${productLabel} · ${units} ${unitLabel}`;
         elements.cartTotal.textContent = money(total);
         elements.cartSubtotal.textContent = money(subtotal);
-        elements.cartDiscount.textContent = discount.cents
-            ? `Descuento (${discount.percent}%): -${money(discount.cents)}`
-            : (klausDiscountUnlocked ? 'Descuento (2%): se aplicará al agregar productos' : 'Descuento: —');
+        elements.cartDiscount.innerHTML = discountSummaryMarkup(discount);
         const needed = Math.max(0, Number(rewards.reward_quantity_units || 20) - units);
         const klausNearReward = rewardOn('reward_quantity_enabled') && units >= Math.max(1, Number(rewards.reward_quantity_units || 20) - 3);
         const klausReachedReward = rewardOn('reward_quantity_enabled') && units >= Number(rewards.reward_quantity_units || 20);
@@ -1397,7 +1416,7 @@
                     </div>
                 `).join('')}
             </div>
-            <div class="order-total"><span>Subtotal<br><small>Descuento (${discount.percent}%): -${money(discount.cents)}<br>Total</small></span><strong>${money(total)}</strong></div>
+            <div class="order-total"><span>Subtotal<br><small>${discountSummaryMarkup(discount)}<br>Total</small></span><strong>${money(total)}</strong></div>
             <form id="checkout-form" novalidate>
                 <label>
                     Nombre y Apellido

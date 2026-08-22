@@ -58,6 +58,7 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 .cart-actions .cart-summary-meta { margin:0 0 4px; }
 .cart-actions .order-total { padding:8px 0; font-size:14px; }
 .cart-actions .order-total strong { font-size:20px; }
+.klaus-gift-icon { width:24px; height:18px; margin-right:4px; vertical-align:-4px; }
 .cart-actions #checkout-button { min-height:38px; padding:8px 14px; font-size:12px; }
 .cart-actions .continue-shopping-button,.cart-actions .order-note { display:none !important; }
 .cart-products-divider { order:1; height:1px; margin:12px 0; background:var(--line); }
