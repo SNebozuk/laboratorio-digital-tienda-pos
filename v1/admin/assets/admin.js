@@ -60,7 +60,7 @@
         quantity: 'por cantidad',
         surprise: 'sorpresa',
         klaus: 'premio de Klaus',
-    });
+    })[type];
     const discountSourceText = type => String(type || '').split('+')
         .map(source => discountSourceLabel(source) || 'promoción')
         .join(' + ');
