@@ -1683,6 +1683,7 @@
             ${rewardOn('reward_checkout_celebration_enabled') ? `<div class="checkout-celebration" aria-hidden="true">${rewardOn('reward_checkout_confetti_enabled') ? '✦ ✦ ✦' : ''}<b>✓</b></div><p class="checkout-celebration-copy">¡Listo! Recibimos tu compra.</p>${klausMarkup(999, rewardOn('reward_klaus_messages_enabled') ? (rewards.reward_klaus_complete_text || '🎉 ¡Compra lista!') : '')}` : ''}
             <h2 id="modal-title">¡Gracias por tu pedido!</h2>
             <p class="checkout-lead">Tu pedido <strong>${escapeHtml(order.public_number)}</strong> ingresó correctamente.</p>
+            <section class="transfer-ready" aria-live="polite"><span aria-hidden="true">✨</span><div><strong>¿Podés hacer la transferencia ahora?</strong><p>Te dejamos los datos listos para que sea súper simple.</p></div></section>
             <div class="payment-focus">
                 <span>Para confirmarlo, transferí</span>
                 <strong class="payment-amount">${total}</strong>
@@ -1695,6 +1696,7 @@
                 <strong>Un último paso, muy simple</strong>
                 <span>Cuando hagas la transferencia, escribinos por WhatsApp para avisarnos.</span>
             </div>
+            <div class="transfer-choice"><button class="primary-button" type="button" data-transfer-ready>Sí, la hago ahora</button><button class="secondary-button" type="button" data-transfer-later>La haré más tarde</button></div>
             <a class="primary-button button-link" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener" data-whatsapp-order-complete>AVISAR TRANSFERENCIA POR WHATSAPP</a>
             <button class="secondary-button" type="button" data-finish-order>VOLVER A LA TIENDA</button>
         `);
@@ -1943,6 +1945,15 @@
 
         if (event.target.closest('[data-finish-order]')) {
             finishOrder();
+            return;
+        }
+
+        if (event.target.closest('[data-transfer-ready], [data-transfer-later]')) {
+            const ready = event.target.closest('[data-transfer-ready]');
+            const panel = elements.modalContent.querySelector('.transfer-ready');
+            if (panel) panel.innerHTML = ready
+                ? '<span aria-hidden="true">💜</span><div><strong>¡Perfecto!</strong><p>Usá los datos de abajo y después avisános por WhatsApp.</p></div>'
+                : '<span aria-hidden="true">🕒</span><div><strong>¡No hay problema!</strong><p>Guardamos tu pedido. Los datos quedan acá cuando estés lista.</p></div>';
             return;
         }
 
