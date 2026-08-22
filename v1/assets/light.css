@@ -254,7 +254,7 @@ body.home-mode .catalog-intro p { max-width:720px; margin:9px 0 0; color:#55445f
 .product-view-chooser > p { margin:0 0 10px; color:#796d80; }
 .product-view-remember { display:flex; align-items:center; gap:7px; color:#55445f; font-size:12px; font-weight:700; }.product-view-remember input { width:16px; height:16px; accent-color:#7652b8; }
 .product-view-chooser > div { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; width:calc(100% - 122px); margin-right:122px; }
-.product-view-chooser button { display:grid; gap:8px; min-height:142px; padding:14px; border:2px solid #fff; border-radius:12px; background:#f8c5db !important; color:#38234f; text-align:left; cursor:pointer; }
+.product-view-chooser button { display:grid; gap:8px; min-height:142px; padding:14px; border:2px solid #fff; border-radius:12px; background:#fde7f0 !important; color:#38234f; text-align:left; cursor:pointer; }
 .product-view-chooser button:first-child { border-color:#fff; background:#f8c5db; }
 .product-view-chooser button:hover,.product-view-chooser button:focus-visible { transform:translateY(-2px); border-color:#8f145f; background:#a51a71; color:#fff; box-shadow:0 8px 18px rgba(165,26,113,.28); }
 .product-view-chooser button:hover small,.product-view-chooser button:focus-visible small { color:#fff; }
