@@ -695,7 +695,7 @@
                     <i aria-label="100% completado"><b style="width:100%"></b></i>
                     <small>100% del beneficio</small>
                 </div>
-                <button class="primary-button" type="button" data-close-modal>OK</button>
+                <button class="primary-button" type="button" data-close-modal>¡Excelente!</button>
             </section>
         `);
         window.setTimeout(() => elements.modalContent.querySelector('[data-close-modal]')?.focus(), 0);
