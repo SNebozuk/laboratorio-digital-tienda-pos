@@ -71,12 +71,12 @@ body { background:#f7faf7 !important; color:var(--text) !important; }
 .cart-remove svg { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .cart-rewards { order:3; justify-items:start; margin:12px 0 0; }
 .cart-rewards .reward-progress { order:0; width:100%; }
-.cart-rewards .klaus { order:1; justify-self:stretch; justify-content:flex-start; width:100%; min-height:56px; border-bottom:0; }
+.cart-rewards .klaus { order:1; justify-self:stretch; justify-content:flex-start; width:100%; min-height:112px; border-bottom:0; }
 .cart-rewards .klaus > div { display:none; }
 @media (max-width:760px) { .order-panel.mobile-open { height:100dvh; overflow:hidden; } }
 @media (max-width:760px) { .cart-rewards { order:1; width:100%; margin:8px 0 0; }.cart-rewards .klaus { width:100%; min-height:62px; }.cart-rewards .klaus > div { display:grid; }.cart-products-divider { order:2; margin:8px 0; }.cart-lines { order:3; } }
 .mobile-klaus-host { display:none; }
-@media (max-width:760px) { .cart-rewards .klaus { display:none; }.mobile-klaus-host { position:fixed; z-index:75; bottom:10px; left:10px; display:block; }.mobile-klaus-host .klaus { width:235px; min-height:70px; padding:0; overflow:visible; border:0; background:transparent; }.mobile-klaus-host .klaus-image { width:96px; height:68px; }.mobile-klaus-host .klaus > div { display:none; }.mobile-klaus-host .klaus-zzz { left:15px; }.mobile-klaus-host .klaus-pet-effects { transform:scaleX(-1); } }
+@media (max-width:760px) { .cart-rewards .klaus { display:none; }.mobile-klaus-host { position:fixed; z-index:75; bottom:10px; left:10px; display:block; }.mobile-klaus-host .klaus { width:265px; min-height:90px; padding:0; overflow:visible; border:0; background:transparent; }.mobile-klaus-host .klaus-image { width:125px; height:88px; }.mobile-klaus-host .klaus > div { display:none; }.mobile-klaus-host .klaus-zzz { left:15px; }.mobile-klaus-host .klaus-pet-effects { transform:scaleX(-1); } }
 
 /* Checkout claro y legible en teléfonos. */
 @media (max-width:760px){.modal{padding:0 !important;align-items:end !important;}.modal.open{place-items:end stretch !important;}.modal-backdrop{background:rgba(24,35,27,.3) !important;}.modal-card{width:100% !important;max-height:calc(100vh - 42px) !important;padding:22px 18px 28px !important;border-radius:18px 18px 0 0 !important;background:#fff !important;color:var(--text) !important;box-shadow:0 -14px 40px rgba(24,35,27,.16) !important;}.modal-card p,.modal-card small,.checkout-footnote{color:var(--muted) !important;}.modal-close{background:#fff !important;color:var(--text) !important;}.payment-focus,.cash-confirmation,.cash-expiry-explanation,.payment-instructions,.bank-details{background:#f0f7f1 !important;border-color:#c7dec9 !important;color:var(--text) !important;}.payment-focus span,.cash-confirmation span,.payment-instructions span,.cash-expiry-explanation p,.bank-details dt{color:var(--muted) !important;}.payment-focus strong,.cash-confirmation strong,.bank-details dd{color:var(--text) !important;}.button-link{display:block;text-align:center;text-decoration:none;}}
@@ -285,12 +285,12 @@ body.home-mode .catalog-intro p { max-width:720px; margin:9px 0 0; color:#55445f
 .reward-cart-animation .cart-mobile span { transition:transform .18s ease; }.reward-cart-animation .cart-mobile:has(span:not(:empty)) span { animation:cart-count-pop .28s ease; }
 @keyframes cart-count-pop { 50% { transform:scale(1.22); } }
 @media (prefers-reduced-motion: reduce) { .reward-progress b,.cart-mobile span,.checkout-celebration,.klaus *,.klaus.is-happy::before { transition:none; animation:none; } }
-.klaus-image { width:110px; height:86px; object-fit:contain; transform:scaleX(-1); }
+.klaus-image { width:143px; height:112px; object-fit:contain; transform:scaleX(-1); }
 .mobile-klaus-host .klaus-image { transform:none; }
 .klaus-pet-prompt,.klaus-greeting,.klaus-zzz { display:none; }
 .klaus-welcome { position:absolute; right:18px; bottom:16px; display:grid; justify-items:center; gap:2px; width:106px; padding:0; border:0; background:transparent; color:#54223f; cursor:pointer; }
 .klaus-welcome .klaus-image { width:94px; height:94px; transform:scaleX(-1); object-fit:contain; animation:klaus-welcome-bob 3s ease-in-out infinite; }
-.klaus-welcome span { font-family:Georgia,'Times New Roman',serif; font-size:13px; font-style:italic; font-weight:400; line-height:1.2; }.klaus-welcome strong { font-weight:800; }
+.klaus-welcome span { font-family:Georgia,'Times New Roman',serif; font-size:13px; font-style:italic; font-weight:400; line-height:1.2; }.klaus-welcome strong { font-weight:800; }.klaus-welcome small { display:block; margin-top:3px; font-size:10px; }
 @keyframes klaus-welcome-bob { 50% { transform:scaleX(-1) translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .klaus-welcome .klaus-image { animation:none; } }
 @media (max-width:700px) { .klaus-welcome { right:10px; bottom:10px; width:88px; }.klaus-welcome .klaus-image { width:76px; height:76px; }.klaus-welcome span { font-size:9px; } }
