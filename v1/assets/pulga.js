@@ -18,13 +18,13 @@
         const element = document.elementFromPoint(x, y);
         return element && element.closest('button, a, input, textarea, select, .product-card, .product-modal, .modal, .toast, .order-panel, .store-header, .search-wrap');
     };
-    const pickSpot = () => {
+    const pickSpot = (side = '') => {
         const spots = [
             { side: 'left', x: 34, y: innerHeight * .72 },
             { side: 'right', x: innerWidth - 34, y: innerHeight * .70 },
             { side: 'left', x: 34, y: innerHeight * .38 },
             { side: 'right', x: innerWidth - 34, y: innerHeight * .40 },
-        ].filter(spot => !isObstructed(spot.x, spot.y));
+        ].filter(spot => (!side || spot.side === side) && !isObstructed(spot.x, spot.y));
         return spots[Math.floor(Math.random() * spots.length)] || null;
     };
     const schedule = () => {
@@ -38,9 +38,9 @@
         const delay = escaping && animationsEnabled ? 420 : 160;
         setTimeout(() => { host?.remove(); host = undefined; schedule(); }, delay);
     };
-    const show = () => {
+    const show = (side = '') => {
         if (!enabled || document.hidden || document.querySelector('.modal.is-open, .product-modal:not([hidden])')) return schedule();
-        const spot = pickSpot();
+        const spot = pickSpot(side);
         if (!spot) return schedule();
         active = true;
         host = document.createElement('div');
@@ -64,6 +64,15 @@
     if (enabled) {
         document.addEventListener('visibilitychange', () => { if (document.hidden) hide(false); else schedule(); });
         window.addEventListener('pagehide', () => clearTimeout(timer));
+        window.addEventListener('keydown', event => {
+            if (!event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || !['Digit1', 'Digit2'].includes(event.code)) return;
+            if (event.target.matches('input, textarea, select, [contenteditable="true"]')) return;
+            event.preventDefault();
+            const side = event.code === 'Digit1' ? 'left' : 'right';
+            const wasActive = active;
+            if (wasActive) hide(false);
+            setTimeout(() => show(side), wasActive ? 170 : 0);
+        });
         schedule();
     }
 })();
