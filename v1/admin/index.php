@@ -294,11 +294,11 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading"><div><p class="eyebrow">HERRAMIENTA PARA CLIENTES</p><h1 class="admin-page-title">COTIZADOR</h1><p>Definí costos y rendimientos estimados de tinta. El papel siempre toma el precio actual del catálogo.</p></div><a class="secondary-button fit-button" href="<?= $escape($storePath) ?>/cotizador.php" target="_blank" rel="noopener">VER COTIZADOR</a></div>
                         <form id="quote-settings-form" class="settings-card">
                             <div class="settings-grid">
-                                <label>COSTO SET TINTA COMERCIAL ($)<input name="commercial_cost" type="number" min="0" required></label>
+                                <label>COSTO JUEGO CMYK COMERCIAL 4 × 100 CC ($)<input name="commercial_cost" type="number" min="0" required></label>
                                 <label>RENDIMIENTO COMERCIAL (HOJAS A4)<input name="commercial_yield" type="number" min="1" required></label>
-                                <label>COSTO SET TINTA PROFESIONAL ($)<input name="professional_cost" type="number" min="0" required></label>
+                                <label>COSTO JUEGO CMYK PROFESIONAL 4 × 100 CC ($)<input name="professional_cost" type="number" min="0" required></label>
                                 <label>RENDIMIENTO PROFESIONAL (HOJAS A4)<input name="professional_yield" type="number" min="1" required></label>
-                                <label>COSTO SET TINTA ETERNITY ($)<input name="eternity_cost" type="number" min="0" required></label>
+                                <label>COSTO JUEGO CMYK ETERNITY 4 × 100 CC ($)<input name="eternity_cost" type="number" min="0" required></label>
                                 <label>RENDIMIENTO ETERNITY (HOJAS A4)<input name="eternity_yield" type="number" min="1" required></label>
                                 <label>MARGEN RECOMENDADO (%)<input name="recommended_margin" type="number" min="0" required></label>
                             </div>

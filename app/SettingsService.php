@@ -152,9 +152,9 @@ final class SettingsService
     public function quote(): array
     {
         $defaults = [
-            'commercial_cost' => '8500', 'commercial_yield' => '4500',
-            'professional_cost' => '24000', 'professional_yield' => '6000',
-            'eternity_cost' => '12000', 'eternity_yield' => '5000',
+            'commercial_cost' => '12000', 'commercial_yield' => '4500',
+            'professional_cost' => '32000', 'professional_yield' => '6000',
+            'eternity_cost' => '47600', 'eternity_yield' => '5000',
             'recommended_margin' => '50',
         ];
         $statement = $this->pdo->query("SELECT key, value FROM settings WHERE key LIKE 'quote_%'");
