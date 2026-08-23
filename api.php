@@ -39,6 +39,7 @@ try {
                 Http::json([
                     'ok' => true,
                     'products' => $app['products']->publicCatalog(),
+                    'categories' => $app['categories']->tree(),
                     'quote_settings' => $app['settings']->quote(),
                 ]);
 
