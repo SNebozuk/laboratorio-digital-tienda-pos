@@ -1037,16 +1037,12 @@
         });
     }
 
-    function setProductView(view, useAlways = alwaysUseProductView) {
+    function setProductView(view) {
         if (!PRODUCT_VIEWS.has(view)) return;
         productView = view;
-        alwaysUseProductView = useAlways;
+        alwaysUseProductView = true;
         try {
-            if (alwaysUseProductView) {
-                window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view);
-            } else {
-                window.localStorage.removeItem(PRODUCT_VIEW_STORAGE_KEY);
-            }
+            window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view);
         } catch (_) { /* La vista funciona aunque el navegador no permita guardar la preferencia. */ }
         if (productView === 'list') setCategoryMenuOpen(false);
         syncProductViewSwitcher();
@@ -1058,8 +1054,7 @@
             <section class="product-view-chooser" aria-labelledby="product-view-chooser-title">
                 <span class="product-view-chooser-icon" aria-hidden="true">◉</span>
                 <h2 id="product-view-chooser-title">¿Cómo preferís ver los productos?</h2>
-                <p>Podés cambiarlo cuando quieras.</p>
-                <label class="product-view-remember"><input type="checkbox" data-use-product-view-always> Usar siempre la vista elegida</label>
+                <p>La vista elegida se guarda y podés cambiarla cuando quieras.</p>
                 <div>
                     <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos ordenados por categoría y subcategoría.</small></button>
                     <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
@@ -1812,9 +1807,7 @@
         const productViewButton = event.target.closest('[data-product-view]');
         if (productViewButton) {
             const chooser = productViewButton.closest('.product-view-chooser');
-            setProductView(productViewButton.dataset.productView, chooser
-                ? Boolean(chooser.querySelector('[data-use-product-view-always]')?.checked)
-                : alwaysUseProductView);
+            setProductView(productViewButton.dataset.productView);
             if (chooser) closeModal();
             return;
         }
