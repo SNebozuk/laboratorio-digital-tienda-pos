@@ -195,7 +195,7 @@ body { background:#fff !important; }
 
 /* Apertura simple de la portada. */
 body.home-mode .catalog-intro { display:grid; align-content:start; justify-items:start; min-height:330px; max-width:none; margin-inline:calc(-1 * clamp(22px,4vw,58px)); padding:24px clamp(22px,6vw,88px); background:#fff url('/v1/assets/quote-atelier.jpg') right 28px center/auto 88% no-repeat !important; text-align:left; }
-body.home-mode .catalog-intro h1 { max-width:600px; margin:0; color:#5b4459 !important; font:clamp(34px,4.2vw,58px)/.96 Georgia,serif; letter-spacing:-.04em; text-shadow:none !important; }
+body.home-mode .catalog-intro h1 { max-width:620px; margin:12px 0; color:#5b4459 !important; font:clamp(40px,8vw,72px)/.95 Georgia,serif; letter-spacing:normal; text-shadow:none !important; }
 body.home-mode .catalog-intro h1 em { color:#9e5a73; font-weight:normal; }
 body.home-mode .catalog-intro p { max-width:590px; margin:14px 0 0; color:#55445f !important; font-size:15px; font-weight:650; }
 .catalog-intro .catalog-slogan { color:#796d80 !important; font-size:13px; font-weight:500; }

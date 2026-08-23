@@ -73,7 +73,10 @@
     choosePaper(row);
   });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') $('paper-picker').open = false;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      window.location.assign(app.storeUrl || '/');
+    }
   });
   $('calculate-quote').addEventListener('click', () => {
     calculate();
