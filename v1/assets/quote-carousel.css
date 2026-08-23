@@ -15,5 +15,6 @@
 .related-card small { margin-top: 6px; color: #9e5a73; font-weight: bold; }
 .quote-card, .quote-guide { background: rgba(255,255,255,.75); }
 .related-card { background: #fff; }
-.paper-table th:nth-child(2), .paper-table td:nth-child(2) { display: none; }
+.paper-table tbody tr { cursor: pointer; }
+.paper-table input[type="radio"] { accent-color: #9e5a73; margin: 0 8px 0 0; }
 @media (max-width: 700px) { .quote-hero { min-height: 0; padding-right: 20px; text-align: center; } .quote-shell { background-size: auto 100vh; } }

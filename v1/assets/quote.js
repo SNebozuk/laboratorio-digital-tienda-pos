@@ -1,28 +1,84 @@
 (() => {
-  const app = window.quoteApp, $ = id => document.getElementById(id), money = value => new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(value);
-  let papers=app.papers||[], selected=null, settings={};
-  const fold = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  const paperSize = label => { const match=String(label).match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i); if(match) return [+match[1].replace(',','.'),+match[2].replace(',','.')]; const t=fold(label); if(t.includes('a3+')) return [32.9,48.3]; if(t.includes('a4')) return [21,29.7]; if(t.includes('a3')) return [29.7,42]; if(t.includes('a6')||t.includes('4r')) return [10,15]; if(t.includes('a5')) return [14.8,21]; return null; };
+  const app = window.quoteApp || {};
+  const $ = id => document.getElementById(id);
+  const money = value => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(value);
+  const papers = app.papers || [];
+  const settings = (app.catalog || {}).quote_settings || {};
+  let selected = null;
+
+  const fold = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const paperSize = label => {
+    const match = String(label).match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i);
+    if (match) return [+match[1].replace(',', '.'), +match[2].replace(',', '.')];
+    const name = fold(label);
+    if (name.includes('a3+')) return [32.9, 48.3];
+    if (name.includes('a4')) return [21, 29.7];
+    if (name.includes('a3')) return [29.7, 42];
+    if (name.includes('a6') || name.includes('4r')) return [10, 15];
+    if (name.includes('a5')) return [14.8, 21];
+    return null;
+  };
   const packSheets = label => +(String(label).match(/(\d+)\s*hojas?/i)?.[1] || 1);
-  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
-  const renderPapers=()=>{const matches=papers; $('paper-list').innerHTML=matches.length?`<table class="paper-table"><thead><tr><th>Papel</th><th>Presentación</th><th>Precio resma</th></tr></thead><tbody>${matches.map(p=>`<tr class="${selected?.variant_id===p.variant_id?'chosen':''}" data-id="${p.variant_id}"><td>${escapeHtml(p.product_name)}</td><td>${escapeHtml(p.variant_name||'—')}</td><td>${money(p.price_cents/100)}</td></tr>`).join('')}</tbody></table>`:'<p>No hay papeles disponibles para cotizar.</p>'; document.querySelectorAll('.paper-table tbody tr').forEach(row=>row.onclick=()=>{selected=papers.find(p=>p.variant_id===+row.dataset.id); $('paper-selected').textContent=`Papel elegido: ${selected.product_name}${selected.variant_name ? ` · ${selected.variant_name}` : ''} · ${money(selected.price_cents/100)}`; $('paper-selected').hidden=false; $('paper-picker-panel').hidden=true; $('paper-picker').setAttribute('aria-expanded','false'); renderPapers(); calculate();});};
-  const renderRelated = products => { const cards = products.filter(p => fold(`${p.name} ${p.description} ${p.category?.name||''} ${(p.variants||[]).map(v=>v.name).join(' ')}`).includes('atelier')).slice(0, 12); if (!cards.length) return; $('related-products').innerHTML=`<div class="related-track">${cards.map(p=>{const v=p.variants.find(v=>Number(v.price_cents)>0); return v?`<a class="related-card" href="${escapeHtml(app.storeUrl)}?producto=${Number(p.id)}">${p.image_path?`<img src="${escapeHtml(p.image_path)}" alt="">`:''}<strong>${escapeHtml(p.name)}</strong><small>${money(v.price_cents/100)}</small></a>`:'';}).join('')}</div>`; };
-  const calculate=()=>{if(!selected){$('quote-result').innerHTML='<p>Elegí un papel para ver tu cotización.</p>';return;} const size=paperSize(`${selected.product_name} ${selected.variant_name}`); if(!size){$('quote-result').innerHTML='<p>Este papel no tiene un tamaño identificable. Elegí una variante que indique A4, A3, A5 o medidas (ej. 21 x 29,7 cm).</p>';return;} const qty=+$('project-quantity').value,w=+$('project-width').value,h=+$('project-height').value, margin=(+$('cut-margin').value||0)/10; if(!(qty>0&&w>0&&h>0))return; const fit=(pw,ph)=>Math.floor(pw/(w+margin))*Math.floor(ph/(h+margin)); const perSheet=Math.max(fit(size[0],size[1]),fit(size[1],size[0])); if(!perSheet){$('quote-result').innerHTML='<p>La pieza no entra en la hoja seleccionada. Probá otro papel o tamaño.</p>';return;} const sheets=Math.ceil(qty/perSheet), cutLeftovers=sheets*perSheet-qty, perPack=packSheets(`${selected.product_name} ${selected.variant_name}`), packs=Math.ceil(sheets/perPack), sheetLeftovers=packs*perPack-sheets, paperCost=(+selected.price_cents/100)*packs; const type=$('ink-type').value, coverage=+$('ink-coverage').value, ratio=(size[0]*size[1])/(21*29.7), inkCost=(+settings[`${type}_cost`]/+settings[`${type}_yield`])*sheets*ratio*coverage; const total=paperCost+inkCost, marginPct=+$('profit-margin').value||0, price=total*(1+marginPct/100); $('quote-result').innerHTML=`<div class="result-heading"><span>Tu cotización estimada</span><strong>${money(price)}</strong><small>precio sugerido para el trabajo</small></div><div class="result-grid"><div><b>${perSheet}</b><span>tarjetas por hoja</span></div><div><b>${sheets}</b><span>hojas necesarias</span></div><div><b>${sheetLeftovers}</b><span>hojas que sobran</span></div><div><b>${money(total/qty)}</b><span>costo unitario</span></div></div><div class="result-costs"><span>Papel <b>${money(paperCost)}</b></span><span>Tinta estimada <b>${money(inkCost)}</b></span><span>Ganancia estimada <b>${money(price-total)}</b></span></div><p>Calculado sobre ${size[0]} × ${size[1]} cm. Necesitás ${packs} paquete(s) de ${perPack} hoja(s); quedan ${cutLeftovers} tarjeta(s) posibles del recorte.</p>`;};
-  ['project-quantity','project-width','project-height','cut-margin','ink-type','ink-coverage','profit-margin'].forEach(id=>$(id).addEventListener('input',calculate));
-  const data = app.catalog || {}; settings=data.quote_settings || {}; $('profit-margin').value=settings.recommended_margin || 50; const paperCategoryIds=new Set(), collectIds=category=>{paperCategoryIds.add(Number(category.id)); (category.children||[]).forEach(collectIds);}, collect=category=>{if(fold(category.name).includes('papel')) collectIds(category); (category.children||[]).forEach(collect);}; (data.categories||[]).forEach(collect); const paperTerms=/papel|cartulina|matelina|gliterina|cristalina|acetato|filmilo/i; (data.products||[]).filter(p=>paperCategoryIds.has(Number(p.category?.id))||paperTerms.test(`${p.name} ${p.category?.name||''}`)).forEach(p=>(p.variants||[]).forEach(v=>{if(Number(v.price_cents)>0) papers.push({product_name:p.name,variant_name:v.name,variant_id:v.id,price_cents:v.price_cents});})); renderPapers(); renderRelated(data.products||[]);
-  document.addEventListener('click', event => {
-    const row = event.target.closest('.paper-table tbody tr');
-    if (!row) return;
-    event.stopPropagation();
-    const choice = papers.find(paper => Number(paper.variant_id) === Number(row.dataset.id));
-    if (!choice) return;
-    selected = choice;
+
+  const calculate = () => {
+    if (!selected) {
+      $('quote-result').innerHTML = '<p>Elegí un papel para ver tu cotización.</p>';
+      return;
+    }
+    const size = paperSize(selected.product_name + ' ' + selected.variant_name);
+    if (!size) {
+      $('quote-result').innerHTML = '<p>Este papel no tiene un tamaño identificable. Elegí una variante que indique A4, A3, A5 o medidas.</p>';
+      return;
+    }
+    const quantity = +$('project-quantity').value;
+    const width = +$('project-width').value;
+    const height = +$('project-height').value;
+    const margin = (+$('cut-margin').value || 0) / 10;
+    if (!(quantity > 0 && width > 0 && height > 0)) return;
+    const fit = (sheetWidth, sheetHeight) => Math.floor(sheetWidth / (width + margin)) * Math.floor(sheetHeight / (height + margin));
+    const perSheet = Math.max(fit(size[0], size[1]), fit(size[1], size[0]));
+    if (!perSheet) {
+      $('quote-result').innerHTML = '<p>La pieza no entra en la hoja seleccionada. Probá otro papel o tamaño.</p>';
+      return;
+    }
+    const sheets = Math.ceil(quantity / perSheet);
+    const cutLeftovers = sheets * perSheet - quantity;
+    const perPack = packSheets(selected.product_name + ' ' + selected.variant_name);
+    const packs = Math.ceil(sheets / perPack);
+    const sheetLeftovers = packs * perPack - sheets;
+    const paperCost = (+selected.price_cents / 100) * packs;
+    const inkType = $('ink-type').value;
+    const coverage = +$('ink-coverage').value;
+    const sizeRatio = (size[0] * size[1]) / (21 * 29.7);
+    const inkCost = (+settings[inkType + '_cost'] / +settings[inkType + '_yield']) * sheets * sizeRatio * coverage;
+    const total = paperCost + inkCost;
+    const marginPct = +$('profit-margin').value || 0;
+    const price = total * (1 + marginPct / 100);
+    $('quote-result').innerHTML = '<div class="result-heading"><span>Tu cotización estimada</span><strong>' + money(price) + '</strong><small>precio sugerido para el trabajo</small></div><div class="result-grid"><div><b>' + perSheet + '</b><span>tarjetas por hoja</span></div><div><b>' + sheets + '</b><span>hojas necesarias</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(total / quantity) + '</b><span>costo unitario</span></div></div><div class="result-costs"><span>Papel <b>' + money(paperCost) + '</b></span><span>Tinta estimada <b>' + money(inkCost) + '</b></span><span>Ganancia estimada <b>' + money(price - total) + '</b></span></div><p>Calculado sobre ' + size[0] + ' × ' + size[1] + ' cm. Necesitás ' + packs + ' paquete(s) de ' + perPack + ' hoja(s); quedan ' + cutLeftovers + ' tarjeta(s) posibles del recorte.</p>';
+  };
+
+  const choosePaper = variantId => {
+    selected = papers.find(paper => Number(paper.variant_id) === Number(variantId));
+    if (!selected) return;
     $('paper-selected').textContent = 'Papel elegido: ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + ' · ' + money(selected.price_cents / 100);
     $('paper-selected').hidden = false;
     $('paper-picker').open = false;
     calculate();
-  }, true);
+  };
+
+  $('paper-list').addEventListener('change', event => {
+    if (event.target.name === 'quote-paper') choosePaper(event.target.value);
+  });
+  $('paper-list').addEventListener('click', event => {
+    const row = event.target.closest('tr[data-id]');
+    if (!row) return;
+    const input = row.querySelector('input[name="quote-paper"]');
+    if (input) input.checked = true;
+    choosePaper(row.dataset.id);
+  });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') $('paper-picker').open = false;
   });
+  ['project-quantity', 'project-width', 'project-height', 'cut-margin', 'ink-type', 'ink-coverage', 'profit-margin'].forEach(id => $(id).addEventListener('input', calculate));
+  $('profit-margin').value = settings.recommended_margin || 50;
 })();
