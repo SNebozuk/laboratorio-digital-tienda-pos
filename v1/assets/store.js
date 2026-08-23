@@ -1168,7 +1168,7 @@
         syncProductViewSwitcher();
         document.body.classList.toggle('product-view-list', productView === 'list');
         document.body.classList.toggle('search-mode', state.searchActive);
-        const isHome = !state.searchActive && !state.category;
+        const isHome = !state.searchActive && !state.category && !state.showAll;
         document.body.classList.toggle('home-mode', isHome);
         elements.results.classList.toggle('search-results-mode', state.searchActive);
         const openedProduct = products.find(product => (
