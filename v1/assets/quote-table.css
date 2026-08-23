@@ -1,0 +1,9 @@
+.paper-list { display: block; border: 1px solid #eadfe1; border-radius: 12px; }
+.paper-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.paper-table th { position: sticky; top: 0; background: #f8e9ed; color: #755363; text-align: left; font-size: 11px; letter-spacing: .05em; }
+.paper-table th, .paper-table td { padding: 11px 13px; border-bottom: 1px solid #f1e6e8; }
+.paper-table tbody tr { cursor: pointer; }
+.paper-table tbody tr:hover, .paper-table tbody tr.chosen { background: #fff3f5; }
+.paper-table tbody tr.chosen { box-shadow: inset 3px 0 #9e5a73; }
+.paper-table td:last-child { text-align: right; font-weight: bold; white-space: nowrap; }
+@media (max-width:620px) { .paper-table th, .paper-table td { padding: 10px 8px; } .paper-table th:nth-child(2), .paper-table td:nth-child(2) { display: none; } }
