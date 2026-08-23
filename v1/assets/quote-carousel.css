@@ -2,7 +2,7 @@
 .paper-picker span { float: right; font-size: 20px; line-height: .8; }
 .paper-selected { margin: 11px 0 0; color: #755363; font-size: 14px; }
 .paper-picker-panel { margin-top: 10px; }
-.related-products { margin-top: 30px; overflow: hidden; }
+.related-products { min-height: 190px; margin-top: 30px; overflow: hidden; padding-top: 12px; background: url('/v1/assets/quote-atelier.jpg') left bottom / 340px auto no-repeat; }
 .related-track { display: flex; gap: 12px; overflow-x: auto; padding: 3px 2px 14px; scrollbar-width: thin; }
 .related-card { flex: 0 0 180px; min-height: 132px; border: 1px solid #eadfe1; border-radius: 15px; background: rgba(255,255,255,.72); padding: 14px; color: #57455a; }
 .related-card img { display: block; width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; }
