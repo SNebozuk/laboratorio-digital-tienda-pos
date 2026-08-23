@@ -1,6 +1,6 @@
 (() => {
   const app = window.quoteApp, $ = id => document.getElementById(id), money = value => new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(value);
-  let papers=[], selected=null, settings={};
+  let papers=app.papers||[], selected=null, settings={};
   const fold = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const paperSize = label => { const match=String(label).match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i); if(match) return [+match[1].replace(',','.'),+match[2].replace(',','.')]; const t=fold(label); if(t.includes('a3+')) return [32.9,48.3]; if(t.includes('a4')) return [21,29.7]; if(t.includes('a3')) return [29.7,42]; if(t.includes('a6')||t.includes('4r')) return [10,15]; if(t.includes('a5')) return [14.8,21]; return null; };
   const packSheets = label => +(String(label).match(/(\d+)\s*hojas?/i)?.[1] || 1);
