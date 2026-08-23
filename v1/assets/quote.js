@@ -3,7 +3,6 @@
   const $ = id => document.getElementById(id);
   const money = value => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(value);
   const papers = app.papers || [];
-  const settings = (app.catalog || {}).quote_settings || {};
   let selected = null;
 
   const fold = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -81,5 +80,4 @@
     $('quote-modal').showModal();
   });
   $('close-quote').addEventListener('click', () => $('quote-modal').close());
-  $('profit-margin').value = settings.recommended_margin || 50;
 })();
