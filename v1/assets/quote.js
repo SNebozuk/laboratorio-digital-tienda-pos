@@ -47,6 +47,7 @@
     const packs = Math.ceil(sheets / perPack);
     const sheetLeftovers = packs * perPack - sheets;
     const paperCost = (+selected.price_cents / 100) * packs;
+    const sheetPrice = (+selected.price_cents / 100) / perPack;
     const inkType = $('ink-type').value;
     const coverage = +$('ink-coverage').value;
     const sizeRatio = (size[0] * size[1]) / (21 * 29.7);
@@ -54,7 +55,7 @@
     const total = paperCost + inkCost;
     const marginPct = +$('profit-margin').value || 0;
     const price = total * (1 + marginPct / 100);
-    $('quote-result').innerHTML = '<div class="result-heading"><span>Tu cotización estimada</span><strong>' + money(price) + '</strong><small>precio sugerido para el trabajo</small></div><div class="result-grid"><div><b>' + perSheet + '</b><span>tarjetas por hoja</span></div><div><b>' + sheets + '</b><span>hojas necesarias</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(total / quantity) + '</b><span>costo unitario</span></div></div><div class="result-costs"><span>Papel <b>' + money(paperCost) + '</b></span><span>Tinta estimada <b>' + money(inkCost) + '</b></span><span>Ganancia estimada <b>' + money(price - total) + '</b></span></div><p>Calculado sobre ' + size[0] + ' × ' + size[1] + ' cm. Necesitás ' + packs + ' paquete(s) de ' + perPack + ' hoja(s); quedan ' + cutLeftovers + ' tarjeta(s) posibles del recorte.</p>';
+    $('quote-result').innerHTML = '<h2 id="quote-modal-title">Tu cotización</h2><div class="result-heading"><span>Precio sugerido</span><strong>' + money(price) + '</strong><small>para el trabajo completo</small></div><div class="result-grid"><div><b>' + sheets + '</b><span>hojas a usar</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(sheetPrice) + '</b><span>precio por hoja</span></div><div><b>' + money(total / quantity) + '</b><span>costo por unidad</span></div></div><div class="result-costs"><span>Papel <b>' + money(paperCost) + '</b></span><span>Tinta estimada <b>' + money(inkCost) + '</b></span><span>Ganancia estimada <b>' + money(price - total) + '</b></span></div><p>Con ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + '. Rinde ' + perSheet + ' unidades por hoja; necesitás ' + packs + ' resma(s) de ' + perPack + ' hoja(s) y sobran ' + cutLeftovers + ' unidades posibles del recorte.</p>';
   };
 
   const choosePaper = variantId => {
@@ -63,7 +64,6 @@
     $('paper-selected').textContent = 'Papel elegido: ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + ' · ' + money(selected.price_cents / 100);
     $('paper-selected').hidden = false;
     $('paper-picker').open = false;
-    calculate();
   };
 
   $('paper-list').addEventListener('change', event => {
@@ -79,6 +79,10 @@
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') $('paper-picker').open = false;
   });
-  ['project-quantity', 'project-width', 'project-height', 'cut-margin', 'ink-type', 'ink-coverage', 'profit-margin'].forEach(id => $(id).addEventListener('input', calculate));
+  $('calculate-quote').addEventListener('click', () => {
+    calculate();
+    $('quote-modal').showModal();
+  });
+  $('close-quote').addEventListener('click', () => $('quote-modal').close());
   $('profit-margin').value = settings.recommended_margin || 50;
 })();
