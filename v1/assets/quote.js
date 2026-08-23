@@ -48,15 +48,10 @@
     const sheetLeftovers = packs * perPack - sheets;
     const paperCost = (+selected.price_cents / 100) * packs;
     const sheetPrice = (+selected.price_cents / 100) / perPack;
-    const inkType = $('ink-type').value;
-    const coverage = +$('ink-coverage').value;
-    const sizeRatio = (size[0] * size[1]) / (21 * 29.7);
-    const inkCost = (+settings[inkType + '_cost'] / +settings[inkType + '_yield']) * sheets * sizeRatio * coverage;
-    const total = paperCost + inkCost;
+    const total = paperCost;
     const marginPct = +$('profit-margin').value || 0;
     const price = total * (1 + marginPct / 100);
-    const inkIncidence = total > 0 ? (inkCost / total) * 100 : 0;
-    $('quote-result').innerHTML = '<h2 id="quote-modal-title">Tu cotización</h2><div class="result-heading"><span>Precio sugerido</span><strong>' + money(price) + '</strong><small>' + money(price / quantity) + ' por unidad</small></div><div class="result-grid"><div><b>' + sheets + '</b><span>hojas a usar</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(sheetPrice) + '</b><span>precio por hoja</span></div><div><b>' + money(total / quantity) + '</b><span>costo por unidad</span></div></div><div class="result-costs"><span>Papel <b>' + money(paperCost) + '</b></span><span>Incidencia de tinta <b>' + money(inkCost) + ' · ' + money(inkCost / quantity) + ' c/u · ' + inkIncidence.toFixed(1).replace('.', ',') + '%</b></span><span>Ganancia estimada <b>' + money(price - total) + ' · ' + marginPct + '%</b></span></div><p>Con ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + '. Rinde ' + perSheet + ' unidades por hoja; necesitás ' + packs + ' resma(s) de ' + perPack + ' hoja(s) y sobran ' + cutLeftovers + ' unidades posibles del recorte.</p>';
+    $('quote-result').innerHTML = '<h2 id="quote-modal-title">Tu cotización</h2><div class="result-heading"><span>Precio sugerido</span><strong>' + money(price) + '</strong><small>' + money(price / quantity) + ' por unidad</small></div><div class="result-grid"><div><b>' + sheets + '</b><span>hojas a usar</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(sheetPrice) + '</b><span>precio por hoja</span></div><div><b>' + money(total / quantity) + '</b><span>costo por unidad</span></div></div><div class="result-costs"><span>Costo de papel <b>' + money(paperCost) + '</b></span><span>Ganancia estimada <b>' + money(price - total) + ' · ' + marginPct + '%</b></span></div><p>Con ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + '. Rinde ' + perSheet + ' unidades por hoja; necesitás ' + packs + ' resma(s) de ' + perPack + ' hoja(s) y sobran ' + cutLeftovers + ' unidades posibles del recorte.</p>';
   };
 
   const choosePaper = row => {

@@ -153,9 +153,6 @@ final class SettingsService
     public function quote(): array
     {
         $defaults = [
-            'commercial_cost' => '12000', 'commercial_yield' => '4500',
-            'professional_cost' => '32000', 'professional_yield' => '6000',
-            'eternity_cost' => '47600', 'eternity_yield' => '5000',
             'recommended_margin' => '50',
         ];
         $statement = $this->pdo->query("SELECT key, value FROM settings WHERE key LIKE 'quote_%'");
@@ -171,16 +168,6 @@ final class SettingsService
     {
         $values = [];
         $values['enabled'] = in_array((string) ($data['enabled'] ?? '0'), ['1', 'true', 'on'], true) ? '1' : '0';
-        foreach (['commercial_cost', 'professional_cost', 'eternity_cost'] as $key) {
-            $value = filter_var($data[$key] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 10000000]]);
-            if ($value === false) throw new ValidationException('Ingresá un costo de tinta válido.');
-            $values[$key] = (string) $value;
-        }
-        foreach (['commercial_yield', 'professional_yield', 'eternity_yield'] as $key) {
-            $value = filter_var($data[$key] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 1000000]]);
-            if ($value === false) throw new ValidationException('Ingresá un rendimiento de tinta válido.');
-            $values[$key] = (string) $value;
-        }
         $margin = filter_var($data['recommended_margin'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 1000]]);
         if ($margin === false) throw new ValidationException('Ingresá un margen válido.');
         $values['recommended_margin'] = (string) $margin;
