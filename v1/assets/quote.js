@@ -58,23 +58,24 @@
     $('quote-result').innerHTML = '<h2 id="quote-modal-title">Tu cotización</h2><div class="result-heading"><span>Precio sugerido</span><strong>' + money(price) + '</strong><small>para el trabajo completo</small></div><div class="result-grid"><div><b>' + sheets + '</b><span>hojas a usar</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(sheetPrice) + '</b><span>precio por hoja</span></div><div><b>' + money(total / quantity) + '</b><span>costo por unidad</span></div></div><div class="result-costs"><span>Papel <b>' + money(paperCost) + '</b></span><span>Tinta estimada <b>' + money(inkCost) + '</b></span><span>Ganancia estimada <b>' + money(price - total) + '</b></span></div><p>Con ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + '. Rinde ' + perSheet + ' unidades por hoja; necesitás ' + packs + ' resma(s) de ' + perPack + ' hoja(s) y sobran ' + cutLeftovers + ' unidades posibles del recorte.</p>';
   };
 
-  const choosePaper = variantId => {
-    selected = papers.find(paper => Number(paper.variant_id) === Number(variantId));
+  const choosePaper = row => {
+    selected = papers.find(paper => Number(paper.variant_id) === Number(row.dataset.id)) || {
+      variant_id: Number(row.dataset.id),
+      product_name: row.dataset.product,
+      variant_name: row.dataset.variant,
+      price_cents: Number(row.dataset.price)
+    };
     if (!selected) return;
     $('paper-selected').textContent = 'Papel elegido: ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + ' · ' + money(selected.price_cents / 100);
     $('paper-selected').hidden = false;
     $('paper-picker').open = false;
   };
 
-  $('paper-list').addEventListener('change', event => {
-    if (event.target.name === 'quote-paper') choosePaper(event.target.value);
-  });
   $('paper-list').addEventListener('click', event => {
     const row = event.target.closest('tr[data-id]');
     if (!row) return;
-    const input = row.querySelector('input[name="quote-paper"]');
-    if (input) input.checked = true;
-    choosePaper(row.dataset.id);
+    event.preventDefault();
+    choosePaper(row);
   });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') $('paper-picker').open = false;
