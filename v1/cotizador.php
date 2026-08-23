@@ -10,6 +10,11 @@ $quoteAssetsVersion = (string) max(
     filemtime(__DIR__ . '/assets/quote.js') ?: 0,
     filemtime(__DIR__ . '/assets/quote-carousel.css') ?: 0
 );
+$quoteCatalog = [
+    'products' => $app['products']->publicCatalog(),
+    'categories' => $app['categories']->tree(),
+    'quote_settings' => $app['settings']->quote(),
+];
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 header("Content-Security-Policy: default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' https: data:; base-uri 'self'; form-action 'self'");
 ?>
@@ -20,4 +25,4 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self'; script-sr
 <section class="quote-card quote-project"><div class="quote-step"><b>2</b><div><h2>Contanos tu proyecto</h2><p>Usamos el tamaño real del papel elegido para aprovecharlo al máximo.</p></div></div><div class="quote-fields"><label>Cantidad de piezas<input id="project-quantity" type="number" min="1" value="200"></label><label>Ancho de cada pieza (cm)<input id="project-width" type="number" min="0.1" step="0.1" value="10"></label><label>Alto de cada pieza (cm)<input id="project-height" type="number" min="0.1" step="0.1" value="15"></label><label>Margen de corte (mm)<input id="cut-margin" type="number" min="0" step="0.5" value="0"></label></div><p class="quote-tip"><strong>¿Qué es el sangrado?</strong> Es el excedente que se deja alrededor del diseño para cortar sin bordes blancos. Si tu archivo lleva sangrado o necesitás espacio entre cortes, cargalo acá.</p></section>
 <section class="quote-card"><div class="quote-step"><b>3</b><div><h2>Sumá la tinta</h2><p>Usamos el juego completo CMYK (4 tintas). El rendimiento se estima en hojas A4 de cobertura estándar.</p></div></div><div class="quote-fields ink-fields"><label>Línea de tinta<select id="ink-type"><option value="commercial">Comercial · juego CMYK 4 × 100 cc</option><option value="professional">Profesional · juego CMYK 4 × 100 cc</option><option value="eternity">Eternity · juego CMYK 4 × 100 cc</option></select></label><label>Cobertura estimada<select id="ink-coverage"><option value="0.5">Diseño suave · 50%</option><option value="1" selected>Color estándar · 100%</option><option value="1.5">Full color · 150%</option><option value="2">Foto intensa · 200%</option></select></label><label>Margen de ganancia (%)<input id="profit-margin" type="number" min="0" value="50"></label></div></section>
 <section id="quote-result" class="quote-result" aria-live="polite"><p>Elegí un papel para ver tu cotización.</p></section>
-<section id="related-products" class="related-products" aria-label="Productos Atelier"></section></main><script>window.quoteApp={apiUrl:<?= json_encode($apiUrl) ?>,storeUrl:<?= json_encode($storeUrl) ?>};</script><script src="<?= $escape($assetPath) ?>/quote.js?v=<?= $quoteAssetsVersion ?>"></script></body></html>
+<section id="related-products" class="related-products" aria-label="Productos Atelier"></section></main><script>window.quoteApp={storeUrl:<?= json_encode($storeUrl) ?>,catalog:<?= json_encode($quoteCatalog, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>};</script><script src="<?= $escape($assetPath) ?>/quote.js?v=<?= $quoteAssetsVersion ?>"></script></body></html>
