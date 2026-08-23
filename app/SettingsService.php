@@ -148,6 +148,47 @@ final class SettingsService
         return $defaults;
     }
 
+    /** @return array<string, string> */
+    public function quote(): array
+    {
+        $defaults = [
+            'commercial_cost' => '8500', 'commercial_yield' => '4500',
+            'professional_cost' => '24000', 'professional_yield' => '6000',
+            'eternity_cost' => '12000', 'eternity_yield' => '5000',
+            'recommended_margin' => '50',
+        ];
+        $statement = $this->pdo->query("SELECT key, value FROM settings WHERE key LIKE 'quote_%'");
+        foreach ($statement->fetchAll() as $row) {
+            $key = substr((string) $row['key'], 6);
+            if (array_key_exists($key, $defaults)) $defaults[$key] = (string) $row['value'];
+        }
+        return $defaults;
+    }
+
+    /** @param array<string, mixed> $data @return array<string, string> */
+    public function updateQuote(array $data): array
+    {
+        $values = [];
+        foreach (['commercial_cost', 'professional_cost', 'eternity_cost'] as $key) {
+            $value = filter_var($data[$key] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 10000000]]);
+            if ($value === false) throw new ValidationException('Ingresá un costo de tinta válido.');
+            $values[$key] = (string) $value;
+        }
+        foreach (['commercial_yield', 'professional_yield', 'eternity_yield'] as $key) {
+            $value = filter_var($data[$key] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 1000000]]);
+            if ($value === false) throw new ValidationException('Ingresá un rendimiento de tinta válido.');
+            $values[$key] = (string) $value;
+        }
+        $margin = filter_var($data['recommended_margin'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 1000]]);
+        if ($margin === false) throw new ValidationException('Ingresá un margen válido.');
+        $values['recommended_margin'] = (string) $margin;
+        Database::immediate($this->pdo, static function (PDO $pdo) use ($values): void {
+            $save = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
+            foreach ($values as $key => $value) $save->execute(['key' => 'quote_' . $key, 'value' => $value]);
+        });
+        return $this->quote();
+    }
+
     /** @return list<int> */
     public function featuredProductIds(): array
     {

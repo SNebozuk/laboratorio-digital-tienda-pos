@@ -329,7 +329,7 @@
     }
 
     function showView(view) {
-        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -372,6 +372,7 @@
         if (view === 'design') {
             loadDesign();
         }
+        if (view === 'quote') loadQuoteSettings();
         if (view === 'invitations') {
             loadInvitations();
         }
@@ -3912,6 +3913,25 @@
         } catch (error) { toast(error.message); }
     }
 
+    async function loadQuoteSettings() {
+        const form = document.getElementById('quote-settings-form');
+        if (!form || app.user?.role !== 'admin') return;
+        try {
+            const data = await apiGet('quote_catalog');
+            Object.entries(data.quote_settings).forEach(([key, value]) => { if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value; });
+        } catch (error) { toast(error.message); }
+    }
+
+    async function saveQuoteSettings(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        try {
+            const values = Object.fromEntries(new FormData(form).entries());
+            await apiPost({ action: 'quote_settings_update', quote_settings: values });
+            toast('Configuración del cotizador guardada.');
+        } catch (error) { toast(error.message); } finally { button.disabled = false; }
+    }
+
     async function saveDesign(form) {
         const button = form.querySelector('button[type="submit"]');
         button.disabled = true;
@@ -4307,6 +4327,10 @@
         if (event.target.id === 'design-form') {
             event.preventDefault();
             saveDesign(event.target);
+        }
+        if (event.target.id === 'quote-settings-form') {
+            event.preventDefault();
+            saveQuoteSettings(event.target);
         }
         if (event.target.id === 'size-guide-form') {
             event.preventDefault();

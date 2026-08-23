@@ -35,6 +35,13 @@ try {
                     ),
                 ]);
 
+            case 'quote_catalog':
+                Http::json([
+                    'ok' => true,
+                    'products' => $app['products']->publicCatalog(),
+                    'quote_settings' => $app['settings']->quote(),
+                ]);
+
             case 'size_guide':
                 Http::json([
                     'ok' => true,
@@ -580,6 +587,15 @@ try {
                     is_array($input['settings'] ?? null)
                         ? $input['settings']
                         : []
+                ),
+            ]);
+
+        case 'quote_settings_update':
+            $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'quote_settings' => $app['settings']->updateQuote(
+                    is_array($input['quote_settings'] ?? null) ? $input['quote_settings'] : []
                 ),
             ]);
 

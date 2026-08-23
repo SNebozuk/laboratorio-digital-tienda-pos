@@ -33,6 +33,7 @@ $assetVersion = substr(hash('sha256',
 ), 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
+$quoteUrl = $storePath . '/cotizador.php';
 $apiUrl = $storePath . '/api.php';
 $whatsappNumber = preg_replace('/\D+/', '', (string) ($publicSettings['whatsapp_number'] ?? '5493415699338')) ?: '5493415699338';
 $pickupAddress = trim((string) ($publicSettings['pickup_address'] ?? ''));
@@ -72,6 +73,7 @@ header('Referrer-Policy: same-origin');
             </a>
         </div>
         <div class="header-actions">
+            <a class="header-link header-quote-link" href="<?= $escape($quoteUrl) ?>">COTIZADOR PARA EMPRENDEDORES</a>
             <a class="header-link" href="<?= $escape($sizeGuideUrl) ?>" aria-label="Ver tabla de talles"><span class="header-link-long">TABLA DE TALLES</span><span class="header-link-short">TALLES</span></a>
             <button class="cart-mobile" id="cart-mobile" type="button" aria-label="Abrir pedido">
                 <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 1.9-1.4L20 8H7M10 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm7 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
