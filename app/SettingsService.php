@@ -119,6 +119,7 @@ final class SettingsService
     public function design(): array
     {
         $defaults = [
+            'enabled' => '1',
             'hero_badge' => 'STOCK DISPONIBLE EN TIEMPO REAL',
             'hero_title' => 'TODO PARA CREAR, PERSONALIZAR Y VENDER',
             'hero_text' => 'Buscá lo que necesitás, elegí variantes y armá tu pedido en pocos pasos.',
@@ -169,6 +170,7 @@ final class SettingsService
     public function updateQuote(array $data): array
     {
         $values = [];
+        $values['enabled'] = in_array((string) ($data['enabled'] ?? '0'), ['1', 'true', 'on'], true) ? '1' : '0';
         foreach (['commercial_cost', 'professional_cost', 'eternity_cost'] as $key) {
             $value = filter_var($data[$key] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 10000000]]);
             if ($value === false) throw new ValidationException('Ingresá un costo de tinta válido.');

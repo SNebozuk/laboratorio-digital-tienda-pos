@@ -294,6 +294,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading"><div><p class="eyebrow">HERRAMIENTA PARA CLIENTES</p><h1 class="admin-page-title">COTIZADOR</h1><p>Definí costos y rendimientos estimados de tinta. El papel siempre toma el precio actual del catálogo.</p></div><a class="secondary-button fit-button" href="<?= $escape($storePath) ?>/cotizador.php" target="_blank" rel="noopener">VER COTIZADOR</a></div>
                         <form id="quote-settings-form" class="settings-card">
                             <div class="settings-grid">
+                                <label class="settings-span-two"><input name="enabled" type="checkbox" value="1"> MOSTRAR EL COTIZADOR EN LA TIENDA</label>
                                 <label>COSTO JUEGO CMYK COMERCIAL 4 × 100 CC ($)<input name="commercial_cost" type="number" min="0" required></label>
                                 <label>RENDIMIENTO COMERCIAL (HOJAS A4)<input name="commercial_yield" type="number" min="1" required></label>
                                 <label>COSTO JUEGO CMYK PROFESIONAL 4 × 100 CC ($)<input name="professional_cost" type="number" min="0" required></label>

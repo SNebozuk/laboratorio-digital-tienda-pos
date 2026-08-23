@@ -3918,7 +3918,12 @@
         if (!form || app.user?.role !== 'admin') return;
         try {
             const data = await apiGet('quote_catalog');
-            Object.entries(data.quote_settings).forEach(([key, value]) => { if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value; });
+            Object.entries(data.quote_settings).forEach(([key, value]) => {
+                const field = form.elements.namedItem(key);
+                if (!field) return;
+                if (field.type === 'checkbox') field.checked = ['1', 'true', 'on'].includes(String(value));
+                else field.value = value;
+            });
         } catch (error) { toast(error.message); }
     }
 
@@ -3927,6 +3932,7 @@
         button.disabled = true;
         try {
             const values = Object.fromEntries(new FormData(form).entries());
+            values.enabled = form.elements.enabled.checked ? '1' : '0';
             await apiPost({ action: 'quote_settings_update', quote_settings: values });
             toast('Configuración del cotizador guardada.');
         } catch (error) { toast(error.message); } finally { button.disabled = false; }
