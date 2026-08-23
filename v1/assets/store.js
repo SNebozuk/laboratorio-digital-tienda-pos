@@ -2215,7 +2215,7 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    if (!alwaysUseProductView) window.setTimeout(showProductViewChooser, 350);
+    window.setTimeout(showProductViewChooser, 350);
     // La lista completa es la vista inicial, por lo que el catálogo se carga
     // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();
