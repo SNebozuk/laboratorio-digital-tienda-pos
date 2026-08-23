@@ -125,7 +125,7 @@ header('Referrer-Policy: same-origin');
                 </div>
             </div>
             <div class="catalog-intro">
-                <h1 id="catalog-title">Insumos para sublimación y DTF en Rosario</h1>
+                <h1 id="catalog-title">Insumos para sublimación <em>y DTF en Rosario.</em></h1>
                 <p>Papeles, indumentaria, sublimables y todo para personalizar. Precios mayoristas y retiro en el local.</p>
                 <p class="catalog-slogan">Tus ideas merecen hacerse realidad.</p>
             </div>
