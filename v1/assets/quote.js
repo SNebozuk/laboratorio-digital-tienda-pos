@@ -13,6 +13,7 @@
   document.addEventListener('click', event => {
     const row = event.target.closest('.paper-table tbody tr');
     if (!row) return;
+    event.stopPropagation();
     const choice = papers.find(paper => Number(paper.variant_id) === Number(row.dataset.id));
     if (!choice) return;
     selected = choice;
@@ -20,5 +21,8 @@
     $('paper-selected').hidden = false;
     $('paper-picker').open = false;
     calculate();
+  }, true);
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') $('paper-picker').open = false;
   });
 })();
