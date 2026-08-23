@@ -13,4 +13,7 @@
 .related-card strong, .related-card small { display: block; }
 .related-card strong { font-size: 13px; line-height: 1.25; }
 .related-card small { margin-top: 6px; color: #9e5a73; font-weight: bold; }
+.quote-card, .quote-guide { background: rgba(255,255,255,.75); }
+.related-card { background: #fff; }
+.paper-table th:nth-child(2), .paper-table td:nth-child(2) { display: none; }
 @media (max-width: 700px) { .quote-hero { min-height: 0; padding-right: 20px; text-align: center; } .quote-shell { background-size: auto 100vh; } }
