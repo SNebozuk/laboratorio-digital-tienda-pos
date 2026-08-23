@@ -25,6 +25,7 @@ final class ProductService
                 p.name AS product_name,
                 p.description,
                 COALESCE(NULLIF(p.image_path, ""), NULLIF(v.image_path, "")) AS image_path,
+                c.id AS category_id,
                 c.name AS category_name,
                 c.slug AS category_slug,
                 v.id AS variant_id,
