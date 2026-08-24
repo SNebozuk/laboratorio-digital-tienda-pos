@@ -321,7 +321,9 @@
                 password: formData.get('password'),
                 setup_token: formData.get('setup_token'),
             });
-            window.location.reload();
+            // Tras autenticar, navegar de forma explícita al panel evita que el
+            // navegador reutilice el estado de la pantalla de acceso.
+            window.location.replace(window.location.pathname);
         } catch (error) {
             toast(error.message);
             button.disabled = false;
