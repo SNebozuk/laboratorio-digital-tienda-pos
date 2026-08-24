@@ -53,6 +53,11 @@
             return 'list';
         }
     })();
+    const returnedFromQuote = initialUrl.searchParams.has('volver-del-cotizador');
+    if (returnedFromQuote) {
+        initialUrl.searchParams.delete('volver-del-cotizador');
+        window.history.replaceState(window.history.state, '', initialUrl.href);
+    }
     const isMobileStorefront = () => window.matchMedia('(max-width: 900px)').matches;
 
     const elements = {
@@ -2215,7 +2220,7 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    window.setTimeout(showProductViewChooser, 350);
+    if (!returnedFromQuote) window.setTimeout(showProductViewChooser, 350);
     // La lista completa es la vista inicial, por lo que el catálogo se carga
     // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();

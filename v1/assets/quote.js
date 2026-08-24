@@ -5,6 +5,19 @@
   const papers = app.papers || [];
   let selected = null;
 
+  const returnToStore = () => {
+    const storeUrl = new URL(app.storeUrl || '/', window.location.origin);
+    try {
+      const referrer = new URL(document.referrer);
+      if (referrer.origin === window.location.origin && referrer.pathname.replace(/\/+$/, '') === storeUrl.pathname.replace(/\/+$/, '')) {
+        window.history.back();
+        return;
+      }
+    } catch (_) { /* Sin página anterior de la tienda, se usa el enlace de respaldo. */ }
+    storeUrl.searchParams.set('volver-del-cotizador', '1');
+    window.location.assign(storeUrl.href);
+  };
+
   const fold = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const paperSize = label => {
     const match = String(label).match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i);
@@ -125,7 +138,7 @@
         $('quote-modal').close();
         return;
       }
-      window.location.assign(app.storeUrl || '/');
+      returnToStore();
     }
   });
   $('calculate-quote').addEventListener('click', () => {
@@ -133,6 +146,10 @@
     $('quote-modal').showModal();
   });
   $('close-quote').addEventListener('click', () => $('quote-modal').close());
+  $('quote-back').addEventListener('click', event => {
+    event.preventDefault();
+    returnToStore();
+  });
   ['project-width', 'project-height', 'cut-margin'].forEach(id => $(id).addEventListener('input', renderPreview));
   renderPreview();
 })();
