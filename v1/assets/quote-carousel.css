@@ -8,12 +8,12 @@
 .quote-shell { background: url('/v1/assets/quote-atelier.jpg') center top / cover scroll no-repeat; }
 .related-products { margin-top: 30px; overflow: hidden; }
 .related-track { display: flex; gap: 12px; overflow-x: auto; padding: 3px 2px 14px; scrollbar-width: thin; }
-.related-card { flex: 0 0 180px; min-height: 132px; border: 1px solid #eadfe1; border-radius: 15px; background: rgba(255,255,255,.38); padding: 14px; color: #57455a; text-decoration: none; }
-.related-card img { display: block; width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; }
+.related-card { flex: 0 0 220px; min-height: 300px; overflow: hidden; border: 1px solid #eadfe1; border-radius: 15px; background: rgba(255,255,255,.38); padding: 0 0 14px; color: #57455a; text-decoration: none; }
+.related-card img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; margin-bottom: 12px; }
 .related-card strong, .related-card small { display: block; }
-.related-card strong { font-size: 13px; line-height: 1.25; }
-.related-card small { margin-top: 6px; color: #9e5a73; font-weight: bold; }
-.quote-card, .quote-guide { background: rgba(255,255,255,.10); border-color: #d8b9c5; box-shadow: none; }
+.related-card strong { padding: 0 14px; font-size: 13px; line-height: 1.25; }
+.related-card small { margin-top: 6px; padding: 0 14px; color: #9e5a73; font-weight: bold; }
+.quote-card, .quote-guide { background: rgba(255,255,255,.30); border-color: #d8b9c5; box-shadow: none; }
 .related-card { background: #fff; }
 .paper-table tbody tr { cursor: pointer; }
 @media (max-width: 700px) { .quote-hero { min-height: 0; padding-right: 20px; text-align: center; } .quote-shell { background-size: auto 100vh; } }
