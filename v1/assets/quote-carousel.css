@@ -1,6 +1,11 @@
 .paper-picker { width: 100%; min-height: 46px; margin-top: 20px; border: 1px solid #d8b9c5; border-radius: 12px; background: #fff4f7; color: #75485d; font: 600 15px ui-rounded, "Trebuchet MS", sans-serif; text-align: left; padding: 11px 14px; cursor: pointer; }
 .paper-picker span { float: right; font-size: 20px; line-height: .8; }
-.paper-selected { margin: 11px 0 0; color: #755363; font-size: 14px; }
+.paper-selected { display: grid; grid-template-columns: minmax(150px, 240px) 1fr; gap: 22px; align-items: center; margin: 18px 0 0; padding: 16px; border: 1px solid #d8b9c5; border-radius: 16px; background: rgba(255,255,255,.72); color: #755363; }
+.paper-selected-image { display: block; width: 100%; max-height: 240px; border-radius: 10px; background: #fff; object-fit: contain; }
+.paper-selected > div { display: grid; gap: 7px; }
+.paper-selected span { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #9e5a73; }
+.paper-selected strong { font: 26px/1.12 Georgia, serif; }
+.paper-selected small { font-size: 16px; font-weight: 700; }
 .paper-picker-panel { margin-top: 10px; }
 .quote-guide { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 16px 0; padding: 14px 18px; border: 1px solid #eadfe1; border-radius: 16px; background: rgba(255,255,255,.48); color: #755363; font-size: 13px; }
 .quote-guide strong { width: 100%; }
@@ -17,4 +22,4 @@
 .quote-shell, .quote-shell .quote-back, .quote-shell .quote-hero span, .quote-shell .quote-hero h1, .quote-shell .quote-hero em, .quote-shell .quote-hero p, .quote-shell .quote-step p, .quote-shell .quote-fields label, .quote-shell .paper-picker, .quote-shell .paper-selected, .quote-shell .quote-guide, .quote-shell .related-card, .quote-shell .related-card small, .quote-shell .live-cut-copy, .quote-shell .live-cut-copy strong, .quote-shell .live-cut-copy small { color: #000; }
 .related-card { background: #fff; }
 .paper-table tbody tr { cursor: pointer; }
-@media (max-width: 700px) { .quote-hero { min-height: 0; padding-right: 20px; text-align: center; } .quote-shell { background-size: auto 100vh; } }
+@media (max-width: 700px) { .quote-hero { min-height: 0; padding-right: 20px; text-align: center; } .quote-shell { background-size: auto 100vh; } .paper-selected { grid-template-columns: 1fr; gap: 14px; text-align: center; } .paper-selected-image { width: min(100%, 300px); margin: auto; } }

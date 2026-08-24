@@ -8,4 +8,10 @@
 .paper-table tbody tr.chosen { background: #f3ccd9; }
 .paper-table tbody tr.chosen { box-shadow: inset 3px 0 #9e5a73; }
 .paper-table td:last-child { text-align: right; font-weight: bold; white-space: nowrap; }
-@media (max-width:620px) { .paper-table th, .paper-table td { padding: 10px 8px; } .paper-table th:nth-child(2), .paper-table td:nth-child(2) { display: none; } }
+.paper-thumb-cell { width: 68px; padding-right: 0 !important; }
+.paper-thumbnail { display: block; position: relative; width: 48px; height: 48px; }
+.paper-thumbnail > img { display: block; width: 48px; height: 48px; border: 1px solid #dfc1ca; border-radius: 8px; object-fit: cover; background: #fff; }
+.paper-thumbnail-zoom { position: absolute; z-index: 5; left: 58px; top: -30px; display: none; width: 220px; padding: 6px; border: 1px solid #d8b9c5; border-radius: 12px; background: #fff; box-shadow: 0 12px 30px #6c435044; pointer-events: none; }
+.paper-thumbnail-zoom img { display: block; width: 100%; aspect-ratio: 1; border-radius: 7px; object-fit: contain; }
+.paper-thumbnail:hover .paper-thumbnail-zoom { display: block; }
+@media (max-width:620px) { .paper-table th, .paper-table td { padding: 10px 8px; } .paper-table th:nth-child(3), .paper-table td:nth-child(3) { display: none; } .paper-thumbnail-zoom { left: 52px; top: -10px; width: 170px; } }

@@ -108,10 +108,16 @@
       variant_id: Number(row.dataset.id),
       product_name: row.dataset.product,
       variant_name: row.dataset.variant,
-      price_cents: Number(row.dataset.price)
+      price_cents: Number(row.dataset.price),
+      image_path: row.dataset.image || ''
     };
     if (!selected) return;
-    $('paper-selected').textContent = 'Papel elegido: ' + selected.product_name + ' · ' + money(selected.price_cents / 100);
+    $('paper-selected-name').textContent = selected.product_name;
+    $('paper-selected-price').textContent = money(selected.price_cents / 100) + ' la resma';
+    const selectedImage = $('paper-selected-image');
+    selectedImage.src = selected.image_path || '';
+    selectedImage.alt = selected.image_path ? selected.product_name : '';
+    selectedImage.hidden = !selected.image_path;
     $('paper-selected').hidden = false;
     $('paper-picker').open = false;
     document.querySelectorAll('.paper-table tbody tr').forEach(paperRow => paperRow.classList.toggle('chosen', paperRow === row));
