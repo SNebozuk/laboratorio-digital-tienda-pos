@@ -330,7 +330,7 @@
         }
     }
 
-    function showView(view) {
+    function showView(view, highlightNavigation = true) {
         const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
@@ -346,7 +346,7 @@
             section.classList.toggle('active', section.id === `view-${view}`);
         });
         document.querySelectorAll('[data-view]').forEach(button => {
-            button.classList.toggle('active', button.dataset.view === view);
+            button.classList.toggle('active', highlightNavigation && button.dataset.view === view);
         });
         if (elements.mobileView) {
             elements.mobileView.value = view;
@@ -5463,8 +5463,8 @@
         if (elements.invitationsBadge) loadInvitations();
         if (elements.ordersBadge) loadOrderNotifications();
         if (document.getElementById('view-orders')) {
-            const requestedView = new URL(window.location.href).searchParams.get('view') || 'orders';
-            showView(requestedView);
+            const requestedView = new URL(window.location.href).searchParams.get('view');
+            showView(requestedView || 'orders', Boolean(requestedView));
         }
         window.setInterval(refreshActiveAdminView, 2000);
         document.addEventListener('visibilitychange', () => {

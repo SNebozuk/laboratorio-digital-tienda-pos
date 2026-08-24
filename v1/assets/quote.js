@@ -27,8 +27,8 @@
     const margin = (+$('cut-margin').value || 0) / 10;
     if (!size || !(width > 0 && height > 0)) return { size, best: null };
     const layout = (pieceWidth, pieceHeight, rotated) => {
-      const columns = Math.floor(size[0] / (pieceWidth + margin));
-      const rows = Math.floor(size[1] / (pieceHeight + margin));
+      const columns = Math.floor((size[0] + margin) / (pieceWidth + margin));
+      const rows = Math.floor((size[1] + margin) / (pieceHeight + margin));
       return { columns, rows, count: columns * rows, pieceWidth, pieceHeight, rotated };
     };
     const normal = layout(width, height, false);
@@ -52,16 +52,21 @@
       return;
     }
     const { size, margin, best } = project;
-    const verticalLines = Array.from({ length: best.columns }, (_, index) => {
+    const pieces = Array.from({ length: best.columns * best.rows }, (_, index) => {
+      const column = index % best.columns;
+      const row = Math.floor(index / best.columns);
+      return '<rect class="cut-piece" x="' + (column * (best.pieceWidth + margin)) + '" y="' + (row * (best.pieceHeight + margin)) + '" width="' + best.pieceWidth + '" height="' + best.pieceHeight + '"></rect>';
+    }).join('');
+    const verticalLines = Array.from({ length: best.columns - 1 }, (_, index) => {
       const position = ((index + 1) * (best.pieceWidth + margin)) - (margin / 2);
       return position < size[0] - 0.02 ? '<line class="cut-line" x1="' + position + '" y1="0" x2="' + position + '" y2="' + size[1] + '"></line>' : '';
     }).join('');
-    const horizontalLines = Array.from({ length: best.rows }, (_, index) => {
+    const horizontalLines = Array.from({ length: best.rows - 1 }, (_, index) => {
       const position = ((index + 1) * (best.pieceHeight + margin)) - (margin / 2);
       return position < size[1] - 0.02 ? '<line class="cut-line" x1="0" y1="' + position + '" x2="' + size[0] + '" y2="' + position + '"></line>' : '';
     }).join('');
-    const sheet = '<svg class="live-cut-sheet" width="' + (size[0] * 10) + '" height="' + (size[1] * 10) + '" viewBox="0 0 ' + size[0] + ' ' + size[1] + '" role="img" aria-label="Esquema de cortes sobre papel de ' + size[0] + ' por ' + size[1] + ' centímetros"><rect class="cut-paper" x="0" y="0" width="' + size[0] + '" height="' + size[1] + '"></rect>' + verticalLines + horizontalLines + '</svg>';
-    preview.innerHTML = '<div class="quote-step"><b>3</b><div><h2>Vista previa de cortes</h2><p>Las líneas punteadas muestran por dónde cortar.</p></div></div><div class="live-cut-layout">' + sheet + '<div class="live-cut-copy"><strong>' + selected.product_name + '</strong><span>Papel ' + size[0] + ' × ' + size[1] + ' cm</span><span>Pieza ' + best.pieceWidth + ' × ' + best.pieceHeight + ' cm</span><span>' + best.columns + ' columnas × ' + best.rows + ' filas · ' + best.count + ' piezas por hoja</span>' + (best.rotated ? '<small>La pieza se giró para aprovechar mejor el papel.</small>' : '') + '</div></div>';
+    const sheet = '<svg class="live-cut-sheet" width="' + (size[0] * 10) + '" height="' + (size[1] * 10) + '" viewBox="0 0 ' + size[0] + ' ' + size[1] + '" role="img" aria-label="Esquema de cortes sobre papel de ' + size[0] + ' por ' + size[1] + ' centímetros"><rect class="cut-paper" x="0" y="0" width="' + size[0] + '" height="' + size[1] + '"></rect>' + pieces + verticalLines + horizontalLines + '</svg>';
+    preview.innerHTML = '<div class="quote-step"><b>3</b><div><h2>Vista previa de cortes</h2><p>Las franjas entre las piezas representan el margen de corte.</p></div></div><div class="live-cut-layout">' + sheet + '<div class="live-cut-copy"><strong>' + selected.product_name + '</strong><span>Papel ' + size[0] + ' × ' + size[1] + ' cm</span><span>Pieza ' + best.pieceWidth + ' × ' + best.pieceHeight + ' cm</span><span>Margen de corte: ' + (margin * 10) + ' mm</span><span>' + best.columns + ' columnas × ' + best.rows + ' filas · ' + best.count + ' piezas por hoja</span>' + (best.rotated ? '<small>La pieza se giró para aprovechar mejor el papel.</small>' : '') + '</div></div>';
   };
 
   const calculate = () => {

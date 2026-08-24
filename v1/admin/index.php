@@ -86,7 +86,7 @@ header('Referrer-Policy: same-origin');
                 </a>
                 <nav class="admin-nav">
                     <div class="admin-nav-sales">
-                        <button class="admin-nav-button active admin-nav-orders" type="button" data-view="orders">Lista de Ventas <b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
+                        <button class="admin-nav-button admin-nav-orders" type="button" data-view="orders">Lista de Ventas <b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
                         <button class="admin-nav-button" type="button" data-view="deliveries">Entrega de pedidos</button>
                     </div>
                     <button class="admin-nav-button" type="button" data-view="statistics">Estadísticas</button>

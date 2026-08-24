@@ -14,6 +14,7 @@
 .related-card strong { padding: 0 14px; font-size: 13px; line-height: 1.25; }
 .related-card small { margin-top: 6px; padding: 0 14px; color: #9e5a73; font-weight: bold; }
 .quote-card, .quote-guide { background: rgba(255,255,255,.30); border-color: #d8b9c5; box-shadow: none; }
+.quote-shell, .quote-shell .quote-back, .quote-shell .quote-hero span, .quote-shell .quote-hero h1, .quote-shell .quote-hero em, .quote-shell .quote-hero p, .quote-shell .quote-step p, .quote-shell .quote-fields label, .quote-shell .paper-picker, .quote-shell .paper-selected, .quote-shell .quote-guide, .quote-shell .related-card, .quote-shell .related-card small, .quote-shell .live-cut-copy, .quote-shell .live-cut-copy strong, .quote-shell .live-cut-copy small { color: #000; }
 .related-card { background: #fff; }
 .paper-table tbody tr { cursor: pointer; }
 @media (max-width: 700px) { .quote-hero { min-height: 0; padding-right: 20px; text-align: center; } .quote-shell { background-size: auto 100vh; } }
