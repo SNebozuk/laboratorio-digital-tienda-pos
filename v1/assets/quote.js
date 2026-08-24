@@ -19,34 +19,68 @@
   };
   const packSheets = label => +(String(label).match(/(\d+)\s*hojas?/i)?.[1] || 1);
 
-  const calculate = () => {
-    if (!selected) {
-      $('quote-result').innerHTML = '<p>Elegí un papel para ver tu cotización.</p>';
-      return;
-    }
+  const currentLayout = () => {
+    if (!selected) return null;
     const size = paperSize(selected.product_name + ' ' + selected.variant_name);
-    if (!size) {
-      $('quote-result').innerHTML = '<p>Este papel no tiene un tamaño identificable. Elegí una variante que indique A4, A3, A5 o medidas.</p>';
-      return;
-    }
-    const quantity = +$('project-quantity').value;
     const width = +$('project-width').value;
     const height = +$('project-height').value;
     const margin = (+$('cut-margin').value || 0) / 10;
-    if (!(quantity > 0 && width > 0 && height > 0)) return;
+    if (!size || !(width > 0 && height > 0)) return { size, best: null };
     const layout = (pieceWidth, pieceHeight, rotated) => {
       const columns = Math.floor(size[0] / (pieceWidth + margin));
       const rows = Math.floor(size[1] / (pieceHeight + margin));
       return { columns, rows, count: columns * rows, pieceWidth, pieceHeight, rotated };
     };
-    const normalLayout = layout(width, height, false);
-    const rotatedLayout = layout(height, width, true);
-    const bestLayout = rotatedLayout.count > normalLayout.count ? rotatedLayout : normalLayout;
-    const perSheet = bestLayout.count;
-    if (!perSheet) {
+    const normal = layout(width, height, false);
+    const rotated = layout(height, width, true);
+    return { size, margin, best: rotated.count > normal.count ? rotated : normal };
+  };
+
+  const renderPreview = () => {
+    const preview = $('cut-preview');
+    const project = currentLayout();
+    if (!selected) {
+      preview.innerHTML = '<div class="quote-step"><b>3</b><div><h2>Vista previa de cortes</h2><p>Seleccioná un papel para ver el esquema a escala.</p></div></div>';
+      return;
+    }
+    if (!project?.size) {
+      preview.innerHTML = '<div class="quote-step"><b>3</b><div><h2>Vista previa de cortes</h2><p>El papel seleccionado no indica una medida reconocible.</p></div></div>';
+      return;
+    }
+    if (!project.best?.count) {
+      preview.innerHTML = '<div class="quote-step"><b>3</b><div><h2>Vista previa de cortes</h2><p>La pieza no entra en el papel con estas medidas.</p></div></div>';
+      return;
+    }
+    const { size, margin, best } = project;
+    const verticalLines = Array.from({ length: best.columns }, (_, index) => {
+      const position = (((index + 1) * (best.pieceWidth + margin)) - (margin / 2)) / size[0] * 100;
+      return position < 99.8 ? '<i class="cut-line cut-line-vertical" style="left:' + position + '%"></i>' : '';
+    }).join('');
+    const horizontalLines = Array.from({ length: best.rows }, (_, index) => {
+      const position = (((index + 1) * (best.pieceHeight + margin)) - (margin / 2)) / size[1] * 100;
+      return position < 99.8 ? '<i class="cut-line cut-line-horizontal" style="top:' + position + '%"></i>' : '';
+    }).join('');
+    preview.innerHTML = '<div class="quote-step"><b>3</b><div><h2>Vista previa de cortes</h2><p>Las líneas punteadas muestran por dónde cortar.</p></div></div><div class="live-cut-layout"><div class="live-cut-sheet" style="width:' + (size[0] * 10) + 'px;aspect-ratio:' + size[0] + '/' + size[1] + '">' + verticalLines + horizontalLines + '</div><div class="live-cut-copy"><strong>' + selected.product_name + '</strong><span>Papel ' + size[0] + ' × ' + size[1] + ' cm</span><span>Pieza ' + best.pieceWidth + ' × ' + best.pieceHeight + ' cm</span><span>' + best.columns + ' columnas × ' + best.rows + ' filas · ' + best.count + ' piezas por hoja</span>' + (best.rotated ? '<small>La pieza se giró para aprovechar mejor el papel.</small>' : '') + '</div></div>';
+  };
+
+  const calculate = () => {
+    if (!selected) {
+      $('quote-result').innerHTML = '<p>Elegí un papel para ver tu cotización.</p>';
+      return;
+    }
+    const project = currentLayout();
+    if (!project?.size) {
+      $('quote-result').innerHTML = '<p>Este papel no tiene un tamaño identificable. Elegí una variante que indique A4, A3, A5 o medidas.</p>';
+      return;
+    }
+    if (!project.best?.count) {
       $('quote-result').innerHTML = '<p>La pieza no entra en la hoja seleccionada. Probá otro papel o tamaño.</p>';
       return;
     }
+    const quantity = +$('project-quantity').value;
+    if (!(quantity > 0)) return;
+    const { size, best: bestLayout } = project;
+    const perSheet = bestLayout.count;
     const sheets = Math.ceil(quantity / perSheet);
     const cutLeftovers = sheets * perSheet - quantity;
     const perPack = packSheets(selected.product_name + ' ' + selected.variant_name);
@@ -54,8 +88,7 @@
     const sheetLeftovers = packs * perPack - sheets;
     const paperCost = (+selected.price_cents / 100) * packs;
     const sheetPrice = (+selected.price_cents / 100) / perPack;
-    const diagram = '<div class="cut-diagram"><div class="cut-sheet" style="--sheet-ratio:' + size[0] + '/' + size[1] + ';--cut-width:' + (100 / bestLayout.columns) + '%;--cut-height:' + (100 / bestLayout.rows) + '%"></div><div class="cut-diagram-copy"><strong>Esquema de corte optimizado</strong><span>Hoja ' + size[0] + ' × ' + size[1] + ' cm</span><span>' + bestLayout.columns + ' columnas × ' + bestLayout.rows + ' filas · ' + perSheet + ' piezas</span><span>Pieza ' + bestLayout.pieceWidth + ' × ' + bestLayout.pieceHeight + ' cm' + (bestLayout.rotated ? ' · girada para aprovechar mejor' : '') + '</span></div></div>';
-    $('quote-result').innerHTML = '<h2 id="quote-modal-title">Costo del papel</h2><div class="result-heading"><span>Total para comprar el papel</span><strong>' + money(paperCost) + '</strong><small>' + money(paperCost / quantity) + ' de papel por unidad</small></div><div class="result-grid"><div><b>' + sheets + '</b><span>hojas a usar</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(sheetPrice) + '</b><span>precio por hoja</span></div><div><b>' + perSheet + '</b><span>piezas por hoja</span></div></div>' + diagram + '<p>Con ' + selected.product_name + '. Necesitás ' + packs + ' resma(s) de ' + perPack + ' hoja(s) y quedan ' + cutLeftovers + ' espacios de corte libres en la última hoja.</p>';
+    $('quote-result').innerHTML = '<h2 id="quote-modal-title">Costo del papel</h2><div class="result-heading"><span>Total para comprar el papel</span><strong>' + money(paperCost) + '</strong><small>' + money(paperCost / quantity) + ' de papel por unidad</small></div><div class="result-grid"><div><b>' + sheets + '</b><span>hojas a usar</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(sheetPrice) + '</b><span>precio por hoja</span></div><div><b>' + perSheet + '</b><span>piezas por hoja</span></div></div><p>Con ' + selected.product_name + '. Necesitás ' + packs + ' resma(s) de ' + perPack + ' hoja(s) y quedan ' + cutLeftovers + ' espacios de corte libres en la última hoja.</p>';
   };
 
   const choosePaper = row => {
@@ -66,10 +99,11 @@
       price_cents: Number(row.dataset.price)
     };
     if (!selected) return;
-    $('paper-selected').textContent = 'Papel elegido: ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + ' · ' + money(selected.price_cents / 100);
+    $('paper-selected').textContent = 'Papel elegido: ' + selected.product_name + ' · ' + money(selected.price_cents / 100);
     $('paper-selected').hidden = false;
     $('paper-picker').open = false;
     document.querySelectorAll('.paper-table tbody tr').forEach(paperRow => paperRow.classList.toggle('chosen', paperRow === row));
+    renderPreview();
   };
 
   $('paper-list').addEventListener('click', event => {
@@ -89,4 +123,6 @@
     $('quote-modal').showModal();
   });
   $('close-quote').addEventListener('click', () => $('quote-modal').close());
+  ['project-width', 'project-height', 'cut-margin'].forEach(id => $(id).addEventListener('input', renderPreview));
+  renderPreview();
 })();
