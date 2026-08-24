@@ -53,14 +53,15 @@
     }
     const { size, margin, best } = project;
     const verticalLines = Array.from({ length: best.columns }, (_, index) => {
-      const position = (((index + 1) * (best.pieceWidth + margin)) - (margin / 2)) / size[0] * 100;
-      return position < 99.8 ? '<i class="cut-line cut-line-vertical" style="left:' + position + '%"></i>' : '';
+      const position = ((index + 1) * (best.pieceWidth + margin)) - (margin / 2);
+      return position < size[0] - 0.02 ? '<line class="cut-line" x1="' + position + '" y1="0" x2="' + position + '" y2="' + size[1] + '"></line>' : '';
     }).join('');
     const horizontalLines = Array.from({ length: best.rows }, (_, index) => {
-      const position = (((index + 1) * (best.pieceHeight + margin)) - (margin / 2)) / size[1] * 100;
-      return position < 99.8 ? '<i class="cut-line cut-line-horizontal" style="top:' + position + '%"></i>' : '';
+      const position = ((index + 1) * (best.pieceHeight + margin)) - (margin / 2);
+      return position < size[1] - 0.02 ? '<line class="cut-line" x1="0" y1="' + position + '" x2="' + size[0] + '" y2="' + position + '"></line>' : '';
     }).join('');
-    preview.innerHTML = '<div class="quote-step"><b>3</b><div><h2>Vista previa de cortes</h2><p>Las líneas punteadas muestran por dónde cortar.</p></div></div><div class="live-cut-layout"><div class="live-cut-sheet" style="width:' + (size[0] * 10) + 'px;aspect-ratio:' + size[0] + '/' + size[1] + '">' + verticalLines + horizontalLines + '</div><div class="live-cut-copy"><strong>' + selected.product_name + '</strong><span>Papel ' + size[0] + ' × ' + size[1] + ' cm</span><span>Pieza ' + best.pieceWidth + ' × ' + best.pieceHeight + ' cm</span><span>' + best.columns + ' columnas × ' + best.rows + ' filas · ' + best.count + ' piezas por hoja</span>' + (best.rotated ? '<small>La pieza se giró para aprovechar mejor el papel.</small>' : '') + '</div></div>';
+    const sheet = '<svg class="live-cut-sheet" width="' + (size[0] * 10) + '" height="' + (size[1] * 10) + '" viewBox="0 0 ' + size[0] + ' ' + size[1] + '" role="img" aria-label="Esquema de cortes sobre papel de ' + size[0] + ' por ' + size[1] + ' centímetros"><rect class="cut-paper" x="0" y="0" width="' + size[0] + '" height="' + size[1] + '"></rect>' + verticalLines + horizontalLines + '</svg>';
+    preview.innerHTML = '<div class="quote-step"><b>3</b><div><h2>Vista previa de cortes</h2><p>Las líneas punteadas muestran por dónde cortar.</p></div></div><div class="live-cut-layout">' + sheet + '<div class="live-cut-copy"><strong>' + selected.product_name + '</strong><span>Papel ' + size[0] + ' × ' + size[1] + ' cm</span><span>Pieza ' + best.pieceWidth + ' × ' + best.pieceHeight + ' cm</span><span>' + best.columns + ' columnas × ' + best.rows + ' filas · ' + best.count + ' piezas por hoja</span>' + (best.rotated ? '<small>La pieza se giró para aprovechar mejor el papel.</small>' : '') + '</div></div>';
   };
 
   const calculate = () => {
