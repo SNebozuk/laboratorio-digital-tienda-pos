@@ -1181,9 +1181,9 @@
                 </div>
                 <div class="button-row">
                     <button class="secondary-button" type="button" data-add-variant>+ VARIANTE</button>
-                    <button class="primary-button fit-button" type="submit">GUARDAR PRODUCTO</button>
                 </div>
                 ${product ? `<div class="product-form-actions"><button type="button" data-product-visibility="show" data-product-id="${Number(product.id)}">Mostrar producto</button><button type="button" data-product-visibility="hide" data-product-id="${Number(product.id)}">Ocultar producto</button><button type="button" class="danger-button" data-delete-product="${Number(product.id)}">Eliminar producto</button></div>` : ''}
+                <div class="product-save-actions"><button class="primary-button fit-button" type="submit">GUARDAR CAMBIOS</button></div>
             </form>
         `);
     }
@@ -1240,7 +1240,7 @@
         } catch (error) {
             toast(error.message);
             button.disabled = false;
-            button.textContent = 'GUARDAR PRODUCTO';
+            button.textContent = 'GUARDAR CAMBIOS';
         }
     }
 

@@ -2058,6 +2058,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 
 /* Las fotos se cargan al hosting propio; no se admiten URLs de terceros. */
 #product-form label:has(input[name="image_path"]) { display: none; }
+#product-form input[name="name"] { font-weight:400; text-transform:uppercase; }
+.product-save-actions { display:flex; justify-content:flex-end; margin-top:20px; padding-top:16px; border-top:1px solid #e2e6ef; }
+#product-form .product-save-actions .primary-button { min-height:46px !important; padding:0 18px !important; border:1px solid #1769e0 !important; border-radius:10px !important; background:#1769e0 !important; box-shadow:none !important; color:#fff !important; font-size:13px !important; font-weight:700; }
+#product-form .product-save-actions .primary-button:hover { border-color:#1459bd !important; background:#1459bd !important; }
 
 .product-admin-head { min-height: 76px; border-bottom-color: #edf0f3; }
 
