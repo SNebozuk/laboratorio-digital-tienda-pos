@@ -7,13 +7,6 @@
 
   const returnToStore = () => {
     const storeUrl = new URL(app.storeUrl || '/', window.location.origin);
-    try {
-      const referrer = new URL(document.referrer);
-      if (referrer.origin === window.location.origin && referrer.pathname.replace(/\/+$/, '') === storeUrl.pathname.replace(/\/+$/, '')) {
-        window.history.back();
-        return;
-      }
-    } catch (_) { /* Sin página anterior de la tienda, se usa el enlace de respaldo. */ }
     storeUrl.searchParams.set('volver-del-cotizador', '1');
     window.location.assign(storeUrl.href);
   };

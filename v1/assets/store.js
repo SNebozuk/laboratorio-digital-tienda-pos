@@ -33,6 +33,7 @@
     let codeSearchTimer = null;
     let catalogLoaded = products.length > 0;
     let catalogLoading = null;
+    let cartRestored = false;
     const collapsedCategories = new Set();
     const CART_STORAGE_KEY = 'laboratorio-digital:public-cart:v1';
     const KLAUS_REWARD_SHOWN_STORAGE_KEY = 'laboratorio-digital:klaus-reward-shown:v1';
@@ -361,7 +362,10 @@
     }
 
     rebuildVariantIndex();
-    restoreCart();
+    if (catalogLoaded) {
+        restoreCart();
+        cartRestored = true;
+    }
 
     async function refreshCatalog() {
         if (state.order) {
@@ -394,6 +398,10 @@
                 featuredProductIds = data.featured_product_ids.map(Number).filter(Number.isFinite);
             }
             rebuildVariantIndex();
+            if (!cartRestored) {
+                restoreCart();
+                cartRestored = true;
+            }
 
             let adjusted = false;
             const harmfulChanges = new Set(state.reducedAvailability);
