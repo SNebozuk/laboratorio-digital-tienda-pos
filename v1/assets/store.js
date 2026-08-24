@@ -1053,7 +1053,7 @@
         openModal(`
             <section class="product-view-chooser" aria-labelledby="product-view-chooser-title">
                 <span class="product-view-chooser-icon" aria-hidden="true">◉</span>
-                <h2 id="product-view-chooser-title">¿Cómo preferís ver los productos?</h2>
+                <h2 id="product-view-chooser-title">Bienvenida a Laboratorio Digital</h2>
                 <p>La vista elegida se guarda y podés cambiarla cuando quieras.</p>
                 <div>
                     <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos ordenados por categoría y subcategoría.</small></button>

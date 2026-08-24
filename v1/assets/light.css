@@ -262,6 +262,7 @@ body.home-mode .search-wrap .search-field input { background:transparent !import
 .product-view-chooser button:hover,.product-view-chooser button:focus-visible { transform:translateY(-2px); border-color:#8f145f; background:#a51a71; color:#fff; box-shadow:0 8px 18px rgba(165,26,113,.28); }
 .product-view-chooser button:hover small,.product-view-chooser button:focus-visible small { color:#fff; }
 .product-view-chooser button strong { font-size:14px; }.product-view-chooser button small { color:#796d80; font-size:11px; line-height:1.35; }
+.product-view-chooser .klaus-welcome,.product-view-chooser .klaus-welcome:hover,.product-view-chooser .klaus-welcome:focus-visible { min-height:0; border:0; background:transparent !important; box-shadow:none; color:#000; transform:none; }.product-view-chooser .klaus-welcome span,.product-view-chooser .klaus-welcome small { color:#000 !important; }
 .modal-card:has(.product-view-chooser) { background:#f8c5db !important; border-color:#e9a7c8 !important; }
 .modal-card:has(.product-view-chooser) .modal-close { display:none; }
 .cart-rewards { display:grid; gap:8px; margin:12px 0; }

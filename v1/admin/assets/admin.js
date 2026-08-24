@@ -1184,7 +1184,7 @@
                 <div class="button-row">
                     <button class="secondary-button" type="button" data-add-variant>+ VARIANTE</button>
                 </div>
-                ${product ? `<div class="product-form-actions"><button type="button" data-product-visibility="show" data-product-id="${Number(product.id)}">Mostrar producto</button><button type="button" data-product-visibility="hide" data-product-id="${Number(product.id)}">Ocultar producto</button><button type="button" class="danger-button" data-delete-product="${Number(product.id)}">Eliminar producto</button></div>` : ''}
+                ${product ? `<div class="product-form-actions"><button type="button" data-product-visibility="show" data-product-id="${Number(product.id)}">Mostrar</button><button type="button" data-product-visibility="hide" data-product-id="${Number(product.id)}">Ocultar</button><button type="button" class="danger-button" data-delete-product="${Number(product.id)}">Eliminar</button></div>` : ''}
                 <div class="product-save-actions"><button class="primary-button fit-button" type="submit">GUARDAR CAMBIOS</button></div>
             </form>
         `);
