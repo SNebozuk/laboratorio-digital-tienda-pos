@@ -116,6 +116,10 @@
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
       event.preventDefault();
+      if ($('quote-modal').open) {
+        $('quote-modal').close();
+        return;
+      }
       window.location.assign(app.storeUrl || '/');
     }
   });
