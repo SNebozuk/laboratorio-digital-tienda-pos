@@ -34,8 +34,15 @@
     const height = +$('project-height').value;
     const margin = (+$('cut-margin').value || 0) / 10;
     if (!(quantity > 0 && width > 0 && height > 0)) return;
-    const fit = (sheetWidth, sheetHeight) => Math.floor(sheetWidth / (width + margin)) * Math.floor(sheetHeight / (height + margin));
-    const perSheet = Math.max(fit(size[0], size[1]), fit(size[1], size[0]));
+    const layout = (pieceWidth, pieceHeight, rotated) => {
+      const columns = Math.floor(size[0] / (pieceWidth + margin));
+      const rows = Math.floor(size[1] / (pieceHeight + margin));
+      return { columns, rows, count: columns * rows, pieceWidth, pieceHeight, rotated };
+    };
+    const normalLayout = layout(width, height, false);
+    const rotatedLayout = layout(height, width, true);
+    const bestLayout = rotatedLayout.count > normalLayout.count ? rotatedLayout : normalLayout;
+    const perSheet = bestLayout.count;
     if (!perSheet) {
       $('quote-result').innerHTML = '<p>La pieza no entra en la hoja seleccionada. Probá otro papel o tamaño.</p>';
       return;
@@ -47,10 +54,8 @@
     const sheetLeftovers = packs * perPack - sheets;
     const paperCost = (+selected.price_cents / 100) * packs;
     const sheetPrice = (+selected.price_cents / 100) / perPack;
-    const total = paperCost;
-    const marginPct = +$('profit-margin').value || 0;
-    const price = total * (1 + marginPct / 100);
-    $('quote-result').innerHTML = '<h2 id="quote-modal-title">Tu cotización</h2><div class="result-heading"><span>Precio sugerido</span><strong>' + money(price) + '</strong><small>' + money(price / quantity) + ' por unidad</small></div><div class="result-grid"><div><b>' + sheets + '</b><span>hojas a usar</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(sheetPrice) + '</b><span>precio por hoja</span></div><div><b>' + money(total / quantity) + '</b><span>costo por unidad</span></div></div><div class="result-costs"><span>Costo de papel <b>' + money(paperCost) + '</b></span><span>Ganancia estimada <b>' + money(price - total) + ' · ' + marginPct + '%</b></span></div><p>Con ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + '. Rinde ' + perSheet + ' unidades por hoja; necesitás ' + packs + ' resma(s) de ' + perPack + ' hoja(s) y sobran ' + cutLeftovers + ' unidades posibles del recorte.</p>';
+    const diagram = '<div class="cut-diagram"><div class="cut-sheet" style="--sheet-ratio:' + size[0] + '/' + size[1] + ';--cut-width:' + (100 / bestLayout.columns) + '%;--cut-height:' + (100 / bestLayout.rows) + '%"></div><div class="cut-diagram-copy"><strong>Esquema de corte optimizado</strong><span>Hoja ' + size[0] + ' × ' + size[1] + ' cm</span><span>' + bestLayout.columns + ' columnas × ' + bestLayout.rows + ' filas · ' + perSheet + ' piezas</span><span>Pieza ' + bestLayout.pieceWidth + ' × ' + bestLayout.pieceHeight + ' cm' + (bestLayout.rotated ? ' · girada para aprovechar mejor' : '') + '</span></div></div>';
+    $('quote-result').innerHTML = '<h2 id="quote-modal-title">Costo del papel</h2><div class="result-heading"><span>Total para comprar el papel</span><strong>' + money(paperCost) + '</strong><small>' + money(paperCost / quantity) + ' de papel por unidad</small></div><div class="result-grid"><div><b>' + sheets + '</b><span>hojas a usar</span></div><div><b>' + sheetLeftovers + '</b><span>hojas que sobran</span></div><div><b>' + money(sheetPrice) + '</b><span>precio por hoja</span></div><div><b>' + perSheet + '</b><span>piezas por hoja</span></div></div>' + diagram + '<p>Con ' + selected.product_name + '. Necesitás ' + packs + ' resma(s) de ' + perPack + ' hoja(s) y quedan ' + cutLeftovers + ' espacios de corte libres en la última hoja.</p>';
   };
 
   const choosePaper = row => {
@@ -64,6 +69,7 @@
     $('paper-selected').textContent = 'Papel elegido: ' + selected.product_name + (selected.variant_name ? ' · ' + selected.variant_name : '') + ' · ' + money(selected.price_cents / 100);
     $('paper-selected').hidden = false;
     $('paper-picker').open = false;
+    document.querySelectorAll('.paper-table tbody tr').forEach(paperRow => paperRow.classList.toggle('chosen', paperRow === row));
   };
 
   $('paper-list').addEventListener('click', event => {

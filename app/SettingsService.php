@@ -152,9 +152,7 @@ final class SettingsService
     /** @return array<string, string> */
     public function quote(): array
     {
-        $defaults = [
-            'recommended_margin' => '50',
-        ];
+        $defaults = ['enabled' => '1'];
         $statement = $this->pdo->query("SELECT key, value FROM settings WHERE key LIKE 'quote_%'");
         foreach ($statement->fetchAll() as $row) {
             $key = substr((string) $row['key'], 6);
@@ -168,9 +166,6 @@ final class SettingsService
     {
         $values = [];
         $values['enabled'] = in_array((string) ($data['enabled'] ?? '0'), ['1', 'true', 'on'], true) ? '1' : '0';
-        $margin = filter_var($data['recommended_margin'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 1000]]);
-        if ($margin === false) throw new ValidationException('Ingresá un margen válido.');
-        $values['recommended_margin'] = (string) $margin;
         Database::immediate($this->pdo, static function (PDO $pdo) use ($values): void {
             $save = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
             foreach ($values as $key => $value) $save->execute(['key' => 'quote_' . $key, 'value' => $value]);

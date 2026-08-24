@@ -291,13 +291,12 @@ header('Referrer-Policy: same-origin');
                     </section>
 
                     <section class="admin-view" id="view-quote">
-                        <div class="view-heading"><div><p class="eyebrow">HERRAMIENTA PARA CLIENTES</p><h1 class="admin-page-title">COTIZADOR</h1><p>El papel siempre toma el precio actual del catálogo. Definí su visibilidad y el margen recomendado.</p></div><a class="secondary-button fit-button" href="<?= $escape($storePath) ?>/cotizador.php" target="_blank" rel="noopener">VER COTIZADOR</a></div>
+                        <div class="view-heading"><div><p class="eyebrow">HERRAMIENTA PARA CLIENTES</p><h1 class="admin-page-title">COTIZADOR</h1><p>Calcula el costo y rendimiento del papel usando el precio actual del catálogo.</p></div><a class="secondary-button fit-button" href="<?= $escape($storePath) ?>/cotizador.php" target="_blank" rel="noopener">VER COTIZADOR</a></div>
                         <form id="quote-settings-form" class="settings-card">
                             <div class="settings-grid">
                                 <label class="settings-span-two"><input name="enabled" type="checkbox" value="1"> MOSTRAR EL COTIZADOR EN LA TIENDA</label>
-                                <label>MARGEN RECOMENDADO (%)<input name="recommended_margin" type="number" min="0" required></label>
                             </div>
-                            <p class="form-hint">El cálculo contempla únicamente el papel elegido y el margen de ganancia indicado.</p>
+                            <p class="form-hint">El cálculo contempla únicamente el papel elegido.</p>
                             <button class="primary-button fit-button" type="submit">GUARDAR COTIZADOR</button>
                         </form>
                     </section>

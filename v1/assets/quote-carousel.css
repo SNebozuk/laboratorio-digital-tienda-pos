@@ -5,7 +5,7 @@
 .quote-guide { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 16px 0; padding: 14px 18px; border: 1px solid #eadfe1; border-radius: 16px; background: rgba(255,255,255,.48); color: #755363; font-size: 13px; }
 .quote-guide strong { width: 100%; }
 .quote-hero { min-height: 250px; padding-right: min(42vw, 380px); text-align: left; }
-.quote-shell { background: url('/v1/assets/quote-atelier.jpg') center top / cover fixed no-repeat; }
+.quote-shell { background: url('/v1/assets/quote-atelier.jpg') center top / cover scroll no-repeat; }
 .related-products { margin-top: 30px; overflow: hidden; }
 .related-track { display: flex; gap: 12px; overflow-x: auto; padding: 3px 2px 14px; scrollbar-width: thin; }
 .related-card { flex: 0 0 180px; min-height: 132px; border: 1px solid #eadfe1; border-radius: 15px; background: rgba(255,255,255,.38); padding: 14px; color: #57455a; text-decoration: none; }
@@ -13,8 +13,7 @@
 .related-card strong, .related-card small { display: block; }
 .related-card strong { font-size: 13px; line-height: 1.25; }
 .related-card small { margin-top: 6px; color: #9e5a73; font-weight: bold; }
-.quote-card, .quote-guide { background: rgba(255,255,255,.75); }
+.quote-card, .quote-guide { background: rgba(255,255,255,.94); box-shadow: none; }
 .related-card { background: #fff; }
 .paper-table tbody tr { cursor: pointer; }
-.choose-paper { display:block;min-height:32px;margin-top:7px;padding:4px 11px;border:1px solid #c58a9f;border-radius:8px;background:#fff;color:#8f4d68;font:700 13px ui-rounded,"Trebuchet MS",sans-serif;cursor:pointer; }
 @media (max-width: 700px) { .quote-hero { min-height: 0; padding-right: 20px; text-align: center; } .quote-shell { background-size: auto 100vh; } }
