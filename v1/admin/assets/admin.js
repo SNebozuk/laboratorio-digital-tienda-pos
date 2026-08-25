@@ -5076,7 +5076,7 @@
         }
         if (document.getElementById('view-orders') && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
             event.preventDefault();
-            window.open('pos.php', 'laboratorio-pos');
+            window.location.href = 'pos.php';
             return;
         }
         if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
