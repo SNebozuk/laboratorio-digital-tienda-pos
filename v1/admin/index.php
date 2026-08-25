@@ -31,7 +31,7 @@ header('Referrer-Policy: same-origin');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#050505">
     <title>Laboratorio Digital · Administración</title>
-    <link rel="icon" href="<?= $escape($storeAssetPath) ?>/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="<?= $escape($storeAssetPath) ?>/favicon.png" type="image/png">
     <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($assetVersion) ?>">
 </head>

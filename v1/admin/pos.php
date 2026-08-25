@@ -30,7 +30,7 @@ header('Referrer-Policy: same-origin');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="<?= $escape($storeAssetPath) ?>/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="<?= $escape($storeAssetPath) ?>/favicon.png" type="image/png">
     <meta name="theme-color" content="#ffffff">
     <title>Punto de Venta · Laboratorio Digital</title>
     <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">

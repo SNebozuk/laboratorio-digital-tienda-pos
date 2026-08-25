@@ -55,7 +55,7 @@ header('Referrer-Policy: same-origin');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f4f2ed">
     <title>Laboratorio Digital · Catálogo mayorista</title>
-    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png" type="image/png">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
 </head>

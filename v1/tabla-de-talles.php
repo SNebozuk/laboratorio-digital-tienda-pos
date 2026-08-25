@@ -28,7 +28,7 @@ header('Referrer-Policy: same-origin');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png" type="image/png">
     <meta name="theme-color" content="#06080d">
     <title>Tabla de Talles · Laboratorio Digital</title>
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
