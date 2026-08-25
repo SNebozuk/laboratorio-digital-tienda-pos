@@ -1068,30 +1068,30 @@
             </div>`;
         elements.productList.innerHTML = `${toolbar}${products.length ? `
             <div class="product-list-table" role="table" aria-label="Listado de productos">
-                <div class="product-list-head" role="row"><span></span><span>Producto y variantes</span><span>Estado</span><span>Stock</span><span>Precio</span><span></span></div>
+                <div class="product-list-head" role="row"><span></span><span>Producto y variantes</span><span>Stock</span><span>Precio</span><span>Estado</span><span></span></div>
                 ${products.map(product => {
                     const hasVariants = product.variants.length > 1;
                     const single = product.variants[0];
                     // Un producto con variantes no tiene un único precio ni stock: esos valores
                     // se muestran únicamente en las filas de cada variante.
-                    const inlineFields = !hasVariants && single ? `<label class="product-inline-field ${quickStockSaved.has(Number(single.id)) ? 'is-saved' : ''}"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
+                    const inlineFields = !hasVariants && single ? `<label class="product-inline-field ${quickStockSaved.has(Number(single.id)) ? 'is-saved' : ''} ${single.stock_on_hand != null && Number(single.stock_on_hand) === 0 ? 'is-empty' : ''}"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
                         <label class="product-inline-field"><input type="number" min="0" step="1" value="${single.price_cents == null ? '' : Number(single.price_cents) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
                     const visible = isProductVisible(product);
                     const featured = state.featuredProductIds.has(Number(product.id));
                     return `<div class="product-list-row ${visible ? '' : 'is-hidden'}" role="row">
                         <span><input type="checkbox" data-select-product="${Number(product.id)}" ${state.selectedProductIds.has(Number(product.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(product.name)}"></span>
                         <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong>${hasVariants ? `<small>${product.variants.length} variantes</small>` : ''}</span></button>
-                        <span class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}" title="${visible ? 'Visible' : 'Oculto'}" aria-label="${visible ? 'Visible' : 'Oculto'}"><i aria-hidden="true"></i>${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</span>
                         ${inlineFields}
+                        <span class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}" title="${visible ? 'Visible' : 'Oculto'}" aria-label="${visible ? 'Visible' : 'Oculto'}"><i aria-hidden="true"></i>${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</span>
                         <div class="product-table-actions"><button class="small-button icon-action-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace" aria-label="Copiar enlace de ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15"/></svg></button><button class="small-button icon-action-button" type="button" data-duplicate-product="${Number(product.id)}" title="Duplicar producto" aria-label="Duplicar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="1"/><path d="M15 9V6a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/></svg></button><button class="small-button icon-action-button product-delete-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button></div>
                     </div>${hasVariants ? product.variants.map(variant => {
                         const name = variantDisplayName(product, variant);
                         return `<div class="product-variant-inline-row ${product.active && variant.active ? '' : 'is-hidden'}" role="row">
                             <span></span>
                             <span class="product-inline-variant-name"><strong>${escapeHtml(name || 'Variante única')}</strong><small>${escapeHtml(variant.sku || '')}</small></span>
-                            <span></span>
-                            <label class="product-inline-field ${quickStockSaved.has(Number(variant.id)) ? 'is-saved' : ''}"><input type="number" min="0" step="1" value="${variant.stock_on_hand == null ? '' : Number(variant.stock_on_hand)}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
+                            <label class="product-inline-field ${quickStockSaved.has(Number(variant.id)) ? 'is-saved' : ''} ${variant.stock_on_hand != null && Number(variant.stock_on_hand) === 0 ? 'is-empty' : ''}"><input type="number" min="0" step="1" value="${variant.stock_on_hand == null ? '' : Number(variant.stock_on_hand)}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
                             <label class="product-inline-field"><input type="number" min="0" step="1" value="${variant.price_cents == null ? '' : Number(variant.price_cents) / 100}" data-quick-price="${Number(variant.id)}" aria-label="Precio de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
+                            <span></span>
                             <span></span>
                         </div>`;
                     }).join('') : ''}`;
