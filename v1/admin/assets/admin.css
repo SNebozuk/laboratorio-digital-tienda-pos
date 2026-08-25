@@ -2676,7 +2676,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .product-list-row.is-hidden { background: #f8f4fc; opacity: .82; }
 .product-variant-inline-row { min-height: 58px; padding: 8px 14px 8px 14px; border-bottom: 1px solid #edf0f5; background: #fbfcfe; }
 .product-variant-inline-row.is-hidden { background: #fafafd; opacity: .68; }
-.product-inline-variant-name { display: grid; justify-self:end; gap: 3px; max-width:100%; color: #40485b; }
+.product-inline-variant-name { display: grid; justify-self:end; gap: 3px; max-width:100%; margin-right:2cm; color: #40485b; }
 .product-inline-variant-name strong { font-size: 13px; }
 .product-inline-variant-name small { color: #7a8293; font-size: 10px; }
 .product-inline-field { display: block; }
