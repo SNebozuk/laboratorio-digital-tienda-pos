@@ -130,11 +130,8 @@ header('Referrer-Policy: same-origin');
                 <p class="catalog-slogan">Tus ideas merecen hacerse realidad.</p>
             </div>
 
-            <div class="trust-strip" aria-label="Información de compra">
-                <span>Pago por transferencia</span>
-                <span>Retiro en el local</span>
-                <span>Ayuda por WhatsApp</span>
-                <span>Local físico en Rosario · Desde 2005</span>
+            <div class="trust-strip" aria-label="Distribución oficial">
+                <p>Somos reseller oficial de <strong>ART-JET</strong></p>
             </div>
 
             <nav class="catalog-breadcrumb" id="category-breadcrumb" aria-label="Ubicación actual">
