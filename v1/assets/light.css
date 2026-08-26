@@ -134,9 +134,9 @@ body { background:#fff !important; }
 .footer-contact-button span,.creator-credit span { display:block; color:#7652b8; font-size:11px; font-weight:850; letter-spacing:.1em; }
 .footer-contact-button small { display:block; margin-top:4px; color:#685d76; font-size:13px; }
 .footer-contact-button:hover span,.footer-contact-button:focus-visible span { text-decoration:underline; text-underline-offset:4px; }
-.creator-credit { display:grid; gap:4px; }
-.creator-credit strong { color:#2a1d3c; font-size:13px; }
-.creator-credit b { color:#7652b8; font-size:17px; }
+.creator-credit { display:flex; align-items:center; gap:7px; }
+.creator-credit img { width:22px; height:28px; object-fit:contain; }
+.creator-credit:hover span,.creator-credit:focus-visible span { text-decoration:underline; text-underline-offset:4px; }
 .store-contact-modal { display:grid; gap:16px; }
 .store-contact-modal h2 { margin:0; color:#2a1d3c; }
 .contact-modal-lead { margin:0; color:#685d76; }

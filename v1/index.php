@@ -66,13 +66,6 @@ header('Referrer-Policy: same-origin');
             <button class="catalog-menu-button" id="catalog-menu-button" type="button" aria-expanded="false" aria-controls="category-panel">
                 <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
-            <a class="brand" href="<?= $escape($design['logo_link'] ?: $storeUrl) ?>" aria-label="Laboratorio Digital, inicio">
-                <img class="brand-logo" src="<?= $escape($design['logo_path']) ?>?v=<?= $brandAssetVersion ?>" alt="Laboratorio Digital">
-                <span>
-                    <strong>LABORATORIO DIGITAL</strong>
-                    <small>CATÁLOGO MAYORISTA · RETIRO EN EL LOCAL</small>
-                </span>
-            </a>
         </div>
         <div class="header-actions">
             <?php if ($quoteEnabled): ?><a class="header-link header-quote-link" href="<?= $escape($quoteUrl) ?>">COTIZADOR</a><?php endif ?>
@@ -197,7 +190,10 @@ header('Referrer-Policy: same-origin');
             <span>CONTACTO</span>
             <small>Horario, WhatsApp y ubicación</small>
         </button>
-        <p class="creator-credit"><strong>Tienda creada por Alle y Sergio</strong></p>
+        <a class="creator-credit" href="https://www.kauri.com.ar" target="_blank" rel="noopener">
+            <span>Sitio creado por Tiendas Kauri</span>
+            <img src="<?= $escape($storePath) ?>/assets/kauri-logo.png" alt="Kauri">
+        </a>
     </footer>
 
     <a
