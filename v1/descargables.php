@@ -28,7 +28,11 @@ header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data:
         <div class="header-leading"><a class="brand" href="<?= $escape($storeUrl) ?>"><img class="brand-logo" src="<?= $escape($design['logo_path']) ?>" alt="Laboratorio Digital"></a></div>
         <a class="downloads-back-header" href="<?= $escape($storeUrl) ?>">← Volver a la tienda</a>
     </header>
-    <iframe class="downloads-frame" src="https://www.art-jet.com.ar/descargablescomunidad" title="Descargables de Art-Jet"></iframe>
+    <main class="downloads-shell">
+        <a class="downloads-back" href="<?= $escape($storeUrl) ?>">← Volver a la tienda <small>ESC</small></a>
+        <header class="downloads-hero"><span>✦ COMUNIDAD ART-JET</span><h1>Descargables <em>gratuitos.</em></h1><p>Ideas, plantillas y proyectos para imprimir, crear y regalar.</p></header>
+        <div class="downloads-source"><iframe class="downloads-frame" src="https://www.art-jet.com.ar/descargablescomunidad" title="Descargables de Art-Jet"></iframe></div>
+    </main>
     <script>document.addEventListener('keydown', event => { if (event.key === 'Escape') window.location.href = <?= json_encode($storeUrl) ?>; });</script>
 </body>
 </html>
