@@ -482,6 +482,15 @@ button:disabled {
     object-position: left center;
 }
 
+.brand:has(.brand-logo[src*="/uploads/"]) {
+    overflow: hidden;
+}
+
+.brand-logo[src*="/uploads/"] {
+    transform: translateX(36px) scale(2.3);
+    transform-origin: center;
+}
+
 .brand strong,
 .brand small {
     display: block;
@@ -3517,6 +3526,7 @@ body.category-menu-open .category-panel {
     .catalog-menu-button span:first-child { font-size: 18px; }
     .brand { min-width: 0; overflow: hidden; }
     .brand-logo { display: block !important; width: min(108px, 31vw) !important; height: 30px !important; object-position: left center !important; }
+    .brand-logo[src*="/uploads/"] { transform: translateX(24px) scale(2) !important; }
     .brand > span:not(.brand-logo) { display: none !important; }
     .header-actions { flex: 0 0 auto; gap: 4px !important; }
     .header-link { display: inline-flex !important; align-items: center; padding: 7px 6px !important; font-size: 9px !important; letter-spacing: 0 !important; white-space: nowrap; }
