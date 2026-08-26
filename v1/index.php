@@ -91,6 +91,7 @@ header('Referrer-Policy: same-origin');
                 <span>Categorías</span><span aria-hidden="true">⌄</span>
             </button>
             <nav id="category-list"></nav>
+            <a class="category-button category-downloads-link" href="<?= $escape($storePath) ?>/descargables.php">DESCARGABLES</a>
             <div class="category-help">
                 <strong>Compra práctica</strong>
                 <span>Elegí talle y cantidad directamente desde la lista.</span>
