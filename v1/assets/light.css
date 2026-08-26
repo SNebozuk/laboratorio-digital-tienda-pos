@@ -108,6 +108,7 @@ body { background:#fff !important; }
 .catalog-product-summary,.opened-variant-row,.cart-line,.order-panel,.home-search-prompt,.home-how-it-works,.quick-categories button,.product-row { box-shadow:0 6px 18px rgba(62,38,91,.06) !important; }
 .order-panel { background:#fbe4ed !important; border-color:#efb9ce !important; }
 .catalog-product-summary:hover,.opened-variant-row:hover,.product-row:hover,.quick-categories button:hover { background:#fff1f7 !important; border-color:#e7a7c4 !important; }
+@media (hover:hover) { .catalog-product-summary,.opened-variant-row,.product-row { transition:transform .18s ease; }.catalog-product-summary:hover,.opened-variant-row:hover,.product-row:hover { transform:scale(1.01); }.summary-product-title:not(.static-title):hover > strong,.summary-product-title:not(.static-title):focus-visible > strong,.search-product-title:hover,.search-product-title:focus-visible { text-decoration:none; } }
 .modal-card label.payment-option:has(input:checked),.modal-card .cash-reservation-warning { background:#f3edfb !important; border-color:#d4c1e8 !important; color:#38234f !important; }
 
 /* El acceso flotante no debe tapar la información de contacto al final de la tienda. */
