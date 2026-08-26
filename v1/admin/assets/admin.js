@@ -1082,7 +1082,7 @@
                         <span><input type="checkbox" data-select-product="${Number(product.id)}" ${state.selectedProductIds.has(Number(product.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(product.name)}"></span>
                         <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong>${hasVariants ? `<small>${product.variants.length} variantes</small>` : ''}</span></button>
                         ${inlineFields}
-                        <span class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}" title="${visible ? 'Visible' : 'Oculto'}" aria-label="${visible ? 'Visible' : 'Oculto'}"><i aria-hidden="true"></i>${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</span>
+                        <button class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}" type="button" data-toggle-product-visibility="${Number(product.id)}" title="${visible ? 'Ocultar producto' : 'Mostrar producto'}" aria-label="${visible ? 'Ocultar' : 'Mostrar'} ${escapeHtml(product.name)}"><i aria-hidden="true"></i>${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</button>
                         <div class="product-table-actions"><button class="small-button icon-action-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace" aria-label="Copiar enlace de ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15"/></svg></button><button class="small-button icon-action-button" type="button" data-duplicate-product="${Number(product.id)}" title="Duplicar producto" aria-label="Duplicar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="1"/><path d="M15 9V6a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/></svg></button><button class="small-button icon-action-button product-delete-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button></div>
                     </div>${hasVariants ? product.variants.map(variant => {
                         const name = variantDisplayName(product, variant);
@@ -4619,6 +4619,21 @@
                 [Number(productVisibility.dataset.productId)],
                 productVisibility.dataset.productVisibility === 'show'
             ).then(closeModal).catch(error => toast(error.message));
+            return;
+        }
+        const toggleProductVisibility = event.target.closest('[data-toggle-product-visibility]');
+        if (toggleProductVisibility) {
+            const product = state.products.find(item => (
+                Number(item.id) === Number(toggleProductVisibility.dataset.toggleProductVisibility)
+            ));
+            if (!product) return;
+            toggleProductVisibility.disabled = true;
+            setProductsVisibility([Number(product.id)], !(
+                product.active === true || product.active === 1 || product.active === '1'
+            )).catch(error => {
+                toggleProductVisibility.disabled = false;
+                toast(error.message);
+            });
             return;
         }
         const deleteProduct = event.target.closest('[data-delete-product]');
