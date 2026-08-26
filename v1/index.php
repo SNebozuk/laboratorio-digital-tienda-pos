@@ -75,6 +75,7 @@ header('Referrer-Policy: same-origin');
         </div>
         <div class="header-actions">
             <?php if ($quoteEnabled): ?><a class="header-link header-quote-link" href="<?= $escape($quoteUrl) ?>">COTIZADOR</a><?php endif ?>
+            <a class="header-link" href="<?= $escape($storePath) ?>/descargables.php">DESCARGABLES</a>
             <a class="header-link" href="<?= $escape($sizeGuideUrl) ?>" aria-label="Ver tabla de talles"><span class="header-link-long">TABLA DE TALLES</span><span class="header-link-short">TALLES</span></a>
             <button class="cart-mobile" id="cart-mobile" type="button" aria-label="Abrir pedido">
                 <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 1.9-1.4L20 8H7M10 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm7 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
