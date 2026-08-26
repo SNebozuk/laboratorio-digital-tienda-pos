@@ -31,6 +31,7 @@ $assetVersion = substr(hash('sha256',
     . (string) @file_get_contents(__DIR__ . '/assets/pulga.js')
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
 ), 0, 12);
+$brandAssetVersion = '20260826';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $quoteUrl = $storePath . '/cotizador.php';
@@ -55,7 +56,7 @@ header('Referrer-Policy: same-origin');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f4f2ed">
     <title>Laboratorio Digital · Catálogo mayorista</title>
-    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png" type="image/png">
+    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png?v=<?= $brandAssetVersion ?>" type="image/png">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
 </head>
@@ -66,7 +67,7 @@ header('Referrer-Policy: same-origin');
                 <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
             <a class="brand" href="<?= $escape($design['logo_link'] ?: $storeUrl) ?>" aria-label="Laboratorio Digital, inicio">
-                <img class="brand-logo" src="<?= $escape($design['logo_path']) ?>" alt="Laboratorio Digital">
+                <img class="brand-logo" src="<?= $escape($design['logo_path']) ?>?v=<?= $brandAssetVersion ?>" alt="Laboratorio Digital">
                 <span>
                     <strong>LABORATORIO DIGITAL</strong>
                     <small>CATÁLOGO MAYORISTA · RETIRO EN EL LOCAL</small>

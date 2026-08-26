@@ -8,6 +8,7 @@ $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'),
 $storePath = $storePath === '/' ? '' : $storePath;
 $assetPath = $storePath . '/assets';
 $assetVersion = substr(hash('sha256', (string) @file_get_contents(__DIR__ . '/assets/app.css') . (string) @file_get_contents(__DIR__ . '/assets/light.css')), 0, 12);
+$brandAssetVersion = '20260826';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 ?>
@@ -17,13 +18,13 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Descargables · Laboratorio Digital</title>
-    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png" type="image/png">
+    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png?v=<?= $brandAssetVersion ?>" type="image/png">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
 </head>
 <body class="downloads-page">
     <header class="store-header">
-        <div class="header-leading"><a class="brand" href="<?= $escape($storeUrl) ?>"><img class="brand-logo" src="<?= $escape($design['logo_path']) ?>" alt="Laboratorio Digital"></a></div>
+        <div class="header-leading"><a class="brand" href="<?= $escape($storeUrl) ?>"><img class="brand-logo" src="<?= $escape($design['logo_path']) ?>?v=<?= $brandAssetVersion ?>" alt="Laboratorio Digital"></a></div>
         <a class="downloads-back-header" href="<?= $escape($storeUrl) ?>">← Volver a la tienda</a>
     </header>
     <main class="downloads-shell">
