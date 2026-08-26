@@ -191,8 +191,8 @@ header('Referrer-Policy: same-origin');
             <small>Horario, WhatsApp y ubicación</small>
         </button>
         <a class="creator-credit" href="https://www.kauri.com.ar" target="_blank" rel="noopener">
-            <span>Sitio creado por Tiendas Kauri</span>
             <img src="<?= $escape($storePath) ?>/assets/kauri-logo.png" alt="Kauri">
+            <span>Sitio creado por Tiendas Kauri</span>
         </a>
     </footer>
 
