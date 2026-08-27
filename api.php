@@ -476,7 +476,8 @@ try {
             $user = $app['auth']->requireAdmin();
             $app['orders']->reopen(
                 (int) ($input['order_id'] ?? 0),
-                (int) $user['id']
+                (int) $user['id'],
+                is_array($input['items'] ?? null) ? $input['items'] : null
             );
             // Si estaba en Entregas, reabrir también la devuelve a LDV para
             // que nunca quede duplicada en ambas mesas de trabajo.

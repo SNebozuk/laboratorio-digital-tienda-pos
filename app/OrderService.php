@@ -792,12 +792,13 @@ final class OrderService
         );
     }
 
-    public function reopen(int $orderId, int $actorUserId): void
+    /** @param list<array<string, mixed>>|null $items */
+    public function reopen(int $orderId, int $actorUserId, ?array $items = null): void
     {
         Database::immediate(
             $this->pdo,
-            function (PDO $pdo) use ($orderId, $actorUserId): void {
-                $query = $pdo->prepare('SELECT status, archived_at FROM orders WHERE id = :id');
+            function (PDO $pdo) use ($orderId, $actorUserId, $items): void {
+                $query = $pdo->prepare('SELECT status, archived_at, public_number FROM orders WHERE id = :id');
                 $query->execute(['id' => $orderId]);
                 $order = $query->fetch();
                 if (!$order) {
@@ -807,6 +808,33 @@ final class OrderService
                     throw new ValidationException('La venta ya está abierta.');
                 }
                 $oldStatus = (string) $order['status'];
+
+                if ($oldStatus === 'cancelled') {
+                    if ($items === null) {
+                        throw new ValidationException('Revisá los productos antes de reabrir una venta cancelada.');
+                    }
+                    $quantities = $this->normalizeItems($items);
+                    $resolvedItems = $this->resolveItems($pdo, $quantities);
+                    $total = array_sum(array_column($resolvedItems, 'line_total_cents'));
+
+                    $pdo->prepare('DELETE FROM order_items WHERE order_id = :order_id')
+                        ->execute(['order_id' => $orderId]);
+                    $this->insertOrderItems($pdo, $orderId, $resolvedItems);
+                    $this->reserveCashItems(
+                        $pdo,
+                        $orderId,
+                        (string) $order['public_number'],
+                        $resolvedItems,
+                        'order_reopened_stock'
+                    );
+                    $pdo->prepare(
+                        'UPDATE orders
+                         SET subtotal_cents = :subtotal_cents,
+                             discount_cents = ROUND(:subtotal_cents * discount_percent / 100.0),
+                             total_cents = :subtotal_cents - ROUND(:subtotal_cents * discount_percent / 100.0)
+                         WHERE id = :id'
+                    )->execute(['subtotal_cents' => $total, 'id' => $orderId]);
+                }
                 $update = $pdo->prepare(
                     'UPDATE orders
                      SET status = :status,
@@ -1109,7 +1137,8 @@ final class OrderService
         PDO $pdo,
         int $orderId,
         string $publicNumber,
-        array $items
+        array $items,
+        string $movementReason = 'web_order_stock'
     ): void {
         foreach ($items as $item) {
             $quantity = (int) $item['quantity'];
@@ -1148,7 +1177,7 @@ final class OrderService
                 'variant_id' => (int) $item['variant_id'],
                 'order_id' => $orderId,
                 'on_hand_delta' => -$quantity,
-                'reason' => 'web_order_stock',
+                'reason' => $movementReason,
                 'reference' => $publicNumber,
             ]);
         }

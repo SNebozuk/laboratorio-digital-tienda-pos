@@ -2723,6 +2723,13 @@
     }
 
     async function reopenSelectedOrders(orderIds) {
+        const cancelledOrder = orderIds.length === 1
+            ? state.orders.find(order => Number(order.id) === Number(orderIds[0]) && order.status === 'cancelled')
+            : null;
+        if (cancelledOrder) {
+            showOrderEditor(Number(cancelledOrder.id), 'reopen');
+            return;
+        }
         if (!window.confirm(`¿Reabrir ${orderIds.length} ${orderIds.length === 1 ? 'venta' : 'ventas'}?`)) return;
         try {
             for (const orderId of orderIds) {
@@ -3176,7 +3183,7 @@
         `;
     }
 
-    async function showOrderEditor(orderId) {
+    async function showOrderEditor(orderId, mode = 'edit') {
         try {
             const data = await apiGet('order', { id: orderId });
             const order = data.order;
@@ -3194,6 +3201,7 @@
 
             state.editOrder = {
                 order,
+                mode,
                 quantities,
                 originalQuantities,
                 snapshots,
@@ -3201,10 +3209,11 @@
             };
 
             openModal(`
-                <h2 id="modal-title">EDITAR ${escapeHtml(order.public_number)}</h2>
+                <h2 id="modal-title">${mode === 'reopen' ? 'REABRIR' : 'EDITAR'} ${escapeHtml(order.public_number)}</h2>
                 <p class="empty-copy">
-                    Agregá, quitá o cambiá cantidades. Si el pedido ya reservó
-                    stock, la reserva se ajustará al guardar.
+                    ${mode === 'reopen'
+                        ? 'Revisá la disponibilidad actual. Podés ajustar productos y cantidades antes de reabrir; al confirmar, se reservará el stock elegido.'
+                        : 'Agregá, quitá o cambiá cantidades. Si el pedido ya reservó stock, la reserva se ajustará al guardar.'}
                 </p>
                 <form id="order-edit-form">
                     <div class="search-wrap order-edit-search-wrap">
@@ -3227,7 +3236,7 @@
                         <strong id="order-edit-total">$ 0</strong>
                     </div>
                     <button class="primary-button" id="save-order-edit" type="submit">
-                        GUARDAR CAMBIOS
+                        ${mode === 'reopen' ? 'REABRIR Y RESERVAR STOCK' : 'GUARDAR CAMBIOS'}
                     </button>
                 </form>
             `);
@@ -3247,6 +3256,7 @@
         }
 
         const index = allVariantIndex();
+        const reopening = editing.mode === 'reopen';
         let total = 0;
         const lines = Array.from(editing.quantities, ([variantId, quantity]) => {
             const indexed = index.get(Number(variantId));
@@ -3262,7 +3272,7 @@
                 : 0;
             const available = Number(indexed?.variant.available_stock || 0)
                 + reservationCredit;
-            const max = Math.max(quantity, available);
+            const max = reopening ? available : Math.max(quantity, available);
             total += unitPrice * quantity;
 
             return {
@@ -3279,6 +3289,7 @@
                             : snapshot?.variant_name || 'Variante'
                     ),
                 active: Boolean(indexed?.product.active && indexed?.variant.active),
+                available,
             };
         });
 
@@ -3288,7 +3299,7 @@
                     <strong>${escapeHtml(line.productName)}</strong><br>
                     <small>
                         ${line.variantName ? `${escapeHtml(line.variantName)} · ` : ''}${money(line.unitPrice)}
-                        ${line.active ? '' : ' · INACTIVA'}
+                        ${line.active ? '' : ' · INACTIVA'}${reopening && line.quantity > line.available ? ` · SOLO HAY ${line.available} DISPONIBLES` : ''}
                     </small>
                 </div>
                 <div class="quantity-control">
@@ -3296,7 +3307,7 @@
                     <input
                         type="number"
                         min="1"
-                        max="${line.max}"
+                        max="${Math.max(1, line.max)}"
                         value="${line.quantity}"
                         data-order-edit-input="${line.variantId}"
                     >
@@ -3309,7 +3320,7 @@
             </div>
         `).join('') : '<p class="empty-copy">El pedido debe conservar al menos un producto.</p>';
         totalElement.textContent = money(total);
-        saveButton.disabled = lines.length === 0 || lines.some(line => !line.active);
+        saveButton.disabled = lines.length === 0 || lines.some(line => !line.active || (reopening && line.quantity > line.available));
     }
 
     function setOrderEditQuantity(variantId, requested) {
@@ -3389,7 +3400,7 @@
         button.textContent = 'GUARDANDO…';
         try {
             await apiPost({
-                action: 'order_update_items',
+                action: editing.mode === 'reopen' ? 'order_reopen' : 'order_update_items',
                 order_id: Number(editing.order.id),
                 items: Array.from(
                     editing.quantities,
@@ -3401,11 +3412,11 @@
             });
             closeModal();
             await Promise.all([loadOrders(), loadProducts()]);
-            toast('Productos del pedido actualizados.');
+            toast(editing.mode === 'reopen' ? 'Venta reabierta y stock reservado.' : 'Productos del pedido actualizados.');
         } catch (error) {
             toast(error.message);
             button.disabled = false;
-            button.textContent = 'GUARDAR CAMBIOS';
+            button.textContent = editing.mode === 'reopen' ? 'REABRIR Y RESERVAR STOCK' : 'GUARDAR CAMBIOS';
         }
     }
 
