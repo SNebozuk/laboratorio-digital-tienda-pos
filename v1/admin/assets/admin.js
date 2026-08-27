@@ -1317,12 +1317,18 @@
             const copyImages = window.confirm(
                 '¿Querés duplicar también la foto del producto?\n\nAceptar: duplicar con foto.\nCancelar: duplicar sin foto.'
             );
-            await apiPost({
+            const response = await apiPost({
                 action: 'product_duplicate',
                 product_id: productId,
                 copy_images: copyImages,
             });
             await loadProducts();
+            const duplicatedProduct = state.products.find(product => (
+                Number(product.id) === Number(response.product_id)
+            ));
+            if (duplicatedProduct) {
+                showProductForm(duplicatedProduct);
+            }
             toast(`Producto duplicado ${copyImages ? 'con sus fotos' : 'sin fotos'}, con stock cero e inactivo.`);
         } catch (error) {
             toast(error.message);
