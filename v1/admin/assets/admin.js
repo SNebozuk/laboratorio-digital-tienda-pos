@@ -1576,23 +1576,38 @@
                 <ul>${conflictNames.map(name => `<li>${escapeHtml(name)}</li>`).join('')}</ul>
                 <button type="button" data-dismiss-pos-stock-warning>ENTENDIDO</button>
             </section>` : '';
-        elements.posCartLines.innerHTML = conflictNotice + (items.length ? items.map(item => `
-            <div class="cart-line pos-cart-detail-row ${state.posStockConflicts.has(Number(item.variantId)) ? 'stock-conflict' : ''}">
-                <div class="pos-cart-product">
-                    <strong>${escapeHtml(item.product.name)}</strong>
-                    ${variantDisplayName(item.product, item.variant)
-                        ? `<small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
-                        : ''}
-                </div>
-                <div class="quantity-control">
-                    <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity - 1}">−</button>
-                    <input type="number" value="${item.quantity}" min="0" max="${Number(item.variant.available_stock)}" data-pos-input="${item.variantId}">
-                    <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity + 1}" ${item.quantity >= Number(item.variant.available_stock) ? 'disabled' : ''}>+</button>
-                </div>
-                <small class="pos-cart-available">Stock disponible: ${Math.max(0, Number(item.variant.available_stock) - item.quantity)}</small>
-                <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
-                <button class="pos-remove-cart-line icon-action-button" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
-            </div>
+        const groups = new Map();
+        items.forEach(item => {
+            const productId = Number(item.product.id);
+            if (!groups.has(productId)) {
+                groups.set(productId, { product: item.product, items: [] });
+            }
+            groups.get(productId).items.push(item);
+        });
+        const sortedGroups = Array.from(groups.values()).sort((left, right) => (
+            left.product.name.localeCompare(right.product.name, 'es', { sensitivity: 'base' })
+        ));
+        elements.posCartLines.innerHTML = conflictNotice + (items.length ? sortedGroups.map(group => `
+            <section class="pos-cart-product-group">
+                <strong class="pos-cart-group-name">${escapeHtml(group.product.name)}</strong>
+                ${group.items.map(item => `
+                    <div class="cart-line pos-cart-detail-row ${state.posStockConflicts.has(Number(item.variantId)) ? 'stock-conflict' : ''}">
+                        <div class="pos-cart-product">
+                            ${variantDisplayName(item.product, item.variant)
+                                ? `<small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
+                                : ''}
+                        </div>
+                        <div class="quantity-control">
+                            <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity - 1}" aria-label="Quitar una unidad">−</button>
+                            <input type="number" value="${item.quantity}" min="0" max="${Number(item.variant.available_stock)}" data-pos-input="${item.variantId}" aria-label="Cantidad de ${escapeHtml(item.product.name)}">
+                            <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity + 1}" ${item.quantity >= Number(item.variant.available_stock) ? 'disabled' : ''} aria-label="Agregar una unidad">+</button>
+                        </div>
+                        <small class="pos-cart-available">Stock disponible: ${Math.max(0, Number(item.variant.available_stock) - item.quantity)}</small>
+                        <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
+                        <button class="pos-remove-cart-line icon-action-button" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
+                    </div>
+                `).join('')}
+            </section>
         `).join('') : '<p class="empty-copy">Sin productos.</p>');
     }
 
@@ -5385,6 +5400,11 @@
         state.posCart.clear();
         persistPosCart();
         renderPosCart();
+    });
+    elements.posCartLines?.addEventListener('pointerdown', event => {
+        if (event.target.closest('[data-pos-quantity]')) {
+            event.preventDefault();
+        }
     });
 
     salesChannel?.addEventListener('message', event => {
