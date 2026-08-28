@@ -3160,8 +3160,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-page-cart .pos-cart-product-group .pos-cart-detail-row { border-bottom: 0 !important; }
 .pos-cart-product { min-width: 0; }
 .pos-cart-product strong { display: block; overflow: hidden; color: #252a3a; font-size: 15px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
-.pos-cart-product small { display: block; overflow: hidden; margin-top: 3px; color: #667087; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.pos-page-cart .quantity-control input { width: 54px; height: 38px; padding: 0 3px; border: 1px solid #c9d3e0; border-radius: 8px; color: #252a3a; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 36px; text-align: center; }
+.pos-cart-product small { display: block; overflow: hidden; margin-top: 3px; color: #252a3a; font-size: 16px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.pos-page-cart .quantity-control input { width: 54px; height: 38px; padding: 0 3px; border: 1px solid #c9d3e0; border-radius: 8px; color: #252a3a; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 36px; text-align: center; }
 .pos-cart-subtotal { color: #252a3a; font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .pos-cart-available { color: #46536b; font-size: 13px; font-variant-numeric: tabular-nums; text-align: center; white-space: nowrap; }
 .pos-page .pos-product,
