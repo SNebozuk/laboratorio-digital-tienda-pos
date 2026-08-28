@@ -1587,6 +1587,13 @@
         const sortedGroups = Array.from(groups.values()).sort((left, right) => (
             left.product.name.localeCompare(right.product.name, 'es', { sensitivity: 'base' })
         ));
+        sortedGroups.forEach(group => group.items.sort((left, right) => (
+            variantDisplayName(group.product, left.variant).localeCompare(
+                variantDisplayName(group.product, right.variant),
+                'es',
+                { sensitivity: 'base', numeric: true }
+            )
+        )));
         elements.posCartLines.innerHTML = conflictNotice + (items.length ? sortedGroups.map(group => `
             <section class="pos-cart-product-group">
                 <strong class="pos-cart-group-name">${escapeHtml(group.product.name)}</strong>
