@@ -3194,7 +3194,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-page .pos-cart h2,
 .pos-page .order-total { color: #252a3a; }
 @media (max-width: 980px) {
-    .pos-page-header { grid-template-columns: 1fr auto; padding: 0 16px; }
+    .pos-page-header { grid-template-columns: 1fr auto; min-height: 82px; padding: 0 24px; }
+    .pos-page-brand strong { font-size: 16px; }
+    .pos-page-brand span { font-size: 10px; }
     .pos-live-status { display: none; }
     .pos-page-intro { padding: 18px 16px 0; }
     .pos-search-results { padding: 18px 16px 40px; }
@@ -3211,7 +3213,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .pos-search-page .pos-variant-row .pos-variant-remove, .pos-page .pos-variant-row .pos-variant-remove, .pos-search-page .pos-variant-row .pos-variant-remove-placeholder, .pos-page .pos-variant-row .pos-variant-remove-placeholder { grid-column: 2; grid-row: 1 / 3; align-self: center; }
     .pos-search-page .pos-variant-row .pos-variant-quantity, .pos-page .pos-variant-row .pos-variant-quantity, .pos-page .pos-variant-row .pos-variant-quantity-placeholder, .pos-search-page .pos-variant-row .pos-variant-quantity-placeholder { grid-column: 3; grid-row: 1 / 3; align-self: center; }
     .pos-search-page .pos-variant-row .pos-variant-add, .pos-page .pos-variant-row .pos-variant-add { grid-column: 4; grid-row: 1 / 3; }
-    .pos-page-workspace { grid-template-columns: 1fr; padding: 18px 16px 40px; }
+    .pos-page-workspace { grid-template-columns: 1fr; gap: 28px; padding: 24px 24px 40px; }
+    .pos-page-title h1 { font-size: 36px; }
+    .pos-add-products-link { min-height: 96px; padding: 18px; }
     .pos-page-cart { position: static; }
     .pos-page-cart .pos-cart-detail-row { grid-template-columns: minmax(0, 1fr) auto; }
     .pos-page-cart .quantity-control { grid-column: 1; }
@@ -3726,6 +3730,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-sidebar .admin-nav { overflow-y:hidden; }
 
 .admin-sidebar-settings-menu { position:absolute; z-index:10; inset:0; display:grid; align-content:start; gap:4px; padding:22px 10px 15px; background:#d9dde2; }
+.admin-sidebar-settings-menu[hidden] { display:none; }
 .admin-sidebar-settings-menu strong { margin:16px 10px 8px; color:#3d356f; font-size:13px; }
 .admin-sidebar-settings-menu button { min-height:38px; border:0; border-radius:10px; background:transparent; color:#4f596b; padding:9px 10px; text-align:left; font:inherit; font-size:14px; font-weight:650; cursor:pointer; }
 .admin-sidebar-settings-menu button:hover { background:#e6e9ed; color:#3d356f; }
