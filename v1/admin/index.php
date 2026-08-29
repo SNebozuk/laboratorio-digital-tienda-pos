@@ -104,12 +104,6 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
                         </button>
-                        <button class="admin-nav-button" type="button" data-view="whatsapp">
-                            WhatsApp
-                        </button>
-                        <button class="admin-nav-button" type="button" data-view="users">
-                            Usuarios
-                        </button>
                         <button class="admin-nav-button" type="button" data-view="settings">
                             Configuración
                         </button>
