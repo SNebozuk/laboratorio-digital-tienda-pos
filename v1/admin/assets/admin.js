@@ -2,6 +2,7 @@
     'use strict';
 
     const app = JSON.parse(document.getElementById('admin-app-data').textContent);
+    if (document.querySelector('.pos-page')) window.name = 'laboratorio-digital-pos';
     const state = {
         products: [],
         tutorials: [],
@@ -155,7 +156,6 @@
         invitationsBadge: document.getElementById('invitations-badge'),
         ordersBadge: document.getElementById('orders-badge'),
         statisticsContent: document.getElementById('statistics-content'),
-        posFrame: document.getElementById('admin-pos-frame'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -349,7 +349,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'pos', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -374,9 +374,6 @@
         }
         if (view === 'products') {
             loadProducts();
-        }
-        if (view === 'pos' && elements.posFrame && !elements.posFrame.getAttribute('src')) {
-            elements.posFrame.src = elements.posFrame.dataset.src;
         }
         if (view === 'tutorials') loadTutorials();
         if (view === 'deliveries') {
@@ -411,6 +408,11 @@
         if (view === 'size-guide') {
             loadSizeGuide();
         }
+    }
+
+    function openPointOfSale() {
+        const pointOfSaleWindow = window.open('pos.php', 'laboratorio-digital-pos');
+        if (pointOfSaleWindow) pointOfSaleWindow.focus();
     }
 
     function invitationDate(value) {
@@ -5136,7 +5138,7 @@
         }
         if (document.getElementById('view-orders') && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
             event.preventDefault();
-            showView('pos');
+            openPointOfSale();
             return;
         }
         if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
@@ -5146,6 +5148,9 @@
     });
 
     document.getElementById('open-deliveries')?.addEventListener('click', () => showView('deliveries'));
+    document.querySelectorAll('[data-open-pos]').forEach(button => {
+        button.addEventListener('click', openPointOfSale);
+    });
 
     document.addEventListener('click', event => {
         const zone = event.target.closest('[data-image-drop]');
@@ -5469,7 +5474,14 @@
         if (preview) preview.src = path;
         toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
     });
-    elements.mobileView?.addEventListener('change', event => showView(event.target.value));
+    elements.mobileView?.addEventListener('change', event => {
+        if (event.target.value === 'pos') {
+            openPointOfSale();
+            event.target.value = state.view;
+            return;
+        }
+        showView(event.target.value);
+    });
     document.getElementById('admin-sidebar-toggle')?.addEventListener('click', () => {
         setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));
     });

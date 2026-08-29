@@ -98,7 +98,7 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
-                    <button class="admin-nav-button" type="button" data-view="pos">Punto de Venta</button>
+                    <button class="admin-nav-button" type="button" data-open-pos>Punto de Venta</button>
                     <?php if ($user['role'] === 'admin'): ?>
                         <button class="admin-nav-button" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu">Configuración</button>
                         <button class="admin-nav-button" type="button" data-view="categories">
@@ -154,10 +154,6 @@ header('Referrer-Policy: same-origin');
                         <?php endif ?>
                     </select>
                 </header>
-
-                <section class="admin-view" id="view-pos">
-                    <iframe id="admin-pos-frame" class="admin-pos-frame" title="Punto de Venta" data-src="pos.php?embedded=1"></iframe>
-                </section>
 
                 <section class="admin-view" id="view-products">
                     <div class="view-heading order-page-heading">
@@ -332,7 +328,7 @@ header('Referrer-Policy: same-origin');
                         <div class="order-page-actions">
                             <div class="order-quick-links">
                                 <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
-                                <button class="order-quick-link order-quick-link-pos" type="button" data-view="pos" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></button>
+                                <button class="order-quick-link order-quick-link-pos" type="button" data-open-pos title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></button>
                             </div>
                         </div>
                     </div>
