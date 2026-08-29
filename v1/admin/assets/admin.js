@@ -5471,6 +5471,10 @@
     document.getElementById('admin-sidebar-toggle')?.addEventListener('click', () => {
         setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));
     });
+    document.querySelector('.admin-sidebar')?.addEventListener('dblclick', event => {
+        if (event.target.closest('button, a, input, select, textarea')) return;
+        setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));
+    });
     document.getElementById('logout-button')?.addEventListener('click', async () => {
         try {
             await apiPost({ action: 'logout' });

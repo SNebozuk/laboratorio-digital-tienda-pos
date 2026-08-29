@@ -133,9 +133,6 @@ header('Referrer-Policy: same-origin');
                     <?php endif ?>
                 </nav>
                 <div class="admin-user">
-                    <span class="admin-greeting">Hola, <?= htmlspecialchars(explode(' ', $user['name'])[0], ENT_QUOTES, 'UTF-8') ?> 👋</span>
-                    <strong><?= htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                    <small><?= htmlspecialchars($user['role'], ENT_QUOTES, 'UTF-8') ?></small>
                     <a class="secondary-button admin-store-link" href="<?= $escape($storeUrl) ?>" target="_blank" rel="noopener">VER TIENDA ↗</a>
                     <button class="secondary-button" id="logout-button" type="button">Salir</button>
                 </div>

@@ -3721,3 +3721,6 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-sidebar-collapsed .admin-user { display:none; }
 .admin-sidebar-collapsed .admin-sidebar-toggle svg { transform:rotate(180deg); }
 @media (max-width:820px) { .admin-sidebar-brand-row { display:contents; } }
+
+/* El lateral no desplaza su contenido ni muestra datos de la sesión. */
+.admin-sidebar .admin-nav { overflow-y:hidden; }
