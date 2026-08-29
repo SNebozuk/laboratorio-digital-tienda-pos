@@ -5468,6 +5468,25 @@
     document.getElementById('admin-sidebar-toggle')?.addEventListener('click', () => {
         setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));
     });
+    const secondaryMenu = document.getElementById('admin-secondary-menu');
+    const secondaryMenuToggle = document.getElementById('admin-secondary-menu-toggle');
+    const secondaryMenuList = document.getElementById('admin-secondary-menu-list');
+    secondaryMenuToggle?.addEventListener('click', () => {
+        const isOpen = !secondaryMenuList.hidden;
+        secondaryMenuList.hidden = isOpen;
+        secondaryMenuToggle.setAttribute('aria-expanded', String(!isOpen));
+    });
+    secondaryMenu?.addEventListener('click', event => {
+        if (!event.target.closest('[data-view]')) return;
+        secondaryMenuList.hidden = true;
+        secondaryMenuToggle?.setAttribute('aria-expanded', 'false');
+    });
+    document.addEventListener('click', event => {
+        if (secondaryMenu && !event.target.closest('#admin-secondary-menu')) {
+            secondaryMenuList.hidden = true;
+            secondaryMenuToggle?.setAttribute('aria-expanded', 'false');
+        }
+    });
     document.querySelector('.admin-sidebar')?.addEventListener('dblclick', event => {
         if (event.target.closest('button, a, input, select, textarea')) return;
         setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));

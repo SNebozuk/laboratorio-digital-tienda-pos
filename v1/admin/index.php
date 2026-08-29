@@ -100,17 +100,8 @@ header('Referrer-Policy: same-origin');
                     </button>
                     <button class="admin-nav-button" id="open-pos" type="button">Punto de Venta</button>
                     <?php if ($user['role'] === 'admin'): ?>
-                        <button class="admin-nav-button" type="button" data-view="tutorials">
-                            Aprende
-                        </button>
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
-                        </button>
-                        <button class="admin-nav-button" type="button" data-view="size-guide">
-                            Tabla de Talles
-                        </button>
-                        <button class="admin-nav-button" type="button" data-view="contact">
-                            Contacto
                         </button>
                         <button class="admin-nav-button" type="button" data-view="design">
                             Diseño
@@ -335,6 +326,18 @@ header('Referrer-Policy: same-origin');
                             <div class="order-quick-links">
                                 <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
                                 <a class="order-quick-link order-quick-link-pos" href="pos.php" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
+                                <?php if ($user['role'] === 'admin'): ?>
+                                    <div class="admin-secondary-menu" id="admin-secondary-menu">
+                                        <button class="icon-button" id="admin-secondary-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-secondary-menu-list" aria-label="Abrir opciones secundarias" title="Opciones secundarias">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"></path><path d="m19.4 15 .1 1.8-2 1.2-1.4-1a7.5 7.5 0 0 1-1.6.9l-.4 1.7h-2.3L11.4 17a7.5 7.5 0 0 1-1.6-.9l-1.4 1-2-1.2.1-1.8a7.6 7.6 0 0 1-.1-1.9l-1.5-1 .8-2.2 1.8.1a7 7 0 0 1 1.3-1.3l-.1-1.8 2.2-.8 1 1.5a7.6 7.6 0 0 1 1.9.1l1-1.5 2.2.8-.1 1.8a7 7 0 0 1 1.3 1.3l1.8-.1.8 2.2-1.5 1a7.6 7.6 0 0 1-.1 1.9Z"></path></svg>
+                                        </button>
+                                        <div class="admin-secondary-menu-list" id="admin-secondary-menu-list" hidden>
+                                            <button type="button" data-view="contact">Contacto</button>
+                                            <button type="button" data-view="size-guide">Tabla de Talles</button>
+                                            <button type="button" data-view="tutorials">Aprende</button>
+                                        </div>
+                                    </div>
+                                <?php endif ?>
                             </div>
                         </div>
                     </div>
