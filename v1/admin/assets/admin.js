@@ -347,17 +347,17 @@
         }
     }
 
-    function showView(view, highlightNavigation = true) {
+    function showView(view, highlightNavigation = true, updateHistory = true) {
         const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
         const previousView = state.view;
         state.view = view;
-        if (!document.querySelector('.pos-page')) {
+        if (updateHistory && previousView !== view && !document.querySelector('.pos-page')) {
             const url = new URL(window.location.href);
             url.searchParams.set('view', view);
-            window.history.replaceState({ adminView: view }, '', url);
+            window.history.pushState({ adminView: view }, '', url);
         }
         document.querySelectorAll('.admin-view').forEach(section => {
             section.classList.toggle('active', section.id === `view-${view}`);
@@ -5298,14 +5298,6 @@
                 }
             }
         }
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            if (document.body.classList.contains('pos-search-page')) {
-                window.location.href = 'pos.php';
-            } else {
-                closePosSuggestions();
-            }
-        }
     });
     document.addEventListener('keydown', event => {
         const isPos = state.view === 'pos' || Boolean(document.querySelector('.pos-page'));
@@ -5336,9 +5328,7 @@
         }
 
     });
-    // Esc es contextual en el PDV: vuelve de la búsqueda a la venta que se
-    // estaba armando, pero nunca abandona el Punto de Venta hacia el admin.
-    // Las ventanas emergentes se dejan al manejador general para que se cierren.
+    // Esc sigue el historial también desde la búsqueda del PDV.
     document.addEventListener('keydown', event => {
         if (
             event.key === 'Escape'
@@ -5348,7 +5338,7 @@
         ) {
             event.preventDefault();
             event.stopImmediatePropagation();
-            window.location.href = 'pos.php';
+            window.history.back();
         }
     }, true);
     document.addEventListener('keydown', event => {
@@ -5362,10 +5352,17 @@
         } else if (
             event.key === 'Escape'
             && !event.defaultPrevented
-            && state.view === 'deliveries'
+            && document.querySelector('.pos-page')
         ) {
             event.preventDefault();
-            showView('orders');
+            window.history.back();
+        } else if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && state.view !== 'orders'
+        ) {
+            event.preventDefault();
+            window.history.back();
         }
     });
     document.addEventListener('keydown', captureGlobalBarcode);
@@ -5540,8 +5537,13 @@
         if (elements.ordersBadge) loadOrderNotifications();
         if (document.getElementById('view-orders')) {
             const requestedView = new URL(window.location.href).searchParams.get('view');
-            showView(requestedView || 'orders', Boolean(requestedView));
+            showView(requestedView || 'orders', Boolean(requestedView), false);
         }
+        window.addEventListener('popstate', () => {
+            if (!document.getElementById('view-orders')) return;
+            const previousView = new URL(window.location.href).searchParams.get('view');
+            showView(previousView || 'orders', Boolean(previousView), false);
+        });
         window.setInterval(refreshActiveAdminView, 2000);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {

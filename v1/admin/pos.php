@@ -39,7 +39,6 @@ header('Referrer-Policy: same-origin');
 <body class="admin-body pos-page-body">
     <main class="pos-page">
         <header class="pos-page-header">
-            <a href="./" class="pos-back-link">← Administración</a>
             <div class="pos-page-brand"><strong>LABORATORIO DIGITAL</strong><span>PUNTO DE VENTA</span></div>
             <span class="pos-live-status"><i></i> LISTO PARA VENDER</span>
         </header>
