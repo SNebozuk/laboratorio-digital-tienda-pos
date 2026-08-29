@@ -158,11 +158,28 @@
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
+    const ADMIN_SIDEBAR_COLLAPSED_STORAGE_KEY = 'laboratorio-digital:admin-sidebar-collapsed';
     const quickUpdateTimers = new Map();
     const quickStockSaved = new Set();
     const quickStockSavedTimers = new Map();
     let automaticRefreshRunning = false;
     let quickUpdateInFlight = 0;
+
+    function setAdminSidebarCollapsed(collapsed) {
+        const shell = document.querySelector('.admin-shell');
+        const toggle = document.getElementById('admin-sidebar-toggle');
+        if (!shell || !toggle) return;
+        shell.classList.toggle('admin-sidebar-collapsed', collapsed);
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        const label = collapsed ? 'Desplegar menú lateral' : 'Plegar menú lateral';
+        toggle.setAttribute('aria-label', label);
+        toggle.setAttribute('title', label);
+        try {
+            window.localStorage.setItem(ADMIN_SIDEBAR_COLLAPSED_STORAGE_KEY, String(collapsed));
+        } catch (_) {
+            // El menú sigue funcionando aunque el navegador bloquee el almacenamiento local.
+        }
+    }
     let productActionsMenuPauseUntil = 0;
     let invitationBadgeRefreshAt = 0;
     let orderBadgeRefreshAt = 0;
@@ -5448,6 +5465,12 @@
         toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
     });
     elements.mobileView?.addEventListener('change', event => showView(event.target.value));
+    document.getElementById('open-pos')?.addEventListener('click', () => {
+        window.location.assign('pos.php');
+    });
+    document.getElementById('admin-sidebar-toggle')?.addEventListener('click', () => {
+        setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));
+    });
     document.getElementById('logout-button')?.addEventListener('click', async () => {
         try {
             await apiPost({ action: 'logout' });
@@ -5494,6 +5517,11 @@
     });
 
     if (app.user) {
+        try {
+            setAdminSidebarCollapsed(window.localStorage.getItem(ADMIN_SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true');
+        } catch (_) {
+            // No hace falta persistencia para usar el menú en esta sesión.
+        }
         // Las páginas independientes del PDV no usan la navegación del admin;
         // marcarlas explícitamente permite capturar escaneos desde cualquier foco.
         const isPosPage = Boolean(document.querySelector('.pos-page'));

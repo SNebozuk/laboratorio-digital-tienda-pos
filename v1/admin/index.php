@@ -77,13 +77,18 @@ header('Referrer-Policy: same-origin');
     <?php else: ?>
         <div class="admin-shell">
             <aside class="admin-sidebar">
-                <a class="brand admin-brand" href="./">
-                    <span class="brand-mark">LD</span>
-                    <span>
-                        <strong>LABORATORIO DIGITAL</strong>
-                        <small>ADMINISTRACIÓN</small>
-                    </span>
-                </a>
+                <div class="admin-sidebar-brand-row">
+                    <a class="brand admin-brand" href="./">
+                        <span class="brand-mark">LD</span>
+                        <span>
+                            <strong>LABORATORIO DIGITAL</strong>
+                            <small>ADMINISTRACIÓN</small>
+                        </span>
+                    </a>
+                    <button class="icon-button admin-sidebar-toggle" id="admin-sidebar-toggle" type="button" aria-expanded="true" aria-label="Plegar menú lateral" title="Plegar menú lateral">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+                    </button>
+                </div>
                 <nav class="admin-nav">
                     <div class="admin-nav-sales">
                         <button class="admin-nav-button admin-nav-orders" type="button" data-view="orders">Lista de Ventas <b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
@@ -93,7 +98,7 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
-                    <a class="admin-nav-button" href="pos.php">Punto de Venta</a>
+                    <button class="admin-nav-button" id="open-pos" type="button">Punto de Venta</button>
                     <?php if ($user['role'] === 'admin'): ?>
                         <button class="admin-nav-button" type="button" data-view="tutorials">
                             Aprende
