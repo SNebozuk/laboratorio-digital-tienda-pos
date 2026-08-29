@@ -19,6 +19,7 @@ $assetVersion = substr(hash('sha256',
 ), 0, 12);
 $apiUrl = $storePath . '/api.php';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
+$embedded = ($_GET['embedded'] ?? '') === '1';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data: blob:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
@@ -36,7 +37,7 @@ header('Referrer-Policy: same-origin');
     <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($assetVersion) ?>">
 </head>
-<body class="admin-body pos-page-body">
+<body class="admin-body pos-page-body<?= $embedded ? ' pos-embedded' : '' ?>">
     <main class="pos-page">
         <header class="pos-page-header">
             <div class="pos-page-brand"><strong>LABORATORIO DIGITAL</strong><span>PUNTO DE VENTA</span></div>

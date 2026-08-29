@@ -127,6 +127,8 @@ header('Referrer-Policy: same-origin');
                         <button type="button" data-view="tutorials">Aprende</button>
                         <button type="button" data-view="design">Diseño</button>
                         <button type="button" data-view="quote">Cotizador</button>
+                        <button type="button" data-view="whatsapp">WhatsApp</button>
+                        <button type="button" data-view="users">Usuarios</button>
                     </div>
                 <?php endif ?>
                 <div class="admin-user">
@@ -160,7 +162,7 @@ header('Referrer-Policy: same-origin');
                 </header>
 
                 <section class="admin-view" id="view-pos">
-                    <iframe id="admin-pos-frame" class="admin-pos-frame" title="Punto de Venta" data-src="pos.php"></iframe>
+                    <iframe id="admin-pos-frame" class="admin-pos-frame" title="Punto de Venta" data-src="pos.php?embedded=1"></iframe>
                 </section>
 
                 <section class="admin-view" id="view-products">
