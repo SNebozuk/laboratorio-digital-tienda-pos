@@ -155,6 +155,7 @@
         invitationsBadge: document.getElementById('invitations-badge'),
         ordersBadge: document.getElementById('orders-badge'),
         statisticsContent: document.getElementById('statistics-content'),
+        posFrame: document.getElementById('admin-pos-frame'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -348,7 +349,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'pos', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -373,6 +374,9 @@
         }
         if (view === 'products') {
             loadProducts();
+        }
+        if (view === 'pos' && elements.posFrame && !elements.posFrame.getAttribute('src')) {
+            elements.posFrame.src = elements.posFrame.dataset.src;
         }
         if (view === 'tutorials') loadTutorials();
         if (view === 'deliveries') {
@@ -5132,7 +5136,7 @@
         }
         if (document.getElementById('view-orders') && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
             event.preventDefault();
-            window.location.href = 'pos.php';
+            showView('pos');
             return;
         }
         if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
@@ -5355,7 +5359,11 @@
             && document.querySelector('.pos-page')
         ) {
             event.preventDefault();
-            window.history.back();
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'laboratorio-pos-back' }, window.location.origin);
+            } else {
+                window.history.back();
+            }
         } else if (
             event.key === 'Escape'
             && !event.defaultPrevented
@@ -5462,30 +5470,23 @@
         toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
     });
     elements.mobileView?.addEventListener('change', event => showView(event.target.value));
-    document.getElementById('open-pos')?.addEventListener('click', () => {
-        window.location.assign('pos.php');
-    });
     document.getElementById('admin-sidebar-toggle')?.addEventListener('click', () => {
         setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));
     });
-    const secondaryMenu = document.getElementById('admin-secondary-menu');
-    const secondaryMenuToggle = document.getElementById('admin-secondary-menu-toggle');
-    const secondaryMenuList = document.getElementById('admin-secondary-menu-list');
-    secondaryMenuToggle?.addEventListener('click', () => {
-        const isOpen = !secondaryMenuList.hidden;
-        secondaryMenuList.hidden = isOpen;
-        secondaryMenuToggle.setAttribute('aria-expanded', String(!isOpen));
+    const sidebarSettingsMenu = document.getElementById('admin-sidebar-settings-menu');
+    const sidebarSettingsMenuToggle = document.getElementById('admin-sidebar-settings-menu-toggle');
+    const closeSidebarSettingsMenu = () => {
+        if (!sidebarSettingsMenu) return;
+        sidebarSettingsMenu.hidden = true;
+        sidebarSettingsMenuToggle?.setAttribute('aria-expanded', 'false');
+    };
+    sidebarSettingsMenuToggle?.addEventListener('click', () => {
+        const isOpen = !sidebarSettingsMenu.hidden;
+        sidebarSettingsMenu.hidden = isOpen;
+        sidebarSettingsMenuToggle.setAttribute('aria-expanded', String(!isOpen));
     });
-    secondaryMenu?.addEventListener('click', event => {
-        if (!event.target.closest('[data-view]')) return;
-        secondaryMenuList.hidden = true;
-        secondaryMenuToggle?.setAttribute('aria-expanded', 'false');
-    });
-    document.addEventListener('click', event => {
-        if (secondaryMenu && !event.target.closest('#admin-secondary-menu')) {
-            secondaryMenuList.hidden = true;
-            secondaryMenuToggle?.setAttribute('aria-expanded', 'false');
-        }
+    sidebarSettingsMenu?.addEventListener('click', event => {
+        if (event.target.closest('[data-view], .admin-sidebar-settings-menu-close')) closeSidebarSettingsMenu();
     });
     document.querySelector('.admin-sidebar')?.addEventListener('dblclick', event => {
         if (event.target.closest('button, a, input, select, textarea')) return;
@@ -5511,10 +5512,14 @@
 
     window.addEventListener('message', event => {
         if (event.origin !== window.location.origin
-            || event.data?.type !== 'laboratorio-pos-sale-completed'
             || !document.getElementById('view-orders')) {
             return;
         }
+        if (event.data?.type === 'laboratorio-pos-back') {
+            window.history.back();
+            return;
+        }
+        if (event.data?.type !== 'laboratorio-pos-sale-completed') return;
         const url = new URL(window.location.href);
         url.searchParams.set('view', 'orders');
         window.history.replaceState({}, '', url);

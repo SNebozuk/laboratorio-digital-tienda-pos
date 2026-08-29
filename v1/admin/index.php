@@ -98,16 +98,11 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button" type="button" data-view="products">
                         Productos
                     </button>
-                    <button class="admin-nav-button" id="open-pos" type="button">Punto de Venta</button>
+                    <button class="admin-nav-button" type="button" data-view="pos">Punto de Venta</button>
                     <?php if ($user['role'] === 'admin'): ?>
+                        <button class="admin-nav-button" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu">Configuración</button>
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
-                        </button>
-                        <button class="admin-nav-button" type="button" data-view="design">
-                            Diseño
-                        </button>
-                        <button class="admin-nav-button" type="button" data-view="quote">
-                            Cotizador
                         </button>
                         <button class="admin-nav-button" type="button" data-view="whatsapp">
                             WhatsApp
@@ -123,6 +118,17 @@ header('Referrer-Policy: same-origin');
                         </button>
                     <?php endif ?>
                 </nav>
+                <?php if ($user['role'] === 'admin'): ?>
+                    <div class="admin-sidebar-settings-menu" id="admin-sidebar-settings-menu" hidden>
+                        <button class="admin-sidebar-settings-menu-close" type="button" aria-label="Cerrar configuración">Menú principal</button>
+                        <strong>CONFIGURACIÓN</strong>
+                        <button type="button" data-view="contact">Contacto</button>
+                        <button type="button" data-view="size-guide">Tabla de Talles</button>
+                        <button type="button" data-view="tutorials">Aprende</button>
+                        <button type="button" data-view="design">Diseño</button>
+                        <button type="button" data-view="quote">Cotizador</button>
+                    </div>
+                <?php endif ?>
                 <div class="admin-user">
                     <a class="secondary-button admin-store-link" href="<?= $escape($storeUrl) ?>" target="_blank" rel="noopener">VER TIENDA ↗</a>
                     <button class="secondary-button" id="logout-button" type="button">Salir</button>
@@ -137,6 +143,7 @@ header('Referrer-Policy: same-origin');
                         <option value="deliveries">Entrega de Pedidos</option>
                         <option value="statistics">Estadísticas</option>
                         <option value="products">Productos</option>
+                        <option value="pos">Punto de Venta</option>
                         <?php if ($user['role'] === 'admin'): ?>
                             <option value="tutorials">Aprende</option>
                             <option value="categories">Categorías</option>
@@ -151,6 +158,10 @@ header('Referrer-Policy: same-origin');
                         <?php endif ?>
                     </select>
                 </header>
+
+                <section class="admin-view" id="view-pos">
+                    <iframe id="admin-pos-frame" class="admin-pos-frame" title="Punto de Venta" data-src="pos.php"></iframe>
+                </section>
 
                 <section class="admin-view" id="view-products">
                     <div class="view-heading order-page-heading">
@@ -325,19 +336,7 @@ header('Referrer-Policy: same-origin');
                         <div class="order-page-actions">
                             <div class="order-quick-links">
                                 <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
-                                <a class="order-quick-link order-quick-link-pos" href="pos.php" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></a>
-                                <?php if ($user['role'] === 'admin'): ?>
-                                    <div class="admin-secondary-menu" id="admin-secondary-menu">
-                                        <button class="icon-button" id="admin-secondary-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-secondary-menu-list" aria-label="Abrir opciones secundarias" title="Opciones secundarias">
-                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"></path><path d="m19.4 15 .1 1.8-2 1.2-1.4-1a7.5 7.5 0 0 1-1.6.9l-.4 1.7h-2.3L11.4 17a7.5 7.5 0 0 1-1.6-.9l-1.4 1-2-1.2.1-1.8a7.6 7.6 0 0 1-.1-1.9l-1.5-1 .8-2.2 1.8.1a7 7 0 0 1 1.3-1.3l-.1-1.8 2.2-.8 1 1.5a7.6 7.6 0 0 1 1.9.1l1-1.5 2.2.8-.1 1.8a7 7 0 0 1 1.3 1.3l1.8-.1.8 2.2-1.5 1a7.6 7.6 0 0 1-.1 1.9Z"></path></svg>
-                                        </button>
-                                        <div class="admin-secondary-menu-list" id="admin-secondary-menu-list" hidden>
-                                            <button type="button" data-view="contact">Contacto</button>
-                                            <button type="button" data-view="size-guide">Tabla de Talles</button>
-                                            <button type="button" data-view="tutorials">Aprende</button>
-                                        </div>
-                                    </div>
-                                <?php endif ?>
+                                <button class="order-quick-link order-quick-link-pos" type="button" data-view="pos" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></button>
                             </div>
                         </div>
                     </div>

@@ -3725,9 +3725,9 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 /* El lateral no desplaza su contenido ni muestra datos de la sesión. */
 .admin-sidebar .admin-nav { overflow-y:hidden; }
 
-.admin-secondary-menu { position:relative; }
-.admin-secondary-menu .icon-button { display:grid; width:32px; height:32px; place-items:center; padding:0; }
-.admin-secondary-menu .icon-button svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.admin-secondary-menu-list { position:absolute; z-index:25; top:calc(100% + 8px); right:0; display:grid; min-width:174px; padding:6px; border:1px solid #d9dee7; border-radius:10px; background:#fff; box-shadow:0 10px 24px rgba(35,45,75,.16); }
-.admin-secondary-menu-list button { border:0; border-radius:7px; background:transparent; color:#4f596b; padding:9px 10px; text-align:left; font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
-.admin-secondary-menu-list button:hover { background:#eef0f4; color:#3d356f; }
+.admin-sidebar-settings-menu { position:absolute; z-index:10; inset:0; display:grid; align-content:start; gap:4px; padding:22px 10px 15px; background:#d9dde2; }
+.admin-sidebar-settings-menu strong { margin:16px 10px 8px; color:#3d356f; font-size:13px; }
+.admin-sidebar-settings-menu button { min-height:38px; border:0; border-radius:10px; background:transparent; color:#4f596b; padding:9px 10px; text-align:left; font:inherit; font-size:14px; font-weight:650; cursor:pointer; }
+.admin-sidebar-settings-menu button:hover { background:#e6e9ed; color:#3d356f; }
+.admin-sidebar-settings-menu .admin-sidebar-settings-menu-close { margin:0 10px; min-height:auto; padding:0; font-size:12px; }
+.admin-pos-frame { display:block; width:100%; min-height:calc(100vh - 68px); border:0; background:#f6f7fb; }
