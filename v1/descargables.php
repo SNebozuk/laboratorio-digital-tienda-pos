@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 $app = require dirname(__DIR__) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
-$design = $app['settings']->design();
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
 $assetPath = $storePath . '/assets';
@@ -24,7 +23,6 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
 </head>
 <body class="downloads-page">
     <header class="store-header">
-        <div class="header-leading"><a class="brand" href="<?= $escape($storeUrl) ?>"><img class="brand-logo" src="<?= $escape($design['logo_path']) ?>?v=<?= $brandAssetVersion ?>" alt="Laboratorio Digital"></a></div>
         <a class="downloads-back-header" href="<?= $escape($storeUrl) ?>">← Volver a la tienda</a>
     </header>
     <main class="downloads-shell">
