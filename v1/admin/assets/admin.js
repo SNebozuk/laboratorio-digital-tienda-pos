@@ -2211,7 +2211,7 @@
                     : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">${orderActionIconMarkup('return')}</button>` : '';
             const hasSale = linkedOrders.length > 0 || String(slot.order_numbers || '').trim() !== '';
-            const deleteButton = hasSale ? `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('cancel')}</button>` : '';
+            const deleteButton = hasSale ? `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('door')}</button>` : '';
             const transferAmount = transferTotal(slot.transfers);
             const transferMatches = transferAmount !== null && Math.round(transferAmount * 100) === Number(slot.order_total_cents || 0);
             const transferStatus = hasSale ? `<span class="delivery-transfer-status ${transferMatches ? 'is-matched' : 'is-unmatched'}" data-order-total-cents="${Number(slot.order_total_cents || 0)}" role="img" aria-label="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}" title="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}"></span>` : '';
@@ -2643,6 +2643,7 @@
             reopen: '<path d="M8 7 4 11l4 4M5 11h9a5 5 0 0 1 0 10h-1"/>',
             print: '<path d="M7 9V4h10v5M7 17H5V10h14v7h-2M7 14h10v6H7z"/>',
             cancel: '<path d="M5 7h14M10 7V5h4v2M8 10v8M12 10v8M16 10v8M7 7l1 13h8l1-13"/>',
+            door: '<path d="M5 21V3h12v18M5 21h14M17 3l2 2v16M9 12h.01"/>',
         };
         return `<svg class="order-action-icon" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;
     }
@@ -2955,7 +2956,7 @@
                         ${group.items.map(item => `
                             <div class="order-detail-variant">
                                 <span class="order-detail-quantity">${Number(item.quantity)}</span>
-                                <span class="order-detail-variant-name">${fold(item.variant_name) === 'unica' ? 'Sin variante' : escapeHtml(item.variant_name || 'Sin variante')}</span>
+                                <span class="order-detail-variant-name">${fold(item.variant_name) === 'unica' ? '' : escapeHtml(item.variant_name || '')}</span>
                                 <span class="order-detail-variant-details">${item.sku ? `SKU: ${escapeHtml(item.sku)} · ` : ''}${money(item.unit_price_cents)}</span>
                                 <span class="order-detail-line-total">${money(item.line_total_cents)}</span>
                             </div>
