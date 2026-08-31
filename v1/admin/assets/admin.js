@@ -990,7 +990,6 @@
     }
 
     async function deleteProducts(ids) {
-        if (!window.confirm(`¿Eliminar ${ids.length === 1 ? 'el producto seleccionado' : `los ${ids.length} productos seleccionados`}? Esta acción no se puede deshacer.`)) return false;
         try {
             await apiPost({ action: 'product_delete', product_ids: ids });
         } catch (error) {
@@ -1004,6 +1003,22 @@
         await loadProducts();
         toast(ids.length === 1 ? 'Producto eliminado.' : 'Productos eliminados.');
         return true;
+    }
+
+    function showDeleteProductsConfirmation(ids) {
+        const products = ids.map(id => state.products.find(product => Number(product.id) === Number(id))).filter(Boolean);
+        const label = products.length === 1
+            ? `“${escapeHtml(products[0].name)}”`
+            : `${products.length} productos seleccionados`;
+        openModal(`
+            <h2 id="modal-title">ELIMINAR PRODUCTO${products.length === 1 ? '' : 'S'}</h2>
+            <p class="checkout-lead">¿Querés eliminar ${label}?</p>
+            <p class="notice"><strong>Esta acción no se puede deshacer.</strong></p>
+            <div class="filter-modal-actions">
+                <button class="secondary-button" type="button" data-close-modal>CANCELAR</button>
+                <button class="danger-button" type="button" data-confirm-delete-products="${ids.map(Number).join(',')}">ELIMINAR${products.length === 1 ? '' : ' PRODUCTOS'}</button>
+            </div>
+        `);
     }
 
     function showProductFilters() {
@@ -4793,9 +4808,19 @@
         }
         const deleteProduct = event.target.closest('[data-delete-product]');
         if (deleteProduct) {
-            deleteProducts([Number(deleteProduct.dataset.deleteProduct)]).then(deleted => {
-                if (deleted && elements.modal.classList.contains('open')) closeModal();
-            }).catch(error => toast(error.message));
+            showDeleteProductsConfirmation([Number(deleteProduct.dataset.deleteProduct)]);
+            return;
+        }
+        const confirmDeleteProducts = event.target.closest('[data-confirm-delete-products]');
+        if (confirmDeleteProducts) {
+            const ids = confirmDeleteProducts.dataset.confirmDeleteProducts.split(',').map(Number).filter(Number.isFinite);
+            confirmDeleteProducts.disabled = true;
+            deleteProducts(ids).then(deleted => {
+                if (deleted) closeModal();
+            }).catch(error => {
+                confirmDeleteProducts.disabled = false;
+                toast(error.message);
+            });
             return;
         }
         const duplicate = event.target.closest('[data-duplicate-product]');
@@ -5176,7 +5201,7 @@
             if (action === 'price') showPriceAdjustment();
             if (action === 'show') setProductsVisibility(ids, true).catch(error => toast(error.message));
             if (action === 'hide') setProductsVisibility(ids, false).catch(error => toast(error.message));
-            if (action === 'delete') deleteProducts(ids).catch(error => toast(error.message));
+            if (action === 'delete') showDeleteProductsConfirmation(ids);
             return;
         }
         if (event.target.matches('[data-select-order]')) {
