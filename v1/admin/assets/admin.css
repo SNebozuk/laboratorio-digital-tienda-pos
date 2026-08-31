@@ -3745,7 +3745,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .duplicate-variant-row label { margin:0; }
 @media (max-width:560px) { .duplicate-product-heading { grid-template-columns:82px minmax(0, 1fr); gap:12px; }.duplicate-product-image { width:82px; }.duplicate-variant-row { grid-template-columns:1fr; } }
 
-.admin-sidebar-settings-menu { position:absolute; z-index:10; inset:0; display:grid; align-content:start; gap:4px; padding:22px 10px 15px; background:#d9dde2; }
+.admin-sidebar-settings-menu { position:absolute; z-index:10; inset:0; display:grid; min-width:0; overflow-x:hidden; align-content:start; gap:4px; padding:22px 10px 15px; background:#d9dde2; }
 .admin-sidebar-settings-menu[hidden] { display:none; }
 .admin-sidebar-settings-menu strong { margin:16px 10px 8px; color:#3d356f; font-size:13px; }
 .admin-sidebar-settings-menu button { min-height:38px; border:0; border-radius:10px; background:transparent; color:#4f596b; padding:9px 10px; text-align:left; font:inherit; font-size:14px; font-weight:650; cursor:pointer; }
