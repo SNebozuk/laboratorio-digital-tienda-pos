@@ -215,6 +215,15 @@
     const salesChannel = typeof BroadcastChannel === 'function'
         ? new BroadcastChannel('laboratorio-digital-sales')
         : null;
+    const newWebSaleSound = new Audio('assets/nueva_venta_sutil_elegante.mp3');
+    newWebSaleSound.preload = 'auto';
+
+    function playNewWebSaleSound() {
+        newWebSaleSound.currentTime = 0;
+        newWebSaleSound.play().catch(() => {
+            // El navegador puede exigir una interacción previa antes de reproducir audio.
+        });
+    }
 
     async function apiGet(action, parameters = {}) {
         const url = new URL(app.api_url, window.location.href);
@@ -2159,6 +2168,12 @@
             });
             const orders = data.orders || [];
             const currentOrderIds = new Set(orders.map(order => Number(order.id)));
+            const newNonPosOrders = state.knownOrderIds === null
+                ? []
+                : orders.filter(order => (
+                    !state.knownOrderIds.has(Number(order.id))
+                    && String(order.channel || '') !== 'pos'
+                ));
             state.knownOrderIds = currentOrderIds;
             state.orders = orders;
             state.openOrderCount = Number(data.open_count || 0);
@@ -2168,6 +2183,9 @@
                 Array.from(state.selectedOrderIds).filter(id => currentIds.has(Number(id)))
             );
             renderOrders();
+            if (state.view === 'orders' && newNonPosOrders.length) {
+                playNewWebSaleSound();
+            }
         } catch (error) {
             toast(error.message);
         }
