@@ -81,8 +81,8 @@
     ];
 
     const emptyOrdersMessage = () => {
-        const hour = Math.floor(Date.now() / 3600000);
-        return emptyOrdersMessages[(hour * 7 + Math.floor(hour / emptyOrdersMessages.length)) % emptyOrdersMessages.length];
+        const quarterHour = Math.floor(Date.now() / (15 * 60 * 1000));
+        return emptyOrdersMessages[(quarterHour * 7 + Math.floor(quarterHour / emptyOrdersMessages.length)) % emptyOrdersMessages.length];
     };
 
     const discountSourceLabel = type => ({
