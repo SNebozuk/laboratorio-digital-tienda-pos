@@ -1387,7 +1387,7 @@
                 <h2 id="modal-title">${escapeHtml(contact.store_name || 'Laboratorio Digital')}</h2>
                 <p class="contact-modal-lead">Estamos para ayudarte a encontrar los productos que necesitás.</p>
                 <div class="contact-info-grid">
-                    <a class="contact-info-card contact-whatsapp-card" href="https://wa.me/${escapeHtml(phone)}" target="_blank" rel="noopener">
+                    <a class="contact-info-card contact-whatsapp-card" href="whatsapp://send?phone=${escapeHtml(phone)}" target="_blank" rel="noopener">
                         <span>WHATSAPP</span><strong>Escribinos por WhatsApp</strong><small>+${escapeHtml(phone)}</small>
                     </a>
                     <div class="contact-info-card contact-hours-card">
@@ -1734,7 +1734,7 @@
             '',
             `Total: ${money(Number(order.total_cents))}`,
         ].join('\n');
-        return `https://wa.me/${app.whatsapp_number}?text=${encodeURIComponent(message)}`;
+        return `whatsapp://send?phone=${app.whatsapp_number}&text=${encodeURIComponent(message)}`;
     }
 
     function rememberCompletedOrder() {

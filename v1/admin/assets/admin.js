@@ -2700,7 +2700,7 @@
             return;
         }
         if (elements.modal?.classList.contains('open')) closeModal();
-        window.open(`https://wa.me/${phone}`, '_blank', 'noopener');
+        window.open(`whatsapp://send?phone=${phone}`, '_blank', 'noopener');
     }
 
     async function sendOrderWhatsappMessage(orderId, kind) {
@@ -2711,7 +2711,7 @@
             if (phone.length < 8) throw new Error('Esta venta no tiene un WhatsApp válido cargado.');
             const message = whatsappMessageForOrder(order, kind);
             closeModal();
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+            window.open(`whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`, '_blank', 'noopener');
         } catch (error) { toast(error.message); }
     }
 

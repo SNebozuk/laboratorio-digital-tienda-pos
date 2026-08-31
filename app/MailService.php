@@ -241,7 +241,7 @@ final class MailService
             if (!is_array($item)) continue;
             $variant = trim((string) ($item['variant_name'] ?? ''));
             if (preg_match('/^única$/iu', $variant) === 1) $variant = '';
-            $lines[] = '- ' . (string) ($item['product_name'] ?? '')
+            $lines[] = (string) ($item['product_name'] ?? '')
                 . ($variant !== '' ? ' (' . $variant . ')' : '')
                 . ' x' . (int) ($item['quantity'] ?? 0)
                 . ' — ' . $this->money((int) ($item['line_total_cents'] ?? 0));

@@ -198,7 +198,7 @@ header('Referrer-Policy: same-origin');
 
     <a
         class="floating-whatsapp"
-        href="https://wa.me/<?= $escape($whatsappNumber) ?>"
+        href="whatsapp://send?phone=<?= $escape($whatsappNumber) ?>"
         target="_blank"
         rel="noopener"
         aria-label="Consultar por WhatsApp"
