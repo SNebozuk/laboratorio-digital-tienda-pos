@@ -3276,6 +3276,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     letter-spacing: .035em;
 }
 #view-orders .order-list-empty span { font-size: 13px; }
+#view-orders .order-list-empty em {
+    font-size: 15px;
+    font-style: italic;
+}
 
 @media (max-width: 760px) {
     #view-orders .order-list-row {

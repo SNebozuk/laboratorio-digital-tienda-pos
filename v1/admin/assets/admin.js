@@ -57,6 +57,34 @@
         maximumFractionDigits: 0,
     }).format(Number(cents || 0) / 100);
 
+    const emptyOrdersMessages = [
+        'Si no llegan ventas, no esperes. Cambiá algo.',
+        'Un negocio quieto no vende más. Se mueve.',
+        'Si hoy no vendés, hoy es un buen día para hacer algo distinto.',
+        'Las ventas no aparecen solas. Hay que salir a buscarlas.',
+        'Menos esperar clientes. Más generar oportunidades.',
+        'Cuando las ventas frenan, el negocio tiene que moverse.',
+        'No necesitás más suerte. Necesitás más oportunidades.',
+        'Si nadie te encuentra, difícilmente te compre.',
+        'No esperes que el cliente llegue solo.',
+        'Un día sin ventas también puede ser un día para conseguir la próxima.',
+        'Tu próximo cliente todavía no sabe que existís.',
+        'Hay negocios esperando ventas. Y negocios buscándolas.',
+        'No controles las ventas. Generá ventas.',
+        'Si el teléfono no suena, hay que hacer que suene.',
+        'La falta de ventas no se mira. Se trabaja.',
+        'Cuando no pasa nada, hacé que pase.',
+        'No hace falta venderle a todos. Hace falta encontrar al próximo.',
+        'Cada negocio que descubrís puede ser una nueva oportunidad.',
+        'Mientras otros esperan consultas, vos podés salir a encontrarlas.',
+        'No necesitás miles de clientes. Necesitás empezar por uno.',
+    ];
+
+    const emptyOrdersMessage = () => {
+        const hour = Math.floor(Date.now() / 3600000);
+        return emptyOrdersMessages[(hour * 7 + Math.floor(hour / emptyOrdersMessages.length)) % emptyOrdersMessages.length];
+    };
+
     const discountSourceLabel = type => ({
         quantity: 'por cantidad',
         surprise: 'sorpresa',
@@ -3220,10 +3248,9 @@
                 <span></span><span>ORDEN</span><span>CLIENTE</span><span>TOTAL</span><span>PRODUCTOS</span><span>ESTADO</span><span></span><span></span><span></span><span>FECHA</span>
             </div>
             <div class="order-list-empty" role="status">
-                <strong>${state.orders.length ? 'NO HAY COINCIDENCIAS' : 'TODAVÍA NO HAY PEDIDOS'}</strong>
-                <span>${state.orders.length
-                    ? 'Probá con otro número, nombre o apellido.'
-                    : 'Los pedidos web y las ventas de mostrador aparecerán aquí.'}</span>
+                ${state.orders.length
+                    ? '<strong>NO HAY COINCIDENCIAS</strong><span>Probá con otro número, nombre o apellido.</span>'
+                    : `<em>${escapeHtml(emptyOrdersMessage())}</em>`}
             </div>
         `;
     }
