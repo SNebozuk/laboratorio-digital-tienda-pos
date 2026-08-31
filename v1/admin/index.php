@@ -9,12 +9,12 @@ $storePath = $storePath === '/' ? '' : $storePath;
 $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
 $publicSettings = $app['settings']->values();
-$assetVersion = substr(hash('sha256',
-    (string) @file_get_contents(dirname(__DIR__) . '/assets/app.css')
-    . (string) @file_get_contents(dirname(__DIR__) . '/assets/pulga.js')
-    . (string) @file_get_contents(__DIR__ . '/assets/admin.css')
-    . (string) @file_get_contents(__DIR__ . '/assets/admin.js')
-), 0, 12);
+$assetVersion = static fn (string $path): string => (string) (filemtime($path) ?: 1);
+$appCssVersion = $assetVersion(dirname(__DIR__) . '/assets/app.css');
+$adminCssVersion = $assetVersion(__DIR__ . '/assets/admin.css');
+$pulgaJsVersion = $assetVersion(dirname(__DIR__) . '/assets/pulga.js');
+$klausJsVersion = $assetVersion(dirname(__DIR__) . '/assets/klaus.js');
+$adminJsVersion = $assetVersion(__DIR__ . '/assets/admin.js');
 $apiUrl = $storePath . '/api.php';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
@@ -32,8 +32,8 @@ header('Referrer-Policy: same-origin');
     <meta name="theme-color" content="#050505">
     <title>Laboratorio Digital · Administración</title>
     <link rel="icon" href="<?= $escape($storeAssetPath) ?>/favicon.png?v=20260826" type="image/png">
-    <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
-    <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($assetVersion) ?>">
+    <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($appCssVersion) ?>">
+    <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($adminCssVersion) ?>">
 </head>
 <body class="admin-body">
     <?php if (!$user): ?>
@@ -552,7 +552,7 @@ header('Referrer-Policy: same-origin');
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
-    <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script><script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($assetVersion) ?>" defer></script><?php endif ?>
-    <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($assetVersion) ?>" defer></script>
+    <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/pulga.js?v=<?= $escape($pulgaJsVersion) ?>" defer></script><script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($klausJsVersion) ?>" defer></script><?php endif ?>
+    <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($adminJsVersion) ?>" defer></script>
 </body>
 </html>
