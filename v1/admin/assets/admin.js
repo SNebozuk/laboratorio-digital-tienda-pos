@@ -963,6 +963,17 @@
         return state.products.filter(product => state.selectedProductIds.has(Number(product.id)));
     }
 
+    function keepSelectedProductsInCategory() {
+        if (!state.productCategoryId) return;
+        state.selectedProductIds.forEach(id => {
+            const product = state.products.find(item => Number(item.id) === Number(id));
+            const matchesCategory = state.productCategoryId === '__unassigned__'
+                ? !product?.category?.id
+                : Number(product?.category?.id) === Number(state.productCategoryId);
+            if (!matchesCategory) state.selectedProductIds.delete(id);
+        });
+    }
+
     async function setProductsVisibility(ids, active) {
         const response = await apiPost({ action: 'product_visibility', product_ids: ids, active: Boolean(active) });
         if (Boolean(response.active) !== Boolean(active)) {
@@ -4443,6 +4454,7 @@
             state.productCategoryId = String(data.get('category') || '');
             state.productAvailability = data.getAll('availability').map(String);
             state.productVisibility = data.getAll('visibility').map(String);
+            keepSelectedProductsInCategory();
             closeModal();
             renderProducts();
         }
