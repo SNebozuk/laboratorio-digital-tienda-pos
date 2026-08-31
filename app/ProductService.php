@@ -612,17 +612,53 @@ final class ProductService
         }
     }
 
-    public function duplicate(int $productId, int $actorUserId, bool $copyImages = true): int
+    public function duplicate(int $productId, int $actorUserId, array $changes = []): int
     {
         return Database::immediate(
             $this->pdo,
-            function (PDO $pdo) use ($productId, $actorUserId, $copyImages): int {
+            function (PDO $pdo) use ($productId, $actorUserId, $changes): int {
                 $productQuery = $pdo->prepare('SELECT * FROM products WHERE id = :id');
                 $productQuery->execute(['id' => $productId]);
                 $product = $productQuery->fetch();
                 if (!$product) {
                     throw new ValidationException('El producto no existe.');
                 }
+
+                $variants = $pdo->prepare(
+                    'SELECT * FROM product_variants
+                     WHERE product_id = :product_id
+                     ORDER BY sort_order, id'
+                );
+                $variants->execute(['product_id' => $productId]);
+                $sourceVariants = $variants->fetchAll();
+                $changedVariants = is_array($changes['variants'] ?? null) ? $changes['variants'] : [];
+                $duplicateData = [
+                    'name' => $changes['name'] ?? ($product['name'] . ' (COPIA)'),
+                    'category_id' => $product['category_id'],
+                    'description' => $product['description'],
+                    'image_path' => $changes['image_path'] ?? $product['image_path'],
+                    'active' => false,
+                    'variants' => [],
+                ];
+                foreach ($sourceVariants as $index => $sourceVariant) {
+                    $changedVariant = is_array($changedVariants[$index] ?? null) ? $changedVariants[$index] : [];
+                    $duplicateData['variants'][] = [
+                        'name' => $sourceVariant['name'],
+                        'sku' => $changedVariant['sku'] ?? '',
+                        'barcode' => '',
+                        'price_cents' => $changedVariant['price_cents'],
+                        'stock_on_hand' => $changedVariant['stock_on_hand'] ?? 0,
+                        'min_stock' => $sourceVariant['min_stock'],
+                        'active' => false,
+                    ];
+                    if (array_key_exists('price_cents', $changedVariant)) {
+                        $duplicateData['variants'][$index]['price_cents'] = $changedVariant['price_cents'];
+                    }
+                    if (array_key_exists('stock_on_hand', $changedVariant)) {
+                        $duplicateData['variants'][$index]['stock_on_hand'] = $changedVariant['stock_on_hand'];
+                    }
+                }
+                $payload = $this->validateProduct($duplicateData);
 
                 $insertProduct = $pdo->prepare(
                     'INSERT INTO products(
@@ -633,43 +669,34 @@ final class ProductService
                 );
                 $insertProduct->execute([
                     'category_id' => $product['category_id'],
-                    'name' => $product['name'] . ' (COPIA)',
-                    'description' => $product['description'],
-                    'image_path' => $copyImages ? $product['image_path'] : null,
+                    'name' => $payload['name'],
+                    'description' => $payload['description'],
+                    'image_path' => $payload['image_path'],
                     'sort_order' => $product['sort_order'],
                 ]);
                 $newProductId = (int) $pdo->lastInsertId();
 
-                $variants = $pdo->prepare(
-                    'SELECT * FROM product_variants
-                     WHERE product_id = :product_id
-                     ORDER BY sort_order, id'
-                );
-                $variants->execute(['product_id' => $productId]);
-                $suffix = '-COPIA-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
-
-                foreach ($variants->fetchAll() as $sort => $variant) {
-                    $newSku = str_starts_with((string) $variant['sku'], '__AUTO__')
-                        ? '__AUTO__' . bin2hex(random_bytes(12))
-                        : substr((string) $variant['sku'], 0, 48) . $suffix;
+                foreach ($payload['variants'] as $sort => $variant) {
                     $newVariantId = $this->insertVariant(
                         $pdo,
                         $newProductId,
                         [
                             'name' => $variant['name'],
-                            'sku' => $newSku,
-                            'barcode' => null,
+                            'sku' => $variant['sku'],
+                            'barcode' => $variant['barcode'],
                             'image_path' => null,
-                            'price_cents' => (int) $variant['price_cents'],
-                            'price_specified' => (bool) ($variant['price_specified'] ?? true),
-                            'stock_on_hand' => 0,
-                            'stock_specified' => (bool) ($variant['stock_specified'] ?? true),
+                            'price_cents' => $variant['price_cents'],
+                            'price_specified' => $variant['price_specified'],
+                            'stock_on_hand' => $variant['stock_on_hand'],
+                            'stock_specified' => $variant['stock_specified'],
                             'min_stock' => (int) $variant['min_stock'],
                             'active' => false,
                         ],
                         $sort
                     );
-                    unset($newVariantId);
+                    if ($variant['stock_on_hand'] > 0) {
+                        $this->recordStockMovement($pdo, $newVariantId, $variant['stock_on_hand'], 0, 'initial_stock', 'Duplicación de producto', $actorUserId);
+                    }
                 }
 
                 $this->recordOrderlessAudit(

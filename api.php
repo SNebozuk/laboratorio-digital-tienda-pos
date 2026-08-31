@@ -406,7 +406,7 @@ try {
             $newProductId = $app['products']->duplicate(
                 (int) ($input['product_id'] ?? 0),
                 (int) $user['id'],
-                !isset($input['copy_images']) || (bool) $input['copy_images']
+                is_array($input['product'] ?? null) ? $input['product'] : []
             );
             Http::json(['ok' => true, 'product_id' => $newProductId], 201);
 

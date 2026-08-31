@@ -285,6 +285,11 @@
 
     function showSelectedImage(input, file) {
         if (!input || !file) return;
+        const duplicatePreview = input.closest('#duplicate-product-form')?.querySelector('[data-duplicate-image]');
+        if (duplicatePreview) {
+            duplicatePreview.innerHTML = `<img data-image-preview src="${URL.createObjectURL(file)}" alt="Vista previa de la foto seleccionada"><button class="icon-button danger-icon-button" type="button" data-remove-duplicate-image title="Quitar foto" aria-label="Quitar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button>`;
+            return;
+        }
         const container = input.closest('label');
         let preview = container?.querySelector('[data-image-preview]');
         if (!preview) {
@@ -1374,15 +1379,71 @@
         }, 700));
     }
 
-    async function duplicateProduct(productId) {
+    function duplicateSku(sku) {
+        return sku ? `${sku}-COPIA` : '';
+    }
+
+    function showDuplicateProductForm(product) {
+        if (!product) return;
+        const variants = product.variants || [];
+        openModal(`
+            <h2 id="modal-title">DUPLICAR PRODUCTO</h2>
+            <form id="duplicate-product-form" data-product-id="${Number(product.id)}">
+                <div class="duplicate-product-heading">
+                    <div class="duplicate-product-image" data-duplicate-image>
+                        ${safeImage(product.image_path)
+                            ? `<img data-image-preview src="${escapeHtml(safeImage(product.image_path))}" alt="Foto de ${escapeHtml(product.name)}"><button class="icon-button danger-icon-button" type="button" data-remove-duplicate-image title="Quitar foto" aria-label="Quitar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button>`
+                            : '<span>SIN FOTO</span>'}
+                    </div>
+                    <label>
+                        TÍTULO COMPLETO
+                        <input name="name" value="${escapeHtml(`${product.name} (COPIA)`)}" required>
+                    </label>
+                </div>
+                <input name="image_path" type="hidden" value="${escapeHtml(safeImage(product.image_path))}">
+                <label class="product-image-field">
+                    AGREGAR O REEMPLAZAR FOTO
+                    <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp">
+                    <span class="image-drop-zone" data-image-drop data-image-input="image_file">Arrastrá la foto aquí o hacé clic para elegirla</span>
+                    <small>JPG, PNG o WebP · máximo 8 MB.</small>
+                </label>
+                <h3 class="variant-section-title">${variants.length === 1 ? 'PRECIO, STOCK Y SKU' : 'PRECIO, STOCK Y SKU POR VARIANTE'}</h3>
+                <div class="duplicate-variant-list">
+                    ${variants.map(variant => `
+                        <div class="duplicate-variant-row" data-duplicate-variant data-variant-name="${escapeHtml(variant.name || 'Única')}">
+                            ${variants.length > 1 ? `<strong>${escapeHtml(variant.name)}</strong>` : ''}
+                            <label>SKU<input class="duplicate-variant-sku" value="${escapeHtml(duplicateSku(variant.sku || ''))}" placeholder="Opcional"></label>
+                            <label>PRECIO<input class="duplicate-variant-price" type="number" min="0" value="${variant.price_cents == null ? '' : Number(variant.price_cents) / 100}" placeholder="Opcional"></label>
+                            <label>STOCK<input class="duplicate-variant-stock" type="number" min="0" value="0" placeholder="0"></label>
+                        </div>`).join('')}
+                </div>
+                <div class="product-save-actions"><button class="primary-button fit-button" type="submit">DUPLICAR PRODUCTO</button></div>
+            </form>
+        `);
+    }
+
+    async function duplicateProduct(form) {
         try {
-            const copyImages = window.confirm(
-                '¿Querés duplicar también la foto del producto?\n\nAceptar: duplicar con foto.\nCancelar: duplicar sin foto.'
-            );
+            const button = form.querySelector('button[type="submit"]');
+            button.disabled = true;
+            const imageFile = form.querySelector('[name="image_file"]').files[0];
+            const formData = new FormData(form);
+            let imagePath = formData.get('image_path') || '';
+            if (imageFile) {
+                button.textContent = 'SUBIENDO FOTO…';
+                imagePath = await uploadProductImage(imageFile);
+            }
+            const variants = Array.from(form.querySelectorAll('[data-duplicate-variant]')).map(row => ({
+                name: row.dataset.variantName,
+                sku: row.querySelector('.duplicate-variant-sku').value.trim(),
+                price_cents: row.querySelector('.duplicate-variant-price').value.trim() === '' ? null : Math.round(Number(row.querySelector('.duplicate-variant-price').value) * 100),
+                stock_on_hand: row.querySelector('.duplicate-variant-stock').value.trim() === '' ? null : Number(row.querySelector('.duplicate-variant-stock').value),
+            }));
+            button.textContent = 'DUPLICANDO…';
             const response = await apiPost({
                 action: 'product_duplicate',
-                product_id: productId,
-                copy_images: copyImages,
+                product_id: Number(form.dataset.productId),
+                product: { name: formData.get('name'), image_path: imagePath, variants },
             });
             await loadProducts();
             const duplicatedProduct = state.products.find(product => (
@@ -1391,9 +1452,12 @@
             if (duplicatedProduct) {
                 showProductForm(duplicatedProduct);
             }
-            toast(`Producto duplicado ${copyImages ? 'con sus fotos' : 'sin fotos'}, con stock cero e inactivo.`);
+            toast('Producto duplicado correctamente, con stock indicado e inactivo.');
         } catch (error) {
             toast(error.message);
+            const button = form.querySelector('button[type="submit"]');
+            button.disabled = false;
+            button.textContent = 'DUPLICAR PRODUCTO';
         }
     }
 
@@ -4401,6 +4465,10 @@
             event.preventDefault();
             saveProduct(event.target);
         }
+        if (event.target.id === 'duplicate-product-form') {
+            event.preventDefault();
+            duplicateProduct(event.target);
+        }
         if (event.target.id === 'category-form') {
             event.preventDefault();
             saveCategory(event.target).catch(error => toast(error.message));
@@ -4732,7 +4800,16 @@
         }
         const duplicate = event.target.closest('[data-duplicate-product]');
         if (duplicate) {
-            duplicateProduct(Number(duplicate.dataset.duplicateProduct));
+            const product = state.products.find(item => Number(item.id) === Number(duplicate.dataset.duplicateProduct));
+            showDuplicateProductForm(product);
+            return;
+        }
+        if (event.target.closest('[data-remove-duplicate-image]')) {
+            const form = event.target.closest('#duplicate-product-form');
+            if (!form) return;
+            form.querySelector('[name="image_path"]').value = '';
+            form.querySelector('[name="image_file"]').value = '';
+            form.querySelector('[data-duplicate-image]').innerHTML = '<span>SIN FOTO</span>';
             return;
         }
         const share = event.target.closest('[data-share-product]');
