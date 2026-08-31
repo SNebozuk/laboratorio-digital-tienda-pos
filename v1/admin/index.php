@@ -126,7 +126,7 @@ header('Referrer-Policy: same-origin');
                     </div>
                 <?php endif ?>
                 <div class="admin-user">
-                    <a class="secondary-button admin-store-link" href="<?= $escape($storeUrl) ?>" target="_blank" rel="noopener">VER TIENDA ↗</a>
+                    <button class="secondary-button admin-store-link" id="admin-store-button" type="button">VER TIENDA ↗</button>
                     <button class="secondary-button" id="logout-button" type="button">Salir</button>
                 </div>
             </aside>

@@ -5687,6 +5687,16 @@
     sidebarSettingsMenu?.addEventListener('click', event => {
         if (event.target.closest('[data-view], .admin-sidebar-settings-menu-close')) closeSidebarSettingsMenu();
     });
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape' || event.defaultPrevented || !sidebarSettingsMenu || sidebarSettingsMenu.hidden) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closeSidebarSettingsMenu();
+        sidebarSettingsMenuToggle?.focus();
+    }, true);
+    document.getElementById('admin-store-button')?.addEventListener('click', () => {
+        window.open(app.store_url || '/', '_blank', 'noopener');
+    });
     document.querySelector('.admin-sidebar')?.addEventListener('dblclick', event => {
         if (event.target.closest('button, a, input, select, textarea')) return;
         setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));
