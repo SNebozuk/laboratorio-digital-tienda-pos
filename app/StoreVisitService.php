@@ -25,4 +25,17 @@ final class StoreVisitService
             'visit_day' => $day,
         ]);
     }
+
+    public function recordKlausInteraction(string $visitorId): void
+    {
+        $day = (new DateTimeImmutable('now', new DateTimeZone('America/Argentina/Buenos_Aires')))
+            ->format('Y-m-d');
+        $insert = $this->pdo->prepare(
+            'INSERT OR IGNORE INTO klaus_interactions(visitor_hash, interaction_day) VALUES(:visitor_hash, :interaction_day)'
+        );
+        $insert->execute([
+            'visitor_hash' => hash('sha256', $visitorId),
+            'interaction_day' => $day,
+        ]);
+    }
 }

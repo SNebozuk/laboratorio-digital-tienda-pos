@@ -1981,6 +1981,7 @@
     });
 
     window.Klaus?.attach(document, '.klaus', async () => {
+        apiJson({ action: 'klaus_interaction' }).catch(() => {});
         klausAwake = true;
         window.sessionStorage.setItem(KLAUS_AWAKE_STORAGE_KEY, '1');
         if (!reactKlaus('is-petted is-celebrating')) renderCart();
@@ -2022,6 +2023,7 @@
     });
 
     window.Klaus?.attach(document, '.klaus-welcome', (klaus) => {
+        apiJson({ action: 'klaus_interaction' }).catch(() => {});
         window.Klaus?.pose(klaus, 'touch_bark_hearts');
         window.setTimeout(() => {
             window.Klaus?.pose(klaus, 'after_touch_happy_tailwag');

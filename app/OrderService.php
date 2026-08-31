@@ -977,7 +977,20 @@ final class OrderService
             $visits[$period] = (int) $query->fetchColumn();
         }
 
-        return ['archived' => $archived, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries, 'visits' => $visits];
+        $klausInteractions = [];
+        $klausPeriods = [
+            'daily' => "SELECT interaction_day AS label, COUNT(DISTINCT visitor_hash) AS count FROM klaus_interactions WHERE interaction_day >= date('now', 'localtime', 'start of month', '-2 months') GROUP BY interaction_day ORDER BY interaction_day",
+            'weekly' => "SELECT date(interaction_day, '-6 days', 'weekday 1') AS label, COUNT(DISTINCT visitor_hash) AS count FROM klaus_interactions WHERE interaction_day >= date('now', 'localtime', 'start of month', '-2 months') GROUP BY label ORDER BY label",
+            'monthly' => "SELECT substr(interaction_day, 1, 7) AS label, COUNT(DISTINCT visitor_hash) AS count FROM klaus_interactions WHERE interaction_day >= date('now', 'localtime', 'start of month', '-2 months') GROUP BY label ORDER BY label",
+        ];
+        foreach ($klausPeriods as $period => $sql) {
+            $klausInteractions[$period] = $this->pdo->query($sql)->fetchAll();
+        }
+        $klausInteractionTotal = (int) $this->pdo->query(
+            "SELECT COUNT(DISTINCT visitor_hash) FROM klaus_interactions WHERE interaction_day >= date('now', 'localtime', 'start of month', '-2 months')"
+        )->fetchColumn();
+
+        return ['archived' => $archived, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries, 'visits' => $visits, 'klaus_interactions' => $klausInteractions, 'klaus_interactions_total' => $klausInteractionTotal];
     }
 
     /** @return array<string, mixed> */

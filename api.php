@@ -221,6 +221,14 @@ try {
             $app['auth']->unlockStatistics((string) ($input['password'] ?? ''));
             Http::json(['ok' => true]);
 
+        case 'klaus_interaction':
+            $user = $app['auth']->user();
+            $visitorId = $user
+                ? 'user:' . (int) $user['id']
+                : (string) ($_COOKIE['laboratorio_store_visitor'] ?? '');
+            if ($visitorId !== '') $app['store_visits']->recordKlausInteraction($visitorId);
+            Http::json(['ok' => true]);
+
         case 'create_order':
             $requestKey = trim((string) ($input['request_key'] ?? ''));
             $cached = $requestKey !== '' ? ($_SESSION['web_order_requests'][$requestKey] ?? null) : null;

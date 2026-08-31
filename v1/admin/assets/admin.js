@@ -324,6 +324,7 @@
     function petPosKlaus() {
         const klaus = elements.posKlaus;
         if (!klaus) return;
+        apiPost({ action: 'klaus_interaction' }).catch(() => {});
         window.Klaus?.pose(klaus, 'touch_bark_hearts');
         klaus.classList.remove('is-petted');
         void klaus.offsetWidth;
@@ -3686,6 +3687,14 @@
             ['🎁', 'Caja sorpresa', Number(statistics.discounts?.surprise || 0), 'surprise', statistics.beneficiaries?.surprise || []],
         ];
         const discountMaximum = Math.max(1, ...discounts.map(([, , count]) => count));
+        const klausInteractions = statistics.klaus_interactions || {};
+        const renderKlausChart = period => {
+            const rows = Array.isArray(klausInteractions[period]) ? klausInteractions[period] : [];
+            const maximum = Math.max(1, ...rows.map(row => Number(row.count || 0)));
+            return `<div class="klaus-interaction-chart" data-klaus-chart="${period}" ${period === 'daily' ? '' : 'hidden'}>
+                ${rows.length ? rows.map(row => `<div class="klaus-interaction-bar" title="${escapeHtml(String(row.label))}: ${Number(row.count || 0)} personas"><i style="height:${Math.max(3, Math.round(Number(row.count || 0) / maximum * 100))}%"></i><small>${escapeHtml(String(row.label).slice(period === 'daily' ? 5 : 0))}</small></div>`).join('') : '<p class="empty-copy">Todavía no hay interacciones registradas.</p>'}
+            </div>`;
+        };
         elements.statisticsContent.innerHTML = `
             <div class="statistics-periods">
                 ${periods.map(period => `
@@ -3704,6 +3713,16 @@
                     <div><span class="statistics-icon">◉</span><p class="eyebrow">VISITAS ÚNICAS · TIENDA ONLINE</p></div>
                     <p>Personas distintas que visitaron el catálogo. No incluye sesiones de administración.</p>
                     <div class="statistics-visits">${visits.map(([label, count]) => `<span><small>${label}</small><strong>${count}</strong></span>`).join('')}</div>
+                </section>
+                <section class="statistics-card statistics-klaus-card">
+                    <div><span class="statistics-icon">🐾</span><p class="eyebrow">INTERACCIONES CON KLAUS</p></div>
+                    <p><strong>${Number(statistics.klaus_interactions_total || 0)}</strong> personas distintas interactuaron con Klaus en los últimos 3 meses.</p>
+                    <div class="klaus-interaction-tabs" role="tablist" aria-label="Agrupar interacciones con Klaus">
+                        <button type="button" data-klaus-period="daily" class="active">DÍA</button>
+                        <button type="button" data-klaus-period="weekly">SEMANA</button>
+                        <button type="button" data-klaus-period="monthly">MES</button>
+                    </div>
+                    ${['daily', 'weekly', 'monthly'].map(renderKlausChart).join('')}
                 </section>
                 <section class="statistics-card statistics-edp-card">
                     <div><span class="statistics-icon">📦</span><p class="eyebrow">EN EDP AHORA</p></div>
@@ -5540,6 +5559,13 @@
     });
     document.addEventListener('keydown', captureGlobalBarcode);
     document.addEventListener('click', event => {
+        const periodButton = event.target.closest('[data-klaus-period]');
+        if (periodButton) {
+            const period = periodButton.dataset.klausPeriod;
+            document.querySelectorAll('[data-klaus-period]').forEach(button => button.classList.toggle('active', button === periodButton));
+            document.querySelectorAll('[data-klaus-chart]').forEach(chart => { chart.hidden = chart.dataset.klausChart !== period; });
+            return;
+        }
         if (!event.target.closest('.pos-search-wrap')) {
             closePosSuggestions();
         }
@@ -5547,6 +5573,7 @@
     elements.completeSale?.addEventListener('click', finishPosSaleDirectly);
     elements.posKlaus?.addEventListener('click', petPosKlaus);
     window.Klaus?.attach(document, '.admin-klaus', (klaus) => {
+        apiPost({ action: 'klaus_interaction' }).catch(() => {});
         window.Klaus?.pose(klaus, 'touch_bark_hearts');
         window.setTimeout(() => { window.Klaus?.pose(klaus, 'after_touch_happy_tailwag'); window.Klaus?.pant(1600); }, 950);
         window.setTimeout(() => window.Klaus?.pose(klaus, 'checkout_sitting'), 4300);

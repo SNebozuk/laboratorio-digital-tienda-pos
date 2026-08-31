@@ -141,6 +141,15 @@ CREATE TABLE IF NOT EXISTS store_visits (
 
 CREATE INDEX IF NOT EXISTS idx_store_visits_day ON store_visits(visit_day);
 
+CREATE TABLE IF NOT EXISTS klaus_interactions (
+    visitor_hash TEXT NOT NULL,
+    interaction_day TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (visitor_hash, interaction_day)
+);
+
+CREATE INDEX IF NOT EXISTS idx_klaus_interactions_day ON klaus_interactions(interaction_day);
+
 CREATE TABLE IF NOT EXISTS delivery_slots (
     slot_number INTEGER PRIMARY KEY CHECK (slot_number BETWEEN 1 AND 100),
     location TEXT NOT NULL DEFAULT '',
