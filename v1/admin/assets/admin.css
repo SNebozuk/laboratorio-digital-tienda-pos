@@ -3438,7 +3438,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 /* Reservar el ancho de la barra vertical evita que los buscadores "salten"
    hacia el centro cuando una búsqueda deja la página sin resultados. */
 html { overflow-y: scroll; scrollbar-gutter: stable; }
-.admin-sidebar { padding:22px 10px 15px; background:#d9dde2; border-right-color:#c4c9d0; }
+.admin-sidebar { min-width:0; overflow-x:hidden; padding:22px 10px 15px; background:#d9dde2; border-right-color:#c4c9d0; }
 .admin-sidebar .admin-nav-button { color:#4f596b; }
 .admin-sidebar .admin-nav-button:hover,.admin-sidebar .admin-nav-button.active { background:#e6e9ed; color:#3d356f; }
 .statistics-content { display:grid; gap:18px; max-width:1060px; }
