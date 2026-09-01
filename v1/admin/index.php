@@ -103,9 +103,6 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
                         </button>
-                        <button class="admin-nav-button" type="button" data-view="settings">
-                            Configuración
-                        </button>
                         <button class="admin-nav-button" type="button" data-view="maintenance">
                             Mantenimiento
                         </button>
@@ -122,6 +119,7 @@ header('Referrer-Policy: same-origin');
                         <button type="button" data-view="quote">Cotizador</button>
                         <button type="button" data-view="whatsapp">WhatsApp</button>
                         <button type="button" data-view="users">Usuarios</button>
+                        <button type="button" data-view="settings">Configuración</button>
                     </div>
                 <?php endif ?>
                 <div class="admin-user">
