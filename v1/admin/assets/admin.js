@@ -413,6 +413,7 @@
         document.querySelectorAll('[data-view]').forEach(button => {
             button.classList.toggle('active', highlightNavigation && button.dataset.view === view);
         });
+        document.querySelector('.admin-shell')?.classList.toggle('admin-design-mode', view === 'design');
         if (elements.mobileView) {
             elements.mobileView.value = view;
         }
@@ -4140,7 +4141,9 @@
             const data = await apiGet('design');
             Object.entries(data.design).forEach(([key, value]) => {
                 const field = form.elements.namedItem(key);
-                if (field) field.value = value;
+                if (!field) return;
+                if (field.type === 'checkbox') field.checked = ['1', 'true', 'on'].includes(String(value));
+                else field.value = value;
             });
             const preview = document.getElementById('design-logo-preview');
             if (preview) preview.src = data.design.logo_path;
@@ -4153,7 +4156,56 @@
                 const position = order.indexOf(select.dataset.designSection);
                 select.value = String(position >= 0 ? position + 1 : 1);
             });
+            renderDesignPreview();
         } catch (error) { toast(error.message); }
+    }
+
+    function renderDesignPreview() {
+        const form = document.getElementById('design-form');
+        const preview = document.getElementById('design-live-preview');
+        if (!form || !preview) return;
+        const value = name => String(form.elements.namedItem(name)?.value || '');
+        const checked = name => Boolean(form.elements.namedItem(name)?.checked);
+        const setText = (id, text) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = text;
+        };
+        const setImage = (targetId, sourceId) => {
+            const target = document.getElementById(targetId);
+            const source = document.getElementById(sourceId);
+            if (!target || !source) return;
+            target.src = source.currentSrc || source.src || '';
+            target.hidden = !target.getAttribute('src');
+        };
+
+        preview.style.setProperty('--design-preview-background', value('color_background'));
+        preview.style.setProperty('--design-preview-surface', value('color_surface'));
+        preview.style.setProperty('--design-preview-secondary', value('color_secondary'));
+        preview.style.setProperty('--design-preview-text', value('color_text'));
+        preview.style.setProperty('--design-preview-accent', value('color_accent'));
+        setText('design-preview-badge', value('hero_badge'));
+        setText('design-preview-title', value('hero_title'));
+        setText('design-preview-text', value('hero_text'));
+        setImage('design-preview-logo', 'design-logo-preview');
+        [1, 2, 3].forEach(number => setImage(`design-preview-hero-${number}`, `design-hero-${number}-preview`));
+
+        const klaus = document.getElementById('design-preview-klaus');
+        const pulga = document.getElementById('design-preview-pulga');
+        if (klaus) klaus.hidden = !checked('mascot_klaus_enabled');
+        if (pulga) pulga.hidden = !checked('mascot_pulga_enabled');
+        preview.classList.toggle('design-preview-klaus-animated', checked('mascot_klaus_enabled') && checked('mascot_klaus_animations_enabled'));
+        preview.classList.toggle('design-preview-pulga-animated', checked('mascot_pulga_enabled') && checked('mascot_pulga_animations_enabled'));
+
+        const sections = document.getElementById('design-preview-sections');
+        if (sections) {
+            [...form.querySelectorAll('[data-design-section]')]
+                .map((select, index) => ({ section: select.dataset.designSection, position: Number(select.value), index }))
+                .sort((a, b) => a.position - b.position || a.index - b.index)
+                .forEach(item => {
+                    const section = sections.querySelector(`[data-design-preview-section="${item.section}"]`);
+                    if (section) sections.appendChild(section);
+                });
+        }
     }
 
     async function loadQuoteSettings() {
@@ -4202,6 +4254,9 @@
             }
             form.elements.namedItem('section_order').value = positions.map(item => item.section).join(',');
             const data = new FormData(form);
+            ['mascot_klaus_enabled', 'mascot_klaus_animations_enabled', 'mascot_pulga_enabled', 'mascot_pulga_animations_enabled'].forEach(key => {
+                data.set(key, form.elements.namedItem(key)?.checked ? '1' : '0');
+            });
             data.delete('logo_file');
             data.delete('hero_1_file');
             data.delete('hero_2_file');
@@ -4213,7 +4268,8 @@
                 const image = document.getElementById(`design-hero-${number}-preview`);
                 if (image) image.src = response.design[`hero_${number}_path`];
             });
-            toast('Diseño guardado. Actualizá la tienda para verlo.');
+            renderDesignPreview();
+            toast('Diseño guardado y publicado.');
         } catch (error) { toast(error.message); }
         finally { button.disabled = false; button.textContent = 'GUARDAR DISEÑO'; }
     }
@@ -4222,7 +4278,10 @@
         const file = input?.files?.[0];
         if (!file || !preview) return;
         const reader = new FileReader();
-        reader.addEventListener('load', () => { preview.src = String(reader.result || ''); });
+        reader.addEventListener('load', () => {
+            preview.src = String(reader.result || '');
+            renderDesignPreview();
+        });
         reader.readAsDataURL(file);
     }
 
@@ -5683,6 +5742,8 @@
     document.getElementById('create-backup')?.addEventListener('click', createBackup);
     document.getElementById('refresh-orders')?.addEventListener('click', loadOrders);
     const designForm = document.getElementById('design-form');
+    designForm?.addEventListener('input', renderDesignPreview);
+    designForm?.addEventListener('change', renderDesignPreview);
     designForm?.elements.namedItem('logo_file')?.addEventListener('change', event => {
         previewDesignImage(event.target, document.getElementById('design-logo-preview'));
     });
@@ -5699,6 +5760,7 @@
         if (file) file.value = '';
         const preview = document.getElementById('design-logo-preview');
         if (preview) preview.src = path;
+        renderDesignPreview();
         toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
     });
     elements.mobileView?.addEventListener('change', event => {
@@ -5716,8 +5778,17 @@
     const sidebarSettingsMenuToggle = document.getElementById('admin-sidebar-settings-menu-toggle');
     const sidebarDesignMenu = document.getElementById('admin-sidebar-design-menu');
     const sidebarDesignMenuToggle = document.getElementById('admin-sidebar-design-menu-toggle');
+    const sidebarDesignEditor = document.getElementById('admin-sidebar-design-editor');
+    const sidebarDesignEditorTitle = document.getElementById('admin-sidebar-design-editor-title');
+    let activeDesignEditor = '';
+    const closeSidebarDesignEditor = () => {
+        if (!sidebarDesignEditor) return;
+        sidebarDesignEditor.hidden = true;
+        sidebarDesignEditor.querySelectorAll('[data-design-editor-section]').forEach(section => { section.hidden = true; });
+    };
     const closeSidebarDesignMenu = () => {
         if (!sidebarDesignMenu) return;
+        closeSidebarDesignEditor();
         sidebarDesignMenu.hidden = true;
         sidebarDesignMenuToggle?.setAttribute('aria-expanded', 'false');
     };
@@ -5750,24 +5821,34 @@
             sidebarDesignMenuToggle?.focus();
             return;
         }
-        const option = event.target.closest('[data-design-panel]');
+        const option = event.target.closest('[data-design-editor]');
         if (!option) return;
-        const panel = document.getElementById(option.dataset.designPanel);
-        if (!panel) return;
+        const editorName = option.dataset.designEditor;
+        const section = sidebarDesignEditor?.querySelector(`[data-design-editor-section="${editorName}"]`);
+        if (!section || !sidebarDesignEditor) return;
+        activeDesignEditor = editorName;
         showView('design');
-        document.querySelectorAll('#design-form .design-panel').forEach(item => {
-            item.open = item === panel;
+        sidebarDesignEditor.querySelectorAll('[data-design-editor-section]').forEach(item => {
+            item.hidden = item !== section;
         });
-        closeSidebarSettingsMenu();
-        window.requestAnimationFrame(() => {
-            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            panel.querySelector('summary')?.focus();
-        });
+        if (sidebarDesignEditorTitle) sidebarDesignEditorTitle.textContent = option.textContent.trim().toUpperCase();
+        sidebarDesignEditor.hidden = false;
+        window.requestAnimationFrame(() => section.querySelector('input, textarea, select, button')?.focus());
+    });
+    sidebarDesignEditor?.addEventListener('click', event => {
+        if (!event.target.closest('.admin-sidebar-design-editor-back')) return;
+        closeSidebarDesignEditor();
+        sidebarDesignMenu?.querySelector(`[data-design-editor="${activeDesignEditor}"]`)?.focus();
     });
     document.addEventListener('keydown', event => {
         if (event.key !== 'Escape' || event.defaultPrevented || !sidebarSettingsMenu || sidebarSettingsMenu.hidden) return;
         event.preventDefault();
         event.stopImmediatePropagation();
+        if (sidebarDesignEditor && !sidebarDesignEditor.hidden) {
+            closeSidebarDesignEditor();
+            sidebarDesignMenu?.querySelector(`[data-design-editor="${activeDesignEditor}"]`)?.focus();
+            return;
+        }
         if (sidebarDesignMenu && !sidebarDesignMenu.hidden) {
             closeSidebarDesignMenu();
             sidebarDesignMenuToggle?.focus();

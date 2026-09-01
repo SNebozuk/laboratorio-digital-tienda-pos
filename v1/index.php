@@ -54,7 +54,7 @@ header('Referrer-Policy: same-origin');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f4f2ed">
+    <meta name="theme-color" content="<?= $escape((string) ($design['color_background'] ?? '#f7faf7')) ?>">
     <title>Laboratorio Digital · Catálogo mayorista</title>
     <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png?v=<?= $brandAssetVersion ?>" type="image/png">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
@@ -67,6 +67,9 @@ header('Referrer-Policy: same-origin');
                 <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
         </div>
+        <a class="store-header-brand" href="<?= $escape((string) ($design['logo_link'] ?: $storeUrl)) ?>" aria-label="Ir al inicio">
+            <img src="<?= $escape((string) $design['logo_path']) ?>" alt="Laboratorio Digital">
+        </a>
         <div class="header-actions">
             <?php if ($quoteEnabled): ?><a class="header-link header-quote-link" href="<?= $escape($quoteUrl) ?>">COTIZADOR</a><?php endif ?>
             <a class="header-link" href="<?= $escape($storePath) ?>/descargables.php">DESCARGABLES</a>
@@ -120,9 +123,11 @@ header('Referrer-Policy: same-origin');
                 </div>
             </div>
             <div class="catalog-intro">
-                <h1 id="catalog-title">Insumos para sublimación <em>y DTF en Rosario.</em></h1>
-                <p>Precios mayoristas sin límite de compra.</p>
-                <p class="catalog-slogan">Tus ideas merecen hacerse realidad.</p>
+                <p class="eyebrow"><?= $escape((string) $design['hero_badge']) ?></p>
+                <?php if ((string) $design['hero_link'] !== ''): ?><a class="catalog-title-link" href="<?= $escape((string) $design['hero_link']) ?>"><?php endif ?>
+                <h1 id="catalog-title"><?= $escape((string) $design['hero_title']) ?></h1>
+                <?php if ((string) $design['hero_link'] !== ''): ?></a><?php endif ?>
+                <p><?= $escape((string) $design['hero_text']) ?></p>
             </div>
 
             <div class="trust-strip" aria-label="Distribución oficial">

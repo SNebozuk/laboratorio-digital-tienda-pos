@@ -2,6 +2,18 @@
     'use strict';
 
     const app = JSON.parse(document.getElementById('app-data').textContent);
+    const design = app.design && typeof app.design === 'object' ? app.design : {};
+    const designColors = {
+        color_background: '--bg',
+        color_surface: '--panel',
+        color_secondary: '--panel-2',
+        color_text: '--text',
+        color_accent: '--accent',
+    };
+    Object.entries(designColors).forEach(([key, variable]) => {
+        const color = String(design[key] || '');
+        if (/^#[0-9a-f]{6}$/i.test(color)) document.documentElement.style.setProperty(variable, color);
+    });
     const cartMaintenanceEnabled = app.cart_maintenance_enabled === true || String(app.cart_maintenance_enabled) === '1';
     let products = Array.isArray(app.products) ? app.products : [];
     let categoryTree = Array.isArray(app.categories) ? app.categories : [];

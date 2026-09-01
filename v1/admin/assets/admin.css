@@ -3775,6 +3775,61 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-sidebar-design-menu { z-index:11; }
 .admin-sidebar-settings-menu .admin-sidebar-design-menu-back { margin:0 10px; min-height:auto; padding:0; font-size:12px; }
 .admin-sidebar-settings-menu .admin-sidebar-design-menu-back::before { content:'‹ '; }
+.admin-sidebar-design-editor { z-index:12; overflow-y:auto; }
+.admin-sidebar-settings-menu .admin-sidebar-design-editor-back { margin:0 10px; min-height:auto; padding:0; font-size:12px; }
+.admin-sidebar-settings-menu .admin-sidebar-design-editor-back::before { content:'‹ '; }
+.admin-sidebar-design-form { display:grid; gap:14px; min-width:0; padding:0 4px 16px; }
+.admin-sidebar-design-form section { display:grid; gap:12px; }
+.admin-sidebar-design-form section[hidden] { display:none; }
+.admin-sidebar-design-form label { display:grid; gap:6px; margin:0; color:#4f596b; font-size:11px; font-weight:800; letter-spacing:.035em; }
+.admin-sidebar-design-form :is(input,textarea,select) { width:100%; min-width:0; border:1px solid #bdc4cc; border-radius:8px; background:#fff; color:#252a3a; padding:8px; font:inherit; font-size:13px !important; }
+.admin-sidebar-design-form textarea { resize:vertical; }
+.admin-sidebar-design-form input[type="color"] { height:42px; padding:4px; cursor:pointer; }
+.admin-sidebar-design-form input[type="file"] { padding:6px; font-size:11px !important; }
+.admin-sidebar-design-form .checkbox-setting { display:grid; grid-template-columns:18px minmax(0,1fr); align-items:center; gap:8px; padding:9px; border:1px solid #c8cdd3; border-radius:9px; background:#e5e8ec; letter-spacing:0; }
+.admin-sidebar-design-form .checkbox-setting input { width:16px; height:16px; }
+.admin-sidebar-design-form .checkbox-setting strong { margin:0; color:#41485a; font-size:12px; }
+.admin-sidebar-design-form .primary-button,
+.admin-sidebar-design-form .secondary-button { width:100%; min-height:42px; text-align:center; }
+.admin-sidebar-design-image { display:block; width:100%; max-height:110px; object-fit:contain; border:1px solid #c8cdd3; border-radius:8px; background:#fff; }
+.admin-shell.admin-design-mode:not(.admin-sidebar-collapsed) { grid-template-columns:280px minmax(0,1fr); }
+
+.design-live-preview {
+    --design-preview-background:#f7faf7;
+    --design-preview-surface:#fff;
+    --design-preview-secondary:#eff7f0;
+    --design-preview-text:#18231b;
+    --design-preview-accent:#168342;
+    position:relative;
+    min-height:650px;
+    overflow:hidden;
+    border:1px solid #dce2dd;
+    border-radius:18px;
+    background:var(--design-preview-background);
+    color:var(--design-preview-text);
+    box-shadow:0 18px 42px rgba(29,40,33,.11);
+}
+.design-preview-header { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:22px; min-height:70px; padding:12px 26px; border-bottom:1px solid color-mix(in srgb,var(--design-preview-text) 14%,transparent); background:var(--design-preview-surface); font-size:11px; font-weight:800; letter-spacing:.08em; }
+.design-preview-header img { width:150px; height:44px; object-fit:contain; object-position:left center; }
+.design-preview-hero { min-height:230px; padding:42px clamp(24px,6vw,74px); background:linear-gradient(135deg,var(--design-preview-surface),var(--design-preview-secondary)); }
+.design-preview-hero > p:first-child { display:inline-block; margin:0 0 14px; padding:6px 10px; border-radius:999px; background:color-mix(in srgb,var(--design-preview-accent) 13%,var(--design-preview-surface)); color:var(--design-preview-accent); font-size:10px; font-weight:850; letter-spacing:.1em; }
+.design-preview-hero h2 { max-width:680px; margin:0; color:var(--design-preview-text); font:700 clamp(34px,5vw,64px)/.98 Georgia,serif; }
+.design-preview-hero > p:last-child { max-width:580px; margin:17px 0 0; font-size:15px; font-weight:650; }
+.design-preview-sections { display:grid; gap:30px; padding:34px; }
+.design-preview-sections > section { display:grid; gap:13px; }
+.design-preview-sections > section > strong { color:var(--design-preview-accent); font-size:12px; letter-spacing:.08em; }
+.design-preview-card-grid,.design-preview-category-grid,.design-preview-gallery { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
+.design-preview-card-grid span { display:block; min-height:100px; border:1px solid color-mix(in srgb,var(--design-preview-text) 13%,transparent); border-radius:12px; background:var(--design-preview-surface); }
+.design-preview-card-grid span::after { content:''; display:block; width:54%; height:8px; margin:72px 12px 0; border-radius:999px; background:var(--design-preview-secondary); }
+.design-preview-category-grid span { padding:20px 14px; border-radius:12px; background:var(--design-preview-secondary); color:var(--design-preview-text); text-align:center; font-size:11px; font-weight:800; }
+.design-preview-gallery img { width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:12px; background:var(--design-preview-secondary); }
+.design-preview-mascots { position:absolute; right:20px; bottom:14px; display:flex; align-items:end; gap:8px; pointer-events:none; }
+.design-preview-mascots img { width:74px; max-height:88px; object-fit:contain; }
+.design-preview-mascots span { font-size:42px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.15)); }
+.design-preview-klaus-animated #design-preview-klaus { animation:design-preview-float 1.8s ease-in-out infinite alternate; }
+.design-preview-pulga-animated #design-preview-pulga { animation:design-preview-float 1.25s ease-in-out infinite alternate-reverse; }
+@keyframes design-preview-float { to { transform:translateY(-7px) rotate(2deg); } }
+@media (max-width:700px) { .design-preview-header { padding-inline:16px; }.design-preview-header img { width:105px; }.design-preview-sections { padding:22px 16px; }.design-preview-card-grid,.design-preview-category-grid,.design-preview-gallery { grid-template-columns:1fr; } }
 .admin-pos-frame { display:block; width:100%; min-height:calc(100vh - 68px); border:0; background:#f6f7fb; }
 
 /* Dentro del administrador, el PDV mantiene su composición de escritorio. */

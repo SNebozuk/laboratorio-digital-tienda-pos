@@ -130,11 +130,33 @@ final class SettingsService
             'hero_2_path' => '/v1/assets/brand/hero-2.webp',
             'hero_3_path' => '/v1/assets/brand/hero-3.webp',
             'section_order' => 'featured,gallery,categories,tutorials',
+            'color_background' => '#fbf8ff',
+            'color_surface' => '#ffffff',
+            'color_secondary' => '#f4effb',
+            'color_text' => '#2a1d3c',
+            'color_accent' => '#7652b8',
+            'mascot_klaus_enabled' => '1',
+            'mascot_klaus_animations_enabled' => '1',
+            'mascot_pulga_enabled' => '1',
+            'mascot_pulga_animations_enabled' => '1',
         ];
         $query = $this->pdo->query("SELECT key, value FROM settings WHERE key LIKE 'design_%'");
         foreach ($query->fetchAll() as $row) {
             $key = substr((string) $row['key'], 7);
             if (array_key_exists($key, $defaults)) $defaults[$key] = (string) $row['value'];
+        }
+        $mascotKeys = [
+            'reward_klaus_enabled' => 'mascot_klaus_enabled',
+            'reward_klaus_animations_enabled' => 'mascot_klaus_animations_enabled',
+            'pulga_enabled' => 'mascot_pulga_enabled',
+            'pulga_animations_enabled' => 'mascot_pulga_animations_enabled',
+        ];
+        $mascots = $this->pdo->query(
+            "SELECT key, value FROM settings WHERE key IN ('reward_klaus_enabled', 'reward_klaus_animations_enabled', 'pulga_enabled', 'pulga_animations_enabled')"
+        );
+        foreach ($mascots->fetchAll() as $row) {
+            $key = $mascotKeys[(string) $row['key']] ?? '';
+            if ($key !== '') $defaults[$key] = (string) $row['value'];
         }
         // Conserva la configuración de logos personalizados, pero reemplaza el
         // archivo genérico anterior por la nueva identidad visual del sitio.
@@ -246,15 +268,32 @@ final class SettingsService
             if ($image === '' || !str_starts_with($image, '/')) throw new ValidationException('Elegí una imagen válida.');
             $values[$key] = $image;
         }
+        foreach (['color_background', 'color_surface', 'color_secondary', 'color_text', 'color_accent'] as $key) {
+            $color = strtolower(trim((string) ($data[$key] ?? $current[$key])));
+            if (!preg_match('/^#[0-9a-f]{6}$/', $color)) throw new ValidationException('Elegí colores válidos para la tienda.');
+            $values[$key] = $color;
+        }
+        $mascotValues = [];
+        foreach (['mascot_klaus_enabled', 'mascot_klaus_animations_enabled', 'mascot_pulga_enabled', 'mascot_pulga_animations_enabled'] as $key) {
+            $mascotValues[$key] = in_array((string) ($data[$key] ?? $current[$key]), ['1', 'true', 'on'], true) ? '1' : '0';
+        }
         $sectionOrder = array_values(array_filter(array_map('trim', explode(',', (string) ($data['section_order'] ?? $current['section_order'])))));
         $sections = ['featured', 'gallery', 'categories', 'tutorials'];
         if (count($sectionOrder) !== count($sections) || array_diff($sectionOrder, $sections) !== [] || array_diff($sections, $sectionOrder) !== []) {
             throw new ValidationException('Revisá el orden de las secciones de la portada.');
         }
         $values['section_order'] = implode(',', $sectionOrder);
-        Database::immediate($this->pdo, static function (PDO $pdo) use ($values): void {
+        Database::immediate($this->pdo, static function (PDO $pdo) use ($values, $mascotValues): void {
             $update = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
             foreach ($values as $key => $value) $update->execute(['key' => 'design_' . $key, 'value' => $value]);
+            foreach ([
+                'reward_klaus_enabled' => 'mascot_klaus_enabled',
+                'reward_klaus_animations_enabled' => 'mascot_klaus_animations_enabled',
+                'pulga_enabled' => 'mascot_pulga_enabled',
+                'pulga_animations_enabled' => 'mascot_pulga_animations_enabled',
+            ] as $settingKey => $designKey) {
+                $update->execute(['key' => $settingKey, 'value' => $mascotValues[$designKey]]);
+            }
         });
         return $this->design();
     }
