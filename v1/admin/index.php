@@ -99,11 +99,6 @@ header('Referrer-Policy: same-origin');
                         Productos
                     </button>
                     <button class="admin-nav-button" type="button" data-open-pos>Punto de Venta</button>
-                    <?php if ($user['role'] === 'admin'): ?>
-                        <button class="admin-nav-button" type="button" data-view="maintenance">
-                            Mantenimiento
-                        </button>
-                    <?php endif ?>
                 </nav>
                 <?php if ($user['role'] === 'admin'): ?>
                     <div class="admin-sidebar-settings-menu" id="admin-sidebar-settings-menu" hidden>
@@ -118,6 +113,7 @@ header('Referrer-Policy: same-origin');
                         <button type="button" data-view="users">Usuarios</button>
                         <button type="button" data-view="categories">Categorías</button>
                         <button type="button" data-view="settings">Configuración</button>
+                        <button type="button" data-view="maintenance">Mantenimiento</button>
                     </div>
                 <?php endif ?>
                 <div class="admin-user">
