@@ -26,6 +26,7 @@
         showArchivedOrders: false,
         settings: null,
         sizeGuide: { intro: '', rows: [] },
+        sizeGuideDirty: false,
         users: [],
         invitations: [],
         pendingInvitationCount: 0,
@@ -4368,9 +4369,16 @@
         if (!elements.sizeGuideRows || app.user?.role !== 'admin') {
             return;
         }
+        if (state.sizeGuideDirty) {
+            return;
+        }
         try {
             const data = await apiGet('size_guide');
+            if (state.sizeGuideDirty) {
+                return;
+            }
             state.sizeGuide = data.size_guide;
+            state.sizeGuideDirty = false;
             elements.sizeGuideIntro.value = state.sizeGuide.intro || '';
             renderSizeGuideRows();
         } catch (error) {
@@ -4391,6 +4399,7 @@
                 },
             });
             state.sizeGuide = response.size_guide;
+            state.sizeGuideDirty = false;
             renderSizeGuideRows();
             toast('Tabla de talles guardada.');
         } catch (error) {
@@ -4733,6 +4742,7 @@
                 length: '',
                 note: '',
             });
+            state.sizeGuideDirty = true;
             renderSizeGuideRows();
             window.requestAnimationFrame(() => {
                 elements.sizeGuideRows
@@ -4751,6 +4761,7 @@
             const source = state.sizeGuide.rows[index];
             if (!source) return;
             state.sizeGuide.rows.splice(index + 1, 0, { ...source, size: '' });
+            state.sizeGuideDirty = true;
             renderSizeGuideRows();
             window.requestAnimationFrame(() => {
                 elements.sizeGuideRows
@@ -4769,6 +4780,7 @@
                 Number(removeSizeGuideRow.dataset.removeSizeGuideRow),
                 1
             );
+            state.sizeGuideDirty = true;
             renderSizeGuideRows();
             return;
         }
@@ -5276,6 +5288,9 @@
     });
 
     document.addEventListener('input', event => {
+        if (event.target === elements.sizeGuideIntro || event.target.closest?.('#size-guide-rows')) {
+            state.sizeGuideDirty = true;
+        }
         if (event.target.matches('[data-price-adjustment-input]')) {
             renderPriceAdjustmentPreview(event.target.closest('#price-adjustment-form'));
             return;
@@ -5310,12 +5325,13 @@
     });
 
     document.addEventListener('keydown', event => {
-        if (document.getElementById('view-orders') && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F2') {
+        const isEditing = Boolean(event.target.closest?.('input, textarea, select, [contenteditable="true"]'));
+        if (document.getElementById('view-orders') && !isEditing && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F2') {
             event.preventDefault();
             showView('deliveries');
             return;
         }
-        if (document.getElementById('view-orders') && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
+        if (document.getElementById('view-orders') && !isEditing && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
             event.preventDefault();
             openPointOfSale();
             return;
@@ -5552,6 +5568,7 @@
             event.key === 'Escape'
             && !event.defaultPrevented
             && state.view !== 'orders'
+            && !event.target.closest?.('input, textarea, select, [contenteditable="true"]')
         ) {
             event.preventDefault();
             window.history.back();
@@ -5785,5 +5802,10 @@
         });
         window.addEventListener('focus', refreshActiveAdminView);
         window.addEventListener('pageshow', refreshActiveAdminView);
+        window.addEventListener('beforeunload', event => {
+            if (!state.sizeGuideDirty) return;
+            event.preventDefault();
+            event.returnValue = '';
+        });
     }
 })();

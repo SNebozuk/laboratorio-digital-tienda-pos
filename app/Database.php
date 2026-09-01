@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 34;
+    private const CURRENT_MIGRATION_VERSION = 35;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -80,6 +80,7 @@ final class Database
                 self::migratePulgaSettings($pdo);
                 self::migratePulgaFrequency($pdo);
                 self::migrateKlausInteractions($pdo);
+                self::migrateBodyLongSleevesSizeGuide($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -130,8 +131,49 @@ final class Database
         self::migratePulgaSettings($pdo);
         self::migratePulgaFrequency($pdo);
         self::migrateKlausInteractions($pdo);
+        self::migrateBodyLongSleevesSizeGuide($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    /** Agrega la nueva prenda sin reemplazar la tabla de talles ya configurada. */
+    private static function migrateBodyLongSleevesSizeGuide(PDO $pdo): void
+    {
+        $version = 35;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $value = $pdo->query("SELECT value FROM settings WHERE key = 'size_guide_json'")->fetchColumn();
+            $rows = is_string($value) ? json_decode($value, true) : null;
+            if (is_array($rows) && $rows !== []) {
+                $exists = false;
+                foreach ($rows as $row) {
+                    if (is_array($row) && trim((string) ($row['group'] ?? '')) === 'Body - Mangas Largas') {
+                        $exists = true;
+                        break;
+                    }
+                }
+                if (!$exists) {
+                    foreach ([['1','20','30'],['2','21','34'],['3','23','35'],['4','25','38'],['5','26','30'],['6','27','42']] as [$size, $width, $length]) {
+                        $rows[] = [
+                            'group' => 'Body - Mangas Largas',
+                            'size' => $size,
+                            'width' => $width . ' cm',
+                            'length' => $length . ' cm',
+                            'note' => '',
+                        ];
+                    }
+                    $update = $pdo->prepare(
+                        "UPDATE settings SET value = :value, updated_at = CURRENT_TIMESTAMP WHERE key = 'size_guide_json'"
+                    );
+                    $update->execute(['value' => json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)]);
+                }
+            }
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')
+                ->execute(['version' => $version]);
+        });
     }
 
     private static function migratePulgaSettings(PDO $pdo): void
