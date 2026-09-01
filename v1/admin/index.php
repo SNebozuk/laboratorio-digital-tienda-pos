@@ -100,9 +100,6 @@ header('Referrer-Policy: same-origin');
                     </button>
                     <button class="admin-nav-button" type="button" data-open-pos>Punto de Venta</button>
                     <?php if ($user['role'] === 'admin'): ?>
-                        <button class="admin-nav-button" type="button" data-view="categories">
-                            Categorías
-                        </button>
                         <button class="admin-nav-button" type="button" data-view="maintenance">
                             Mantenimiento
                         </button>
@@ -119,6 +116,7 @@ header('Referrer-Policy: same-origin');
                         <button type="button" data-view="quote">Cotizador</button>
                         <button type="button" data-view="whatsapp">WhatsApp</button>
                         <button type="button" data-view="users">Usuarios</button>
+                        <button type="button" data-view="categories">Categorías</button>
                         <button type="button" data-view="settings">Configuración</button>
                     </div>
                 <?php endif ?>
