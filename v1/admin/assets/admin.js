@@ -4418,7 +4418,6 @@
                 <td><input aria-label="Talle" data-size-guide-field="size" value="${escapeHtml(row.size || '')}" placeholder="Ej.: M" required></td>
                 <td><input aria-label="Ancho" data-size-guide-field="width" value="${escapeHtml(row.width || '')}" placeholder="Ej.: 53 cm"></td>
                 <td><input aria-label="Largo" data-size-guide-field="length" value="${escapeHtml(row.length || '')}" placeholder="Ej.: 62 cm"></td>
-                <td><input aria-label="Observaciones" data-size-guide-field="note" value="${escapeHtml(row.note || '')}" placeholder="Opcional"></td>
                 <td class="size-guide-row-actions">
                     <button class="icon-button" type="button" title="Duplicar esta fila" aria-label="Duplicar esta fila" data-duplicate-size-guide-row="${index}">⧉</button>
                     <button class="icon-button danger-button trash-button" type="button" title="Eliminar esta fila" aria-label="Eliminar esta fila" data-remove-size-guide-row="${index}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
@@ -4434,10 +4433,10 @@
         elements.sizeGuideRows.innerHTML = `
             <div class="size-guide-table-wrap">
                 <table class="size-guide-edit-table">
-                    <thead><tr><th>PRENDA</th><th>TALLE</th><th>ANCHO</th><th>LARGO</th><th>OBSERVACIONES</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+                    <thead><tr><th>PRENDA</th><th>TALLE</th><th>ANCHO</th><th>LARGO</th><th><span class="sr-only">Acciones</span></th></tr></thead>
                     <tbody>${state.sizeGuide.rows.length
                         ? state.sizeGuide.rows.map(sizeGuideRowTemplate).join('')
-                        : '<tr><td class="size-guide-empty-cell" colspan="6">Todavía no cargaste medidas. Usá “Agregar fila” para comenzar.</td></tr>'}</tbody>
+                        : '<tr><td class="size-guide-empty-cell" colspan="5">Todavía no cargaste medidas. Usá “Agregar fila” para comenzar.</td></tr>'}</tbody>
                 </table>
             </div>`;
     }

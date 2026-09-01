@@ -77,7 +77,6 @@ header('Referrer-Policy: same-origin');
                                         <th>Talle</th>
                                         <th>Ancho</th>
                                         <th>Largo</th>
-                                        <th>Observaciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -86,7 +85,6 @@ header('Referrer-Policy: same-origin');
                                             <th><?= $escape($row['size']) ?></th>
                                             <td><?= $escape($row['width'] ?: '—') ?></td>
                                             <td><?= $escape($row['length'] ?: '—') ?></td>
-                                            <td><?= $escape($row['note'] ?: '—') ?></td>
                                         </tr>
                                     <?php endforeach ?>
                                 </tbody>
