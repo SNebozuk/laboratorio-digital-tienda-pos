@@ -1680,9 +1680,9 @@ body {
 
 .cart-remove:hover,
 .cart-remove:focus-visible {
-    border-color: #fff;
-    background: #fff;
-    color: #000;
+    border-color: #e2a0a0;
+    background: #fff4f4;
+    color: #c62828;
 }
 
 .cart-line-bottom {

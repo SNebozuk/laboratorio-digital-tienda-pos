@@ -1351,7 +1351,7 @@
                     <small>${money(Number(item.variant.price_cents))} c/u</small>
                     <strong class="cart-line-subtotal">${money(item.lineTotal)}</strong>
                     <button
-                        class="cart-remove icon-action-button"
+                        class="cart-remove icon-action-button trash-button"
                         type="button"
                         data-remove-item="${Number(item.variant.id)}"
                         aria-label="Quitar ${escapeHtml(item.product.name)} del pedido"

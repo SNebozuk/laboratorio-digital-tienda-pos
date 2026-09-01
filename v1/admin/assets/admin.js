@@ -297,7 +297,7 @@
         if (!input || !file) return;
         const duplicatePreview = input.closest('#duplicate-product-form')?.querySelector('[data-duplicate-image]');
         if (duplicatePreview) {
-            duplicatePreview.innerHTML = `<img data-image-preview src="${URL.createObjectURL(file)}" alt="Vista previa de la foto seleccionada"><button class="icon-button danger-icon-button" type="button" data-remove-duplicate-image title="Quitar foto" aria-label="Quitar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button>`;
+            duplicatePreview.innerHTML = `<img data-image-preview src="${URL.createObjectURL(file)}" alt="Vista previa de la foto seleccionada"><button class="icon-button danger-icon-button trash-button" type="button" data-remove-duplicate-image title="Quitar foto" aria-label="Quitar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button>`;
             return;
         }
         const container = input.closest('label');
@@ -1176,7 +1176,7 @@
                         <button class="product-table-name" type="button" data-edit-product="${Number(product.id)}">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong>${hasVariants ? `<small>${product.variants.length} variantes</small>` : ''}</span></button>
                         ${inlineFields}
                         <button class="product-visibility ${visible ? 'is-visible' : 'is-hidden'}" type="button" data-product-visibility="${visible ? 'hide' : 'show'}" data-product-id="${Number(product.id)}" title="${visible ? 'Ocultar producto' : 'Mostrar producto'}" aria-label="${visible ? 'Ocultar' : 'Mostrar'} ${escapeHtml(product.name)}"><i aria-hidden="true"></i>${featured ? '<small class="featured-product-label">Destacado</small>' : ''}</button>
-                        <div class="product-table-actions"><button class="small-button icon-action-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace" aria-label="Copiar enlace de ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15"/></svg></button><button class="small-button icon-action-button" type="button" data-duplicate-product="${Number(product.id)}" title="Duplicar producto" aria-label="Duplicar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="1"/><path d="M15 9V6a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/></svg></button><button class="small-button icon-action-button product-delete-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button></div>
+                        <div class="product-table-actions"><button class="small-button icon-action-button share-product-button" type="button" data-share-product="${Number(product.id)}" title="Copiar enlace" aria-label="Copiar enlace de ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15"/></svg></button><button class="small-button icon-action-button" type="button" data-duplicate-product="${Number(product.id)}" title="Duplicar producto" aria-label="Duplicar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="1"/><path d="M15 9V6a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/></svg></button><button class="small-button icon-action-button product-delete-button trash-button" type="button" data-delete-product="${Number(product.id)}" title="Eliminar producto" aria-label="Eliminar ${escapeHtml(product.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button></div>
                     </div>${hasVariants ? product.variants.map(variant => {
                         const name = variantDisplayName(product, variant);
                         return `<div class="product-variant-inline-row ${product.active && variant.active ? '' : 'is-hidden'}" role="row">
@@ -1418,7 +1418,7 @@
                 <div class="duplicate-product-heading">
                     <div class="duplicate-product-image" data-duplicate-image>
                         ${safeImage(product.image_path)
-                            ? `<img data-image-preview src="${escapeHtml(safeImage(product.image_path))}" alt="Foto de ${escapeHtml(product.name)}"><button class="icon-button danger-icon-button" type="button" data-remove-duplicate-image title="Quitar foto" aria-label="Quitar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button>`
+                            ? `<img data-image-preview src="${escapeHtml(safeImage(product.image_path))}" alt="Foto de ${escapeHtml(product.name)}"><button class="icon-button danger-icon-button trash-button" type="button" data-remove-duplicate-image title="Quitar foto" aria-label="Quitar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v5M14 11v5M9 7l1-2h4l1 2M6 7l1 13h10l1-13"/></svg></button>`
                             : '<span>SIN FOTO</span>'}
                     </div>
                     <label>
@@ -1763,7 +1763,7 @@
                         </div>
                         <small class="pos-cart-available">Stock disponible: ${Math.max(0, Number(item.variant.available_stock) - item.quantity)}</small>
                         <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
-                        <button class="pos-remove-cart-line icon-action-button" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
+                        <button class="pos-remove-cart-line icon-action-button trash-button" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
                     </div>
                 `).join('')}
             </section>
@@ -4330,7 +4330,7 @@
                 <td><input aria-label="Observaciones" data-size-guide-field="note" value="${escapeHtml(row.note || '')}" placeholder="Opcional"></td>
                 <td class="size-guide-row-actions">
                     <button class="icon-button" type="button" title="Duplicar esta fila" aria-label="Duplicar esta fila" data-duplicate-size-guide-row="${index}">⧉</button>
-                    <button class="icon-button danger-button" type="button" title="Eliminar esta fila" aria-label="Eliminar esta fila" data-remove-size-guide-row="${index}">🗑</button>
+                    <button class="icon-button danger-button trash-button" type="button" title="Eliminar esta fila" aria-label="Eliminar esta fila" data-remove-size-guide-row="${index}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
                 </td>
             </tr>
         `;
