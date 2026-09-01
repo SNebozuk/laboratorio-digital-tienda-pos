@@ -1250,7 +1250,8 @@
             const defaultSectionOrder = ['featured', 'gallery', 'categories', 'tutorials'];
             const sectionOrder = String(app.design?.section_order || '').split(',').filter(section => defaultSectionOrder.includes(section));
             const orderedSections = sectionOrder.length === defaultSectionOrder.length ? sectionOrder : defaultSectionOrder;
-            elements.results.innerHTML = `<section class="store-home" aria-label="Empezar a comprar">${orderedSections.map(section => homeSections[section]).join('')}</section>`;
+            const visibleSections = String(app.design?.section_visibility ?? defaultSectionOrder.join(',')).split(',').filter(section => defaultSectionOrder.includes(section));
+            elements.results.innerHTML = `<section class="store-home" aria-label="Empezar a comprar">${orderedSections.filter(section => visibleSections.includes(section)).map(section => homeSections[section]).join('')}</section>`;
             return;
         }
 

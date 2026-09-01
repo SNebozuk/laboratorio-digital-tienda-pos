@@ -130,6 +130,7 @@ final class SettingsService
             'hero_2_path' => '/v1/assets/brand/hero-2.webp',
             'hero_3_path' => '/v1/assets/brand/hero-3.webp',
             'section_order' => 'featured,gallery,categories,tutorials',
+            'section_visibility' => 'featured,gallery,categories,tutorials',
             'color_background' => '#fbf8ff',
             'color_surface' => '#ffffff',
             'color_secondary' => '#f4effb',
@@ -283,6 +284,11 @@ final class SettingsService
             throw new ValidationException('Revisá el orden de las secciones de la portada.');
         }
         $values['section_order'] = implode(',', $sectionOrder);
+        $sectionVisibility = array_values(array_unique(array_filter(array_map('trim', explode(',', (string) ($data['section_visibility'] ?? $current['section_visibility']))))));
+        if (array_diff($sectionVisibility, $sections) !== []) {
+            throw new ValidationException('Revisá la visibilidad de las secciones de la portada.');
+        }
+        $values['section_visibility'] = implode(',', $sectionVisibility);
         Database::immediate($this->pdo, static function (PDO $pdo) use ($values, $mascotValues): void {
             $update = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
             foreach ($values as $key => $value) $update->execute(['key' => 'design_' . $key, 'value' => $value]);
@@ -530,13 +536,13 @@ final class SettingsService
     private function defaultSizeGuideRows(): array
     {
         $tables = [
-            'REMERAS - Niño · Algodón peinado' => [['4','30','40'],['6','33','44'],['8','36','47'],['10','37','49'],['12','39','52'],['14','42','55'],['16','45','59']],
-            'REMERAS - Niño · Modal / Spum' => [['6','33','43'],['8','33','46'],['10','35','48'],['12','37','50'],['14','37','53'],['16','43','56']],
-            'REMERAS - Unisex · Algodón peinado 24.1' => [['1','46','66'],['2','50','67'],['3','53','69'],['4','55','72'],['5','57','76'],['6','59','77'],['8','61','82'],['10','63','84']],
-            'REMERAS - Unisex · Algodón peinado 20.1' => [['1','53','66'],['2','55','68'],['3','58','72'],['4','59','74'],['5','60','75'],['6','63','78'],['8','65','81'],['10','68','83'],['12','69','86'],['14','72','86']],
-            'REMERAS - Unisex · Modal / Spum' => [['1','48','64'],['2','49','65'],['3','52','66'],['4','56','68'],['5','58','72'],['6','62','79'],['8','65','80']],
-            'REMERAS - Mujer · Algodón peinado' => [['1','39','55'],['2','42','58'],['3','43','61'],['4','46','64'],['5','49','68']],
-            'REMERAS - Mujer · Modal / Spum' => [['1','38','53'],['2','41','57'],['3','43','58'],['4','44','62'],['5','47','62'],['6','50','66'],['8','52','67']],
+            'REMERA Niño · Algodón peinado' => [['4','30','40'],['6','33','44'],['8','36','47'],['10','37','49'],['12','39','52'],['14','42','55'],['16','45','59']],
+            'REMERA Niño · Modal / Spum' => [['6','33','43'],['8','33','46'],['10','35','48'],['12','37','50'],['14','37','53'],['16','43','56']],
+            'REMERA Unisex · Algodón peinado 24.1' => [['1','46','66'],['2','50','67'],['3','53','69'],['4','55','72'],['5','57','76'],['6','59','77'],['8','61','82'],['10','63','84']],
+            'REMERA Unisex · Algodón peinado 20.1' => [['1','53','66'],['2','55','68'],['3','58','72'],['4','59','74'],['5','60','75'],['6','63','78'],['8','65','81'],['10','68','83'],['12','69','86'],['14','72','86']],
+            'REMERA Unisex · Modal / Spum' => [['1','48','64'],['2','49','65'],['3','52','66'],['4','56','68'],['5','58','72'],['6','62','79'],['8','65','80']],
+            'REMERA Mujer · Algodón peinado' => [['1','39','55'],['2','42','58'],['3','43','61'],['4','46','64'],['5','49','68']],
+            'REMERA Mujer · Modal / Spum' => [['1','38','53'],['2','41','57'],['3','43','58'],['4','44','62'],['5','47','62'],['6','50','66'],['8','52','67']],
             'Body - Mangas Largas' => [['1','20','30'],['2','21','34'],['3','23','35'],['4','25','38'],['5','26','30'],['6','27','42']],
             'Buzo cuello redondo · Friza clásica' => [['1','52','66'],['2','55','67'],['3','56','67'],['4','59','72'],['5','63','73'],['6','64','76'],['8','65','79'],['10','67','82']],
             'Buzo canguro · Friza clásica' => [['1','53','61'],['2','54','63'],['3','57','67'],['4','58','70'],['5','61','72'],['6','63','78'],['8','71','82']],

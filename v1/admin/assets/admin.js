@@ -4152,9 +4152,21 @@
                 if (image) image.src = data.design[`hero_${number}_path`];
             });
             const order = String(data.design.section_order || '').split(',');
-            form.querySelectorAll('[data-design-section]').forEach(select => {
-                const position = order.indexOf(select.dataset.designSection);
-                select.value = String(position >= 0 ? position + 1 : 1);
+            const visibility = String(data.design.section_visibility || 'featured,gallery,categories,tutorials').split(',');
+            const list = form.querySelector('[data-design-section-order]');
+            order.forEach(section => {
+                const item = list?.querySelector(`[data-design-section="${section}"]`);
+                if (item) list.appendChild(item);
+            });
+            form.querySelectorAll('[data-design-section]').forEach(item => {
+                const visible = visibility.includes(item.dataset.designSection);
+                item.classList.toggle('is-hidden', !visible);
+                const button = item.querySelector('[data-design-section-visibility]');
+                if (button) {
+                    const label = item.querySelector('strong')?.textContent?.toLowerCase() || 'sección';
+                    button.setAttribute('aria-label', `${visible ? 'Ocultar' : 'Mostrar'} ${label}`);
+                    button.setAttribute('title', `${visible ? 'Ocultar' : 'Mostrar'} ${label}`);
+                }
             });
             renderDesignPreview();
         } catch (error) { toast(error.message); }
@@ -4199,11 +4211,12 @@
         const sections = document.getElementById('design-preview-sections');
         if (sections) {
             [...form.querySelectorAll('[data-design-section]')]
-                .map((select, index) => ({ section: select.dataset.designSection, position: Number(select.value), index }))
-                .sort((a, b) => a.position - b.position || a.index - b.index)
                 .forEach(item => {
-                    const section = sections.querySelector(`[data-design-preview-section="${item.section}"]`);
-                    if (section) sections.appendChild(section);
+                    const section = sections.querySelector(`[data-design-preview-section="${item.dataset.designSection}"]`);
+                    if (section) {
+                        section.hidden = item.classList.contains('is-hidden');
+                        sections.appendChild(section);
+                    }
                 });
         }
     }
@@ -4246,13 +4259,9 @@
                 const file = form.elements.namedItem(`hero_${number}_file`)?.files?.[0];
                 if (file) form.elements.namedItem(`hero_${number}_path`).value = await uploadProductImage(file);
             }
-            const positions = [...form.querySelectorAll('[data-design-section]')]
-                .map(select => ({ section: select.dataset.designSection, position: Number(select.value) }))
-                .sort((a, b) => a.position - b.position);
-            if (new Set(positions.map(item => item.position)).size !== positions.length) {
-                throw new Error('Cada sección debe tener una posición distinta.');
-            }
-            form.elements.namedItem('section_order').value = positions.map(item => item.section).join(',');
+            const sections = [...form.querySelectorAll('[data-design-section]')];
+            form.elements.namedItem('section_order').value = sections.map(item => item.dataset.designSection).join(',');
+            form.elements.namedItem('section_visibility').value = sections.filter(item => !item.classList.contains('is-hidden')).map(item => item.dataset.designSection).join(',');
             const data = new FormData(form);
             ['mascot_klaus_enabled', 'mascot_klaus_animations_enabled', 'mascot_pulga_enabled', 'mascot_pulga_animations_enabled'].forEach(key => {
                 data.set(key, form.elements.namedItem(key)?.checked ? '1' : '0');
@@ -5744,6 +5753,38 @@
     const designForm = document.getElementById('design-form');
     designForm?.addEventListener('input', renderDesignPreview);
     designForm?.addEventListener('change', renderDesignPreview);
+    const designSectionOrder = designForm?.querySelector('[data-design-section-order]');
+    let draggedDesignSection = null;
+    designSectionOrder?.addEventListener('dragstart', event => {
+        const item = event.target.closest('[data-design-section]');
+        if (!item) return;
+        draggedDesignSection = item;
+        item.classList.add('is-dragging');
+        event.dataTransfer.effectAllowed = 'move';
+    });
+    designSectionOrder?.addEventListener('dragover', event => {
+        event.preventDefault();
+        const item = event.target.closest('[data-design-section]');
+        if (!draggedDesignSection || !item || item === draggedDesignSection) return;
+        const before = event.clientY < item.getBoundingClientRect().top + item.offsetHeight / 2;
+        designSectionOrder.insertBefore(draggedDesignSection, before ? item : item.nextSibling);
+    });
+    designSectionOrder?.addEventListener('dragend', () => {
+        draggedDesignSection?.classList.remove('is-dragging');
+        draggedDesignSection = null;
+        renderDesignPreview();
+    });
+    designSectionOrder?.addEventListener('click', event => {
+        const button = event.target.closest('[data-design-section-visibility]');
+        if (!button) return;
+        const item = button.closest('[data-design-section]');
+        if (!item) return;
+        const visible = item.classList.toggle('is-hidden');
+        const label = item.querySelector('strong')?.textContent?.toLowerCase() || 'sección';
+        button.setAttribute('aria-label', `${visible ? 'Mostrar' : 'Ocultar'} ${label}`);
+        button.setAttribute('title', `${visible ? 'Mostrar' : 'Ocultar'} ${label}`);
+        renderDesignPreview();
+    });
     designForm?.elements.namedItem('logo_file')?.addEventListener('change', event => {
         previewDesignImage(event.target, document.getElementById('design-logo-preview'));
     });
