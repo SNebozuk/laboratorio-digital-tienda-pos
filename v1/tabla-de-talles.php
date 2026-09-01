@@ -8,6 +8,7 @@ $storePath = $storePath === '/' ? '' : $storePath;
 $assetPath = $storePath . '/assets';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $assetVersion = (string) @filemtime(__DIR__ . '/assets/app.css');
+$scriptVersion = (string) @filemtime(__DIR__ . '/assets/size-guide.js');
 $escape = static fn (string $value): string => htmlspecialchars(
     $value,
     ENT_QUOTES | ENT_SUBSTITUTE,
@@ -60,6 +61,11 @@ header('Referrer-Policy: same-origin');
                 <p>Consultanos por WhatsApp antes de confirmar tu pedido.</p>
             </section>
         <?php else: ?>
+            <div class="size-guide-search" role="search">
+                <label for="size-guide-search">BUSCAR EN LA TABLA</label>
+                <input id="size-guide-search" type="search" placeholder="Ej.: body, mangas largas o talle 5" autocomplete="off">
+            </div>
+            <p class="size-guide-search-empty" id="size-guide-search-empty" role="status" hidden>No encontramos medidas que coincidan con tu búsqueda.</p>
             <div class="size-guide-groups">
                 <?php foreach ($groups as $group => $rows): ?>
                     <section class="size-guide-card">
@@ -91,5 +97,6 @@ header('Referrer-Policy: same-origin');
             </div>
         <?php endif ?>
     </main>
+    <script src="<?= $escape($assetPath) ?>/size-guide.js?v=<?= $escape($scriptVersion) ?>" defer></script>
 </body>
 </html>
