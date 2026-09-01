@@ -67,9 +67,6 @@ header('Referrer-Policy: same-origin');
                 <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
         </div>
-        <a class="store-header-brand" href="<?= $escape((string) ($design['logo_link'] ?: $storeUrl)) ?>" aria-label="Ir al inicio">
-            <img src="<?= $escape((string) $design['logo_path']) ?>" alt="Laboratorio Digital">
-        </a>
         <div class="header-actions">
             <?php if ($quoteEnabled): ?><a class="header-link header-quote-link" href="<?= $escape($quoteUrl) ?>">COTIZADOR</a><?php endif ?>
             <a class="header-link" href="<?= $escape($storePath) ?>/descargables.php">DESCARGABLES</a>

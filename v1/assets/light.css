@@ -213,11 +213,6 @@ body.home-mode .catalog-intro p { max-width:590px; margin:14px 0 0; color:#55445
 /* Paleta y contenido configurables desde Diseño. */
 body { background:var(--bg) !important; color:var(--text) !important; }
 .store-header { position:sticky; background:color-mix(in srgb,var(--panel) 96%,transparent) !important; }
-.store-header { justify-content:flex-start; }
-.store-header-brand { position:static; display:grid; flex:0 0 auto; width:min(170px,22vw); height:50px; place-items:center; transform:none; }
-.store-header-brand img { display:block; width:100%; height:100%; object-fit:contain; }
-.header-actions { margin-left:auto; }
-@media (min-width:1100px) { .store-header-brand { position:absolute; left:calc(220px + clamp(22px,4vw,58px)); top:50%; transform:translateY(-50%); } }
 .catalog-title-link { color:inherit; text-decoration:none; }
 .catalog-intro,
 body.home-mode .catalog-intro { background:linear-gradient(135deg,var(--panel),var(--panel-2)) !important; }
@@ -229,7 +224,6 @@ body.home-mode .catalog-intro p { color:var(--text) !important; }
 .category-panel,.product-card,.summary-product-row,.order-panel,.cart-drawer,.modal-card { background:var(--panel) !important; }
 .trust-strip,.category-help,.category-button:hover,.category-button.active { background:var(--panel-2) !important; }
 .primary-button,.checkout-button,.add-button { background:var(--accent) !important; }
-@media (max-width:760px) { .store-header { grid-template-columns:auto minmax(0,1fr) auto !important; }.store-header-brand { order:-1; width:100px; }.header-leading { order:0; }.header-actions { order:1; margin-left:0; }.store-header-brand img { max-height:38px; } }
 body.home-mode .search-wrap { background:transparent !important; backdrop-filter:none !important; }
 body.home-mode .search-wrap .search-field input { background:transparent !important; box-shadow:none !important; }
 
