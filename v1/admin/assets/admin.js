@@ -31,6 +31,7 @@
         invitations: [],
         pendingInvitationCount: 0,
         openOrderCount: 0,
+        pendingDeliveryCount: 0,
         posCart: new Map(),
         posQuery: '',
         posProductId: null,
@@ -184,6 +185,7 @@
         invitationList: document.getElementById('invitation-list'),
         invitationsBadge: document.getElementById('invitations-badge'),
         ordersBadge: document.getElementById('orders-badge'),
+        deliveriesBadge: document.getElementById('deliveries-badge'),
         statisticsContent: document.getElementById('statistics-content'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
@@ -213,6 +215,7 @@
     let productActionsMenuPauseUntil = 0;
     let invitationBadgeRefreshAt = 0;
     let orderBadgeRefreshAt = 0;
+    let deliveryBadgeRefreshAt = 0;
     const salesChannel = typeof BroadcastChannel === 'function'
         ? new BroadcastChannel('laboratorio-digital-sales')
         : null;
@@ -530,6 +533,21 @@
         } catch (error) {
             // La lista permanece disponible aunque la marca de lectura falle.
         }
+    }
+
+    function renderDeliveryBadge() {
+        if (!elements.deliveriesBadge) return;
+        const count = state.deliverySlots.reduce((total, slot) => {
+            if (!/\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || ''))) return total;
+            return total + String(slot.order_numbers || '')
+                .split('/')
+                .filter(number => number.trim() !== '')
+                .length;
+        }, 0);
+        state.pendingDeliveryCount = count;
+        elements.deliveriesBadge.hidden = count < 1;
+        elements.deliveriesBadge.textContent = String(count);
+        elements.deliveriesBadge.setAttribute('aria-label', `${count} pedidos pendientes de armado`);
     }
 
     async function copyInvitationEmail(email) {
@@ -2265,6 +2283,7 @@
     }
 
     function renderDeliverySlots() {
+        renderDeliveryBadge();
         if (!elements.deliverySlots) return;
         const byNumber = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
         const pendingOrders = pendingDeliveryOrders();
@@ -2649,6 +2668,10 @@
             if (elements.ordersBadge && state.view !== 'orders' && Date.now() >= orderBadgeRefreshAt) {
                 orderBadgeRefreshAt = Date.now() + 10000;
                 await loadOrderNotifications();
+            }
+            if (elements.deliveriesBadge && state.view !== 'deliveries' && Date.now() >= deliveryBadgeRefreshAt) {
+                deliveryBadgeRefreshAt = Date.now() + 10000;
+                await loadDeliverySlots();
             }
             if (elements.posProducts || elements.posCartLines) {
                 await refreshPosAvailability();
@@ -5788,6 +5811,7 @@
         if (document.getElementById('view-orders')) {
             const requestedView = new URL(window.location.href).searchParams.get('view');
             showView(requestedView || 'orders', Boolean(requestedView), false);
+            if (elements.deliveriesBadge && requestedView !== 'deliveries') loadDeliverySlots();
         }
         window.addEventListener('popstate', () => {
             if (!document.getElementById('view-orders')) return;

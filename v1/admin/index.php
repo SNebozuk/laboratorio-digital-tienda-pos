@@ -92,7 +92,7 @@ header('Referrer-Policy: same-origin');
                 <nav class="admin-nav">
                     <div class="admin-nav-sales">
                         <button class="admin-nav-button admin-nav-orders" type="button" data-view="orders">Lista de Ventas <b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
-                        <button class="admin-nav-button" type="button" data-view="deliveries">Entrega de pedidos</button>
+                        <button class="admin-nav-button admin-nav-deliveries" type="button" data-view="deliveries">Entrega de pedidos <b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
                     </div>
                     <button class="admin-nav-button" type="button" data-view="statistics">Estadísticas</button>
                     <button class="admin-nav-button" type="button" data-view="products">
@@ -100,7 +100,6 @@ header('Referrer-Policy: same-origin');
                     </button>
                     <button class="admin-nav-button" type="button" data-open-pos>Punto de Venta</button>
                     <?php if ($user['role'] === 'admin'): ?>
-                        <button class="admin-nav-button" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu">Configuración</button>
                         <button class="admin-nav-button" type="button" data-view="categories">
                             Categorías
                         </button>
@@ -127,7 +126,16 @@ header('Referrer-Policy: same-origin');
                 <?php endif ?>
                 <div class="admin-user">
                     <button class="secondary-button admin-store-link" id="admin-store-button" type="button">VER TIENDA ↗</button>
-                    <button class="secondary-button" id="logout-button" type="button">Salir</button>
+                    <div class="admin-user-icon-actions">
+                        <?php if ($user['role'] === 'admin'): ?>
+                            <button class="icon-button admin-settings-icon" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu" aria-label="Abrir configuración" title="Configuración">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path></svg>
+                            </button>
+                        <?php endif ?>
+                        <button class="icon-button admin-logout-icon" id="logout-button" type="button" aria-label="Salir" title="Salir">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21h16M6 21V3h11v18M13 12h.01"></path></svg>
+                        </button>
+                    </div>
                 </div>
             </aside>
 

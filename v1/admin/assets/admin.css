@@ -3576,7 +3576,8 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .order-list-copy.order-list-copy-reopened:hover:not(:disabled) { color:#fff; background:#17708b; }
 
 /* Solicitudes de invitación a Codex: rápidas de revisar y listas para copiar. */
-.admin-nav-invitations { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.admin-nav-invitations,
+.admin-nav-deliveries { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .nav-notification-badge { display:inline-grid; min-width:20px; height:20px; place-items:center; padding:0 5px; border-radius:999px; background:#7b3f9e; color:#fff; font-size:11px; line-height:1; font-variant-numeric:tabular-nums; }
 .invitation-note { max-width:840px; margin:0 0 18px; padding:13px 15px; border:1px solid #d7c7e9; border-radius:10px; background:#faf7ff; color:#4b3c61; font-size:14px; line-height:1.45; }
 .invitation-table-wrap { overflow:auto; border:1px solid #dfe2e7; border-radius:12px; background:#fff; }
@@ -3733,8 +3734,26 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-sidebar-collapsed .admin-sidebar-toggle svg { transform:rotate(180deg); }
 @media (max-width:820px) { .admin-sidebar-brand-row { display:contents; } }
 
-/* El lateral no desplaza su contenido ni muestra datos de la sesión. */
-.admin-sidebar .admin-nav { overflow-y:hidden; }
+/* El lateral no desplaza su contenido ni muestra barras laterales. */
+.admin-sidebar,
+.admin-sidebar .admin-nav { overflow:hidden; }
+
+.admin-user-icon-actions { display:flex; align-items:center; gap:8px; }
+.admin-user-icon-actions .icon-button {
+    display:inline-grid;
+    width:32px !important;
+    height:32px !important;
+    min-height:32px !important;
+    place-items:center;
+    padding:0 !important;
+    border-radius:8px !important;
+    color:#4f596b !important;
+}
+.admin-user-icon-actions .icon-button svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.admin-user-icon-actions .admin-settings-icon:hover,
+.admin-user-icon-actions .admin-settings-icon:focus-visible { color:#4c2574 !important; }
+.admin-user-icon-actions .admin-logout-icon:hover,
+.admin-user-icon-actions .admin-logout-icon:focus-visible { color:#b33131 !important; }
 
 /* Duplicación rápida de producto. */
 .duplicate-product-heading { display:grid; grid-template-columns:112px minmax(0, 1fr); gap:16px; align-items:center; margin-bottom:18px; }
