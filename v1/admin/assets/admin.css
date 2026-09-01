@@ -3772,6 +3772,9 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-sidebar-settings-menu button { min-height:38px; border:0; border-radius:10px; background:transparent; color:#4f596b; padding:9px 10px; text-align:left; font:inherit; font-size:14px; font-weight:650; cursor:pointer; }
 .admin-sidebar-settings-menu button:hover { background:#e6e9ed; color:#3d356f; }
 .admin-sidebar-settings-menu .admin-sidebar-settings-menu-close { margin:0 10px; min-height:auto; padding:0; font-size:12px; }
+.admin-sidebar-design-menu { z-index:11; }
+.admin-sidebar-settings-menu .admin-sidebar-design-menu-back { margin:0 10px; min-height:auto; padding:0; font-size:12px; }
+.admin-sidebar-settings-menu .admin-sidebar-design-menu-back::before { content:'‹ '; }
 .admin-pos-frame { display:block; width:100%; min-height:calc(100vh - 68px); border:0; background:#f6f7fb; }
 
 /* Dentro del administrador, el PDV mantiene su composición de escritorio. */

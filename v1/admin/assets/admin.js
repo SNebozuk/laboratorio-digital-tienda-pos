@@ -5714,23 +5714,65 @@
     });
     const sidebarSettingsMenu = document.getElementById('admin-sidebar-settings-menu');
     const sidebarSettingsMenuToggle = document.getElementById('admin-sidebar-settings-menu-toggle');
+    const sidebarDesignMenu = document.getElementById('admin-sidebar-design-menu');
+    const sidebarDesignMenuToggle = document.getElementById('admin-sidebar-design-menu-toggle');
+    const closeSidebarDesignMenu = () => {
+        if (!sidebarDesignMenu) return;
+        sidebarDesignMenu.hidden = true;
+        sidebarDesignMenuToggle?.setAttribute('aria-expanded', 'false');
+    };
     const closeSidebarSettingsMenu = () => {
         if (!sidebarSettingsMenu) return;
+        closeSidebarDesignMenu();
         sidebarSettingsMenu.hidden = true;
         sidebarSettingsMenuToggle?.setAttribute('aria-expanded', 'false');
     };
     sidebarSettingsMenuToggle?.addEventListener('click', () => {
         const isOpen = !sidebarSettingsMenu.hidden;
-        sidebarSettingsMenu.hidden = isOpen;
-        sidebarSettingsMenuToggle.setAttribute('aria-expanded', String(!isOpen));
+        if (isOpen) {
+            closeSidebarSettingsMenu();
+            return;
+        }
+        sidebarSettingsMenu.hidden = false;
+        sidebarSettingsMenuToggle.setAttribute('aria-expanded', 'true');
+    });
+    sidebarDesignMenuToggle?.addEventListener('click', () => {
+        if (!sidebarDesignMenu) return;
+        sidebarDesignMenu.hidden = false;
+        sidebarDesignMenuToggle.setAttribute('aria-expanded', 'true');
     });
     sidebarSettingsMenu?.addEventListener('click', event => {
         if (event.target.closest('[data-view], .admin-sidebar-settings-menu-close')) closeSidebarSettingsMenu();
+    });
+    sidebarDesignMenu?.addEventListener('click', event => {
+        if (event.target.closest('.admin-sidebar-design-menu-back')) {
+            closeSidebarDesignMenu();
+            sidebarDesignMenuToggle?.focus();
+            return;
+        }
+        const option = event.target.closest('[data-design-panel]');
+        if (!option) return;
+        const panel = document.getElementById(option.dataset.designPanel);
+        if (!panel) return;
+        showView('design');
+        document.querySelectorAll('#design-form .design-panel').forEach(item => {
+            item.open = item === panel;
+        });
+        closeSidebarSettingsMenu();
+        window.requestAnimationFrame(() => {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            panel.querySelector('summary')?.focus();
+        });
     });
     document.addEventListener('keydown', event => {
         if (event.key !== 'Escape' || event.defaultPrevented || !sidebarSettingsMenu || sidebarSettingsMenu.hidden) return;
         event.preventDefault();
         event.stopImmediatePropagation();
+        if (sidebarDesignMenu && !sidebarDesignMenu.hidden) {
+            closeSidebarDesignMenu();
+            sidebarDesignMenuToggle?.focus();
+            return;
+        }
         closeSidebarSettingsMenu();
         sidebarSettingsMenuToggle?.focus();
     }, true);

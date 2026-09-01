@@ -107,12 +107,20 @@ header('Referrer-Policy: same-origin');
                         <button type="button" data-view="contact">Contacto</button>
                         <button type="button" data-view="size-guide">Tabla de Talles</button>
                         <button type="button" data-view="tutorials">Aprende</button>
-                        <button type="button" data-view="design">Diseño</button>
+                        <button id="admin-sidebar-design-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-design-menu">Diseño</button>
                         <button type="button" data-view="quote">Cotizador</button>
                         <button type="button" data-view="whatsapp">WhatsApp</button>
                         <button type="button" data-view="users">Usuarios</button>
                         <button type="button" data-view="categories">Categorías</button>
                         <button type="button" data-view="maintenance">Mantenimiento</button>
+                    </div>
+                    <div class="admin-sidebar-settings-menu admin-sidebar-design-menu" id="admin-sidebar-design-menu" hidden>
+                        <button class="admin-sidebar-design-menu-back" type="button" aria-label="Volver a configuración">Configuración</button>
+                        <strong>DISEÑO</strong>
+                        <button type="button" data-design-panel="design-panel-content">Contenido principal</button>
+                        <button type="button" data-design-panel="design-panel-branding">Identidad visual</button>
+                        <button type="button" data-design-panel="design-panel-gallery">Fotos de portada</button>
+                        <button type="button" data-design-panel="design-panel-order">Orden de las secciones</button>
                     </div>
                 <?php endif ?>
                 <div class="admin-user">
@@ -243,7 +251,7 @@ header('Referrer-Policy: same-origin');
                     <section class="admin-view" id="view-design">
                         <div class="view-heading"><div><p class="eyebrow">PORTADA DE LA TIENDA</p><h1 class="admin-page-title">DISEÑO</h1><p>Modificá los textos, el logo y los enlaces visibles sin tocar el código.</p></div></div>
                         <form id="design-form" class="settings-card">
-                            <details class="design-panel" open>
+                            <details class="design-panel" id="design-panel-content" open>
                                 <summary>CONTENIDO PRINCIPAL</summary>
                                 <div class="settings-grid">
                                     <label>ETIQUETA SUPERIOR<input name="hero_badge" maxlength="120" required></label>
@@ -252,7 +260,7 @@ header('Referrer-Policy: same-origin');
                                     <label>ENLACE DEL TÍTULO (OPCIONAL)<input name="hero_link" placeholder="https://... o /v1/"></label>
                                 </div>
                             </details>
-                            <details class="design-panel">
+                            <details class="design-panel" id="design-panel-branding">
                                 <summary>IDENTIDAD VISUAL</summary>
                                 <div class="design-branding" aria-labelledby="design-branding-title">
                                     <div><strong id="design-branding-title">LOGO</strong><small>Este logo se muestra en la cabecera de la tienda. Podés elegir otra imagen cuando quieras.</small></div>
@@ -262,7 +270,7 @@ header('Referrer-Policy: same-origin');
                                     <img id="design-logo-preview" class="variant-image-preview" alt="Vista previa del logo">
                                 </div>
                             </details>
-                            <details class="design-panel">
+                            <details class="design-panel" id="design-panel-gallery">
                                 <summary>FOTOS DE PORTADA</summary>
                                 <div class="design-published-images"><small>Elegí una foto para reemplazarla. Se verá inmediatamente en la vista previa al guardar.</small><div class="design-image-grid">
                                     <label>FOTO 1<input name="hero_1_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_1_path" type="hidden"><img id="design-hero-1-preview" alt="Foto publicada 1"></label>
@@ -270,7 +278,7 @@ header('Referrer-Policy: same-origin');
                                     <label>FOTO 3<input name="hero_3_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_3_path" type="hidden"><img id="design-hero-3-preview" alt="Foto publicada 3"></label>
                                 </div></div>
                             </details>
-                            <details class="design-panel">
+                            <details class="design-panel" id="design-panel-order">
                                 <summary>ORDEN DE LAS SECCIONES</summary>
                                 <p class="design-panel-help">Elegí la posición de cada sección de la portada. Los bloques sin contenido no se mostrarán.</p>
                                 <input name="section_order" type="hidden">
