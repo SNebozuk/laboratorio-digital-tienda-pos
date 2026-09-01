@@ -3579,6 +3579,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-nav-invitations,
 .admin-nav-deliveries { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .nav-notification-badge { display:inline-grid; min-width:20px; height:20px; place-items:center; padding:0 5px; border-radius:999px; background:#7b3f9e; color:#fff; font-size:11px; line-height:1; font-variant-numeric:tabular-nums; }
+.nav-notification-badge[hidden] { display:none; }
 .invitation-note { max-width:840px; margin:0 0 18px; padding:13px 15px; border:1px solid #d7c7e9; border-radius:10px; background:#faf7ff; color:#4b3c61; font-size:14px; line-height:1.45; }
 .invitation-table-wrap { overflow:auto; border:1px solid #dfe2e7; border-radius:12px; background:#fff; }
 .invitation-table { width:100%; min-width:620px; border-collapse:collapse; }
