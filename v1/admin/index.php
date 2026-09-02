@@ -252,10 +252,10 @@ header('Referrer-Policy: same-origin');
                             </div>
                         </div>
                         <form id="supplier-order-filters" class="supplier-order-filters">
-                            <label>
+                            <div class="supplier-order-category-filter">
                                 CATEGORÍAS
-                                <select id="supplier-order-categories" name="category_ids" multiple size="5" aria-label="Categorías"></select>
-                            </label>
+                                <div id="supplier-order-categories" class="supplier-order-category-list" role="group" aria-label="Categorías"></div>
+                            </div>
                             <label>
                                 PALABRAS CLAVE
                                 <input id="supplier-order-keywords" name="keywords" type="search" autocomplete="off" placeholder="Nombre, descripción, SKU, código o variante">

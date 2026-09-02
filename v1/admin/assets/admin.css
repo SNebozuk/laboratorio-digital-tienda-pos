@@ -2415,7 +2415,6 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 }
 .supplier-order-filters label { display: grid; gap: 7px; color: #596176; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
 .supplier-order-filters input,
-.supplier-order-filters select,
 .supplier-order-preview textarea {
     width: 100%;
     border: 1px solid #cfd7e4;
@@ -2425,8 +2424,14 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     font: inherit;
 }
 .supplier-order-filters input { min-height: 40px; padding: 8px 10px; }
-.supplier-order-filters select { min-height: 122px; padding: 5px; }
-.supplier-order-filters option { padding: 4px 7px; }
+.supplier-order-category-filter { display: grid; gap: 7px; color: #596176; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+.supplier-order-category-list { display: grid; max-height: 122px; overflow-y: auto; padding: 5px; border: 1px solid #cfd7e4; border-radius: 8px; background: #fff; }
+.supplier-order-category-option { display: flex !important; align-items: center; gap: 8px; min-height: 29px; padding: 4px 7px 4px calc(7px + var(--supplier-category-depth) * 14px); border-radius: 6px; color: #4b5568 !important; font-size: 12px !important; font-weight: 650 !important; letter-spacing: 0 !important; cursor: pointer; }
+.supplier-order-category-option:hover { background: #f4f7fb; }
+.supplier-order-category-option input { position: absolute; width: 1px; min-height: 1px; padding: 0; opacity: 0; }
+.supplier-order-category-check { display: grid; width: 18px; height: 18px; place-items: center; flex: 0 0 18px; border: 1px solid #bac4d1; border-radius: 5px; background: #fff; color: transparent; font-size: 14px; font-weight: 900; line-height: 1; }
+.supplier-order-category-option input:checked + .supplier-order-category-check { border-color: #2d9b60; background: #e9f8ef; color: #159447; }
+.supplier-order-category-option input:focus-visible + .supplier-order-category-check { outline: 2px solid #1769e0; outline-offset: 2px; }
 .supplier-order-filter-actions { align-self: end; }
 .supplier-order-status { min-height: 19px; margin: 0 0 12px; color: #6d7587; font-size: 13px; }
 .supplier-order-status button { margin-left: 4px; padding: 0; border: 0; background: transparent; color: #4d40bd; font: inherit; font-weight: 750; cursor: pointer; text-decoration: underline; }

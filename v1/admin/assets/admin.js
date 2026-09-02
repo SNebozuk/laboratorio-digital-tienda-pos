@@ -4608,7 +4608,11 @@
         const selectedCategories = new Set((filters.category_ids || []).map(Number));
         if (elements.supplierOrderCategories) {
             elements.supplierOrderCategories.innerHTML = supplierOrderFlatCategories().map(category => `
-                <option value="${Number(category.id)}" ${selectedCategories.has(Number(category.id)) ? 'selected' : ''}>${'— '.repeat(Number(category.depth || 0))}${escapeHtml(category.name)}</option>
+                <label class="supplier-order-category-option" style="--supplier-category-depth:${Number(category.depth || 0)}">
+                    <input type="checkbox" value="${Number(category.id)}" data-supplier-order-category ${selectedCategories.has(Number(category.id)) ? 'checked' : ''}>
+                    <span class="supplier-order-category-check" aria-hidden="true">✓</span>
+                    <span>${escapeHtml(category.name)}</span>
+                </label>
             `).join('');
         }
         if (elements.supplierOrderKeywords) elements.supplierOrderKeywords.value = String(filters.keywords || '');
@@ -4696,7 +4700,7 @@
 
     function supplierOrderFiltersFromForm() {
         return {
-            category_ids: Array.from(elements.supplierOrderCategories?.selectedOptions || []).map(option => Number(option.value)),
+            category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
             keywords: String(elements.supplierOrderKeywords?.value || '').trim(),
             stock_threshold: Number(elements.supplierOrderThreshold?.value),
         };
