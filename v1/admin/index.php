@@ -266,7 +266,9 @@ header('Referrer-Policy: same-origin');
                             </label>
                             <div class="supplier-order-filter-actions">
                                 <button class="primary-button fit-button" type="submit">BUSCAR PRODUCTOS</button>
-                                <button class="secondary-button fit-button" type="button" data-supplier-order-reset-filters>LIMPIAR FILTROS</button>
+                                <button class="icon-action-button" type="button" data-supplier-order-reset-filters aria-label="Limpiar filtros" title="Limpiar filtros">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </button>
                             </div>
                         </form>
                         <p id="supplier-order-status" class="supplier-order-status" aria-live="polite"></p>

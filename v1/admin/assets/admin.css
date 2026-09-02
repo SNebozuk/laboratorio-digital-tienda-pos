@@ -2399,7 +2399,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .supplier-order-actions { justify-content: flex-end; }
 .supplier-order-actions .primary-button,
-.supplier-order-filter-actions .primary-button { min-height: 46px; border-radius: 10px; }
+.supplier-order-filter-actions .primary-button { height: 46px; min-height: 46px; padding: 0 18px; border: 1px solid #1769e0; border-radius: 10px; }
 .supplier-order-filter-actions .primary-button { border-color: #1769e0; background: #1769e0; color: #fff; }
 .supplier-order-filter-actions .primary-button:hover { border-color: #1459bd; background: #1459bd; }
 .supplier-order-filters {
@@ -2484,7 +2484,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .supplier-order-actions { justify-content: flex-start; margin-top: 14px; }
     .supplier-order-actions .fit-button { width: 100%; }
     .supplier-order-filters { grid-template-columns: 1fr; }
-    .supplier-order-filter-actions { display: grid; grid-template-columns: 1fr; }
+    .supplier-order-filter-actions { display: flex; }
     .supplier-order-summary { position: static; align-items: flex-start; flex-direction: column; gap: 6px; }
 }
 
