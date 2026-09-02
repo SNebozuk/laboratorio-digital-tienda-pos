@@ -95,9 +95,14 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button admin-nav-deliveries" type="button" data-view="deliveries">Entrega de pedidos <b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
                     </div>
                     <button class="admin-nav-button" type="button" data-view="statistics">Estadísticas</button>
-                    <button class="admin-nav-button" type="button" data-view="products">
-                        Productos
-                    </button>
+                    <div class="admin-nav-products">
+                        <button class="admin-nav-button" type="button" data-view="products">
+                            Productos
+                        </button>
+                        <?php if ($user['role'] === 'admin'): ?>
+                            <button class="admin-nav-button admin-nav-subitem" type="button" data-view="supplier-order">Pedido a proveedor</button>
+                        <?php endif ?>
+                    </div>
                     <button class="admin-nav-button" type="button" data-open-pos>Punto de Venta</button>
                 </nav>
                 <?php if ($user['role'] === 'admin'): ?>
@@ -196,6 +201,9 @@ header('Referrer-Policy: same-origin');
                         <option value="deliveries">Entrega de Pedidos</option>
                         <option value="statistics">Estadísticas</option>
                         <option value="products">Productos</option>
+                        <?php if ($user['role'] === 'admin'): ?>
+                            <option value="supplier-order">Pedido a proveedor</option>
+                        <?php endif ?>
                         <option value="pos">Punto de Venta</option>
                         <?php if ($user['role'] === 'admin'): ?>
                             <option value="tutorials">Aprende</option>
@@ -229,6 +237,49 @@ header('Referrer-Policy: same-origin');
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>
+                    <section class="admin-view supplier-order-view" id="view-supplier-order">
+                        <div class="view-heading supplier-order-heading">
+                            <div>
+                                <p class="eyebrow">REPOSICIÓN DE STOCK</p>
+                                <h1 class="admin-page-title">PEDIDO A PROVEEDOR</h1>
+                                <p>Armá el pedido sin modificar el stock ni los precios de venta.</p>
+                            </div>
+                            <div class="supplier-order-actions">
+                                <button class="secondary-button fit-button" type="button" data-supplier-order-back>VOLVER</button>
+                                <button class="secondary-button fit-button" type="button" data-supplier-order-preview>VER TEXTO PARA WHATSAPP</button>
+                                <button class="secondary-button fit-button" type="button" data-supplier-order-copy>COPIAR PEDIDO</button>
+                                <button class="danger-button fit-button" type="button" data-supplier-order-clear>VACIAR PEDIDO</button>
+                            </div>
+                        </div>
+                        <form id="supplier-order-filters" class="supplier-order-filters">
+                            <label>
+                                CATEGORÍAS
+                                <select id="supplier-order-categories" name="category_ids" multiple size="5" aria-label="Categorías"></select>
+                            </label>
+                            <label>
+                                PALABRAS CLAVE
+                                <input id="supplier-order-keywords" name="keywords" type="search" autocomplete="off" placeholder="Nombre, descripción, SKU, código o variante">
+                            </label>
+                            <label>
+                                MOSTRAR PRODUCTOS CON STOCK MENOR A
+                                <input id="supplier-order-threshold" name="stock_threshold" type="number" inputmode="numeric" min="0" max="1000000" step="1" value="1" required>
+                            </label>
+                            <div class="supplier-order-filter-actions">
+                                <button class="primary-button fit-button" type="submit">BUSCAR PRODUCTOS</button>
+                                <button class="secondary-button fit-button" type="button" data-supplier-order-reset-filters>LIMPIAR FILTROS</button>
+                            </div>
+                        </form>
+                        <p id="supplier-order-status" class="supplier-order-status" aria-live="polite"></p>
+                        <div id="supplier-order-results" class="supplier-order-results"></div>
+                        <section id="supplier-order-preview" class="supplier-order-preview" hidden>
+                            <div>
+                                <p class="eyebrow">MENSAJE EDITABLE</p>
+                                <h2>TEXTO PARA WHATSAPP</h2>
+                            </div>
+                            <textarea id="supplier-order-whatsapp-text" rows="8" maxlength="20000" aria-label="Texto para WhatsApp"></textarea>
+                        </section>
+                    </section>
+
                     <section class="admin-view" id="view-tutorials">
                         <div class="view-heading">
                             <div>

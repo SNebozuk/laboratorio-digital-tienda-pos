@@ -15,6 +15,7 @@ use LaboratorioDigital\ReceiptAiService;
 use LaboratorioDigital\SettingsService;
 use LaboratorioDigital\StockService;
 use LaboratorioDigital\StoreVisitService;
+use LaboratorioDigital\SupplierOrderService;
 use LaboratorioDigital\TutorialService;
 
 $app = require __DIR__ . '/bootstrap.php';
@@ -30,6 +31,7 @@ require_once __DIR__ . '/ProductService.php';
 require_once __DIR__ . '/ProductImageService.php';
 require_once __DIR__ . '/StockService.php';
 require_once __DIR__ . '/StoreVisitService.php';
+require_once __DIR__ . '/SupplierOrderService.php';
 require_once __DIR__ . '/TutorialService.php';
 require_once __DIR__ . '/OrderService.php';
 require_once __DIR__ . '/PaymentProofService.php';
@@ -48,6 +50,7 @@ $app['product_images'] = new ProductImageService(
 );
 $app['stock'] = new StockService($app['pdo']);
 $app['store_visits'] = new StoreVisitService($app['pdo']);
+$app['supplier_orders'] = new SupplierOrderService($app['pdo']);
 $app['mail'] = new MailService($app['pdo'], $app['config']);
 $app['orders'] = new OrderService(
     $app['pdo'],

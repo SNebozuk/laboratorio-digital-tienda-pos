@@ -50,6 +50,15 @@
         posSaleConfirmationTimer: 0,
         posKlausTimer: 0,
         knownOrderIds: null,
+        supplierOrder: null,
+        supplierOrderCategories: [],
+        supplierOrderLoaded: false,
+        supplierOrderSaving: false,
+        supplierOrderSavePromise: null,
+        supplierOrderDirty: false,
+        supplierOrderSaveTimer: 0,
+        supplierOrderPreviewOpen: false,
+        supplierOrderStatus: '',
         view: 'orders',
     };
 
@@ -187,6 +196,13 @@
         ordersBadge: document.getElementById('orders-badge'),
         deliveriesBadge: document.getElementById('deliveries-badge'),
         statisticsContent: document.getElementById('statistics-content'),
+        supplierOrderCategories: document.getElementById('supplier-order-categories'),
+        supplierOrderKeywords: document.getElementById('supplier-order-keywords'),
+        supplierOrderThreshold: document.getElementById('supplier-order-threshold'),
+        supplierOrderResults: document.getElementById('supplier-order-results'),
+        supplierOrderStatus: document.getElementById('supplier-order-status'),
+        supplierOrderPreview: document.getElementById('supplier-order-preview'),
+        supplierOrderWhatsappText: document.getElementById('supplier-order-whatsapp-text'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -396,7 +412,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -422,6 +438,9 @@
         }
         if (view === 'products') {
             loadProducts();
+        }
+        if (view === 'supplier-order') {
+            loadSupplierOrder();
         }
         if (view === 'tutorials') loadTutorials();
         if (view === 'deliveries') {
@@ -4500,6 +4519,336 @@
         }
     }
 
+    const supplierOrderEmpty = () => ({
+        filters: { category_ids: [], keywords: '', stock_threshold: 1 },
+        results: [],
+        lines: [],
+        summary: { total_cents: 0, total_units: 0, included_count: 0, missing_price_count: 0 },
+        whatsapp_text: '',
+        whatsapp_edited: false,
+        searched: false,
+        updated_at: '',
+    });
+
+    const supplierOrderMoney = cents => new Intl.NumberFormat('es-AR', {
+        style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2,
+    }).format(Number(cents || 0) / 100);
+
+    const supplierOrderLines = () => new Map((state.supplierOrder?.lines || []).map(line => [
+        Number(line.variant_id),
+        {
+            variant_id: Number(line.variant_id),
+            quantity: Math.max(0, Number(line.quantity || 0)),
+            unit_price_cents: line.unit_price_cents == null ? null : Math.max(0, Number(line.unit_price_cents)),
+            subtotal_cents: line.subtotal_cents == null ? null : Math.max(0, Number(line.subtotal_cents)),
+        },
+    ]));
+
+    function supplierOrderSummary() {
+        let totalCents = 0, totalUnits = 0, includedCount = 0, missingPriceCount = 0;
+        (state.supplierOrder?.lines || []).forEach(line => {
+            const quantity = Math.max(0, Number(line.quantity || 0));
+            if (!quantity) return;
+            includedCount++;
+            totalUnits += quantity;
+            if (line.unit_price_cents == null) {
+                missingPriceCount++;
+                line.subtotal_cents = null;
+                return;
+            }
+            line.subtotal_cents = quantity * Number(line.unit_price_cents);
+            totalCents += line.subtotal_cents;
+        });
+        return { total_cents: totalCents, total_units: totalUnits, included_count: includedCount, missing_price_count: missingPriceCount };
+    }
+
+    function supplierOrderVariantLabel(product, variant) {
+        const name = String(variant?.name || '').trim();
+        return product?.variants?.length === 1 && fold(name) === 'unica' ? '' : name;
+    }
+
+    function supplierOrderWhatsappText() {
+        const lineMap = supplierOrderLines();
+        return (state.supplierOrder?.results || []).flatMap(product => product.variants.map(variant => {
+            const line = lineMap.get(Number(variant.id));
+            if (!line || line.quantity < 1) return '';
+            const label = [product.name, supplierOrderVariantLabel(product, variant)].filter(Boolean).join(', ');
+            return `${line.quantity} ${line.quantity === 1 ? 'unidad' : 'unidades'} - ${label}`;
+        })).filter(Boolean).join('\n');
+    }
+
+    function supplierOrderFlatCategories(categories = state.supplierOrderCategories) {
+        const rows = [];
+        const visit = (items, depth = 0) => (items || []).forEach(category => {
+            rows.push({ ...category, depth });
+            visit(category.children, depth + 1);
+        });
+        visit(categories);
+        return rows;
+    }
+
+    function supplierOrderStatus() {
+        if (!elements.supplierOrderStatus) return;
+        const status = state.supplierOrderStatus;
+        if (status === 'saving') {
+            elements.supplierOrderStatus.textContent = 'Guardando…';
+        } else if (status === 'saved') {
+            elements.supplierOrderStatus.textContent = 'Pedido guardado';
+        } else if (status === 'error') {
+            elements.supplierOrderStatus.innerHTML = 'Error al guardar. <button type="button" data-supplier-order-retry>Reintentar</button>';
+        } else {
+            elements.supplierOrderStatus.textContent = '';
+        }
+    }
+
+    function renderSupplierOrder() {
+        if (!elements.supplierOrderResults || !state.supplierOrder) return;
+        const draft = state.supplierOrder;
+        const filters = draft.filters || {};
+        const selectedCategories = new Set((filters.category_ids || []).map(Number));
+        if (elements.supplierOrderCategories) {
+            elements.supplierOrderCategories.innerHTML = supplierOrderFlatCategories().map(category => `
+                <option value="${Number(category.id)}" ${selectedCategories.has(Number(category.id)) ? 'selected' : ''}>${'— '.repeat(Number(category.depth || 0))}${escapeHtml(category.name)}</option>
+            `).join('');
+        }
+        if (elements.supplierOrderKeywords) elements.supplierOrderKeywords.value = String(filters.keywords || '');
+        if (elements.supplierOrderThreshold) elements.supplierOrderThreshold.value = String(filters.stock_threshold ?? 1);
+
+        const lineMap = supplierOrderLines();
+        const rows = (draft.results || []).map(product => {
+            const multipleVariants = product.variants.length > 1;
+            const productHead = multipleVariants ? `
+                <tr class="supplier-order-product-head"><td colspan="4"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}</td></tr>
+            ` : '';
+            const variants = product.variants.map(variant => {
+                const line = lineMap.get(Number(variant.id)) || {
+                    variant_id: Number(variant.id), quantity: 0, unit_price_cents: null, subtotal_cents: null,
+                };
+                const quantity = Math.max(0, Number(line.quantity || 0));
+                const hasPrice = line.unit_price_cents != null;
+                const label = supplierOrderVariantLabel(product, variant);
+                const productCell = multipleVariants
+                    ? `<strong>${escapeHtml(label || 'Variante única')}</strong>`
+                    : `<strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}`;
+                const details = [
+                    label && !multipleVariants ? label : '',
+                    variant.sku ? `SKU: ${variant.sku}` : '',
+                    variant.barcode ? `Código: ${variant.barcode}` : '',
+                    `Stock actual: ${Number(variant.stock_on_hand)}`,
+                ].filter(Boolean).map(escapeHtml).join(' · ');
+                return `<tr class="supplier-order-line ${quantity > 0 && !hasPrice ? 'is-missing-price' : ''}" data-supplier-order-line="${Number(variant.id)}">
+                    <td><input type="number" min="0" max="1000000" step="1" inputmode="numeric" value="${quantity}" data-supplier-order-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
+                    <td class="supplier-order-product-cell">${productCell}<small>${details}</small></td>
+                    <td><input type="text" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" placeholder="Sin precio" data-supplier-order-price="${Number(variant.id)}" aria-label="Precio unitario de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
+                    <td class="supplier-order-subtotal" data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(quantity * Number(line.unit_price_cents)) : '—'}</td>
+                </tr>`;
+            }).join('');
+            return productHead + variants;
+        }).join('');
+        const summary = supplierOrderSummary();
+        draft.summary = summary;
+        const updated = draft.updated_at ? `Última modificación: ${escapeHtml(argentinaDateLabel(draft.updated_at))}` : 'Todavía no se guardó el pedido.';
+        elements.supplierOrderResults.innerHTML = rows ? `
+            <div class="supplier-order-table-wrap"><table class="supplier-order-table">
+                <thead><tr><th>CANTIDAD</th><th>PRODUCTO</th><th>PRECIO UNITARIO</th><th>SUBTOTAL</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table></div>
+            <div class="supplier-order-summary" id="supplier-order-summary">
+                <strong>TOTAL DEL PEDIDO: <span id="supplier-order-total">${supplierOrderMoney(summary.total_cents)}</span></strong>
+                <span id="supplier-order-units">${summary.total_units} unidades</span>
+                <span id="supplier-order-included">${summary.included_count} ${summary.included_count === 1 ? 'producto o variante incluido' : 'productos o variantes incluidos'}</span>
+                <span class="supplier-order-missing" id="supplier-order-missing" ${summary.missing_price_count ? '' : 'hidden'}></span>
+                <small id="supplier-order-updated">${updated}</small>
+            </div>` : `<p class="empty-copy">${draft.searched ? 'No encontramos productos con esos filtros y ese stock.' : 'Elegí los filtros y buscá productos para empezar el pedido.'}</p>`;
+        if (elements.supplierOrderPreview) elements.supplierOrderPreview.hidden = !state.supplierOrderPreviewOpen;
+        if (elements.supplierOrderWhatsappText) {
+            elements.supplierOrderWhatsappText.value = draft.whatsapp_edited ? String(draft.whatsapp_text || '') : supplierOrderWhatsappText();
+        }
+        updateSupplierOrderSummary();
+        supplierOrderStatus();
+    }
+
+    function updateSupplierOrderSummary() {
+        if (!state.supplierOrder) return;
+        const summary = supplierOrderSummary();
+        state.supplierOrder.summary = summary;
+        document.getElementById('supplier-order-total')?.replaceChildren(document.createTextNode(supplierOrderMoney(summary.total_cents)));
+        document.getElementById('supplier-order-units')?.replaceChildren(document.createTextNode(`${summary.total_units} unidades`));
+        document.getElementById('supplier-order-included')?.replaceChildren(document.createTextNode(`${summary.included_count} ${summary.included_count === 1 ? 'producto o variante incluido' : 'productos o variantes incluidos'}`));
+        const missing = document.getElementById('supplier-order-missing');
+        if (missing) {
+            missing.hidden = summary.missing_price_count === 0;
+            missing.textContent = `Falta cargar el precio de ${summary.missing_price_count} ${summary.missing_price_count === 1 ? 'producto' : 'productos'}`;
+        }
+        (state.supplierOrder.results || []).forEach(product => product.variants.forEach(variant => {
+            const line = supplierOrderLines().get(Number(variant.id));
+            const row = document.querySelector(`[data-supplier-order-line="${Number(variant.id)}"]`);
+            const subtotal = document.querySelector(`[data-supplier-order-subtotal="${Number(variant.id)}"]`);
+            if (!line || !subtotal) return;
+            const hasPrice = line.unit_price_cents != null;
+            subtotal.textContent = hasPrice ? supplierOrderMoney(line.quantity * Number(line.unit_price_cents)) : '—';
+            row?.classList.toggle('is-missing-price', line.quantity > 0 && !hasPrice);
+        }));
+        if (!state.supplierOrder.whatsapp_edited && elements.supplierOrderWhatsappText) {
+            elements.supplierOrderWhatsappText.value = supplierOrderWhatsappText();
+        }
+    }
+
+    function supplierOrderFiltersFromForm() {
+        return {
+            category_ids: Array.from(elements.supplierOrderCategories?.selectedOptions || []).map(option => Number(option.value)),
+            keywords: String(elements.supplierOrderKeywords?.value || '').trim(),
+            stock_threshold: Number(elements.supplierOrderThreshold?.value),
+        };
+    }
+
+    function supplierOrderPayload() {
+        const draft = state.supplierOrder || supplierOrderEmpty();
+        return {
+            filters: draft.filters,
+            results: (draft.results || []).map(product => ({
+                product_id: Number(product.id),
+                variants: product.variants.map(variant => ({ id: Number(variant.id) })),
+            })),
+            lines: (draft.lines || []).map(line => ({
+                variant_id: Number(line.variant_id),
+                quantity: Math.max(0, Number(line.quantity || 0)),
+                unit_price_cents: line.unit_price_cents == null ? null : Math.max(0, Number(line.unit_price_cents)),
+            })),
+            whatsapp_text: draft.whatsapp_edited ? String(draft.whatsapp_text || '') : supplierOrderWhatsappText(),
+            whatsapp_edited: Boolean(draft.whatsapp_edited),
+            searched: Boolean(draft.searched),
+        };
+    }
+
+    function queueSupplierOrderSave(delay = 650) {
+        if (!state.supplierOrderLoaded || !state.supplierOrder) return;
+        state.supplierOrderDirty = true;
+        state.supplierOrderStatus = 'saving';
+        supplierOrderStatus();
+        window.clearTimeout(state.supplierOrderSaveTimer);
+        state.supplierOrderSaveTimer = window.setTimeout(() => persistSupplierOrder(), delay);
+    }
+
+    async function persistSupplierOrder() {
+        if (!state.supplierOrderLoaded || !state.supplierOrder || state.supplierOrderSaving) return;
+        window.clearTimeout(state.supplierOrderSaveTimer);
+        state.supplierOrderDirty = false;
+        state.supplierOrderSaving = true;
+        state.supplierOrderStatus = 'saving';
+        supplierOrderStatus();
+        try {
+            state.supplierOrderSavePromise = apiPost({ action: 'supplier_order_save', draft: supplierOrderPayload() });
+            const response = await state.supplierOrderSavePromise;
+            state.supplierOrder.updated_at = response.draft?.updated_at || state.supplierOrder.updated_at;
+            state.supplierOrderStatus = 'saved';
+            document.getElementById('supplier-order-updated')?.replaceChildren(document.createTextNode(
+                `Última modificación: ${argentinaDateLabel(state.supplierOrder.updated_at)}`
+            ));
+        } catch (error) {
+            state.supplierOrderStatus = 'error';
+        } finally {
+            state.supplierOrderSaving = false;
+            state.supplierOrderSavePromise = null;
+            supplierOrderStatus();
+            if (state.supplierOrderDirty) queueSupplierOrderSave();
+        }
+    }
+
+    async function flushSupplierOrder() {
+        if (!state.supplierOrderLoaded || !state.supplierOrder) return;
+        if (state.supplierOrderSaving && state.supplierOrderSavePromise) {
+            await state.supplierOrderSavePromise.catch(() => {});
+        }
+        if (state.supplierOrderDirty) await persistSupplierOrder();
+    }
+
+    async function loadSupplierOrder() {
+        if (!elements.supplierOrderResults || app.user?.role !== 'admin' || state.supplierOrderLoaded) {
+            return;
+        }
+        try {
+            const response = await apiGet('supplier_order_draft');
+            state.supplierOrderCategories = response.categories || [];
+            state.supplierOrder = response.draft || supplierOrderEmpty();
+            state.supplierOrder.filters ||= { category_ids: [], keywords: '', stock_threshold: 1 };
+            state.supplierOrder.results ||= [];
+            state.supplierOrder.lines ||= [];
+            state.supplierOrder.whatsapp_edited = Boolean(state.supplierOrder.whatsapp_edited);
+            state.supplierOrder.searched = Boolean(state.supplierOrder.searched);
+            state.supplierOrderLoaded = true;
+            renderSupplierOrder();
+        } catch (error) {
+            state.supplierOrderStatus = 'error';
+            supplierOrderStatus();
+            toast(error.message);
+        }
+    }
+
+    async function searchSupplierOrder() {
+        if (!state.supplierOrderLoaded || !state.supplierOrder) return;
+        const filters = supplierOrderFiltersFromForm();
+        if (!Number.isInteger(filters.stock_threshold) || filters.stock_threshold < 0 || filters.stock_threshold > 1000000) {
+            toast('Ingresá un valor de stock válido.');
+            return;
+        }
+        try {
+            const response = await apiPost({ action: 'supplier_order_search', filters });
+            const priorLines = supplierOrderLines();
+            state.supplierOrder.filters = response.search.filters;
+            state.supplierOrder.results = response.search.results || [];
+            state.supplierOrder.lines = state.supplierOrder.results.flatMap(product => product.variants.map(variant => {
+                const prior = priorLines.get(Number(variant.id));
+                return prior || {
+                    variant_id: Number(variant.id),
+                    quantity: Math.max(0, Number(filters.stock_threshold) - Number(variant.stock_on_hand)),
+                    unit_price_cents: null,
+                    subtotal_cents: null,
+                };
+            }));
+            state.supplierOrder.searched = true;
+            if (!state.supplierOrder.whatsapp_edited) state.supplierOrder.whatsapp_text = supplierOrderWhatsappText();
+            renderSupplierOrder();
+            await persistSupplierOrder();
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    function updateSupplierOrderLine(variantId, changes) {
+        if (!state.supplierOrder) return;
+        const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === Number(variantId));
+        if (!line) return;
+        Object.assign(line, changes);
+        line.subtotal_cents = line.unit_price_cents == null ? null : Number(line.quantity) * Number(line.unit_price_cents);
+        if (!state.supplierOrder.whatsapp_edited) state.supplierOrder.whatsapp_text = supplierOrderWhatsappText();
+        updateSupplierOrderSummary();
+        queueSupplierOrderSave();
+    }
+
+    async function copySupplierOrder() {
+        const text = state.supplierOrder?.whatsapp_edited
+            ? String(state.supplierOrder.whatsapp_text || '')
+            : supplierOrderWhatsappText();
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const field = document.createElement('textarea');
+                field.value = text;
+                field.style.position = 'fixed';
+                field.style.opacity = '0';
+                document.body.appendChild(field);
+                field.select();
+                if (!document.execCommand('copy')) throw new Error('No se pudo copiar el pedido.');
+                field.remove();
+            }
+            toast('Pedido copiado. Ya podés pegarlo en WhatsApp.');
+        } catch (error) {
+            toast('No pudimos copiar el pedido. Copialo desde la vista previa.');
+        }
+    }
+
     async function loadCash() {
         if (!elements.cashContent) {
             return;
@@ -4664,6 +5013,10 @@
             event.preventDefault();
             saveSizeGuide(event.target);
         }
+        if (event.target.id === 'supplier-order-filters') {
+            event.preventDefault();
+            searchSupplierOrder();
+        }
         if (event.target.id === 'user-form') {
             event.preventDefault();
             saveUser(event.target);
@@ -4717,6 +5070,62 @@
     });
 
     document.addEventListener('click', async event => {
+        if (event.target.closest('[data-supplier-order-back]')) {
+            if (window.history.length > 1) window.history.back();
+            else showView('products');
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-preview]')) {
+            state.supplierOrderPreviewOpen = !state.supplierOrderPreviewOpen;
+            renderSupplierOrder();
+            if (state.supplierOrderPreviewOpen) {
+                window.requestAnimationFrame(() => elements.supplierOrderWhatsappText?.focus());
+            }
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-copy]')) {
+            copySupplierOrder();
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-retry]')) {
+            persistSupplierOrder();
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-reset-filters]')) {
+            if (!state.supplierOrder) return;
+            state.supplierOrder.filters = { category_ids: [], keywords: '', stock_threshold: 1 };
+            renderSupplierOrder();
+            queueSupplierOrderSave(0);
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-clear]')) {
+            openModal(`
+                <h2 id="modal-title">VACIAR PEDIDO</h2>
+                <p>¿Querés vaciar el pedido? Se eliminarán los productos, cantidades, precios y totales guardados. Esta acción no se puede deshacer.</p>
+                <div class="button-row">
+                    <button class="secondary-button" type="button" data-close-modal>CANCELAR</button>
+                    <button class="danger-button" type="button" data-supplier-order-confirm-clear>SÍ, VACIAR PEDIDO</button>
+                </div>
+            `);
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-confirm-clear]')) {
+            try {
+                await apiPost({ action: 'supplier_order_clear' });
+                window.clearTimeout(state.supplierOrderSaveTimer);
+                state.supplierOrder = supplierOrderEmpty();
+                state.supplierOrderLoaded = true;
+                state.supplierOrderDirty = false;
+                state.supplierOrderPreviewOpen = false;
+                state.supplierOrderStatus = '';
+                closeModal();
+                renderSupplierOrder();
+                toast('El pedido fue vaciado');
+            } catch (error) {
+                toast(error.message);
+            }
+            return;
+        }
         const editTutorial = event.target.closest('[data-edit-tutorial]');
         if (editTutorial) {
             const tutorial = state.tutorials.find(item => Number(item.id) === Number(editTutorial.dataset.editTutorial));
@@ -5569,6 +5978,49 @@
             reopenSelectedOrders(ids);
         }
     });
+    document.addEventListener('input', event => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
+        if (target.matches('[data-supplier-order-quantity]')) {
+            let quantity = Number(target.value);
+            if (!Number.isInteger(quantity) || quantity < 0) quantity = 0;
+            if (quantity > 1000000) quantity = 1000000;
+            if (target.value !== '' && Number(target.value) !== quantity) target.value = String(quantity);
+            updateSupplierOrderLine(Number(target.dataset.supplierOrderQuantity), { quantity });
+            return;
+        }
+        if (target.matches('[data-supplier-order-price]')) {
+            const raw = target.value.trim();
+            const normalized = raw.replace(',', '.');
+            let priceCents = null;
+            if (raw !== '') {
+                if (!/^\d+(?:\.\d{0,2})?$/.test(normalized)) return;
+                const value = Number(normalized);
+                if (!Number.isFinite(value) || value < 0 || value > 9999999.99) return;
+                priceCents = Math.round(value * 100);
+            }
+            updateSupplierOrderLine(Number(target.dataset.supplierOrderPrice), { unit_price_cents: priceCents });
+            return;
+        }
+        if (target === elements.supplierOrderKeywords || target === elements.supplierOrderThreshold) {
+            if (!state.supplierOrder) return;
+            state.supplierOrder.filters = supplierOrderFiltersFromForm();
+            queueSupplierOrderSave();
+            return;
+        }
+        if (target === elements.supplierOrderWhatsappText) {
+            if (!state.supplierOrder) return;
+            state.supplierOrder.whatsapp_edited = true;
+            state.supplierOrder.whatsapp_text = target.value;
+            queueSupplierOrderSave();
+        }
+    });
+    elements.supplierOrderCategories?.addEventListener('change', () => {
+        if (!state.supplierOrder) return;
+        state.supplierOrder.filters = supplierOrderFiltersFromForm();
+        queueSupplierOrderSave();
+    });
+
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;
         state.posProductId = null;
@@ -5637,6 +6089,15 @@
     }, true);
     document.addEventListener('keydown', event => {
         if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && state.view === 'supplier-order'
+            && state.supplierOrderPreviewOpen
+        ) {
+            event.preventDefault();
+            state.supplierOrderPreviewOpen = false;
+            renderSupplierOrder();
+        } else if (
             event.key === 'Escape'
             && !event.defaultPrevented
             && elements.modal?.classList.contains('open')
@@ -5906,6 +6367,7 @@
     });
     document.getElementById('logout-button')?.addEventListener('click', async () => {
         try {
+            await flushSupplierOrder();
             await apiPost({ action: 'logout' });
             window.location.reload();
         } catch (error) {
@@ -5993,6 +6455,19 @@
             if (!state.sizeGuideDirty) return;
             event.preventDefault();
             event.returnValue = '';
+        });
+        window.addEventListener('pagehide', () => {
+            if (!state.supplierOrderLoaded || !state.supplierOrder || !state.supplierOrderDirty) return;
+            fetch(app.api_url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': app.csrf_token },
+                body: JSON.stringify({
+                    action: 'supplier_order_save',
+                    draft: supplierOrderPayload(),
+                    csrf_token: app.csrf_token,
+                }),
+                keepalive: true,
+            }).catch(() => {});
         });
     }
 })();

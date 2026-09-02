@@ -2393,6 +2393,96 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     .size-guide-table-wrap { margin: 0 -1px; }
 }
 
+/* Pedido a proveedor: borrador operativo, separado del stock y de los precios de venta. */
+.supplier-order-heading { align-items: center; }
+.supplier-order-actions,
+.supplier-order-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.supplier-order-actions { justify-content: flex-end; }
+.supplier-order-actions .primary-button,
+.supplier-order-filter-actions .primary-button { min-height: 46px; border-radius: 10px; }
+.supplier-order-filter-actions .primary-button { border-color: #1769e0; background: #1769e0; color: #fff; }
+.supplier-order-filter-actions .primary-button:hover { border-color: #1459bd; background: #1459bd; }
+.supplier-order-filters {
+    display: grid;
+    grid-template-columns: minmax(210px, 1fr) minmax(220px, 1.4fr) minmax(200px, .85fr) auto;
+    gap: 14px;
+    align-items: end;
+    margin-bottom: 10px;
+    padding: 16px;
+    border: 1px solid #e2e6ef;
+    border-radius: 14px;
+    background: #fff;
+}
+.supplier-order-filters label { display: grid; gap: 7px; color: #596176; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+.supplier-order-filters input,
+.supplier-order-filters select,
+.supplier-order-preview textarea {
+    width: 100%;
+    border: 1px solid #cfd7e4;
+    border-radius: 8px;
+    background: #fff;
+    color: #252a3a;
+    font: inherit;
+}
+.supplier-order-filters input { min-height: 40px; padding: 8px 10px; }
+.supplier-order-filters select { min-height: 122px; padding: 5px; }
+.supplier-order-filters option { padding: 4px 7px; }
+.supplier-order-filter-actions { align-self: end; }
+.supplier-order-status { min-height: 19px; margin: 0 0 12px; color: #6d7587; font-size: 13px; }
+.supplier-order-status button { margin-left: 4px; padding: 0; border: 0; background: transparent; color: #4d40bd; font: inherit; font-weight: 750; cursor: pointer; text-decoration: underline; }
+.supplier-order-table-wrap { overflow-x: auto; border: 1px solid #e2e6ef; border-radius: 14px; background: #fff; }
+.supplier-order-table { width: 100%; min-width: 760px; border-collapse: collapse; }
+.supplier-order-table th { padding: 12px 14px; border-bottom: 1px solid #dfe4ec; color: #687386; font-size: 11px; letter-spacing: .045em; text-align: left; }
+.supplier-order-table td { padding: 12px 14px; border-bottom: 1px solid #edf0f5; vertical-align: middle; }
+.supplier-order-table tbody tr:last-child td { border-bottom: 0; }
+.supplier-order-product-head td { padding: 13px 14px 8px; border-bottom: 1px solid #edf0f5; background: #f7f8fc; color: #252a3a; }
+.supplier-order-product-head strong { font-size: 15px; }
+.supplier-order-product-cell strong { color: #252a3a; font-size: 14px; }
+.supplier-order-product-cell small { display: block; margin-top: 4px; color: #778195; font-size: 11px; }
+.supplier-order-hidden { display: inline-block; margin-left: 7px; padding: 2px 6px; border-radius: 999px; background: #f0edf8; color: #715da7; font-size: 10px; font-weight: 750; vertical-align: middle; }
+.supplier-order-line input { min-height: 38px; padding: 6px 8px; border: 1px solid #cfd7e4; border-radius: 8px; background: #fff; color: #252a3a; font: inherit; }
+.supplier-order-line td:first-child input { width: 76px; text-align: center; }
+.supplier-order-line td:nth-child(3) input { width: 135px; }
+.supplier-order-line.is-missing-price { background: #fff9ec; }
+.supplier-order-line.is-missing-price td:nth-child(3) input { border-color: #d69a32; }
+.supplier-order-subtotal { color: #252a3a; font-variant-numeric: tabular-nums; font-weight: 750; white-space: nowrap; }
+.supplier-order-summary {
+    position: sticky;
+    bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin-top: 14px;
+    padding: 15px 16px;
+    border: 1px solid #d8dcf5;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(46, 54, 91, .10);
+    color: #5d6678;
+    font-size: 13px;
+}
+.supplier-order-summary > strong { color: #252a3a; font-size: 17px; }
+.supplier-order-summary > small { width: 100%; color: #7a8293; }
+.supplier-order-missing { color: #a25d0d; font-weight: 750; }
+.supplier-order-preview { display: grid; gap: 12px; margin-top: 14px; padding: 18px; border: 1px solid #d8dcf5; border-radius: 14px; background: #fff; }
+.supplier-order-preview h2 { margin: 0; color: #252a3a; font-size: 19px; }
+.supplier-order-preview .eyebrow { margin: 0 0 4px; }
+.supplier-order-preview textarea { min-height: 180px; padding: 11px; line-height: 1.45; resize: vertical; }
+
+@media (max-width: 1120px) {
+    .supplier-order-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 680px) {
+    .supplier-order-heading { display: block; }
+    .supplier-order-actions { justify-content: flex-start; margin-top: 14px; }
+    .supplier-order-actions .fit-button { width: 100%; }
+    .supplier-order-filters { grid-template-columns: 1fr; }
+    .supplier-order-filter-actions { display: grid; grid-template-columns: 1fr; }
+    .supplier-order-summary { position: static; align-items: flex-start; flex-direction: column; gap: 6px; }
+}
+
 @media (max-width: 560px) {
     .size-guide-editor {
         padding: 14px;
@@ -2417,6 +2507,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .admin-brand small, .admin-user small { color: #7a8293; }
 .admin-nav-button { border-radius: 10px; color: #596176; font-size: 14px; font-weight: 650; }
 .admin-nav-button:hover, .admin-nav-button.active { background: #f0efff; color: #5b4fc7; }
+.admin-nav-products { display: grid; gap: 2px; }
+.admin-nav-products .admin-nav-subitem { padding-left: 22px; font-size: 13px; }
 .admin-main { background: #f6f7fb; }
 .view-heading h1 { color: #242a3a; font-size: clamp(30px, 3.2vw, 42px); }
 .view-heading p:last-child { color: #798195; }
