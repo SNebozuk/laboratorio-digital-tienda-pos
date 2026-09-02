@@ -4604,7 +4604,15 @@
         }
     }
 
+    function syncSupplierOrderCategoryChoices() {
+        const selected = new Set((state.supplierOrder?.filters?.category_ids || []).map(Number));
+        elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]').forEach(input => {
+            input.checked = selected.has(Number(input.value));
+        });
+    }
+
     function setSupplierOrderCategoriesOpen(open, focus = false) {
+        syncSupplierOrderCategoryChoices();
         state.supplierOrderCategoriesOpen = open;
         if (elements.supplierOrderCategoriesPopover) elements.supplierOrderCategoriesPopover.hidden = !open;
         elements.supplierOrderCategoriesTrigger?.setAttribute('aria-expanded', String(open));
@@ -5097,6 +5105,16 @@
             return;
         }
         if (event.target.closest('[data-close-supplier-order-categories]')) {
+            setSupplierOrderCategoriesOpen(false, true);
+            return;
+        }
+        if (event.target.closest('[data-apply-supplier-order-categories]')) {
+            if (!state.supplierOrder) return;
+            state.supplierOrder.filters = {
+                ...state.supplierOrder.filters,
+                category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
+            };
+            queueSupplierOrderSave();
             setSupplierOrderCategoriesOpen(false, true);
             return;
         }
@@ -6045,12 +6063,6 @@
             queueSupplierOrderSave();
         }
     });
-    elements.supplierOrderCategories?.addEventListener('change', () => {
-        if (!state.supplierOrder) return;
-        state.supplierOrder.filters = supplierOrderFiltersFromForm();
-        queueSupplierOrderSave();
-    });
-
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;
         state.posProductId = null;

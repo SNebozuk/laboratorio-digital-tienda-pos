@@ -263,6 +263,7 @@ header('Referrer-Policy: same-origin');
                                         </header>
                                         <p>Podés elegir más de una categoría.</p>
                                         <div id="supplier-order-categories" class="supplier-order-category-list" role="group" aria-label="Categorías"></div>
+                                        <footer><button class="primary-button fit-button" type="button" data-apply-supplier-order-categories>APLICAR</button></footer>
                                     </section>
                                 </div>
                             </div>

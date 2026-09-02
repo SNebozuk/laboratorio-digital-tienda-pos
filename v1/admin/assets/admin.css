@@ -2435,6 +2435,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-category-dialog .eyebrow { margin: 0; }
 .supplier-order-category-dialog > p { margin: 7px 0 14px; color: #70798b; font-size: 13px; }
 .supplier-order-category-list { display: grid; max-height: min(460px, calc(100vh - 220px)); overflow-y: auto; padding: 6px; border: 1px solid #dce1ec; border-radius: 10px; background: #f8f9fc; }
+.supplier-order-category-dialog footer { display: flex; justify-content: flex-end; margin-top: 14px; }
+.supplier-order-category-dialog footer .primary-button { height: 46px; min-height: 46px; padding: 0 18px; border: 1px solid #1769e0; border-radius: 10px; background: #1769e0; color: #fff; }
+.supplier-order-category-dialog footer .primary-button:hover { border-color: #1459bd; background: #1459bd; }
 .supplier-order-category-option { display: flex !important; align-items: center; gap: 8px; min-height: 29px; padding: 4px 7px 4px calc(7px + var(--supplier-category-depth) * 14px); border-radius: 6px; color: #4b5568 !important; font-size: 12px !important; font-weight: 650 !important; letter-spacing: 0 !important; cursor: pointer; }
 .supplier-order-category-option:hover { background: #f4f7fb; }
 .supplier-order-category-option input { position: absolute; width: 1px; min-height: 1px; padding: 0; opacity: 0; }
