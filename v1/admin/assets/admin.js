@@ -3081,7 +3081,7 @@
                 ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
                 <span class="order-detail-quantity">${Number(item.quantity)}</span>
                 <span class="order-detail-product-name">${escapeHtml(item.product_name || 'Producto')}</span>
-                <span class="order-detail-variant-name">${fold(item.variant_name) === 'unica' ? 'SIN VARIANTE' : escapeHtml(item.variant_name || 'SIN VARIANTE')}</span>
+                <span class="order-detail-variant-name">${fold(item.variant_name) === 'unica' ? '' : escapeHtml(item.variant_name || '')}</span>
                 <span class="order-detail-item-price">${money(item.unit_price_cents)}</span>
             </div>
         `).join('')}</div>`;

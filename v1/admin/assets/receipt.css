@@ -74,7 +74,7 @@ dd {
     break-inside: avoid;
     page-break-inside: avoid;
 }
-.receipt-item:nth-child(odd) { background: #f4b6cf; }
+.receipt-item:nth-child(odd) { background: #f2edf0; }
 .receipt-item:nth-child(even) { background: #fff; }
 .receipt-item > * { min-width: 0; color: inherit; font: inherit; }
 .receipt-item-image,

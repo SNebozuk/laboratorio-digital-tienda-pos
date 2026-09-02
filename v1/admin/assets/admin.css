@@ -1718,7 +1718,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     line-height: 1.2;
     text-transform: uppercase;
 }
-.order-detail-item-row:nth-child(odd) { background: #f4b6cf; }
+.order-detail-item-row:nth-child(odd) { background: #f2edf0; }
 .order-detail-item-row:nth-child(even) { background: #fff; }
 .order-detail-item-row > * { min-width: 0; color: inherit; font: inherit; }
 .order-detail-item-row img,
