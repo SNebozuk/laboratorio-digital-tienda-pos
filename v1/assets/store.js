@@ -14,6 +14,21 @@
         const color = String(design[key] || '');
         if (/^#[0-9a-f]{6}$/i.test(color)) document.documentElement.style.setProperty(variable, color);
     });
+    const textLogo = document.querySelector('.store-text-logo');
+    if (textLogo) {
+        const fontStacks = {
+            'Arial': 'Arial, sans-serif', 'Helvetica': 'Helvetica, Arial, sans-serif', 'Verdana': 'Verdana, sans-serif',
+            'Georgia': 'Georgia, serif', 'Times New Roman': '"Times New Roman", serif', 'Trebuchet MS': '"Trebuchet MS", sans-serif',
+            'Montserrat': 'Montserrat, Arial, sans-serif', 'Roboto': 'Roboto, Arial, sans-serif', 'Poppins': 'Poppins, Arial, sans-serif',
+            'Oswald': 'Oswald, Arial, sans-serif', 'Inter': 'Inter, Arial, sans-serif', 'Bebas Neue': '"Bebas Neue", Arial, sans-serif',
+        };
+        const size = String(design.logo_size || '24');
+        const color = String(design.logo_color || '');
+        textLogo.style.fontFamily = fontStacks[design.logo_font] || fontStacks.Montserrat;
+        textLogo.style.fontSize = ['16', '20', '24', '28', '32', '36'].includes(size) ? `${size}px` : '24px';
+        if (/^#[0-9a-f]{6}$/i.test(color)) textLogo.style.color = color;
+        textLogo.style.fontWeight = ['1', 'true', 'on'].includes(String(design.logo_bold || '1')) ? '700' : '400';
+    }
     const cartMaintenanceEnabled = app.cart_maintenance_enabled === true || String(app.cart_maintenance_enabled) === '1';
     let products = Array.isArray(app.products) ? app.products : [];
     let categoryTree = Array.isArray(app.categories) ? app.categories : [];

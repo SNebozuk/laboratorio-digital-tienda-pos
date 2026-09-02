@@ -126,6 +126,16 @@ final class SettingsService
             'hero_link' => '',
             'logo_path' => '/v1/assets/brand/logo-laboratorio-digital.png',
             'logo_link' => '',
+            'logo_mode' => 'image',
+            'logo_text' => 'Laboratorio Digital',
+            'logo_font' => 'Montserrat',
+            'logo_size' => '24',
+            'logo_color' => '#2a1d3c',
+            'logo_bold' => '1',
+            'favicon_text' => 'LD',
+            'favicon_font' => 'Arial',
+            'favicon_background_color' => '#7652b8',
+            'favicon_text_color' => '#ffffff',
             'hero_1_path' => '/v1/assets/brand/hero-1.webp',
             'hero_2_path' => '/v1/assets/brand/hero-2.webp',
             'hero_3_path' => '/v1/assets/brand/hero-3.webp',
@@ -251,11 +261,46 @@ final class SettingsService
     {
         $current = $this->design();
         $values = [];
-        foreach (['hero_badge' => 120, 'hero_title' => 160, 'hero_text' => 500] as $key => $limit) {
+        foreach (['hero_badge' => 120, 'hero_title' => 160, 'hero_text' => 500, 'logo_text' => 80] as $key => $limit) {
             $value = trim((string) ($data[$key] ?? $current[$key]));
-            if ($value === '' || strlen($value) > $limit) throw new ValidationException('Revisá el texto de diseño: ' . $key . '.');
+            if (($key !== 'logo_text' && $value === '') || strlen($value) > $limit) throw new ValidationException('Revisá el texto de diseño: ' . $key . '.');
             $values[$key] = $value;
         }
+        $logoMode = (string) ($data['logo_mode'] ?? $current['logo_mode']);
+        if (!in_array($logoMode, ['image', 'text'], true)) {
+            throw new ValidationException('Elegí el tipo de logo para el encabezado.');
+        }
+        if ($logoMode === 'text' && $values['logo_text'] === '') {
+            throw new ValidationException('Indicá el nombre de la empresa para el logo textual.');
+        }
+        $values['logo_mode'] = $logoMode;
+        $fontFamilies = ['Arial', 'Helvetica', 'Verdana', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Montserrat', 'Roboto', 'Poppins', 'Oswald', 'Inter', 'Bebas Neue'];
+        foreach (['logo_font', 'favicon_font'] as $key) {
+            $font = (string) ($data[$key] ?? $current[$key]);
+            if (!in_array($font, $fontFamilies, true)) {
+                throw new ValidationException('Elegí una tipografía válida.');
+            }
+            $values[$key] = $font;
+        }
+        $logoSize = (string) ($data['logo_size'] ?? $current['logo_size']);
+        if (!in_array($logoSize, ['16', '20', '24', '28', '32', '36'], true)) {
+            throw new ValidationException('Elegí un tamaño válido para el logo textual.');
+        }
+        $values['logo_size'] = $logoSize;
+        foreach (['logo_color', 'favicon_background_color', 'favicon_text_color'] as $key) {
+            $color = strtolower(trim((string) ($data[$key] ?? $current[$key])));
+            if (!preg_match('/^#[0-9a-f]{6}$/', $color)) {
+                throw new ValidationException('Elegí colores válidos para la identidad visual.');
+            }
+            $values[$key] = $color;
+        }
+        $faviconText = trim((string) ($data['favicon_text'] ?? $current['favicon_text']));
+        $faviconCharacterCount = preg_match_all('/./u', $faviconText);
+        if ($faviconText === '' || $faviconCharacterCount === false || $faviconCharacterCount > 2) {
+            throw new ValidationException('El texto del favicon debe tener hasta 2 caracteres.');
+        }
+        $values['favicon_text'] = $faviconText;
+        $values['logo_bold'] = in_array((string) ($data['logo_bold'] ?? $current['logo_bold']), ['1', 'true', 'on'], true) ? '1' : '0';
         foreach (['hero_link', 'logo_link'] as $key) {
             $value = trim((string) ($data[$key] ?? $current[$key]));
             if ($value !== '' && !preg_match('#^(https?://|/)#i', $value)) throw new ValidationException('Los enlaces deben comenzar con https:// o /.');

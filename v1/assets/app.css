@@ -522,6 +522,20 @@ button:disabled {
     object-position: left center;
 }
 
+.store-text-logo {
+    display: block;
+    max-width: min(310px, 34vw);
+    overflow: hidden;
+    color: var(--store-logo-color, var(--text));
+    font-family: var(--store-logo-font, Arial, sans-serif);
+    font-size: var(--store-logo-size, 24px);
+    font-weight: var(--store-logo-weight, 700);
+    letter-spacing: normal;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .brand:has(.brand-logo[src*="/uploads/"]) {
     overflow: hidden;
 }
@@ -3568,6 +3582,7 @@ body.category-menu-open .category-panel {
     .brand-logo { display: block !important; width: min(108px, 31vw) !important; height: 30px !important; object-position: left center !important; }
     .brand-logo[src*="/uploads/"] { transform: translateX(24px) scale(2) !important; }
     .brand > span:not(.brand-logo) { display: none !important; }
+    .brand > .store-text-logo { display:block !important; max-width:31vw; }
     .header-actions { flex: 0 0 auto; gap: 4px !important; }
     .header-link { display: inline-flex !important; align-items: center; padding: 7px 6px !important; font-size: 9px !important; letter-spacing: 0 !important; white-space: nowrap; }
     .header-link-long { display: none; }

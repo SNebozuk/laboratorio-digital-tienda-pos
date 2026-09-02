@@ -31,7 +31,6 @@ $assetVersion = substr(hash('sha256',
     . (string) @file_get_contents(__DIR__ . '/assets/pulga.js')
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
 ), 0, 12);
-$brandAssetVersion = '20260826';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $quoteUrl = $storePath . '/cotizador.php';
@@ -44,6 +43,9 @@ $mapUrl = $pickupAddress === '' ? '' : 'https://www.google.com/maps/search/?api=
 $cartMaintenanceEnabled = in_array((string) ($publicSettings['cart_maintenance_enabled'] ?? '0'), ['1', 'true', 'on'], true);
 $featuredProductIds = $app['settings']->featuredProductIds();
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+$logoIsText = ($design['logo_mode'] ?? 'image') === 'text' && trim((string) ($design['logo_text'] ?? '')) !== '';
+$logoText = trim((string) ($design['logo_text'] ?? '')) ?: 'Laboratorio Digital';
+$logoHref = trim((string) ($design['logo_link'] ?? '')) ?: $storeUrl;
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
 header('X-Content-Type-Options: nosniff');
@@ -56,7 +58,7 @@ header('Referrer-Policy: same-origin');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="<?= $escape((string) ($design['color_background'] ?? '#f7faf7')) ?>">
     <title>Laboratorio Digital · Catálogo mayorista</title>
-    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png?v=<?= $brandAssetVersion ?>" type="image/png">
+    <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
 </head>
@@ -66,6 +68,13 @@ header('Referrer-Policy: same-origin');
             <button class="catalog-menu-button" id="catalog-menu-button" type="button" aria-expanded="false" aria-controls="category-panel">
                 <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
+            <a class="brand store-brand" href="<?= $escape($logoHref) ?>" aria-label="<?= $escape($logoText) ?>">
+                <?php if ($logoIsText): ?>
+                    <span class="store-text-logo"><?= $escape($logoText) ?></span>
+                <?php else: ?>
+                    <img class="brand-logo" src="<?= $escape((string) $design['logo_path']) ?>" alt="<?= $escape($logoText) ?>">
+                <?php endif ?>
+            </a>
         </div>
         <div class="header-actions">
             <?php if ($quoteEnabled): ?><a class="header-link header-quote-link" href="<?= $escape($quoteUrl) ?>">COTIZADOR</a><?php endif ?>

@@ -71,7 +71,7 @@ if ($isCashOrder && in_array($order['status'], ['pending_payment', 'ready_pickup
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="assets/favicon.png?v=20260826" type="image/png">
+    <link rel="icon" href="favicon.php" type="image/svg+xml">
     <meta name="theme-color" content="#f7faf7">
     <title>Seguimiento de pedido · Laboratorio Digital</title>
     <link rel="stylesheet" href="assets/app.css">

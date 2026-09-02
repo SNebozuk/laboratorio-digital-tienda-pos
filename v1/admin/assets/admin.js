@@ -4198,8 +4198,23 @@
         const form = document.getElementById('design-form');
         const preview = document.getElementById('design-live-preview');
         if (!form || !preview) return;
+        const fontStacks = {
+            'Arial': 'Arial, sans-serif',
+            'Helvetica': 'Helvetica, Arial, sans-serif',
+            'Verdana': 'Verdana, sans-serif',
+            'Georgia': 'Georgia, serif',
+            'Times New Roman': '"Times New Roman", serif',
+            'Trebuchet MS': '"Trebuchet MS", sans-serif',
+            'Montserrat': 'Montserrat, Arial, sans-serif',
+            'Roboto': 'Roboto, Arial, sans-serif',
+            'Poppins': 'Poppins, Arial, sans-serif',
+            'Oswald': 'Oswald, Arial, sans-serif',
+            'Inter': 'Inter, Arial, sans-serif',
+            'Bebas Neue': '"Bebas Neue", Arial, sans-serif',
+        };
         const value = name => String(form.elements.namedItem(name)?.value || '');
         const checked = name => Boolean(form.elements.namedItem(name)?.checked);
+        const fontStack = name => fontStacks[value(name)] || fontStacks.Montserrat;
         const setText = (id, text) => {
             const element = document.getElementById(id);
             if (element) element.textContent = text;
@@ -4220,7 +4235,39 @@
         setText('design-preview-badge', value('hero_badge'));
         setText('design-preview-title', value('hero_title'));
         setText('design-preview-text', value('hero_text'));
-        setImage('design-preview-logo', 'design-logo-preview');
+        const usesTextLogo = value('logo_mode') === 'text';
+        const imageLogo = document.getElementById('design-preview-logo');
+        const textLogo = document.getElementById('design-preview-text-logo');
+        if (usesTextLogo) {
+            if (imageLogo) imageLogo.hidden = true;
+            if (textLogo) {
+                textLogo.hidden = false;
+                textLogo.textContent = value('logo_text') || 'Nombre de la empresa';
+                textLogo.style.fontFamily = fontStack('logo_font');
+                textLogo.style.fontSize = `${value('logo_size') || 24}px`;
+                textLogo.style.color = value('logo_color');
+                textLogo.style.fontWeight = checked('logo_bold') ? '700' : '400';
+            }
+        } else {
+            if (textLogo) textLogo.hidden = true;
+            setImage('design-preview-logo', 'design-logo-preview');
+        }
+        const textLogoPreview = document.getElementById('design-text-logo-preview');
+        if (textLogoPreview) {
+            textLogoPreview.textContent = value('logo_text') || 'Nombre de la empresa';
+            textLogoPreview.style.fontFamily = fontStack('logo_font');
+            textLogoPreview.style.fontSize = `${value('logo_size') || 24}px`;
+            textLogoPreview.style.color = value('logo_color');
+            textLogoPreview.style.fontWeight = checked('logo_bold') ? '700' : '400';
+        }
+        const faviconPreview = document.getElementById('design-favicon-preview');
+        if (faviconPreview) {
+            faviconPreview.textContent = value('favicon_text') || 'LD';
+            faviconPreview.style.fontFamily = fontStack('favicon_font');
+            faviconPreview.style.backgroundColor = value('favicon_background_color');
+            faviconPreview.style.color = value('favicon_text_color');
+        }
+        form.querySelectorAll('.font-family-select').forEach(select => { select.style.fontFamily = fontStacks[select.value] || fontStacks.Montserrat; });
         [1, 2, 3].forEach(number => setImage(`design-preview-hero-${number}`, `design-hero-${number}-preview`));
 
         const klaus = document.getElementById('design-preview-klaus');
@@ -4285,7 +4332,7 @@
             form.elements.namedItem('section_order').value = sections.map(item => item.dataset.designSection).join(',');
             form.elements.namedItem('section_visibility').value = sections.filter(item => !item.classList.contains('is-hidden')).map(item => item.dataset.designSection).join(',');
             const data = new FormData(form);
-            ['mascot_klaus_enabled', 'mascot_klaus_animations_enabled', 'mascot_pulga_enabled', 'mascot_pulga_animations_enabled'].forEach(key => {
+            ['logo_bold', 'mascot_klaus_enabled', 'mascot_klaus_animations_enabled', 'mascot_pulga_enabled', 'mascot_pulga_animations_enabled'].forEach(key => {
                 data.set(key, form.elements.namedItem(key)?.checked ? '1' : '0');
             });
             data.delete('logo_file');

@@ -31,7 +31,7 @@ header('Referrer-Policy: same-origin');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#050505">
     <title>Laboratorio Digital · Administración</title>
-    <link rel="icon" href="<?= $escape($storeAssetPath) ?>/favicon.png?v=20260826" type="image/png">
+    <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($appCssVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($adminCssVersion) ?>">
 </head>
@@ -140,10 +140,38 @@ header('Referrer-Policy: same-origin');
                                 <label>ENLACE DEL TÍTULO<input name="hero_link" placeholder="https://... o /v1/"></label>
                             </section>
                             <section data-design-editor-section="branding" hidden>
-                                <label>ENLACE DEL LOGO<input name="logo_link" placeholder="https://... o /v1/"></label>
-                                <label>REEMPLAZAR LOGO<input name="logo_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="logo_path" type="hidden"></label>
-                                <button id="restore-default-logo" class="secondary-button" type="button">USAR LOGO ORIGINAL</button>
-                                <img id="design-logo-preview" class="admin-sidebar-design-image" alt="Vista previa del logo">
+                                <div class="design-branding">
+                                    <div><strong>LOGO EN EL ENCABEZADO</strong><small>Elegí conservar el logo imagen o mostrar el nombre de tu empresa.</small></div>
+                                    <div class="design-logo-mode">
+                                        <label><input name="logo_mode" type="radio" value="image">Logo imagen</label>
+                                        <label><input name="logo_mode" type="radio" value="text">Logo textual</label>
+                                    </div>
+                                    <label>NOMBRE DE LA EMPRESA<input name="logo_text" maxlength="80" placeholder="Nombre de la empresa"></label>
+                                    <label>TIPOGRAFÍA<select name="logo_font" class="font-family-select">
+                                        <option value="Arial" style="font-family:Arial,sans-serif">Arial</option><option value="Helvetica" style="font-family:Helvetica,Arial,sans-serif">Helvetica</option><option value="Verdana" style="font-family:Verdana,sans-serif">Verdana</option><option value="Georgia" style="font-family:Georgia,serif">Georgia</option><option value="Times New Roman" style="font-family:'Times New Roman',serif">Times New Roman</option><option value="Trebuchet MS" style="font-family:'Trebuchet MS',sans-serif">Trebuchet MS</option><option value="Montserrat" style="font-family:Montserrat,Arial,sans-serif">Montserrat</option><option value="Roboto" style="font-family:Roboto,Arial,sans-serif">Roboto</option><option value="Poppins" style="font-family:Poppins,Arial,sans-serif">Poppins</option><option value="Oswald" style="font-family:Oswald,Arial,sans-serif">Oswald</option><option value="Inter" style="font-family:Inter,Arial,sans-serif">Inter</option><option value="Bebas Neue" style="font-family:'Bebas Neue',Arial,sans-serif">Bebas Neue</option>
+                                    </select></label>
+                                    <label>TAMAÑO<select name="logo_size"><option value="16">16 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option><option value="32">32 px</option><option value="36">36 px</option></select></label>
+                                    <label>COLOR DEL TEXTO<input name="logo_color" type="color"></label>
+                                    <label class="checkbox-setting"><input name="logo_bold" type="checkbox" value="1"><span><strong>Negrita</strong></span></label>
+                                    <output class="design-text-logo-preview" id="design-text-logo-preview" aria-label="Vista previa del logo textual"></output>
+                                </div>
+                                <div class="design-branding">
+                                    <div><strong>LOGO IMAGEN</strong><small>El archivo se conserva aunque actives el logo textual.</small></div>
+                                    <label>ENLACE DEL LOGO<input name="logo_link" placeholder="https://... o /v1/"></label>
+                                    <label>REEMPLAZAR LOGO<input name="logo_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="logo_path" type="hidden"></label>
+                                    <button id="restore-default-logo" class="secondary-button" type="button">USAR LOGO ORIGINAL</button>
+                                    <img id="design-logo-preview" class="admin-sidebar-design-image" alt="Vista previa del logo imagen">
+                                </div>
+                                <div class="design-branding">
+                                    <div><strong>FAVICON</strong><small>Se genera automáticamente como SVG para toda la tienda.</small></div>
+                                    <label>TEXTO (MÁXIMO 2 CARACTERES)<input name="favicon_text" maxlength="2" required></label>
+                                    <label>TIPOGRAFÍA<select name="favicon_font" class="font-family-select">
+                                        <option value="Arial" style="font-family:Arial,sans-serif">Arial</option><option value="Helvetica" style="font-family:Helvetica,Arial,sans-serif">Helvetica</option><option value="Verdana" style="font-family:Verdana,sans-serif">Verdana</option><option value="Georgia" style="font-family:Georgia,serif">Georgia</option><option value="Times New Roman" style="font-family:'Times New Roman',serif">Times New Roman</option><option value="Trebuchet MS" style="font-family:'Trebuchet MS',sans-serif">Trebuchet MS</option><option value="Montserrat" style="font-family:Montserrat,Arial,sans-serif">Montserrat</option><option value="Roboto" style="font-family:Roboto,Arial,sans-serif">Roboto</option><option value="Poppins" style="font-family:Poppins,Arial,sans-serif">Poppins</option><option value="Oswald" style="font-family:Oswald,Arial,sans-serif">Oswald</option><option value="Inter" style="font-family:Inter,Arial,sans-serif">Inter</option><option value="Bebas Neue" style="font-family:'Bebas Neue',Arial,sans-serif">Bebas Neue</option>
+                                    </select></label>
+                                    <label>COLOR DE FONDO<input name="favicon_background_color" type="color"></label>
+                                    <label>COLOR DEL TEXTO<input name="favicon_text_color" type="color"></label>
+                                    <output class="design-favicon-preview" id="design-favicon-preview" aria-label="Vista previa del favicon"></output>
+                                </div>
                             </section>
                             <section data-design-editor-section="gallery" hidden>
                                 <label>FOTO 1<input name="hero_1_file" type="file" accept="image/jpeg,image/png,image/webp"><input name="hero_1_path" type="hidden"><img id="design-hero-1-preview" class="admin-sidebar-design-image" alt="Foto publicada 1"></label>
@@ -365,7 +393,7 @@ header('Referrer-Policy: same-origin');
                     <section class="admin-view" id="view-design">
                         <div class="view-heading"><div><p class="eyebrow">VISTA PREVIA EN TIEMPO REAL</p><h1 class="admin-page-title">DISEÑO</h1><p>Elegí una opción en el menú lateral y mirá el resultado antes de guardar.</p></div><a class="secondary-button fit-button" href="<?= $escape($storeUrl) ?>" target="_blank" rel="noopener">ABRIR TIENDA</a></div>
                         <div class="design-live-preview" id="design-live-preview">
-                            <header class="design-preview-header"><img id="design-preview-logo" alt="Logo de la tienda"><span>MENÚ</span><span>CARRITO</span></header>
+                            <header class="design-preview-header"><img id="design-preview-logo" alt="Logo de la tienda"><span class="design-preview-text-logo" id="design-preview-text-logo" hidden></span><span>MENÚ</span><span>CARRITO</span></header>
                             <section class="design-preview-hero"><p id="design-preview-badge"></p><h2 id="design-preview-title"></h2><p id="design-preview-text"></p></section>
                             <main class="design-preview-sections" id="design-preview-sections">
                                 <section data-design-preview-section="featured"><strong>PRODUCTOS DESTACADOS</strong><div class="design-preview-card-grid"><span></span><span></span><span></span></div></section>

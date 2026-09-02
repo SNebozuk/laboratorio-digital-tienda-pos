@@ -7,7 +7,6 @@ $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'),
 $storePath = $storePath === '/' ? '' : $storePath;
 $assetPath = $storePath . '/assets';
 $assetVersion = substr(hash('sha256', (string) @file_get_contents(__DIR__ . '/assets/app.css') . (string) @file_get_contents(__DIR__ . '/assets/light.css')), 0, 12);
-$brandAssetVersion = '20260826';
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 ?>
@@ -17,7 +16,7 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Descargables · Laboratorio Digital</title>
-    <link rel="icon" href="<?= $escape($assetPath) ?>/favicon.png?v=<?= $brandAssetVersion ?>" type="image/png">
+    <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
 </head>
