@@ -253,8 +253,18 @@ header('Referrer-Policy: same-origin');
                         </div>
                         <form id="supplier-order-filters" class="supplier-order-filters">
                             <div class="supplier-order-category-filter">
-                                CATEGORÍAS
-                                <div id="supplier-order-categories" class="supplier-order-category-list" role="group" aria-label="Categorías"></div>
+                                <button id="supplier-order-categories-trigger" class="supplier-order-category-trigger" type="button" aria-expanded="false" aria-controls="supplier-order-category-popover">CATEGORÍAS</button>
+                                <div id="supplier-order-category-popover" class="supplier-order-category-popover" hidden>
+                                    <div class="supplier-order-category-backdrop" data-close-supplier-order-categories></div>
+                                    <section class="supplier-order-category-dialog" role="dialog" aria-modal="true" aria-labelledby="supplier-order-category-title" tabindex="-1">
+                                        <header>
+                                            <div><p class="eyebrow">FILTRO DEL PEDIDO</p><h2 id="supplier-order-category-title">CATEGORÍAS</h2></div>
+                                            <button class="icon-action-button" type="button" data-close-supplier-order-categories aria-label="Cerrar categorías" title="Cerrar categorías"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                                        </header>
+                                        <p>Podés elegir más de una categoría.</p>
+                                        <div id="supplier-order-categories" class="supplier-order-category-list" role="group" aria-label="Categorías"></div>
+                                    </section>
+                                </div>
                             </div>
                             <label>
                                 PALABRAS CLAVE

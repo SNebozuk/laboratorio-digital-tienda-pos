@@ -58,6 +58,7 @@
         supplierOrderDirty: false,
         supplierOrderSaveTimer: 0,
         supplierOrderPreviewOpen: false,
+        supplierOrderCategoriesOpen: false,
         supplierOrderStatus: '',
         view: 'orders',
     };
@@ -197,6 +198,8 @@
         deliveriesBadge: document.getElementById('deliveries-badge'),
         statisticsContent: document.getElementById('statistics-content'),
         supplierOrderCategories: document.getElementById('supplier-order-categories'),
+        supplierOrderCategoriesTrigger: document.getElementById('supplier-order-categories-trigger'),
+        supplierOrderCategoriesPopover: document.getElementById('supplier-order-category-popover'),
         supplierOrderKeywords: document.getElementById('supplier-order-keywords'),
         supplierOrderThreshold: document.getElementById('supplier-order-threshold'),
         supplierOrderResults: document.getElementById('supplier-order-results'),
@@ -4601,6 +4604,20 @@
         }
     }
 
+    function setSupplierOrderCategoriesOpen(open, focus = false) {
+        state.supplierOrderCategoriesOpen = open;
+        if (elements.supplierOrderCategoriesPopover) elements.supplierOrderCategoriesPopover.hidden = !open;
+        elements.supplierOrderCategoriesTrigger?.setAttribute('aria-expanded', String(open));
+        if (focus) {
+            window.requestAnimationFrame(() => {
+                (open
+                    ? elements.supplierOrderCategories?.querySelector('[data-supplier-order-category]')
+                    : elements.supplierOrderCategoriesTrigger
+                )?.focus();
+            });
+        }
+    }
+
     function renderSupplierOrder() {
         if (!elements.supplierOrderResults || !state.supplierOrder) return;
         const draft = state.supplierOrder;
@@ -4668,6 +4685,7 @@
         if (elements.supplierOrderWhatsappText) {
             elements.supplierOrderWhatsappText.value = draft.whatsapp_edited ? String(draft.whatsapp_text || '') : supplierOrderWhatsappText();
         }
+        setSupplierOrderCategoriesOpen(state.supplierOrderCategoriesOpen);
         updateSupplierOrderSummary();
         supplierOrderStatus();
     }
@@ -5074,6 +5092,14 @@
     });
 
     document.addEventListener('click', async event => {
+        if (event.target.closest('#supplier-order-categories-trigger')) {
+            setSupplierOrderCategoriesOpen(!state.supplierOrderCategoriesOpen, true);
+            return;
+        }
+        if (event.target.closest('[data-close-supplier-order-categories]')) {
+            setSupplierOrderCategoriesOpen(false, true);
+            return;
+        }
         if (event.target.closest('[data-supplier-order-back]')) {
             if (window.history.length > 1) window.history.back();
             else showView('products');
@@ -6093,6 +6119,14 @@
     }, true);
     document.addEventListener('keydown', event => {
         if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && state.view === 'supplier-order'
+            && state.supplierOrderCategoriesOpen
+        ) {
+            event.preventDefault();
+            setSupplierOrderCategoriesOpen(false, true);
+        } else if (
             event.key === 'Escape'
             && !event.defaultPrevented
             && state.view === 'supplier-order'
