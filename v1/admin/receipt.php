@@ -36,10 +36,6 @@ $assetVersion = substr(hash('sha256', (string) @file_get_contents(__DIR__ . '/as
 <?php foreach ($orders as $order):
     $items = $order['items'];
     usort($items, static fn (array $a, array $b): int => strnatcasecmp((string) $a['product_name'], (string) $b['product_name']) ?: strnatcasecmp((string) $a['variant_name'], (string) $b['variant_name']));
-    $itemsByProduct = [];
-    foreach ($items as $item) {
-        $itemsByProduct[(string) $item['product_name']][] = $item;
-    }
     $unitCount = array_sum(array_map(static fn (array $item): int => (int) $item['quantity'], $items)); ?>
 <?php
     $deliveryLocation = '';
@@ -51,6 +47,6 @@ $assetVersion = substr(hash('sha256', (string) @file_get_contents(__DIR__ . '/as
 ?>
 <section class="receipt-order"><?php if ($batch): ?><h2><?= receiptText($order['public_number']) ?></h2><?php endif; ?><?php if (!empty($order['delivery_slot_number'])): ?><div class="receipt-delivery-slot"><strong><?= (int) $order['delivery_slot_number'] ?></strong><?php if ($deliveryLocation !== ''): ?><span>UBICACIÓN <?= receiptText($deliveryLocation) ?></span><?php endif; ?></div><?php endif; ?>
 <dl><div><dt>Cliente</dt><dd><?= receiptText($order['customer_name']) ?></dd></div><div><dt>Contacto</dt><dd><?= receiptText($order['customer_phone'] ?: 'Sin teléfono informado') ?></dd></div><div><dt>Fecha</dt><dd><?= receiptText(receiptArgentinaDate($order['created_at'])) ?></dd></div></dl>
-<div class="receipt-items"><?php foreach ($itemsByProduct as $productName => $productItems): ?><section class="receipt-product-group"><h3><?= receiptText($productName) ?></h3><?php foreach ($productItems as $item): ?><div class="receipt-item"><span class="quantity"><?= (int) $item['quantity'] ?></span><span class="receipt-variant"><?= preg_match('/^única$/iu', trim((string) $item['variant_name'])) === 1 ? 'Sin variante' : receiptText($item['variant_name']) ?></span><span class="receipt-item-details"><?php if (trim((string) $item['sku']) !== ''): ?>SKU <?= receiptText($item['sku']) ?> · <?php endif; ?><?= receiptMoney((int) $item['unit_price_cents']) ?></span></div><?php endforeach; ?></section><?php endforeach; ?></div>
+<div class="receipt-items"><?php foreach ($items as $item): $imagePath = trim((string) ($item['image_path'] ?? '')); ?><div class="receipt-item"><?php if (str_starts_with($imagePath, '/')): ?><img class="receipt-item-image" src="<?= receiptText($imagePath) ?>" alt=""><?php else: ?><span class="receipt-item-placeholder">SIN FOTO</span><?php endif; ?><span class="receipt-quantity"><?= (int) $item['quantity'] ?></span><span class="receipt-product"><?= receiptText($item['product_name'] ?: 'Producto') ?></span><span class="receipt-variant"><?= preg_match('/^única$/iu', trim((string) $item['variant_name'])) === 1 ? 'SIN VARIANTE' : receiptText($item['variant_name'] ?: 'SIN VARIANTE') ?></span><span class="receipt-item-price"><?= receiptMoney((int) $item['unit_price_cents']) ?></span></div><?php endforeach; ?></div>
 <p class="total"><span><?= $unitCount ?> <?= $unitCount === 1 ? 'unidad' : 'unidades' ?> · Subtotal <?= receiptMoney((int) $order['subtotal_cents']) ?><?php if ((int) ($order['discount_cents'] ?? 0) > 0): ?><br>Descuento <?= receiptText(receiptDiscountSource($order['discount_type'] ?? '')) ?> <?= (int) $order['discount_percent'] ?>%: −<?= receiptMoney((int) $order['discount_cents']) ?><?php endif; ?><br>Total</span><strong><?= receiptMoney((int) $order['total_cents']) ?></strong></p></section>
 <?php endforeach; ?><p class="footer">Comprobante interno no fiscal · Retiro en el local</p></main><script src="assets/receipt.js?v=<?= receiptText($assetVersion) ?>"></script></body></html>

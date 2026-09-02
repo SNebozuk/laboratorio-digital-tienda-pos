@@ -1696,57 +1696,50 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 }
 
 .order-detail-lines {
-    overflow: hidden;
+    overflow: auto;
     border: 1px solid #e1e5eb;
     border-bottom: 0;
     border-radius: 12px 12px 0 0;
     background: #fff;
 }
 
-.order-detail-product-group { padding: 13px 16px 11px; border-bottom: 1px solid #edf0f4; }
-
-.order-detail-product {
+.order-detail-item-list { min-width: 680px; }
+.order-detail-item-row {
     display: grid;
-    grid-template-columns: 54px minmax(0, 1fr);
+    grid-template-columns: 48px 64px minmax(170px, 1fr) minmax(135px, .8fr) minmax(95px, auto);
     gap: 12px;
     align-items: center;
-}
-
-.order-detail-product-copy {
-    display: grid;
-    gap: 3px;
-    min-width: 0;
-}
-
-.order-detail-product-name {
-    font-size: 15px;
+    min-height: 64px;
+    padding: 8px 14px;
+    color: #000;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
     font-weight: 400;
+    line-height: 1.2;
     text-transform: uppercase;
 }
-
-.order-detail-variants { margin-top: 8px; }
-.order-detail-variant { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto minmax(82px, .25fr); gap: 10px; align-items: baseline; padding: 4px 0 4px 5px; }
-.order-detail-quantity { font-size: 21px; font-weight: 400; line-height: .9; text-align: center; }
-.order-detail-variant-name { font-size: 14px; font-weight: 400; text-transform: uppercase; overflow-wrap: anywhere; }
-.order-detail-variant-details { color: var(--muted); font-size: 10px; font-weight: 400; white-space: nowrap; }
-.order-detail-line-total { font-size: 12px; font-weight: 400; text-align: right; white-space: nowrap; }
-
-.order-detail-product img,
+.order-detail-item-row:nth-child(odd) { background: #f4b6cf; }
+.order-detail-item-row:nth-child(even) { background: #fff; }
+.order-detail-item-row > * { min-width: 0; color: inherit; font: inherit; }
+.order-detail-item-row img,
 .order-detail-product-placeholder {
-    width: 54px;
-    height: 54px;
-    border-radius: 9px;
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
     object-fit: cover;
     background: #fff;
 }
-
 .order-detail-product-placeholder {
     display: grid;
     place-items: center;
-    color: #788392;
-    font-size: 8px;
-    font-weight: 800;
+    color: #000;
+    font-size: inherit;
+    text-align: center;
 }
+.order-detail-quantity { text-align: center; }
+.order-detail-product-name,
+.order-detail-variant-name { overflow-wrap: anywhere; }
+.order-detail-item-price { text-align: right; white-space: nowrap; }
 
 .order-detail-total {
     margin-top: -14px;
@@ -1869,11 +1862,10 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
         grid-template-columns: 1fr;
     }
 
-    .order-detail-variant { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 7px; }
-    .order-detail-quantity { font-size: 19px; }
-    .order-detail-variant-name { font-size: 13px; }
-    .order-detail-variant-details { grid-column: 2; font-size: 9px; }
-    .order-detail-line-total { grid-column: 3; grid-row: 1 / span 2; }
+    .order-detail-item-list { min-width: 620px; }
+    .order-detail-item-row { grid-template-columns: 42px 54px minmax(150px, 1fr) minmax(120px, .8fr) minmax(90px, auto); gap: 9px; padding-inline: 10px; }
+    .order-detail-item-row img,
+    .order-detail-product-placeholder { width: 42px; height: 42px; }
 }
 
 /* Lenguaje visual operativo, inspirado en patrones de administración de e-commerce. */

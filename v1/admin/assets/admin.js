@@ -3075,41 +3075,16 @@
         });
     }
 
-    function groupedOrderItems(items) {
-        return sortedOrderItems(items).reduce((groups, item) => {
-            const productName = String(item.product_name || 'Producto');
-            const group = groups.find(candidate => candidate.name === productName);
-            if (group) {
-                group.items.push(item);
-            } else {
-                groups.push({ name: productName, items: [item] });
-            }
-            return groups;
-        }, []);
-    }
-
     function orderDetailItemsMarkup(items) {
-        return groupedOrderItems(items).map(group => {
-            const firstItem = group.items[0];
-            return `
-                <section class="order-detail-product-group">
-                    <div class="order-detail-product">
-                        ${safeImage(firstItem.image_path) ? `<img src="${escapeHtml(safeImage(firstItem.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
-                        <span class="order-detail-product-copy"><span class="order-detail-product-name">${escapeHtml(group.name)}</span></span>
-                    </div>
-                    <div class="order-detail-variants">
-                        ${group.items.map(item => `
-                            <div class="order-detail-variant">
-                                <span class="order-detail-quantity">${Number(item.quantity)}</span>
-                                <span class="order-detail-variant-name">${fold(item.variant_name) === 'unica' ? '' : escapeHtml(item.variant_name || '')}</span>
-                                <span class="order-detail-variant-details">${item.sku ? `SKU: ${escapeHtml(item.sku)} · ` : ''}${money(item.unit_price_cents)}</span>
-                                <span class="order-detail-line-total">${money(item.line_total_cents)}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </section>
-            `;
-        }).join('');
+        return `<div class="order-detail-item-list">${sortedOrderItems(items).map(item => `
+            <div class="order-detail-item-row">
+                ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
+                <span class="order-detail-quantity">${Number(item.quantity)}</span>
+                <span class="order-detail-product-name">${escapeHtml(item.product_name || 'Producto')}</span>
+                <span class="order-detail-variant-name">${fold(item.variant_name) === 'unica' ? 'SIN VARIANTE' : escapeHtml(item.variant_name || 'SIN VARIANTE')}</span>
+                <span class="order-detail-item-price">${money(item.unit_price_cents)}</span>
+            </div>
+        `).join('')}</div>`;
     }
 
     async function showCustomerHistory(customerName) {
