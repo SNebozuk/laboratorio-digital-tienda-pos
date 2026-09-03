@@ -35,7 +35,7 @@ final class SupplierOrderService
     public function search(array $filters): array
     {
         $filters = $this->filters($filters);
-        $where = ['p.deleted_at IS NULL', 'v.stock_on_hand < :threshold'];
+        $where = ['p.deleted_at IS NULL', 'v.stock_on_hand <= :threshold'];
         $parameters = ['threshold' => $filters['stock_threshold']];
 
         if ($filters['category_ids']) {

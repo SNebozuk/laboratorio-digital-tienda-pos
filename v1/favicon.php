@@ -1,28 +1,10 @@
 <?php
 declare(strict_types=1);
 
-$app = require dirname(__DIR__) . '/app/container.php';
-$design = $app['settings']->design();
-$fontStacks = [
-    'Arial' => 'Arial, sans-serif',
-    'Helvetica' => 'Helvetica, Arial, sans-serif',
-    'Verdana' => 'Verdana, sans-serif',
-    'Georgia' => 'Georgia, serif',
-    'Times New Roman' => 'Times New Roman, serif',
-    'Trebuchet MS' => 'Trebuchet MS, sans-serif',
-    'Montserrat' => 'Montserrat, Arial, sans-serif',
-    'Roboto' => 'Roboto, Arial, sans-serif',
-    'Poppins' => 'Poppins, Arial, sans-serif',
-    'Oswald' => 'Oswald, Arial, sans-serif',
-    'Inter' => 'Inter, Arial, sans-serif',
-    'Bebas Neue' => 'Bebas Neue, Arial, sans-serif',
-];
-$text = trim((string) ($design['favicon_text'] ?? 'LD')) ?: 'LD';
-$font = $fontStacks[(string) ($design['favicon_font'] ?? '')] ?? $fontStacks['Arial'];
-$background = strtolower((string) ($design['favicon_background_color'] ?? '#7652b8'));
-$foreground = strtolower((string) ($design['favicon_text_color'] ?? '#ffffff'));
-if (!preg_match('/^#[0-9a-f]{6}$/', $background)) $background = '#7652b8';
-if (!preg_match('/^#[0-9a-f]{6}$/', $foreground)) $foreground = '#ffffff';
+$text = 'LD';
+$font = 'Arial, sans-serif';
+$background = '#050505';
+$foreground = '#ff5ca8';
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE, 'UTF-8');
 
 header('Content-Type: image/svg+xml; charset=UTF-8');

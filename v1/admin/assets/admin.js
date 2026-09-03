@@ -4699,7 +4699,7 @@
                     `Stock actual: ${Number(variant.stock_on_hand)}`,
                 ].filter(Boolean).map(escapeHtml).join(' · ');
                 return `<tr class="supplier-order-line ${quantity > 0 && !hasPrice ? 'is-missing-price' : ''}" data-supplier-order-line="${Number(variant.id)}">
-                    <td><input type="number" min="0" max="1000000" step="1" inputmode="numeric" value="${quantity}" data-supplier-order-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
+                    <td><input type="number" min="0" max="1000000" step="1" inputmode="numeric" value="${quantity || ''}" data-supplier-order-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
                     <td class="supplier-order-product-cell">${productCell}<small>${details}</small></td>
                     <td><input type="text" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" placeholder="Sin precio" data-supplier-order-price="${Number(variant.id)}" aria-label="Precio unitario de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
                     <td class="supplier-order-subtotal" data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(quantity * Number(line.unit_price_cents)) : '—'}</td>
@@ -4886,7 +4886,7 @@
                 const prior = priorLines.get(Number(variant.id));
                 return prior || {
                     variant_id: Number(variant.id),
-                    quantity: Math.max(0, Number(filters.stock_threshold) - Number(variant.stock_on_hand)),
+                    quantity: 0,
                     unit_price_cents: null,
                     subtotal_cents: null,
                 };

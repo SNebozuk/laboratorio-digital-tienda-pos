@@ -290,7 +290,7 @@ header('Referrer-Policy: same-origin');
                                         </header>
                                         <p>Podés elegir más de una categoría.</p>
                                         <div id="supplier-order-categories" class="supplier-order-category-list" role="group" aria-label="Categorías"></div>
-                                        <footer><button class="primary-button fit-button" type="button" data-apply-supplier-order-categories>APLICAR</button><span id="supplier-order-categories-count" class="supplier-order-categories-count" aria-label="0 categorías elegidas">0</span></footer>
+                                        <footer><span id="supplier-order-categories-count" class="supplier-order-categories-count" aria-label="0 categorías elegidas">0</span><button class="primary-button fit-button" type="button" data-apply-supplier-order-categories>APLICAR</button></footer>
                                     </section>
                                 </div>
                             </div>
