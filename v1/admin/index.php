@@ -192,7 +192,7 @@ header('Referrer-Policy: same-origin');
                     <div class="admin-user-icon-actions">
                         <button class="icon-button admin-nav-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M3 20h18"></path></svg></button>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <button class="icon-button admin-nav-button" type="button" data-view="supplier-order" aria-label="Pedido a proveedor" title="Pedido a proveedor"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
+                            <button class="icon-button admin-nav-button" type="button" data-view="supplier-order" aria-label="Pedidos" title="Pedidos"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
                             <button class="icon-button admin-settings-icon" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu" aria-label="Abrir configuración" title="Configuración">
                                 <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.1 2.1-.06-.06A1.7 1.7 0 0 0 15.76 18a1.7 1.7 0 0 0-1.04 1.55V20h-3v-.45A1.7 1.7 0 0 0 10.68 18a1.7 1.7 0 0 0-1.88.34l-.06.06-2.1-2.1.06-.06A1.7 1.7 0 0 0 7.04 14.4 1.7 1.7 0 0 0 5.5 13.36H5v-3h.5A1.7 1.7 0 0 0 7.04 9.32 1.7 1.7 0 0 0 6.7 7.44l-.06-.06 2.1-2.1.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.04-1.55V3.7h3v.43a1.7 1.7 0 0 0 1.04 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.1 2.1-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.04h.45v3h-.45A1.7 1.7 0 0 0 19.4 15Z"></path></svg>
                             </button>
@@ -216,7 +216,7 @@ header('Referrer-Policy: same-origin');
                         <option value="statistics">Estadísticas</option>
                         <option value="products">Productos</option>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <option value="supplier-order">Pedido a proveedor</option>
+                            <option value="supplier-order">Pedidos</option>
                         <?php endif ?>
                         <option value="pos">Punto de Venta</option>
                         <?php if ($user['role'] === 'admin'): ?>
@@ -255,7 +255,7 @@ header('Referrer-Policy: same-origin');
                         <div class="view-heading supplier-order-heading">
                             <div>
                                 <p class="eyebrow">REPOSICIÓN DE STOCK</p>
-                                <h1 class="admin-page-title">PEDIDO A PROVEEDOR</h1>
+                                <h1 class="admin-page-title">PEDIDOS</h1>
                                 <p>Armá el pedido sin modificar el stock ni los precios de venta.</p>
                             </div>
                         </div>

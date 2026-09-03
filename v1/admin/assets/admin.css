@@ -4037,6 +4037,13 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-icon-sidebar :is(.admin-sidebar-store-button, .admin-nav-button, .admin-user-icon-actions .icon-button):focus-visible { outline:2px solid #5b4fc7; outline-offset:2px; }
 .admin-icon-sidebar .nav-notification-badge { position:absolute; z-index:2; right:-7px; bottom:-7px; min-width:18px; height:18px; padding:0 4px; border:2px solid #d9dde2; border-radius:999px; background:#a31f57; box-shadow:0 2px 5px rgba(73,18,46,.3); color:#fff; font-size:10px; font-weight:900; }
 .admin-icon-sidebar .admin-nav-button.active .nav-notification-badge { border-color:#5b4fc7; background:#fff; color:#5b4fc7; }
+
+/* Todos los controles que modifican cantidades mantienen la cifra centrada. */
+.supplier-order-quantity-input,
+.pos-variant-quantity,
+.pos-inline-quantity input,
+.pos-page .quantity-control input,
+.admin-modal-card .quantity-control input { text-align:center !important; }
 .admin-icon-sidebar .admin-user { width:32px; margin-top:auto; padding:12px 0 0; border-top:1px solid #c4c9d0; }
 .admin-icon-sidebar .admin-user-icon-actions { display:grid; gap:12px; }
 .admin-icon-sidebar .admin-settings-icon:hover,
