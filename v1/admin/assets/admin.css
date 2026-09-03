@@ -3837,6 +3837,24 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     font-weight: 760 !important;
 }
 
+/* El área de trabajo mantiene siempre el mismo eje, sin importar la vista activa. */
+.admin-main {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+.admin-main .admin-view { width: 100%; min-width: 0; }
+.admin-main .view-heading { min-height: 88px; margin-bottom: 28px; }
+.supplier-order-heading { padding-top: 0; }
+.supplier-order-back { top: 0; right: 0; left: auto; }
+
+/* El PDV se muestra dentro del mismo contenedor y usa su encabezado exterior. */
+.admin-pos-frame { min-height: calc(100vh - 212px); border: 1px solid #e2e6ef; border-radius: 14px; }
+.pos-embedded .pos-page-header,
+.pos-embedded .pos-page-title { display: none; }
+.pos-embedded .pos-page-workspace { padding-top: 24px; }
+
 @media (max-width:700px) {
     .admin-main :is(p, li, label, legend, dt, dd, .form-hint, .invitation-note,
         .empty-copy, .empty-state, .notice, .status-copy, .order-list-empty span),
@@ -4006,7 +4024,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     color:#4f596b !important;
     cursor:pointer;
 }
-.admin-menu-icon { display:block; width:20px; height:20px; object-fit:contain; }
+.admin-menu-icon { display:block; width:20px; height:20px; object-fit:contain; filter:invert(35%) sepia(14%) saturate(904%) hue-rotate(182deg) brightness(92%) contrast(88%); }
 .admin-icon-sidebar .admin-nav { display:grid; width:32px; gap:12px; margin-top:0; }
 .admin-icon-sidebar .admin-nav-sales,
 .admin-icon-sidebar .admin-nav-products { display:contents; }

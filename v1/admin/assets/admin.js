@@ -420,7 +420,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -486,11 +486,6 @@
         if (view === 'size-guide') {
             loadSizeGuide();
         }
-    }
-
-    function openPointOfSale() {
-        const pointOfSaleWindow = window.open('pos.php', 'laboratorio-digital-pos');
-        if (pointOfSaleWindow) pointOfSaleWindow.focus();
     }
 
     function invitationDate(value) {
@@ -2163,23 +2158,14 @@
     function returnToAdminOrders(notifySaleCompleted = true) {
         const ordersUrl = new URL('./', window.location.href);
         ordersUrl.searchParams.set('view', 'orders');
-        if (window.opener && !window.opener.closed) {
-            try {
-                if (notifySaleCompleted) {
-                    window.opener.postMessage(
-                        { type: 'laboratorio-pos-sale-completed' },
-                        window.location.origin
-                    );
-                }
-                window.opener.focus();
-                window.close();
-                window.setTimeout(() => {
-                    window.location.href = ordersUrl.href;
-                }, 350);
-                return;
-            } catch {
-                // Si el navegador bloquea el cierre, continuamos en la lista.
+        if (window.parent !== window) {
+            if (notifySaleCompleted) {
+                window.parent.postMessage(
+                    { type: 'laboratorio-pos-sale-completed' },
+                    window.location.origin
+                );
             }
+            return;
         }
         window.location.href = ordersUrl.href;
     }
@@ -6069,7 +6055,7 @@
         }
         if (document.getElementById('view-orders') && !isEditing && !event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'F3') {
             event.preventDefault();
-            openPointOfSale();
+            showView('pos');
             return;
         }
         if (event.key !== 'Enter' || !event.target.matches('[data-pos-input]')) return;
@@ -6079,10 +6065,6 @@
     });
 
     document.getElementById('open-deliveries')?.addEventListener('click', () => showView('deliveries'));
-    document.querySelectorAll('[data-open-pos]').forEach(button => {
-        button.addEventListener('click', openPointOfSale);
-    });
-
     document.addEventListener('click', event => {
         const zone = event.target.closest('[data-image-drop]');
         if (zone) zone.closest('label')?.querySelector('[name="image_file"]')?.click();
@@ -6528,14 +6510,7 @@
         renderDesignPreview();
         toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
     });
-    elements.mobileView?.addEventListener('change', event => {
-        if (event.target.value === 'pos') {
-            openPointOfSale();
-            event.target.value = state.view;
-            return;
-        }
-        showView(event.target.value);
-    });
+    elements.mobileView?.addEventListener('change', event => showView(event.target.value));
     document.addEventListener('keydown', event => {
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !document.querySelector('.admin-icon-sidebar')) return;
         const shortcutViews = {
@@ -6547,12 +6522,8 @@
             F6: 'statistics',
         };
         const view = shortcutViews[event.key];
-        if (!view || (view !== 'pos' && !document.querySelector(`[data-view="${view}"]`))) return;
+        if (!view || !document.querySelector(`[data-view="${view}"]`)) return;
         event.preventDefault();
-        if (view === 'pos') {
-            openPointOfSale();
-            return;
-        }
         showView(view);
     });
     document.getElementById('admin-sidebar-toggle')?.addEventListener('click', () => {

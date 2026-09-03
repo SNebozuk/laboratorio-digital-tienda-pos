@@ -82,7 +82,7 @@ header('Referrer-Policy: same-origin');
                         <button class="admin-nav-button admin-nav-icon-button admin-nav-orders" type="button" data-view="orders" aria-label="Lista de Ventas (F1)" title="Lista de Ventas · F1"><img class="admin-menu-icon" src="assets/menu-icons/orders.png" alt=""><b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
                         <button class="admin-nav-button admin-nav-icon-button admin-nav-deliveries" type="button" data-view="deliveries" aria-label="Entrega de pedidos (F2)" title="Entrega de pedidos · F2"><img class="admin-menu-icon" src="assets/menu-icons/deliveries.png" alt=""><b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
                     </div>
-                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-open-pos aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><img class="admin-menu-icon" src="assets/menu-icons/pos.png" alt=""></button>
+                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><img class="admin-menu-icon" src="assets/menu-icons/pos.png" alt=""></button>
                     <div class="admin-nav-products">
                         <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><img class="admin-menu-icon" src="assets/menu-icons/products.png" alt=""></button>
                         <?php if ($user['role'] === 'admin'): ?>
@@ -416,6 +416,17 @@ header('Referrer-Policy: same-origin');
                     </section>
                 <?php endif ?>
 
+                <section class="admin-view" id="view-pos">
+                    <div class="view-heading">
+                        <div>
+                            <p class="eyebrow">OPERACIÓN DE MOSTRADOR</p>
+                            <h1 class="admin-page-title">PUNTO DE VENTA</h1>
+                            <p>Registrá ventas y gestioná el carrito sin salir de la administración.</p>
+                        </div>
+                    </div>
+                    <iframe class="admin-pos-frame" src="pos.php?embedded=1" title="Punto de Venta"></iframe>
+                </section>
+
                 <section class="admin-view active" id="view-orders">
                     <div class="view-heading">
                         <div>
@@ -426,7 +437,7 @@ header('Referrer-Policy: same-origin');
                         <div class="order-page-actions">
                             <div class="order-quick-links">
                                 <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
-                                <button class="order-quick-link order-quick-link-pos" type="button" data-open-pos title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></button>
+                                <button class="order-quick-link order-quick-link-pos" type="button" data-view="pos" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></button>
                             </div>
                         </div>
                     </div>
