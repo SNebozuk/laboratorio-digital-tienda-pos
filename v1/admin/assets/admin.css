@@ -3845,7 +3845,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     margin: 0;
 }
 .admin-main .admin-view { width: 100%; min-width: 0; }
-.admin-main .view-heading { min-height: 88px; margin-bottom: 28px; }
+.admin-main .view-heading { align-items: flex-start; min-height: 88px; margin-bottom: 28px; }
 .supplier-order-heading { padding-top: 0; }
 .supplier-order-back { top: 0; right: 0; left: auto; }
 
@@ -4024,7 +4024,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     color:#4f596b !important;
     cursor:pointer;
 }
-.admin-menu-icon { display:block; width:20px; height:20px; object-fit:contain; filter:brightness(0) invert(1); mix-blend-mode:difference; }
+.admin-menu-icon { display:block; width:20px; height:20px; background:currentColor; -webkit-mask:var(--menu-icon) center/contain no-repeat; mask:var(--menu-icon) center/contain no-repeat; }
 .admin-icon-sidebar .admin-nav { display:grid; width:32px; gap:12px; margin-top:0; }
 .admin-icon-sidebar .admin-nav-sales,
 .admin-icon-sidebar .admin-nav-products { display:contents; }
@@ -4032,9 +4032,8 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-icon-sidebar .admin-nav-button:hover:not(.active),
 .admin-icon-sidebar .admin-sidebar-store-button:hover,
 .admin-icon-sidebar .admin-user-icon-actions .icon-button:hover { background:#e8e3ff; box-shadow:0 4px 10px rgba(75,62,174,.2); transform:translateY(-1px); }
-.admin-icon-sidebar :is(.admin-nav-button:hover, .admin-sidebar-store-button:hover, .admin-settings-icon:hover) .admin-menu-icon { filter:brightness(0) invert(1); }
-.admin-icon-sidebar .admin-nav-button.active { background:#5b4fc7; box-shadow:0 5px 12px rgba(65,53,166,.3); }
-.admin-icon-sidebar .admin-nav-button.active .admin-menu-icon { filter:brightness(0) invert(1); }
+.admin-icon-sidebar :is(.admin-nav-button:hover, .admin-sidebar-store-button:hover, .admin-settings-icon:hover) { color:#30266f !important; }
+.admin-icon-sidebar .admin-nav-button.active { background:#5b4fc7; box-shadow:0 5px 12px rgba(65,53,166,.3); color:#fff !important; }
 .admin-icon-sidebar .admin-nav-button.active .nav-notification-badge { background:#fff; color:#5b4fc7; }
 .admin-icon-sidebar :is(.admin-sidebar-store-button, .admin-nav-button, .admin-user-icon-actions .icon-button):focus-visible { outline:2px solid #5b4fc7; outline-offset:2px; }
 .admin-icon-sidebar .nav-notification-badge { position:absolute; top:-7px; right:-9px; min-width:16px; height:16px; padding:0 3px; font-size:9px; }
@@ -4043,7 +4042,6 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-icon-sidebar .admin-settings-icon:hover,
 .admin-icon-sidebar .admin-settings-icon:focus-visible { color:#4c2574 !important; }
 .admin-icon-sidebar .admin-logout-icon:hover { background:#ffe8e8; box-shadow:0 4px 10px rgba(179,49,49,.16); }
-.admin-icon-sidebar .admin-logout-icon:hover .admin-menu-icon { filter:brightness(0) invert(1); }
 .admin-icon-sidebar .admin-logout-icon:focus-visible { color:#b33131 !important; }
 
 /* La configuración se abre como panel flotante para que la barra conserve sus 56 px. */
