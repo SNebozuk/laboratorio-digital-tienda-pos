@@ -6099,6 +6099,16 @@
             queueSupplierOrderSave();
         }
     });
+    document.addEventListener('change', event => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) || !target.matches('[data-supplier-order-category]') || !state.supplierOrder) return;
+        state.supplierOrder.filters = {
+            ...state.supplierOrder.filters,
+            category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
+        };
+        updateSupplierOrderCategoriesCount();
+        queueSupplierOrderSave();
+    });
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;
         state.posProductId = null;
