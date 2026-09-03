@@ -4634,15 +4634,14 @@
 
     function supplierOrderWhatsappText() {
         const lineMap = supplierOrderLines();
-        return supplierOrderCartProducts().map(product => {
-            const variants = supplierOrderCartVariants(product).map(variant => {
+        return supplierOrderCartProducts().flatMap(product =>
+            supplierOrderCartVariants(product).map(variant => {
                 const line = lineMap.get(Number(variant.id));
                 if (!line || line.quantity < 1) return '';
                 const label = supplierOrderVariantLabel(product, variant);
-                return `- ${line.quantity} u${label ? ` - ${label}` : ''}`;
-            }).filter(Boolean);
-            return variants.length ? [product.name, ...variants].join('\n') : '';
-        }).filter(Boolean).join('\n\n');
+                return `- ${line.quantity} ${product.name}${label ? ` · ${label}` : ''}`;
+            })
+        ).filter(Boolean).join('\n');
     }
 
     function supplierOrderFlatCategories(categories = state.supplierOrderCategories) {
