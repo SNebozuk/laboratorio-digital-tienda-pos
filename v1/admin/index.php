@@ -274,9 +274,7 @@ header('Referrer-Policy: same-origin');
                                 <p>Armá el pedido sin modificar el stock ni los precios de venta.</p>
                             </div>
                             <div class="supplier-order-actions">
-                                <button class="secondary-button fit-button" type="button" data-supplier-order-back>VOLVER</button>
-                                <button class="icon-action-button" type="button" data-supplier-order-copy aria-label="Copiar pedido" title="Copiar pedido"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                                <button class="danger-button fit-button" type="button" data-supplier-order-clear>VACIAR PEDIDO</button>
+                                <button class="supplier-order-clear-plan" type="button" data-supplier-order-clear-plan>LIMPIAR PLANILLA</button>
                             </div>
                         </div>
                         <form id="supplier-order-filters" class="supplier-order-filters">
@@ -310,6 +308,10 @@ header('Referrer-Policy: same-origin');
                         </form>
                         <p id="supplier-order-status" class="supplier-order-status" aria-live="polite"></p>
                         <div id="supplier-order-results" class="supplier-order-results"></div>
+                        <section class="supplier-order-cart">
+                            <header><div><p class="eyebrow">PEDIDO ACTUAL</p><h2>CARRITO</h2></div><div><button class="icon-action-button" type="button" data-supplier-order-copy aria-label="Copiar pedido" title="Copiar pedido"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 5.5 16H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="danger-button fit-button" type="button" data-supplier-order-clear>VACIAR CARRITO</button></div></header>
+                            <div id="supplier-order-cart"></div>
+                        </section>
                     </section>
 
                     <section class="admin-view" id="view-tutorials">

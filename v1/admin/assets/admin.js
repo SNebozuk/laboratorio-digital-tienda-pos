@@ -205,6 +205,7 @@
         supplierOrderKeywords: document.getElementById('supplier-order-keywords'),
         supplierOrderThreshold: document.getElementById('supplier-order-threshold'),
         supplierOrderResults: document.getElementById('supplier-order-results'),
+        supplierOrderCart: document.getElementById('supplier-order-cart'),
         supplierOrderStatus: document.getElementById('supplier-order-status'),
         supplierOrderPreview: document.getElementById('supplier-order-preview'),
         supplierOrderWhatsappText: document.getElementById('supplier-order-whatsapp-text'),
@@ -4549,6 +4550,7 @@
     const supplierOrderEmpty = () => ({
         filters: { category_ids: [], keywords: '', stock_threshold: 1 },
         results: [],
+        cart: [],
         lines: [],
         summary: { total_cents: 0, total_units: 0, included_count: 0, missing_price_count: 0 },
         whatsapp_text: '',
@@ -4596,7 +4598,7 @@
 
     function supplierOrderWhatsappText() {
         const lineMap = supplierOrderLines();
-        return (state.supplierOrder?.results || []).flatMap(product => product.variants.map(variant => {
+        return (state.supplierOrder?.cart || []).flatMap(product => product.variants.map(variant => {
             const line = lineMap.get(Number(variant.id));
             if (!line || line.quantity < 1) return '';
             const label = [product.name, supplierOrderVariantLabel(product, variant)].filter(Boolean).join(', ');
@@ -4689,14 +4691,9 @@
             const multipleVariants = product.variants.length > 1;
             const removeProductButton = `<button class="icon-action-button" type="button" data-supplier-order-remove-product="${Number(product.id)}" aria-label="Quitar ${escapeHtml(product.name)} del pedido" title="Quitar producto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
             const productHead = multipleVariants ? `
-                <tr class="supplier-order-product-head"><td colspan="5"><div class="supplier-order-product-title"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}${removeProductButton}</div></td></tr>
+                <tr class="supplier-order-product-head"><td colspan="4"><div class="supplier-order-product-title"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}${removeProductButton}</div></td></tr>
             ` : '';
             const variants = product.variants.map(variant => {
-                const line = lineMap.get(Number(variant.id)) || {
-                    variant_id: Number(variant.id), quantity: 0, unit_price_cents: null, subtotal_cents: null,
-                };
-                const quantity = Math.max(0, Number(line.quantity || 0));
-                const hasPrice = line.unit_price_cents != null;
                 const label = supplierOrderVariantLabel(product, variant);
                 const productCell = multipleVariants
                     ? `<strong>${escapeHtml(label || 'Variante única')}</strong>`
@@ -4706,31 +4703,31 @@
                     variant.sku ? `SKU: ${variant.sku}` : '',
                     variant.barcode ? `Código: ${variant.barcode}` : '',
                 ].filter(Boolean).map(escapeHtml).join(' · ');
-                return `<tr class="supplier-order-line ${quantity > 0 && !hasPrice ? 'is-missing-price' : ''}" data-supplier-order-line="${Number(variant.id)}">
-                    <td><input type="number" min="0" max="1000000" step="1" inputmode="numeric" value="${quantity || ''}" data-supplier-order-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
+                return `<tr class="supplier-order-line">
+                    <td><input type="number" min="0" max="1000000" step="1" inputmode="numeric" data-supplier-order-plan-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
                     <td class="supplier-order-stock">${Number(variant.stock_on_hand)}</td>
                     <td class="supplier-order-product-cell">${productCell}<small>${details}</small></td>
-                    <td><input type="text" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}" aria-label="Precio unitario de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
-                    <td class="supplier-order-subtotal" data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(quantity * Number(line.unit_price_cents)) : '—'}</td>
+                    <td><button class="secondary-button fit-button" type="button" data-supplier-order-add="${Number(variant.id)}">AGREGAR</button></td>
                 </tr>`;
             }).join('');
             return productHead + variants;
         }).join('');
-        const summary = supplierOrderSummary();
-        draft.summary = summary;
-        const updated = draft.updated_at ? `Última modificación: ${escapeHtml(argentinaDateLabel(draft.updated_at))}` : 'Todavía no se guardó el pedido.';
         elements.supplierOrderResults.innerHTML = rows ? `
             <div class="supplier-order-table-wrap"><table class="supplier-order-table">
-                <thead><tr><th>CANTIDAD</th><th>STOCK</th><th>PRODUCTO</th><th>PRECIO UNITARIO</th><th>SUBTOTAL</th></tr></thead>
+                <thead><tr><th>CANTIDAD</th><th>STOCK</th><th>PRODUCTO</th><th></th></tr></thead>
                 <tbody>${rows}</tbody>
-            </table></div>
-            <div class="supplier-order-summary" id="supplier-order-summary">
-                <strong>TOTAL DEL PEDIDO: <span id="supplier-order-total">${supplierOrderMoney(summary.total_cents)}</span></strong>
-                <span id="supplier-order-units">${summary.total_units} unidades</span>
-                <span id="supplier-order-included">${summary.included_count} ${summary.included_count === 1 ? 'producto o variante incluido' : 'productos o variantes incluidos'}</span>
-                <span class="supplier-order-missing" id="supplier-order-missing" ${summary.missing_price_count ? '' : 'hidden'}></span>
-                <small id="supplier-order-updated">${updated}</small>
-            </div>` : `<p class="empty-copy">${draft.searched ? 'No encontramos productos con esos filtros y ese stock.' : 'Elegí los filtros y buscá productos para empezar el pedido.'}</p>`;
+            </table></div>` : `<p class="empty-copy">${draft.searched ? 'No encontramos productos con esos filtros y ese stock.' : 'Elegí los filtros y buscá productos para empezar el pedido.'}</p>`;
+        if (elements.supplierOrderCart) {
+            const cartRows = (draft.cart || []).flatMap(product => product.variants.map(variant => {
+                const line = lineMap.get(Number(variant.id)) || { quantity: 0, unit_price_cents: null };
+                const label = [product.name, supplierOrderVariantLabel(product, variant)].filter(Boolean).join(', ');
+                const hasPrice = line.unit_price_cents != null;
+                return `<tr><td><input type="number" min="0" step="1" value="${Number(line.quantity || 0)}" data-supplier-order-quantity="${Number(variant.id)}"></td><td>${escapeHtml(label)}</td><td><input type="text" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}"></td><td>${hasPrice ? supplierOrderMoney(Number(line.quantity || 0) * Number(line.unit_price_cents)) : '—'}</td><td><button class="icon-action-button" type="button" data-supplier-order-remove-cart-product="${Number(product.id)}" aria-label="Quitar producto"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
+            })).join('');
+            const summary = supplierOrderSummary();
+            draft.summary = summary;
+            elements.supplierOrderCart.innerHTML = cartRows ? `<div class="supplier-order-table-wrap"><table class="supplier-order-table"><thead><tr><th>CANTIDAD</th><th>PRODUCTO</th><th>PRECIO</th><th>SUBTOTAL</th><th></th></tr></thead><tbody>${cartRows}</tbody></table></div><div class="supplier-order-summary"><strong>TOTAL DEL PEDIDO: ${supplierOrderMoney(summary.total_cents)}</strong><span>${summary.total_units} unidades</span></div>` : '<p class="empty-copy">El carrito está vacío.</p>';
+        }
         if (elements.supplierOrderPreview) elements.supplierOrderPreview.hidden = !state.supplierOrderPreviewOpen;
         if (elements.supplierOrderWhatsappText) {
             elements.supplierOrderWhatsappText.value = draft.whatsapp_edited ? String(draft.whatsapp_text || '') : supplierOrderWhatsappText();
@@ -4779,6 +4776,10 @@
         return {
             filters: draft.filters,
             results: (draft.results || []).map(product => ({
+                product_id: Number(product.id),
+                variants: product.variants.map(variant => ({ id: Number(variant.id) })),
+            })),
+            cart: (draft.cart || []).map(product => ({
                 product_id: Number(product.id),
                 variants: product.variants.map(variant => ({ id: Number(variant.id) })),
             })),
@@ -4845,6 +4846,7 @@
             state.supplierOrder = response.draft || supplierOrderEmpty();
             state.supplierOrder.filters ||= { category_ids: [], keywords: '', stock_threshold: 1 };
             state.supplierOrder.results ||= [];
+            state.supplierOrder.cart ||= [];
             state.supplierOrder.lines ||= [];
             state.supplierOrder.whatsapp_edited = Boolean(state.supplierOrder.whatsapp_edited);
             state.supplierOrder.searched = Boolean(state.supplierOrder.searched);
@@ -4866,7 +4868,6 @@
         }
         try {
             const response = await apiPost({ action: 'supplier_order_search', filters });
-            const priorLines = supplierOrderLines();
             state.supplierOrder.filters = response.search.filters;
             const results = response.search.results || [];
             if (preserveResults) {
@@ -4891,15 +4892,6 @@
             } else {
                 state.supplierOrder.results = results;
             }
-            state.supplierOrder.lines = state.supplierOrder.results.flatMap(product => product.variants.map(variant => {
-                const prior = priorLines.get(Number(variant.id));
-                return prior || {
-                    variant_id: Number(variant.id),
-                    quantity: 0,
-                    unit_price_cents: null,
-                    subtotal_cents: null,
-                };
-            }));
             state.supplierOrder.searched = true;
             if (!state.supplierOrder.whatsapp_edited) state.supplierOrder.whatsapp_text = supplierOrderWhatsappText();
             renderSupplierOrder();
@@ -4944,15 +4936,12 @@
     }
 
     async function clearSupplierOrder() {
-        await apiPost({ action: 'supplier_order_clear' });
-        window.clearTimeout(state.supplierOrderSaveTimer);
-        state.supplierOrder = supplierOrderEmpty();
-        state.supplierOrderLoaded = true;
-        state.supplierOrderDirty = false;
-        state.supplierOrderPreviewOpen = false;
-        state.supplierOrderCategoriesOpen = false;
-        state.supplierOrderStatus = '';
+        if (!state.supplierOrder) return;
+        state.supplierOrder.cart = [];
+        state.supplierOrder.lines = [];
+        state.supplierOrder.whatsapp_text = '';
         renderSupplierOrder();
+        queueSupplierOrderSave(0);
     }
 
     async function loadCash() {
@@ -5211,6 +5200,45 @@
             copySupplierOrder();
             return;
         }
+        if (event.target.closest('[data-supplier-order-clear-plan]') && state.supplierOrder) {
+            state.supplierOrder.filters = { category_ids: [], keywords: '', stock_threshold: 1 };
+            state.supplierOrder.results = [];
+            state.supplierOrder.searched = false;
+            renderSupplierOrder();
+            queueSupplierOrderSave(0);
+            return;
+        }
+        const addSupplierOrder = event.target.closest('[data-supplier-order-add]');
+        if (addSupplierOrder && state.supplierOrder) {
+            const variantId = Number(addSupplierOrder.dataset.supplierOrderAdd);
+            const quantity = Number(document.querySelector(`[data-supplier-order-plan-quantity="${variantId}"]`)?.value || 0);
+            const source = state.supplierOrder.results.find(product => product.variants.some(variant => Number(variant.id) === variantId));
+            const variant = source?.variants.find(item => Number(item.id) === variantId);
+            if (!source || !variant || !Number.isInteger(quantity) || quantity < 1) { toast('Ingresá una cantidad para agregar al carrito.'); return; }
+            const cartProduct = state.supplierOrder.cart.find(product => Number(product.id) === Number(source.id));
+            if (cartProduct) {
+                if (!cartProduct.variants.some(item => Number(item.id) === variantId)) cartProduct.variants.push(variant);
+            } else {
+                state.supplierOrder.cart.push({ ...source, variants: [variant] });
+            }
+            const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
+            if (line) line.quantity += quantity;
+            else state.supplierOrder.lines.push({ variant_id: variantId, quantity, unit_price_cents: null, subtotal_cents: null });
+            renderSupplierOrder();
+            queueSupplierOrderSave(0);
+            return;
+        }
+        const removeCartProduct = event.target.closest('[data-supplier-order-remove-cart-product]');
+        if (removeCartProduct && state.supplierOrder) {
+            const productId = Number(removeCartProduct.dataset.supplierOrderRemoveCartProduct);
+            const product = state.supplierOrder.cart.find(item => Number(item.id) === productId);
+            const variantIds = new Set((product?.variants || []).map(variant => Number(variant.id)));
+            state.supplierOrder.cart = state.supplierOrder.cart.filter(item => Number(item.id) !== productId);
+            state.supplierOrder.lines = state.supplierOrder.lines.filter(line => !variantIds.has(Number(line.variant_id)));
+            renderSupplierOrder();
+            queueSupplierOrderSave(0);
+            return;
+        }
         if (event.target.closest('[data-supplier-order-retry]')) {
             persistSupplierOrder();
             return;
@@ -5229,21 +5257,18 @@
             const productId = Number(removeSupplierOrderProduct.dataset.supplierOrderRemoveProduct);
             const product = state.supplierOrder.results.find(item => Number(item.id) === productId);
             if (!product) return;
-            const variantIds = new Set(product.variants.map(variant => Number(variant.id)));
             state.supplierOrder.results = state.supplierOrder.results.filter(item => Number(item.id) !== productId);
-            state.supplierOrder.lines = state.supplierOrder.lines.filter(line => !variantIds.has(Number(line.variant_id)));
-            if (!state.supplierOrder.whatsapp_edited) state.supplierOrder.whatsapp_text = supplierOrderWhatsappText();
             renderSupplierOrder();
             queueSupplierOrderSave(0);
             return;
         }
         if (event.target.closest('[data-supplier-order-clear]')) {
             openModal(`
-                <h2 id="modal-title">VACIAR PEDIDO</h2>
-                <p>¿Querés vaciar el pedido? Se eliminarán los productos, cantidades, precios y totales guardados. Esta acción no se puede deshacer.</p>
+                <h2 id="modal-title">VACIAR CARRITO</h2>
+                <p>¿Querés vaciar el carrito? Se eliminarán sus productos, cantidades, precios y totales. La planilla no se modifica.</p>
                 <div class="button-row">
                     <button class="secondary-button" type="button" data-close-modal>CANCELAR</button>
-                    <button class="danger-button" type="button" data-supplier-order-confirm-clear>SÍ, VACIAR PEDIDO</button>
+                    <button class="danger-button" type="button" data-supplier-order-confirm-clear>SÍ, VACIAR CARRITO</button>
                 </div>
             `);
             return;

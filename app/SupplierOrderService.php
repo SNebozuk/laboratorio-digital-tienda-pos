@@ -89,8 +89,11 @@ final class SupplierOrderService
         $results = $this->canonicalResults(
             is_array($draft['results'] ?? null) ? $draft['results'] : []
         );
+        $cart = $this->canonicalResults(
+            is_array($draft['cart'] ?? null) ? $draft['cart'] : $results
+        );
         $allowedVariantIds = [];
-        foreach ($results as $product) {
+        foreach ($cart as $product) {
             foreach ($product['variants'] as $variant) {
                 $allowedVariantIds[(int) $variant['id']] = true;
             }
@@ -105,7 +108,7 @@ final class SupplierOrderService
             throw new ValidationException('El texto para WhatsApp es demasiado largo.');
         }
         if (!$whatsappEdited) {
-            $whatsappText = $this->whatsappText($results, $lines);
+            $whatsappText = $this->whatsappText($cart, $lines);
         }
 
         $summary = $this->summary($lines);
@@ -114,6 +117,7 @@ final class SupplierOrderService
             'results' => $results,
             'lines' => $lines,
             'summary' => $summary,
+            'cart' => $cart,
             'whatsapp_text' => $whatsappText,
             'whatsapp_edited' => $whatsappEdited,
             'searched' => !empty($draft['searched']),
