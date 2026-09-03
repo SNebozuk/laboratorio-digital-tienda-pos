@@ -135,7 +135,7 @@ body { background:#fff !important; }
 .footer-contact-button small { display:block; margin-top:4px; color:#685d76; font-size:13px; }
 .footer-contact-button:hover span,.footer-contact-button:focus-visible span { text-decoration:underline; text-underline-offset:4px; }
 .creator-credit { display:flex; flex-direction:column; align-items:center; gap:4px; }
-.creator-credit img { width:22px; height:28px; object-fit:contain; }
+.creator-credit img { width:24px; height:24px; object-fit:contain; }
 .creator-credit:hover span,.creator-credit:focus-visible span { text-decoration:underline; text-underline-offset:4px; }
 .store-contact-modal { display:grid; gap:16px; }
 .store-contact-modal h2 { margin:0; color:#2a1d3c; }

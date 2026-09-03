@@ -31,6 +31,7 @@ $assetVersion = substr(hash('sha256',
     . (string) @file_get_contents(__DIR__ . '/assets/pulga.js')
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
 ), 0, 12);
+$creatorLogoVersion = substr((string) hash_file('sha256', __DIR__ . '/assets/kauri-logo.png'), 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $quoteUrl = $storePath . '/cotizador.php';
@@ -202,7 +203,7 @@ header('Referrer-Policy: same-origin');
             <small>Horario, WhatsApp y ubicación</small>
         </button>
         <a class="creator-credit" href="https://www.kauri.com.ar" target="_blank" rel="noopener">
-            <img src="<?= $escape($storePath) ?>/assets/kauri-logo.png" alt="Kauri">
+            <img src="<?= $escape($storePath) ?>/assets/kauri-logo.png?v=<?= $escape($creatorLogoVersion) ?>" alt="Kauri">
             <span>Sitio creado por Tiendas Kauri</span>
         </a>
     </footer>
