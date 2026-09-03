@@ -76,34 +76,20 @@ header('Referrer-Policy: same-origin');
         </main>
     <?php else: ?>
         <div class="admin-shell">
-            <aside class="admin-sidebar">
-                <div class="admin-sidebar-brand-row">
-                    <a class="brand admin-brand" href="./">
-                        <span class="brand-mark">LD</span>
-                        <span>
-                            <strong>LABORATORIO DIGITAL</strong>
-                            <small>ADMINISTRACIÓN</small>
-                        </span>
-                    </a>
-                    <button class="icon-button admin-sidebar-toggle" id="admin-sidebar-toggle" type="button" aria-expanded="true" aria-label="Plegar menú lateral" title="Plegar menú lateral">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
-                    </button>
-                </div>
-                <nav class="admin-nav">
+            <aside class="admin-sidebar admin-icon-sidebar">
+                <nav class="admin-nav" aria-label="Navegación principal">
                     <div class="admin-nav-sales">
-                        <button class="admin-nav-button admin-nav-orders" type="button" data-view="orders">Lista de Ventas <b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
-                        <button class="admin-nav-button admin-nav-deliveries" type="button" data-view="deliveries">Entrega de pedidos <b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
+                        <button class="admin-nav-button admin-nav-icon-button admin-nav-orders" type="button" data-view="orders" aria-label="Lista de Ventas (F1)" title="Lista de Ventas · F1"><img class="admin-menu-icon" src="assets/menu-icons/orders.png" alt=""><b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
+                        <button class="admin-nav-button admin-nav-icon-button admin-nav-deliveries" type="button" data-view="deliveries" aria-label="Entrega de pedidos (F2)" title="Entrega de pedidos · F2"><img class="admin-menu-icon" src="assets/menu-icons/deliveries.png" alt=""><b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
                     </div>
-                    <button class="admin-nav-button" type="button" data-view="statistics">Estadísticas</button>
+                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-open-pos aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><img class="admin-menu-icon" src="assets/menu-icons/pos.png" alt=""></button>
                     <div class="admin-nav-products">
-                        <button class="admin-nav-button" type="button" data-view="products">
-                            Productos
-                        </button>
+                        <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><img class="admin-menu-icon" src="assets/menu-icons/products.png" alt=""></button>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <button class="admin-nav-button admin-nav-subitem" type="button" data-view="supplier-order">Pedido a proveedor</button>
+                            <button class="admin-nav-button admin-nav-icon-button admin-nav-subitem" type="button" data-view="supplier-order" aria-label="Pedido a proveedor (F5)" title="Pedido a proveedor · F5"><img class="admin-menu-icon" src="assets/menu-icons/supplier-order.png" alt=""></button>
                         <?php endif ?>
                     </div>
-                    <button class="admin-nav-button" type="button" data-open-pos>Punto de Venta</button>
+                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><img class="admin-menu-icon" src="assets/menu-icons/statistics.png" alt=""></button>
                 </nav>
                 <?php if ($user['role'] === 'admin'): ?>
                     <div class="admin-sidebar-settings-menu" id="admin-sidebar-settings-menu" hidden>
@@ -207,15 +193,17 @@ header('Referrer-Policy: same-origin');
                     </div>
                 <?php endif ?>
                 <div class="admin-user">
-                    <button class="secondary-button admin-store-link" id="admin-store-button" type="button">VER TIENDA ↗</button>
                     <div class="admin-user-icon-actions">
                         <?php if ($user['role'] === 'admin'): ?>
                             <button class="icon-button admin-settings-icon" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu" aria-label="Abrir configuración" title="Configuración">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.73v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.73l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <img class="admin-menu-icon" src="assets/menu-icons/settings.png" alt="">
                             </button>
                         <?php endif ?>
+                        <button class="icon-button admin-store-link admin-sidebar-store-button" id="admin-store-button" type="button" aria-label="Ver tienda" title="Ver tienda">
+                            <img class="admin-menu-icon" src="assets/menu-icons/store.png" alt="">
+                        </button>
                         <button class="icon-button admin-logout-icon" id="logout-button" type="button" aria-label="Salir" title="Salir">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21h16M6 21V3h11v18M13 12h.01"></path></svg>
+                            <img class="admin-menu-icon" src="assets/menu-icons/logout.png" alt="">
                         </button>
                     </div>
                 </div>
@@ -482,7 +470,7 @@ header('Referrer-Policy: same-origin');
                     </div>
                     <div id="delivery-copy-guide" class="delivery-copy-guide" hidden></div>
                     <label class="delivery-search" for="delivery-search">
-                        <span>BUSCAR EN ENTREGAS</span>
+                        <span>BUSCAR EN ENTREGAS Y LISTA DE VENTAS</span>
                         <input id="delivery-search" type="search" placeholder="N.º de venta, nombre o apellido" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none">
                     </label>
                     <div class="delivery-table-wrap">
@@ -491,15 +479,28 @@ header('Referrer-Policy: same-origin');
                             <tbody id="delivery-slots"></tbody>
                         </table>
                     </div>
+                    <section id="delivery-sales-search-results" class="delivery-sales-search-results" hidden>
+                        <h2>LISTA DE VENTAS</h2>
+                        <div class="delivery-table-wrap">
+                            <table class="delivery-table delivery-sales-search-table">
+                                <thead><tr><th>N.º venta</th><th>Nombre y Apellido</th><th>Total</th><th>Productos</th><th>Estado</th><th>Fecha</th></tr></thead>
+                                <tbody id="delivery-sales-search-results-body"></tbody>
+                            </table>
+                        </div>
+                    </section>
                 </section>
 
                 <section class="admin-view" id="view-statistics">
-                    <div class="view-heading">
+                    <div class="view-heading statistics-heading">
                         <div>
                             <p class="eyebrow">PULSO DEL NEGOCIO</p>
                             <h1 class="admin-page-title">ESTADÍSTICAS</h1>
-                            <p>Una mirada simple a las ventas archivadas, Entregas y beneficios usados.</p>
+                            <p>Indicadores operativos de ventas archivadas, Entregas y beneficios usados.</p>
                         </div>
+                        <form id="statistics-unlock-form" class="statistics-unlock-form">
+                            <input name="password" type="password" autocomplete="current-password" placeholder="Contraseña" aria-label="Contraseña para ver importes" required>
+                            <button class="primary-button fit-button" type="submit">VER</button>
+                        </form>
                     </div>
                     <div id="statistics-content" class="statistics-content"><p class="empty-copy">Calculando estadísticas…</p></div>
                 </section>

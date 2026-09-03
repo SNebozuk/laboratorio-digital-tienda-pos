@@ -3360,11 +3360,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 /* Lista de ventas: sin datos de cobro o envío, sólo lo necesario para preparar pedidos. */
 #view-orders .order-list-head,
 #view-orders .order-list-row {
-    grid-template-columns: 34px minmax(88px, .46fr) minmax(180px, 1.2fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 32px 32px 34px minmax(96px, .52fr);
+    grid-template-columns: 34px minmax(88px, .46fr) minmax(180px, 1.2fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 32px 32px 32px 34px minmax(96px, .52fr);
 }
 #view-orders .order-list.hide-status-column .order-list-head,
 #view-orders .order-list.hide-status-column .order-list-row {
-    grid-template-columns: 34px minmax(88px, .5fr) minmax(180px, 1.3fr) minmax(110px, .65fr) minmax(96px, .55fr) 32px 32px 32px 34px minmax(96px, .58fr);
+    grid-template-columns: 34px minmax(88px, .5fr) minmax(180px, 1.3fr) minmax(110px, .65fr) minmax(96px, .55fr) 32px 32px 32px 32px 34px minmax(96px, .58fr);
 }
 #view-orders .order-list.hide-status-column .order-list-head > :nth-child(6),
 #view-orders .order-list.hide-status-column .order-list-row > :nth-child(6) { display:none; }
@@ -3374,7 +3374,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-orders .order-list-head > :nth-child(7),
 #view-orders .order-list-head > :nth-child(8),
 #view-orders .order-list-head > :nth-child(9),
-#view-orders .order-list-head > :nth-child(10) { display:block; visibility:hidden; font-size:inherit; }
+#view-orders .order-list-head > :nth-child(10),
+#view-orders .order-list-head > :nth-child(11) { display:block; visibility:hidden; font-size:inherit; }
 #view-orders .order-list-head > :nth-child(8)::after { content:''; }
 
 /* Mantiene el volumen visual de la tabla al no haber coincidencias en el buscador. */
@@ -3417,6 +3418,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     #view-orders .order-list-row > :nth-child(9) { grid-column: 3; grid-row: 4; justify-self: end; }
     #view-orders .order-list-row > :nth-child(10) { grid-column: 2; grid-row: 5; justify-self: start; }
     #view-orders .order-list-row > :nth-child(11) { grid-column: 3; grid-row: 5; justify-self: end; }
+    #view-orders .order-list-row > :nth-child(12) { grid-column: 3; grid-row: 6; justify-self: end; }
 }
 
 /* Entrega de pedidos: cien ubicaciones físicas, sin reordenamientos. */
@@ -3462,6 +3464,11 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .delivery-search span { color: #667085; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
 .delivery-search input { min-height: 42px; border: 1px solid #d9cce8; border-radius: 8px; background: #fff; color: #2a1d3c; padding: 0 12px; font: inherit; }
 .delivery-search input:focus { border-color: #8d68bc; box-shadow: 0 0 0 3px rgba(141, 104, 188, .13); outline: none; }
+.delivery-sales-search-results { margin-top:32px; }
+.delivery-sales-search-results h2 { margin:0 0 12px; color:#442467; font-size:15px; letter-spacing:.06em; }
+.delivery-sales-search-table { min-width:760px; }
+.delivery-sales-search-table tbody th { width:auto; font-size:14px; }
+.delivery-sales-search-table td small { display:block; margin-top:2px; color:#778194; font-size:11px; }
 .delivery-table-wrap { overflow: auto; border: 1px solid #ded5eb; border-radius: 14px; background: #fff; box-shadow: 0 10px 30px rgba(66,35,104,.08); }
 .delivery-table { width: 100%; min-width: 1100px; border-collapse: collapse; color: #2a1d3c; font-weight:400; }
 .delivery-table th,.delivery-table td { padding: 10px 12px; border-bottom: 1px solid #eee8f5; text-align: left; vertical-align: middle; font-weight:400; }
@@ -3978,3 +3985,71 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .pos-embedded .pos-page-cart .quantity-control,
 .pos-embedded .pos-page-cart .pos-cart-available,
 .pos-embedded .pos-cart-subtotal { grid-column:auto; grid-row:auto; justify-self:auto; }
+
+/* Navegación principal compacta: los nombres quedan disponibles en los controles. */
+.admin-shell,
+.admin-shell.admin-design-mode:not(.admin-sidebar-collapsed) { grid-template-columns:56px minmax(0,1fr); }
+.admin-icon-sidebar { align-items:center; overflow:visible; padding:12px; }
+.admin-icon-sidebar .admin-sidebar-store-button,
+.admin-icon-sidebar .admin-nav-button,
+.admin-icon-sidebar .admin-user-icon-actions .icon-button {
+    position:relative;
+    display:grid;
+    width:32px !important;
+    height:32px !important;
+    min-height:32px !important;
+    place-items:center;
+    padding:0 !important;
+    border:0;
+    border-radius:8px !important;
+    background:transparent;
+    color:#4f596b !important;
+    cursor:pointer;
+}
+.admin-menu-icon { display:block; width:20px; height:20px; object-fit:contain; }
+.admin-icon-sidebar .admin-nav { display:grid; width:32px; gap:12px; margin-top:0; }
+.admin-icon-sidebar .admin-nav-sales,
+.admin-icon-sidebar .admin-nav-products { display:contents; }
+.admin-icon-sidebar :is(.admin-sidebar-store-button, .admin-nav-button, .admin-user-icon-actions .icon-button) { transition:background .16s ease, box-shadow .16s ease, transform .16s ease; }
+.admin-icon-sidebar .admin-nav-button:hover:not(.active),
+.admin-icon-sidebar .admin-sidebar-store-button:hover,
+.admin-icon-sidebar .admin-user-icon-actions .icon-button:hover { background:#e8e3ff; box-shadow:0 4px 10px rgba(75,62,174,.2); transform:translateY(-1px); }
+.admin-icon-sidebar :is(.admin-nav-button:hover, .admin-sidebar-store-button:hover, .admin-settings-icon:hover) .admin-menu-icon { filter:invert(24%) sepia(28%) saturate(2804%) hue-rotate(223deg) brightness(88%) contrast(89%); }
+.admin-icon-sidebar .admin-nav-button.active { background:#5b4fc7; box-shadow:0 5px 12px rgba(65,53,166,.3); }
+.admin-icon-sidebar .admin-nav-button.active .admin-menu-icon { filter:brightness(0) invert(1); }
+.admin-icon-sidebar .admin-nav-button.active .nav-notification-badge { background:#fff; color:#5b4fc7; }
+.admin-icon-sidebar :is(.admin-sidebar-store-button, .admin-nav-button, .admin-user-icon-actions .icon-button):focus-visible { outline:2px solid #5b4fc7; outline-offset:2px; }
+.admin-icon-sidebar .nav-notification-badge { position:absolute; top:-7px; right:-9px; min-width:16px; height:16px; padding:0 3px; font-size:9px; }
+.admin-icon-sidebar .admin-user { width:32px; margin-top:auto; padding:12px 0 0; border-top:1px solid #c4c9d0; }
+.admin-icon-sidebar .admin-user-icon-actions { display:grid; gap:12px; }
+.admin-icon-sidebar .admin-settings-icon:hover,
+.admin-icon-sidebar .admin-settings-icon:focus-visible { color:#4c2574 !important; }
+.admin-icon-sidebar .admin-logout-icon:hover { background:#ffe8e8; box-shadow:0 4px 10px rgba(179,49,49,.16); }
+.admin-icon-sidebar .admin-logout-icon:hover .admin-menu-icon { filter:invert(21%) sepia(92%) saturate(1962%) hue-rotate(340deg) brightness(77%) contrast(85%); }
+.admin-icon-sidebar .admin-logout-icon:focus-visible { color:#b33131 !important; }
+
+/* La configuración se abre como panel flotante para que la barra conserve sus 56 px. */
+.admin-icon-sidebar .admin-sidebar-settings-menu {
+    position:fixed;
+    z-index:40;
+    inset:12px auto 12px 68px;
+    width:min(250px, calc(100vw - 80px));
+    overflow-x:hidden;
+    overflow-y:auto;
+    padding:22px 10px 15px;
+    border:1px solid #c4c9d0;
+    border-radius:12px;
+    box-shadow:0 12px 30px rgba(35,45,75,.16);
+}
+.admin-icon-sidebar .admin-sidebar-design-editor { width:min(320px, calc(100vw - 80px)); }
+@media (max-width:820px) {
+    .admin-icon-sidebar .admin-sidebar-settings-menu { display:none; }
+}
+
+.statistics-unlock-form { display:flex; align-items:center; gap:8px; margin:0; }
+.statistics-unlock-form input { width:190px; min-height:46px; padding:10px 12px; border:1px solid #d5dbe4; border-radius:10px; background:#fff; color:#25314a; font:inherit; }
+.statistics-unlock-form .primary-button { min-height:46px; }
+@media (max-width:700px) {
+    .statistics-heading { align-items:stretch; flex-direction:column; }
+    .statistics-unlock-form input { width:100%; }
+}

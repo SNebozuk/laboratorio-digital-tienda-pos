@@ -103,11 +103,20 @@ try {
                 Http::json(['ok' => true, 'slots' => $app['deliveries']->slots()]);
 
             case 'statistics':
-                $app['auth']->requireStatisticsAccess();
+                $financialsVisible = $app['auth']->consumeStatisticsAccess();
+                $statistics = $app['orders']->statistics();
+                $deliveries = $app['deliveries']->summary();
+                if (!$financialsVisible) {
+                    foreach ($statistics['archived'] as &$period) {
+                        unset($period['total_cents']);
+                    }
+                    unset($period, $deliveries['total_cents']);
+                }
                 Http::json([
                     'ok' => true,
-                    'statistics' => $app['orders']->statistics(),
-                    'deliveries' => $app['deliveries']->summary(),
+                    'statistics' => $statistics,
+                    'deliveries' => $deliveries,
+                    'financials_visible' => $financialsVisible,
                 ]);
 
             case 'invitations':
