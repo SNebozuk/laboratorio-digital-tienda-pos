@@ -4704,6 +4704,7 @@
                 <tr class="supplier-order-product-head"><td colspan="3"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}</td></tr>
             ` : '';
             const variants = product.variants.map(variant => {
+                const plannedLine = lineMap.get(Number(variant.id));
                 const label = supplierOrderVariantLabel(product, variant);
                 const productCell = multipleVariants
                     ? `<strong>${escapeHtml(label || 'Variante única')}</strong>`
@@ -4714,7 +4715,7 @@
                     variant.barcode ? `Código: ${variant.barcode}` : '',
                 ].filter(Boolean).map(escapeHtml).join(' · ');
                 return `<tr class="supplier-order-line">
-                    <td><input type="number" min="0" max="1000000" step="1" inputmode="numeric" data-supplier-order-plan-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
+                    <td><input class="supplier-order-quantity-input" type="number" min="0" max="99999" step="1" inputmode="numeric" value="${plannedLine?.quantity ? Number(plannedLine.quantity) : ''}" data-supplier-order-plan-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
                     <td class="supplier-order-stock">${Number(variant.stock_on_hand)}</td>
                     <td class="supplier-order-product-cell">${productCell}<small>${details}</small></td>
                 </tr>`;
@@ -4730,15 +4731,15 @@
             const cartRows = supplierOrderCartProducts(draft.cart).map(product => {
                 const variants = supplierOrderCartVariants(product).map(variant => {
                 const line = lineMap.get(Number(variant.id)) || { quantity: 0, unit_price_cents: null };
-                const label = supplierOrderVariantLabel(product, variant) || 'Variante única';
+                const label = supplierOrderVariantLabel(product, variant);
                 const hasPrice = line.unit_price_cents != null;
-                return `<tr><td><input class="supplier-order-cart-input" type="number" min="0" max="99999" step="1" value="${Number(line.quantity || 0)}" data-supplier-order-quantity="${Number(variant.id)}"></td><td>${escapeHtml(label)}</td><td><input class="supplier-order-cart-input" type="text" maxlength="5" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}"></td><td data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(Number(line.quantity || 0) * Number(line.unit_price_cents)) : '—'}</td><td><button class="icon-action-button" type="button" data-supplier-order-remove-cart-product="${Number(product.id)}" aria-label="Quitar producto"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
+                return `<tr><td><input class="supplier-order-cart-input supplier-order-quantity-input" type="number" min="0" max="99999" step="1" value="${Number(line.quantity || 0)}" data-supplier-order-quantity="${Number(variant.id)}"></td><td>${escapeHtml(label)}</td><td><input class="supplier-order-cart-input supplier-order-price-input" type="text" maxlength="8" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}"></td><td data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(Number(line.quantity || 0) * Number(line.unit_price_cents)) : '—'}</td><td><button class="icon-action-button" type="button" data-supplier-order-remove-cart-product="${Number(product.id)}" aria-label="Quitar producto"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
                 }).join('');
                 return `<tr class="supplier-order-product-head"><td colspan="5"><strong>${escapeHtml(product.name)}</strong></td></tr>${variants}`;
             }).join('');
             const summary = supplierOrderSummary();
             draft.summary = summary;
-            elements.supplierOrderCart.innerHTML = cartRows ? `<div class="supplier-order-table-wrap"><table class="supplier-order-table"><thead><tr><th>CANTIDAD</th><th>VARIANTE</th><th>PRECIO</th><th>SUBTOTAL</th><th></th></tr></thead><tbody>${cartRows}</tbody></table></div><div class="supplier-order-summary"><strong>TOTAL DEL PEDIDO: ${supplierOrderMoney(summary.total_cents)}</strong><span>${summary.total_units} u</span></div>` : '<p class="empty-copy">El carrito está vacío.</p>';
+            elements.supplierOrderCart.innerHTML = cartRows ? `<div class="supplier-order-table-wrap"><table class="supplier-order-table"><thead><tr><th>CANTIDAD</th><th>VARIANTE</th><th>PRECIO</th><th>SUBTOTAL</th><th></th></tr></thead><tbody>${cartRows}</tbody></table></div><div class="supplier-order-summary"><strong>TOTAL DEL PEDIDO: <span id="supplier-order-total">${supplierOrderMoney(summary.total_cents)}</span></strong><span id="supplier-order-units">${summary.total_units} u</span></div>` : '<p class="empty-copy">El carrito está vacío.</p>';
         }
         if (elements.supplierOrderPreview) elements.supplierOrderPreview.hidden = !state.supplierOrderPreviewOpen;
         if (elements.supplierOrderWhatsappText) {
@@ -4970,7 +4971,6 @@
         const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
         if (line) line.quantity += quantity;
         else state.supplierOrder.lines.push({ variant_id: variantId, quantity, unit_price_cents: null, subtotal_cents: null });
-        state.supplierOrder.results = state.supplierOrder.results.filter(product => Number(product.id) !== Number(source.id));
         renderSupplierOrder();
         queueSupplierOrderSave(0);
         return true;
@@ -6217,7 +6217,7 @@
         if (target instanceof HTMLInputElement && target.matches('[data-supplier-order-plan-quantity]')) {
             const quantity = Number(target.value || 0);
             if (quantity > 0) {
-                if (!addSupplierOrderToCart(Number(target.dataset.supplierOrderPlanQuantity), quantity)) target.value = '';
+                if (!addSupplierOrderToCart(Number(target.dataset.supplierOrderPlanQuantity), quantity)) renderSupplierOrder();
                 return;
             }
         }
