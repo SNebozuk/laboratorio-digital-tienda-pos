@@ -200,6 +200,7 @@
         supplierOrderCategories: document.getElementById('supplier-order-categories'),
         supplierOrderCategoriesTrigger: document.getElementById('supplier-order-categories-trigger'),
         supplierOrderCategoriesPopover: document.getElementById('supplier-order-category-popover'),
+        supplierOrderCategoriesSearch: document.getElementById('supplier-order-categories-search'),
         supplierOrderCategoriesCount: document.getElementById('supplier-order-categories-count'),
         supplierOrderKeywords: document.getElementById('supplier-order-keywords'),
         supplierOrderThreshold: document.getElementById('supplier-order-threshold'),
@@ -4642,6 +4643,13 @@
         }
     }
 
+    function filterSupplierOrderCategories() {
+        const query = fold(elements.supplierOrderCategoriesSearch?.value);
+        elements.supplierOrderCategories?.querySelectorAll('.supplier-order-category-option').forEach(option => {
+            option.hidden = query !== '' && !fold(option.textContent).includes(query);
+        });
+    }
+
     function setSupplierOrderCategoriesOpen(open, focus = false) {
         syncSupplierOrderCategoryChoices();
         updateSupplierOrderCategoriesCount();
@@ -4651,7 +4659,7 @@
         if (focus) {
             window.requestAnimationFrame(() => {
                 (open
-                    ? elements.supplierOrderCategories?.querySelector('[data-supplier-order-category]')
+                    ? elements.supplierOrderCategoriesSearch || elements.supplierOrderCategories?.querySelector('[data-supplier-order-category]')
                     : elements.supplierOrderCategoriesTrigger
                 )?.focus();
             });
@@ -4671,6 +4679,7 @@
                     <span>${escapeHtml(category.name)}</span>
                 </label>
             `).join('');
+            filterSupplierOrderCategories();
         }
         if (elements.supplierOrderKeywords) elements.supplierOrderKeywords.value = String(filters.keywords || '');
         if (elements.supplierOrderThreshold) elements.supplierOrderThreshold.value = String(filters.stock_threshold ?? 1);
@@ -6104,6 +6113,10 @@
     document.addEventListener('input', event => {
         const target = event.target;
         if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
+        if (target === elements.supplierOrderCategoriesSearch) {
+            filterSupplierOrderCategories();
+            return;
+        }
         if (target.matches('[data-supplier-order-category]')) {
             updateSupplierOrderCategoriesCount();
             return;

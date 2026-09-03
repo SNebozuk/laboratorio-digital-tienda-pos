@@ -267,6 +267,7 @@ header('Referrer-Policy: same-origin');
                 <?php if ($user['role'] === 'admin'): ?>
                     <section class="admin-view supplier-order-view" id="view-supplier-order">
                         <div class="view-heading supplier-order-heading">
+                            <button class="icon-action-button supplier-order-back" type="button" data-supplier-order-back aria-label="Volver" title="Volver"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                             <div>
                                 <p class="eyebrow">REPOSICIÓN DE STOCK</p>
                                 <h1 class="admin-page-title">PEDIDO A PROVEEDOR</h1>
@@ -289,6 +290,7 @@ header('Referrer-Policy: same-origin');
                                             <button class="icon-action-button" type="button" data-close-supplier-order-categories aria-label="Cerrar categorías" title="Cerrar categorías"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                                         </header>
                                         <p>Podés elegir más de una categoría.</p>
+                                        <input id="supplier-order-categories-search" class="supplier-order-category-search" type="search" autocomplete="off" placeholder="Buscar categoría" aria-label="Buscar categoría">
                                         <div id="supplier-order-categories" class="supplier-order-category-list" role="group" aria-label="Categorías"></div>
                                         <footer><span id="supplier-order-categories-count" class="supplier-order-categories-count" aria-label="0 categorías elegidas">0</span><button class="primary-button fit-button" type="button" data-apply-supplier-order-categories>APLICAR</button></footer>
                                     </section>
