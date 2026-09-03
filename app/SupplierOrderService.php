@@ -61,16 +61,24 @@ final class SupplierOrderService
         $query->execute($parameters);
         $rows = $query->fetchAll();
 
-        $keyword = $this->fold($filters['keywords']);
-        if ($keyword !== '') {
-            $rows = array_values(array_filter($rows, function (array $row) use ($keyword): bool {
-                return str_contains($this->fold(implode(' ', [
+        $keywords = preg_split('/\s+/', $this->fold($filters['keywords']), -1, PREG_SPLIT_NO_EMPTY);
+        if ($keywords !== []) {
+            $rows = array_values(array_filter($rows, function (array $row) use ($keywords): bool {
+                $searchable = $this->fold(implode(' ', [
                     $row['product_name'],
                     $row['description'],
                     $row['variant_name'],
                     $row['sku'],
                     $row['barcode'],
-                ])), $keyword);
+                ]));
+
+                foreach ($keywords as $keyword) {
+                    if (!str_contains($searchable, $keyword)) {
+                        return false;
+                    }
+                }
+
+                return true;
             }));
         }
 
