@@ -4071,3 +4071,18 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     .statistics-heading { align-items:stretch; flex-direction:column; }
     .statistics-unlock-form input { width:100%; }
 }
+
+/* Las fichas aseguran contraste alto tanto con el tema claro como con Dark Reader. */
+.admin-icon-sidebar .admin-nav-button:not(.active),
+.admin-icon-sidebar .admin-sidebar-store-button,
+.admin-icon-sidebar .admin-user-icon-actions .icon-button {
+    background: #cfd6df;
+    box-shadow: inset 0 0 0 1px #b5beca;
+}
+
+/* La cabecera de Ventas conservaba relleno propio y desplazaba su título. */
+#view-orders .view-heading {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+}
