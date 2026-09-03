@@ -85,9 +85,6 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18M7 15h4"></path></svg></button>
                     <div class="admin-nav-products">
                         <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 7l3 4 2-1v10h8V10l2 1 3-4-4-3-5 3z"></path></svg></button>
-                        <?php if ($user['role'] === 'admin'): ?>
-                            <button class="admin-nav-button admin-nav-icon-button admin-nav-subitem" type="button" data-view="supplier-order" aria-label="Pedido a proveedor (F5)" title="Pedido a proveedor · F5"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
-                        <?php endif ?>
                     </div>
                     <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M3 20h18"></path></svg></button>
                 </nav>
@@ -195,6 +192,7 @@ header('Referrer-Policy: same-origin');
                 <div class="admin-user">
                     <div class="admin-user-icon-actions">
                         <?php if ($user['role'] === 'admin'): ?>
+                            <button class="icon-button admin-nav-button" type="button" data-view="supplier-order" aria-label="Pedido a proveedor" title="Pedido a proveedor"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
                             <button class="icon-button admin-settings-icon" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu" aria-label="Abrir configuración" title="Configuración">
                                 <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.1 2.1-.06-.06A1.7 1.7 0 0 0 15.76 18a1.7 1.7 0 0 0-1.04 1.55V20h-3v-.45A1.7 1.7 0 0 0 10.68 18a1.7 1.7 0 0 0-1.88.34l-.06.06-2.1-2.1.06-.06A1.7 1.7 0 0 0 7.04 14.4 1.7 1.7 0 0 0 5.5 13.36H5v-3h.5A1.7 1.7 0 0 0 7.04 9.32 1.7 1.7 0 0 0 6.7 7.44l-.06-.06 2.1-2.1.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.04-1.55V3.7h3v.43a1.7 1.7 0 0 0 1.04 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.1 2.1-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.04h.45v3h-.45A1.7 1.7 0 0 0 19.4 15Z"></path></svg>
                             </button>
@@ -255,7 +253,6 @@ header('Referrer-Policy: same-origin');
                 <?php if ($user['role'] === 'admin'): ?>
                     <section class="admin-view supplier-order-view" id="view-supplier-order">
                         <div class="view-heading supplier-order-heading">
-                            <button class="icon-action-button supplier-order-back" type="button" data-supplier-order-back aria-label="Volver" title="Volver"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                             <div>
                                 <p class="eyebrow">REPOSICIÓN DE STOCK</p>
                                 <h1 class="admin-page-title">PEDIDO A PROVEEDOR</h1>
@@ -433,12 +430,6 @@ header('Referrer-Policy: same-origin');
                             <p class="eyebrow">OPERACIÓN DIARIA</p>
                             <h1 class="admin-page-title">LISTA DE VENTAS <small id="open-orders-count"></small></h1>
                             <p>Consultá, imprimí, archivá o cancelá las ventas de la tienda y del mostrador.</p>
-                        </div>
-                        <div class="order-page-actions">
-                            <div class="order-quick-links">
-                                <button class="order-quick-link" id="open-deliveries" type="button" title="Atajo: F2">→ ENTREGA DE PEDIDOS <small>F2</small></button>
-                                <button class="order-quick-link order-quick-link-pos" type="button" data-view="pos" title="Atajo: F3">⊕ ABRIR PUNTO DE VENTA <small>F3</small></button>
-                            </div>
                         </div>
                     </div>
                     <div class="order-toolbar">

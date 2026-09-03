@@ -2386,8 +2386,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 }
 
 /* Pedido a proveedor: borrador operativo, separado del stock y de los precios de venta. */
-.supplier-order-heading { position: relative; align-items: center; padding-top: 40px; }
-.supplier-order-back { position: absolute; top: 0; left: 0; }
+.supplier-order-heading { align-items: center; }
 .supplier-order-actions,
 .supplier-order-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .supplier-order-actions { justify-content: flex-end; }
@@ -3846,8 +3845,6 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 }
 .admin-main .admin-view { width: 100%; min-width: 0; }
 .admin-main .view-heading { align-items: flex-start; min-height: 88px; margin-bottom: 28px; }
-.supplier-order-heading { padding-top: 0; }
-.supplier-order-back { top: 0; right: 0; left: auto; }
 
 /* El PDV se muestra dentro del mismo contenedor y usa su encabezado exterior. */
 .admin-pos-frame { min-height: calc(100vh - 212px); border: 1px solid #e2e6ef; border-radius: 14px; }
@@ -4080,7 +4077,22 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 
 /* La cabecera de Ventas conservaba relleno propio y desplazaba su título. */
 #view-orders .view-heading {
+    align-items: flex-start !important;
     padding: 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
 }
+#view-orders .view-heading > div:first-child > p:last-child {
+    display: block !important;
+    max-width: 680px;
+    margin-top: 8px;
+    color: #798195 !important;
+    font-size: 14px !important;
+    line-height: 1.55;
+}
+
+/* Sin Klaus, el total ocupa por completo la franja bajo Agregar productos. */
+.pos-sale-details,
+.pos-embedded .pos-sale-details { grid-template-columns: minmax(0, 1fr); }
+.pos-main-total,
+.pos-embedded .pos-main-total { min-width: 0; padding-left: 0; border-left: 0; }

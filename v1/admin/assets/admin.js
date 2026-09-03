@@ -5243,11 +5243,6 @@
             await searchSupplierOrder(true);
             return;
         }
-        if (event.target.closest('[data-supplier-order-back]')) {
-            if (window.history.length > 1) window.history.back();
-            else showView('products');
-            return;
-        }
         if (event.target.closest('[data-supplier-order-preview]')) {
             state.supplierOrderPreviewOpen = !state.supplierOrderPreviewOpen;
             renderSupplierOrder();
@@ -6518,7 +6513,6 @@
             F2: 'deliveries',
             F3: 'pos',
             F4: 'products',
-            F5: 'supplier-order',
             F6: 'statistics',
         };
         const view = shortcutViews[event.key];

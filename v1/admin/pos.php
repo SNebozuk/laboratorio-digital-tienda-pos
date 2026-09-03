@@ -55,10 +55,6 @@ header('Referrer-Policy: same-origin');
                     <b>›</b>
                 </a>
                 <section class="pos-sale-details">
-                    <button class="pos-klaus" id="pos-klaus" type="button" aria-label="Acariciar a Klaus" title="Acariciar a Klaus">
-                        <img class="pos-klaus-image" src="<?= $escape($storeAssetPath) ?>/klaus_checkout_sitting.png" alt="">
-                        <span class="pos-klaus-label">KLAUS</span>
-                    </button>
                     <div class="pos-main-total"><span>TOTAL</span><strong id="pos-total">$ 0</strong></div>
                 </section>
             </div>
