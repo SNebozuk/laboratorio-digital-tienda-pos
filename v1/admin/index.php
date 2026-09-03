@@ -274,14 +274,13 @@ header('Referrer-Policy: same-origin');
                             </div>
                             <div class="supplier-order-actions">
                                 <button class="secondary-button fit-button" type="button" data-supplier-order-back>VOLVER</button>
-                                <button class="secondary-button fit-button" type="button" data-supplier-order-preview>VER TEXTO PARA WHATSAPP</button>
-                                <button class="secondary-button fit-button" type="button" data-supplier-order-copy>COPIAR PEDIDO</button>
+                                <button class="secondary-button fit-button" type="button" data-supplier-order-copy>COPIAR</button>
                                 <button class="danger-button fit-button" type="button" data-supplier-order-clear>VACIAR PEDIDO</button>
                             </div>
                         </div>
                         <form id="supplier-order-filters" class="supplier-order-filters">
                             <div class="supplier-order-category-filter">
-                                <button id="supplier-order-categories-trigger" class="supplier-order-category-trigger" type="button" aria-expanded="false" aria-controls="supplier-order-category-popover">CATEGORÍAS</button>
+                                <button id="supplier-order-categories-trigger" class="icon-action-button supplier-order-category-trigger" type="button" aria-expanded="false" aria-controls="supplier-order-category-popover" aria-label="Filtrar por categorías" title="Filtrar por categorías"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                                 <div id="supplier-order-category-popover" class="supplier-order-category-popover" hidden>
                                     <div class="supplier-order-category-backdrop" data-close-supplier-order-categories></div>
                                     <section class="supplier-order-category-dialog" role="dialog" aria-modal="true" aria-labelledby="supplier-order-category-title" tabindex="-1">
@@ -300,7 +299,7 @@ header('Referrer-Policy: same-origin');
                                 <input id="supplier-order-keywords" name="keywords" type="search" autocomplete="off" placeholder="Nombre, descripción, SKU, código o variante">
                             </label>
                             <label>
-                                MOSTRAR PRODUCTOS CON STOCK MENOR A
+                                STOCK HASTA
                                 <input id="supplier-order-threshold" name="stock_threshold" type="number" inputmode="numeric" min="0" max="1000000" step="1" value="1" required>
                             </label>
                             <div class="supplier-order-filter-actions">
@@ -312,13 +311,6 @@ header('Referrer-Policy: same-origin');
                         </form>
                         <p id="supplier-order-status" class="supplier-order-status" aria-live="polite"></p>
                         <div id="supplier-order-results" class="supplier-order-results"></div>
-                        <section id="supplier-order-preview" class="supplier-order-preview" hidden>
-                            <div>
-                                <p class="eyebrow">MENSAJE EDITABLE</p>
-                                <h2>TEXTO PARA WHATSAPP</h2>
-                            </div>
-                            <textarea id="supplier-order-whatsapp-text" rows="8" maxlength="20000" aria-label="Texto para WhatsApp"></textarea>
-                        </section>
                     </section>
 
                     <section class="admin-view" id="view-tutorials">

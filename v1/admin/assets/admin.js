@@ -4678,8 +4678,9 @@
         const lineMap = supplierOrderLines();
         const rows = (draft.results || []).map(product => {
             const multipleVariants = product.variants.length > 1;
+            const removeProductButton = `<button class="icon-action-button" type="button" data-supplier-order-remove-product="${Number(product.id)}" aria-label="Quitar ${escapeHtml(product.name)} del pedido" title="Quitar producto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
             const productHead = multipleVariants ? `
-                <tr class="supplier-order-product-head"><td colspan="4"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}</td></tr>
+                <tr class="supplier-order-product-head"><td colspan="4"><div class="supplier-order-product-title"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}${removeProductButton}</div></td></tr>
             ` : '';
             const variants = product.variants.map(variant => {
                 const line = lineMap.get(Number(variant.id)) || {
@@ -4690,7 +4691,7 @@
                 const label = supplierOrderVariantLabel(product, variant);
                 const productCell = multipleVariants
                     ? `<strong>${escapeHtml(label || 'Variante única')}</strong>`
-                    : `<strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}`;
+                    : `<div class="supplier-order-product-title"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}${removeProductButton}</div>`;
                 const details = [
                     label && !multipleVariants ? label : '',
                     variant.sku ? `SKU: ${variant.sku}` : '',
@@ -4847,7 +4848,7 @@
         }
     }
 
-    async function searchSupplierOrder() {
+    async function searchSupplierOrder(preserveResults = false) {
         if (!state.supplierOrderLoaded || !state.supplierOrder) return;
         const filters = supplierOrderFiltersFromForm();
         if (!Number.isInteger(filters.stock_threshold) || filters.stock_threshold < 0 || filters.stock_threshold > 1000000) {
@@ -4858,7 +4859,29 @@
             const response = await apiPost({ action: 'supplier_order_search', filters });
             const priorLines = supplierOrderLines();
             state.supplierOrder.filters = response.search.filters;
-            state.supplierOrder.results = response.search.results || [];
+            const results = response.search.results || [];
+            if (preserveResults) {
+                const existing = (state.supplierOrder.results || []).map(product => ({
+                    ...product,
+                    variants: [...product.variants],
+                }));
+                const productsById = new Map(existing.map(product => [Number(product.id), product]));
+                results.forEach(product => {
+                    const current = productsById.get(Number(product.id));
+                    if (!current) {
+                        existing.push(product);
+                        productsById.set(Number(product.id), product);
+                        return;
+                    }
+                    const variantIds = new Set(current.variants.map(variant => Number(variant.id)));
+                    product.variants.forEach(variant => {
+                        if (!variantIds.has(Number(variant.id))) current.variants.push(variant);
+                    });
+                });
+                state.supplierOrder.results = existing;
+            } else {
+                state.supplierOrder.results = results;
+            }
             state.supplierOrder.lines = state.supplierOrder.results.flatMap(product => product.variants.map(variant => {
                 const prior = priorLines.get(Number(variant.id));
                 return prior || {
@@ -4907,8 +4930,20 @@
             }
             toast('Pedido copiado. Ya podés pegarlo en WhatsApp.');
         } catch (error) {
-            toast('No pudimos copiar el pedido. Copialo desde la vista previa.');
+            toast('No pudimos copiar el pedido. Volvé a intentarlo.');
         }
+    }
+
+    async function clearSupplierOrder() {
+        await apiPost({ action: 'supplier_order_clear' });
+        window.clearTimeout(state.supplierOrderSaveTimer);
+        state.supplierOrder = supplierOrderEmpty();
+        state.supplierOrderLoaded = true;
+        state.supplierOrderDirty = false;
+        state.supplierOrderPreviewOpen = false;
+        state.supplierOrderCategoriesOpen = false;
+        state.supplierOrderStatus = '';
+        renderSupplierOrder();
     }
 
     async function loadCash() {
@@ -5147,7 +5182,7 @@
                 category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
             };
             setSupplierOrderCategoriesOpen(false, true);
-            await searchSupplierOrder();
+            await searchSupplierOrder(true);
             return;
         }
         if (event.target.closest('[data-supplier-order-back]')) {
@@ -5172,8 +5207,23 @@
             return;
         }
         if (event.target.closest('[data-supplier-order-reset-filters]')) {
-            if (!state.supplierOrder) return;
-            state.supplierOrder.filters = { category_ids: [], keywords: '', stock_threshold: 1 };
+            try {
+                await clearSupplierOrder();
+                toast('El pedido fue vaciado');
+            } catch (error) {
+                toast(error.message);
+            }
+            return;
+        }
+        const removeSupplierOrderProduct = event.target.closest('[data-supplier-order-remove-product]');
+        if (removeSupplierOrderProduct && state.supplierOrder) {
+            const productId = Number(removeSupplierOrderProduct.dataset.supplierOrderRemoveProduct);
+            const product = state.supplierOrder.results.find(item => Number(item.id) === productId);
+            if (!product) return;
+            const variantIds = new Set(product.variants.map(variant => Number(variant.id)));
+            state.supplierOrder.results = state.supplierOrder.results.filter(item => Number(item.id) !== productId);
+            state.supplierOrder.lines = state.supplierOrder.lines.filter(line => !variantIds.has(Number(line.variant_id)));
+            if (!state.supplierOrder.whatsapp_edited) state.supplierOrder.whatsapp_text = supplierOrderWhatsappText();
             renderSupplierOrder();
             queueSupplierOrderSave(0);
             return;
@@ -5191,15 +5241,8 @@
         }
         if (event.target.closest('[data-supplier-order-confirm-clear]')) {
             try {
-                await apiPost({ action: 'supplier_order_clear' });
-                window.clearTimeout(state.supplierOrderSaveTimer);
-                state.supplierOrder = supplierOrderEmpty();
-                state.supplierOrderLoaded = true;
-                state.supplierOrderDirty = false;
-                state.supplierOrderPreviewOpen = false;
-                state.supplierOrderStatus = '';
+                await clearSupplierOrder();
                 closeModal();
-                renderSupplierOrder();
                 toast('El pedido fue vaciado');
             } catch (error) {
                 toast(error.message);
