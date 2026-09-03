@@ -8,11 +8,9 @@ $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'),
 $storePath = $storePath === '/' ? '' : $storePath;
 $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
-$publicSettings = $app['settings']->values();
 $assetVersion = static fn (string $path): string => substr(hash_file('sha256', $path) ?: '1', 0, 12);
 $appCssVersion = $assetVersion(dirname(__DIR__) . '/assets/app.css');
 $adminCssVersion = $assetVersion(__DIR__ . '/assets/admin.css');
-$pulgaJsVersion = $assetVersion(dirname(__DIR__) . '/assets/pulga.js');
 $klausJsVersion = $assetVersion(dirname(__DIR__) . '/assets/klaus.js');
 $adminJsVersion = $assetVersion(__DIR__ . '/assets/admin.js');
 $apiUrl = $storePath . '/api.php';
@@ -170,8 +168,6 @@ header('Referrer-Policy: same-origin');
                             <section data-design-editor-section="mascots" hidden>
                                 <label class="checkbox-setting"><input name="mascot_klaus_enabled" type="checkbox" value="1"><span><strong>Mostrar a Klaus</strong></span></label>
                                 <label class="checkbox-setting"><input name="mascot_klaus_animations_enabled" type="checkbox" value="1"><span><strong>Animaciones de Klaus</strong></span></label>
-                                <label class="checkbox-setting"><input name="mascot_pulga_enabled" type="checkbox" value="1"><span><strong>Mostrar a Pulga</strong></span></label>
-                                <label class="checkbox-setting"><input name="mascot_pulga_animations_enabled" type="checkbox" value="1"><span><strong>Animaciones de Pulga</strong></span></label>
                             </section>
                             <section data-design-editor-section="order" hidden>
                                 <input name="section_order" type="hidden">
@@ -377,7 +373,7 @@ header('Referrer-Policy: same-origin');
                                 <section data-design-preview-section="categories"><strong>CATEGORÍAS</strong><div class="design-preview-category-grid"><span>SUBLIMABLES</span><span>REMERAS</span><span>PAPELES</span></div></section>
                                 <section data-design-preview-section="tutorials"><strong>TUTORIALES</strong><div class="design-preview-card-grid"><span></span><span></span><span></span></div></section>
                             </main>
-                            <div class="design-preview-mascots"><img id="design-preview-klaus" src="<?= $escape($storeAssetPath) ?>/klaus_checkout_sitting.png" alt="Klaus"><span id="design-preview-pulga" role="img" aria-label="Pulga">🐈</span></div>
+                            <div class="design-preview-mascots"><img id="design-preview-klaus" src="<?= $escape($storeAssetPath) ?>/klaus_checkout_sitting.png" alt="Klaus"></div>
                         </div>
                     </section>
 
@@ -590,14 +586,6 @@ header('Referrer-Policy: same-origin');
                                     <label>MENSAJE COMPRA LISTA<textarea name="reward_klaus_complete_text" rows="2"></textarea></label>
                                 </div>
                             </section>
-                            <section class="settings-subsection">
-                                <p class="eyebrow">PULGA / MASCOTA AMBIENTAL</p>
-                                <div class="settings-grid">
-                                    <label class="checkbox-setting"><input name="pulga_enabled" type="checkbox" value="1"><span><strong>Activar a Pulga</strong></span></label>
-                                    <label>MÁXIMO DE ESPERA (30 A 45 SEGUNDOS)<input name="pulga_frequency_seconds" type="number" min="30" max="45"></label>
-                                    <label class="checkbox-setting"><input name="pulga_animations_enabled" type="checkbox" value="1"><span><strong>Activar animaciones de Pulga</strong></span></label>
-                                </div>
-                            </section>
                             <button class="primary-button fit-button" type="submit">
                                 GUARDAR CONFIGURACIÓN
                             </button>
@@ -659,14 +647,9 @@ header('Referrer-Policy: same-origin');
             'setup_required' => $setupRequired,
             'size_guide_url' => $sizeGuideUrl,
             'store_url' => $storeUrl,
-            'pulga' => [
-                'enabled' => $publicSettings['pulga_enabled'] ?? '1',
-                'frequency_seconds' => $publicSettings['pulga_frequency_seconds'] ?? '45',
-                'animations_enabled' => $publicSettings['pulga_animations_enabled'] ?? '1',
-            ],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
-    <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/pulga.js?v=<?= $escape($pulgaJsVersion) ?>" defer></script><script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($klausJsVersion) ?>" defer></script><?php endif ?>
+    <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($klausJsVersion) ?>" defer></script><?php endif ?>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($adminJsVersion) ?>" defer></script>
 </body>
 </html>

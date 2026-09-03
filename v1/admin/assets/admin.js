@@ -4277,11 +4277,8 @@
         [1, 2, 3].forEach(number => setImage(`design-preview-hero-${number}`, `design-hero-${number}-preview`));
 
         const klaus = document.getElementById('design-preview-klaus');
-        const pulga = document.getElementById('design-preview-pulga');
         if (klaus) klaus.hidden = !checked('mascot_klaus_enabled');
-        if (pulga) pulga.hidden = !checked('mascot_pulga_enabled');
         preview.classList.toggle('design-preview-klaus-animated', checked('mascot_klaus_enabled') && checked('mascot_klaus_animations_enabled'));
-        preview.classList.toggle('design-preview-pulga-animated', checked('mascot_pulga_enabled') && checked('mascot_pulga_animations_enabled'));
 
         const sections = document.getElementById('design-preview-sections');
         if (sections) {
@@ -4338,7 +4335,7 @@
             form.elements.namedItem('section_order').value = sections.map(item => item.dataset.designSection).join(',');
             form.elements.namedItem('section_visibility').value = sections.filter(item => !item.classList.contains('is-hidden')).map(item => item.dataset.designSection).join(',');
             const data = new FormData(form);
-            ['logo_bold', 'mascot_klaus_enabled', 'mascot_klaus_animations_enabled', 'mascot_pulga_enabled', 'mascot_pulga_animations_enabled'].forEach(key => {
+            ['logo_bold', 'mascot_klaus_enabled', 'mascot_klaus_animations_enabled'].forEach(key => {
                 data.set(key, form.elements.namedItem(key)?.checked ? '1' : '0');
             });
             data.delete('logo_file');
