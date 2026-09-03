@@ -2420,6 +2420,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-category-trigger { padding: 0; border: 0; background: transparent; color: #5b4fc7; font: inherit; font-size: 13px; font-weight: 750; letter-spacing: .02em; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .supplier-order-category-trigger:hover { color: #392bb2; }
 .supplier-order-category-popover { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 20px; }
+.supplier-order-category-popover[hidden] { display: none; }
 .supplier-order-category-backdrop { position: absolute; inset: 0; background: rgba(28, 34, 53, .28); backdrop-filter: blur(2px); }
 .supplier-order-category-dialog { position: relative; z-index: 1; width: min(100%, 460px); max-height: min(680px, calc(100vh - 40px)); padding: 20px; overflow: hidden; border: 1px solid #dce1ec; border-radius: 16px; background: #fff; box-shadow: 0 18px 55px rgba(26, 35, 64, .24); }
 .supplier-order-category-dialog header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
