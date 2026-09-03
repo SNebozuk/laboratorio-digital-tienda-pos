@@ -3359,13 +3359,13 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 /* Lista de ventas: sin datos de cobro o envío, sólo lo necesario para preparar pedidos. */
 #view-orders .order-list-head,
 #view-orders .order-list-row {
-    grid-template-columns: 34px minmax(70px, .32fr) minmax(180px, 1.25fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 32px 32px 32px 34px minmax(96px, .52fr);
-    column-gap: 10px;
+    grid-template-columns: 34px minmax(64px, .28fr) minmax(180px, 1.38fr) minmax(110px, .6fr) minmax(96px, .5fr) minmax(105px, .56fr) 32px 32px 32px 32px 34px minmax(96px, .52fr);
+    column-gap: 8px;
 }
 #view-orders .order-list.hide-status-column .order-list-head,
 #view-orders .order-list.hide-status-column .order-list-row {
-    grid-template-columns: 34px minmax(70px, .35fr) minmax(180px, 1.34fr) minmax(110px, .65fr) minmax(96px, .55fr) 32px 32px 32px 32px 34px minmax(96px, .58fr);
-    column-gap: 10px;
+    grid-template-columns: 34px minmax(64px, .3fr) minmax(180px, 1.48fr) minmax(110px, .65fr) minmax(96px, .55fr) 32px 32px 32px 32px 34px minmax(96px, .58fr);
+    column-gap: 8px;
 }
 #view-orders .order-list.hide-status-column .order-list-head > :nth-child(6),
 #view-orders .order-list.hide-status-column .order-list-row > :nth-child(6) { display:none; }
