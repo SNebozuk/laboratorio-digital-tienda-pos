@@ -4949,11 +4949,14 @@
         if (!source || !variant) return false;
         const cartProduct = state.supplierOrder.cart.find(product => Number(product.id) === Number(source.id));
         if (cartProduct) {
-            if (!cartProduct.variants.some(item => Number(item.id) === variantId)) cartProduct.variants.push(variant);
-        } else state.supplierOrder.cart.push({ ...source, variants: [variant] });
+            toast('Este producto ya está en el pedido actual.');
+            return false;
+        }
+        state.supplierOrder.cart.push({ ...source, variants: [variant] });
         const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
         if (line) line.quantity += quantity;
         else state.supplierOrder.lines.push({ variant_id: variantId, quantity, unit_price_cents: null, subtotal_cents: null });
+        state.supplierOrder.results = state.supplierOrder.results.filter(product => Number(product.id) !== Number(source.id));
         renderSupplierOrder();
         queueSupplierOrderSave(0);
         return true;
@@ -6199,7 +6202,10 @@
         const target = event.target;
         if (target instanceof HTMLInputElement && target.matches('[data-supplier-order-plan-quantity]')) {
             const quantity = Number(target.value || 0);
-            if (quantity > 0 && addSupplierOrderToCart(Number(target.dataset.supplierOrderPlanQuantity), quantity)) return;
+            if (quantity > 0) {
+                if (!addSupplierOrderToCart(Number(target.dataset.supplierOrderPlanQuantity), quantity)) target.value = '';
+                return;
+            }
         }
         if (!(target instanceof HTMLInputElement) || !target.matches('[data-supplier-order-category]') || !state.supplierOrder) return;
         state.supplierOrder.filters = {
