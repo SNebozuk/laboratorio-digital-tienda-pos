@@ -4091,6 +4091,27 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     line-height: 1.55;
 }
 
+/* Ritmo común entre encabezado, búsqueda y contenido de cada sección. */
+.admin-main .view-heading {
+    align-items: flex-start;
+    min-height: 88px;
+    margin-bottom: 24px;
+}
+.admin-main .view-heading h1,
+#view-orders .view-heading h1 { font-size: clamp(28px, 2.8vw, 40px); }
+.admin-main .view-heading > div:first-child > p:last-child {
+    max-width: 680px;
+    margin: 8px 0 0;
+    color: #798195;
+    font-size: 14px;
+    line-height: 1.55;
+}
+.admin-main .admin-search,
+.admin-main .order-toolbar,
+.admin-main .delivery-search,
+.admin-main .supplier-order-filters { margin: 0 0 24px; }
+#view-orders .order-toolbar { min-height: auto; margin: 0 0 24px; }
+
 /* Sin Klaus, el total ocupa por completo la franja bajo Agregar productos. */
 .pos-sale-details,
 .pos-embedded .pos-sale-details { grid-template-columns: minmax(0, 1fr); }

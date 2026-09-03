@@ -468,6 +468,7 @@ header('Referrer-Policy: same-origin');
                         <div>
                             <p class="eyebrow">ARMADO FÍSICO</p>
                             <h1 class="admin-page-title">ENTREGA DE PEDIDOS</h1>
+                            <p>Organizá los pedidos por fila y encontrá rápidamente las ventas pendientes.</p>
                         </div>
                     </div>
                     <div id="delivery-copy-guide" class="delivery-copy-guide" hidden></div>
