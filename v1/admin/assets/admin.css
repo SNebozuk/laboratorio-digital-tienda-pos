@@ -4024,7 +4024,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     color:#4f596b !important;
     cursor:pointer;
 }
-.admin-menu-icon { display:block; width:20px; height:20px; object-fit:contain; filter:invert(35%) sepia(14%) saturate(904%) hue-rotate(182deg) brightness(92%) contrast(88%); }
+.admin-menu-icon { display:block; width:20px; height:20px; object-fit:contain; filter:brightness(0) invert(1); mix-blend-mode:difference; }
 .admin-icon-sidebar .admin-nav { display:grid; width:32px; gap:12px; margin-top:0; }
 .admin-icon-sidebar .admin-nav-sales,
 .admin-icon-sidebar .admin-nav-products { display:contents; }
@@ -4032,7 +4032,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-icon-sidebar .admin-nav-button:hover:not(.active),
 .admin-icon-sidebar .admin-sidebar-store-button:hover,
 .admin-icon-sidebar .admin-user-icon-actions .icon-button:hover { background:#e8e3ff; box-shadow:0 4px 10px rgba(75,62,174,.2); transform:translateY(-1px); }
-.admin-icon-sidebar :is(.admin-nav-button:hover, .admin-sidebar-store-button:hover, .admin-settings-icon:hover) .admin-menu-icon { filter:invert(24%) sepia(28%) saturate(2804%) hue-rotate(223deg) brightness(88%) contrast(89%); }
+.admin-icon-sidebar :is(.admin-nav-button:hover, .admin-sidebar-store-button:hover, .admin-settings-icon:hover) .admin-menu-icon { filter:brightness(0) invert(1); }
 .admin-icon-sidebar .admin-nav-button.active { background:#5b4fc7; box-shadow:0 5px 12px rgba(65,53,166,.3); }
 .admin-icon-sidebar .admin-nav-button.active .admin-menu-icon { filter:brightness(0) invert(1); }
 .admin-icon-sidebar .admin-nav-button.active .nav-notification-badge { background:#fff; color:#5b4fc7; }
@@ -4043,7 +4043,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-icon-sidebar .admin-settings-icon:hover,
 .admin-icon-sidebar .admin-settings-icon:focus-visible { color:#4c2574 !important; }
 .admin-icon-sidebar .admin-logout-icon:hover { background:#ffe8e8; box-shadow:0 4px 10px rgba(179,49,49,.16); }
-.admin-icon-sidebar .admin-logout-icon:hover .admin-menu-icon { filter:invert(21%) sepia(92%) saturate(1962%) hue-rotate(340deg) brightness(77%) contrast(85%); }
+.admin-icon-sidebar .admin-logout-icon:hover .admin-menu-icon { filter:brightness(0) invert(1); }
 .admin-icon-sidebar .admin-logout-icon:focus-visible { color:#b33131 !important; }
 
 /* La configuración se abre como panel flotante para que la barra conserve sus 56 px. */
