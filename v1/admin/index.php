@@ -79,17 +79,17 @@ header('Referrer-Policy: same-origin');
             <aside class="admin-sidebar admin-icon-sidebar">
                 <nav class="admin-nav" aria-label="Navegación principal">
                     <div class="admin-nav-sales">
-                        <button class="admin-nav-button admin-nav-icon-button admin-nav-orders" type="button" data-view="orders" aria-label="Lista de Ventas (F1)" title="Lista de Ventas · F1"><span class="admin-menu-icon" aria-hidden="true"></span><b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
-                        <button class="admin-nav-button admin-nav-icon-button admin-nav-deliveries" type="button" data-view="deliveries" aria-label="Entrega de pedidos (F2)" title="Entrega de pedidos · F2"><span class="admin-menu-icon" aria-hidden="true"></span><b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
+                        <button class="admin-nav-button admin-nav-icon-button admin-nav-orders" type="button" data-view="orders" aria-label="Lista de Ventas (F1)" title="Lista de Ventas · F1"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4V2h6v2M9 9h6M9 13h6M9 17h4"></path></svg><b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
+                        <button class="admin-nav-button admin-nav-icon-button admin-nav-deliveries" type="button" data-view="deliveries" aria-label="Entrega de pedidos (F2)" title="Entrega de pedidos · F2"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h12v11H3zM15 9h3l3 3v4h-6M7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4"></path></svg><b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
                     </div>
-                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><span class="admin-menu-icon" aria-hidden="true"></span></button>
+                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18M7 15h4"></path></svg></button>
                     <div class="admin-nav-products">
-                        <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><span class="admin-menu-icon" aria-hidden="true"></span></button>
+                        <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 7l3 4 2-1v10h8V10l2 1 3-4-4-3-5 3z"></path></svg></button>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <button class="admin-nav-button admin-nav-icon-button admin-nav-subitem" type="button" data-view="supplier-order" aria-label="Pedido a proveedor (F5)" title="Pedido a proveedor · F5"><span class="admin-menu-icon" aria-hidden="true"></span></button>
+                            <button class="admin-nav-button admin-nav-icon-button admin-nav-subitem" type="button" data-view="supplier-order" aria-label="Pedido a proveedor (F5)" title="Pedido a proveedor · F5"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
                         <?php endif ?>
                     </div>
-                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><span class="admin-menu-icon" aria-hidden="true"></span></button>
+                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M3 20h18"></path></svg></button>
                 </nav>
                 <?php if ($user['role'] === 'admin'): ?>
                     <div class="admin-sidebar-settings-menu" id="admin-sidebar-settings-menu" hidden>
@@ -196,14 +196,14 @@ header('Referrer-Policy: same-origin');
                     <div class="admin-user-icon-actions">
                         <?php if ($user['role'] === 'admin'): ?>
                             <button class="icon-button admin-settings-icon" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu" aria-label="Abrir configuración" title="Configuración">
-                                <span class="admin-menu-icon" aria-hidden="true"></span>
+                                <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.1 2.1-.06-.06A1.7 1.7 0 0 0 15.76 18a1.7 1.7 0 0 0-1.04 1.55V20h-3v-.45A1.7 1.7 0 0 0 10.68 18a1.7 1.7 0 0 0-1.88.34l-.06.06-2.1-2.1.06-.06A1.7 1.7 0 0 0 7.04 14.4 1.7 1.7 0 0 0 5.5 13.36H5v-3h.5A1.7 1.7 0 0 0 7.04 9.32 1.7 1.7 0 0 0 6.7 7.44l-.06-.06 2.1-2.1.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.04-1.55V3.7h3v.43a1.7 1.7 0 0 0 1.04 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.1 2.1-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.04h.45v3h-.45A1.7 1.7 0 0 0 19.4 15Z"></path></svg>
                             </button>
                         <?php endif ?>
                         <button class="icon-button admin-store-link admin-sidebar-store-button" id="admin-store-button" type="button" aria-label="Ver tienda" title="Ver tienda">
-                            <span class="admin-menu-icon" aria-hidden="true"></span>
+                            <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V8l7-4 7 4v12M9 20v-5h6v5M8 10h.01M16 10h.01"></path></svg>
                         </button>
                         <button class="icon-button admin-logout-icon" id="logout-button" type="button" aria-label="Salir" title="Salir">
-                            <span class="admin-menu-icon" aria-hidden="true"></span>
+                            <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M13 4h6v16h-6"></path></svg>
                         </button>
                     </div>
                 </div>
