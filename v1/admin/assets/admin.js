@@ -200,6 +200,7 @@
         supplierOrderCategories: document.getElementById('supplier-order-categories'),
         supplierOrderCategoriesTrigger: document.getElementById('supplier-order-categories-trigger'),
         supplierOrderCategoriesPopover: document.getElementById('supplier-order-category-popover'),
+        supplierOrderCategoriesCount: document.getElementById('supplier-order-categories-count'),
         supplierOrderKeywords: document.getElementById('supplier-order-keywords'),
         supplierOrderThreshold: document.getElementById('supplier-order-threshold'),
         supplierOrderResults: document.getElementById('supplier-order-results'),
@@ -4633,8 +4634,17 @@
         });
     }
 
+    function updateSupplierOrderCategoriesCount() {
+        const count = elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked').length || 0;
+        if (elements.supplierOrderCategoriesCount) {
+            elements.supplierOrderCategoriesCount.textContent = String(count);
+            elements.supplierOrderCategoriesCount.setAttribute('aria-label', `${count} ${count === 1 ? 'categoría elegida' : 'categorías elegidas'}`);
+        }
+    }
+
     function setSupplierOrderCategoriesOpen(open, focus = false) {
         syncSupplierOrderCategoryChoices();
+        updateSupplierOrderCategoriesCount();
         state.supplierOrderCategoriesOpen = open;
         if (elements.supplierOrderCategoriesPopover) elements.supplierOrderCategoriesPopover.hidden = !open;
         elements.supplierOrderCategoriesTrigger?.setAttribute('aria-expanded', String(open));
@@ -5136,8 +5146,8 @@
                 ...state.supplierOrder.filters,
                 category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
             };
-            queueSupplierOrderSave();
             setSupplierOrderCategoriesOpen(false, true);
+            await searchSupplierOrder();
             return;
         }
         if (event.target.closest('[data-supplier-order-back]')) {
@@ -6051,6 +6061,10 @@
     document.addEventListener('input', event => {
         const target = event.target;
         if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
+        if (target.matches('[data-supplier-order-category]')) {
+            updateSupplierOrderCategoriesCount();
+            return;
+        }
         if (target.matches('[data-supplier-order-quantity]')) {
             let quantity = Number(target.value);
             if (!Number.isInteger(quantity) || quantity < 0) quantity = 0;
