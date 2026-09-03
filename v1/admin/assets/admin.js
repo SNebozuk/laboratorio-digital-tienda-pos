@@ -4596,14 +4596,25 @@
         return product?.variants?.length === 1 && fold(name) === 'unica' ? '' : name;
     }
 
+    function supplierOrderCartProducts(cart = state.supplierOrder?.cart || []) {
+        return [...cart].sort((first, second) => String(first.name || '').localeCompare(String(second.name || ''), 'es', { sensitivity: 'base' }));
+    }
+
+    function supplierOrderCartVariants(product) {
+        return [...(product.variants || [])].sort((first, second) => supplierOrderVariantLabel(product, first).localeCompare(supplierOrderVariantLabel(product, second), 'es', { sensitivity: 'base' }));
+    }
+
     function supplierOrderWhatsappText() {
         const lineMap = supplierOrderLines();
-        return (state.supplierOrder?.cart || []).flatMap(product => product.variants.map(variant => {
-            const line = lineMap.get(Number(variant.id));
-            if (!line || line.quantity < 1) return '';
-            const label = [product.name, supplierOrderVariantLabel(product, variant)].filter(Boolean).join(', ');
-            return `${line.quantity} ${line.quantity === 1 ? 'unidad' : 'unidades'} - ${label}`;
-        })).filter(Boolean).join('\n');
+        return supplierOrderCartProducts().map(product => {
+            const variants = supplierOrderCartVariants(product).map(variant => {
+                const line = lineMap.get(Number(variant.id));
+                if (!line || line.quantity < 1) return '';
+                const label = supplierOrderVariantLabel(product, variant);
+                return `- ${line.quantity} u${label ? ` - ${label}` : ''}`;
+            }).filter(Boolean);
+            return variants.length ? [product.name, ...variants].join('\n') : '';
+        }).filter(Boolean).join('\n\n');
     }
 
     function supplierOrderFlatCategories(categories = state.supplierOrderCategories) {
@@ -4716,15 +4727,18 @@
                 <tbody>${rows}</tbody>
             </table></div>` : `<p class="empty-copy">${draft.searched ? 'No encontramos productos con esos filtros y ese stock.' : 'Elegí los filtros y buscá productos para empezar el pedido.'}</p>`;
         if (elements.supplierOrderCart) {
-            const cartRows = (draft.cart || []).flatMap(product => product.variants.map(variant => {
+            const cartRows = supplierOrderCartProducts(draft.cart).map(product => {
+                const variants = supplierOrderCartVariants(product).map(variant => {
                 const line = lineMap.get(Number(variant.id)) || { quantity: 0, unit_price_cents: null };
-                const label = [product.name, supplierOrderVariantLabel(product, variant)].filter(Boolean).join(', ');
+                const label = supplierOrderVariantLabel(product, variant) || 'Variante única';
                 const hasPrice = line.unit_price_cents != null;
                 return `<tr><td><input class="supplier-order-cart-input" type="number" min="0" max="99999" step="1" value="${Number(line.quantity || 0)}" data-supplier-order-quantity="${Number(variant.id)}"></td><td>${escapeHtml(label)}</td><td><input class="supplier-order-cart-input" type="text" maxlength="5" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}"></td><td data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(Number(line.quantity || 0) * Number(line.unit_price_cents)) : '—'}</td><td><button class="icon-action-button" type="button" data-supplier-order-remove-cart-product="${Number(product.id)}" aria-label="Quitar producto"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
-            })).join('');
+                }).join('');
+                return `<tr class="supplier-order-product-head"><td colspan="5"><strong>${escapeHtml(product.name)}</strong></td></tr>${variants}`;
+            }).join('');
             const summary = supplierOrderSummary();
             draft.summary = summary;
-            elements.supplierOrderCart.innerHTML = cartRows ? `<div class="supplier-order-table-wrap"><table class="supplier-order-table"><thead><tr><th>CANTIDAD</th><th>PRODUCTO</th><th>PRECIO</th><th>SUBTOTAL</th><th></th></tr></thead><tbody>${cartRows}</tbody></table></div><div class="supplier-order-summary"><strong>TOTAL DEL PEDIDO: ${supplierOrderMoney(summary.total_cents)}</strong><span>${summary.total_units} unidades</span></div>` : '<p class="empty-copy">El carrito está vacío.</p>';
+            elements.supplierOrderCart.innerHTML = cartRows ? `<div class="supplier-order-table-wrap"><table class="supplier-order-table"><thead><tr><th>CANTIDAD</th><th>VARIANTE</th><th>PRECIO</th><th>SUBTOTAL</th><th></th></tr></thead><tbody>${cartRows}</tbody></table></div><div class="supplier-order-summary"><strong>TOTAL DEL PEDIDO: ${supplierOrderMoney(summary.total_cents)}</strong><span>${summary.total_units} u</span></div>` : '<p class="empty-copy">El carrito está vacío.</p>';
         }
         if (elements.supplierOrderPreview) elements.supplierOrderPreview.hidden = !state.supplierOrderPreviewOpen;
         if (elements.supplierOrderWhatsappText) {
@@ -4740,7 +4754,7 @@
         const summary = supplierOrderSummary();
         state.supplierOrder.summary = summary;
         document.getElementById('supplier-order-total')?.replaceChildren(document.createTextNode(supplierOrderMoney(summary.total_cents)));
-        document.getElementById('supplier-order-units')?.replaceChildren(document.createTextNode(`${summary.total_units} unidades`));
+        document.getElementById('supplier-order-units')?.replaceChildren(document.createTextNode(`${summary.total_units} u`));
         document.getElementById('supplier-order-included')?.replaceChildren(document.createTextNode(`${summary.included_count} ${summary.included_count === 1 ? 'producto o variante incluido' : 'productos o variantes incluidos'}`));
         const missing = document.getElementById('supplier-order-missing');
         if (missing) {
