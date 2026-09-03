@@ -2451,8 +2451,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-cart > header .eyebrow { margin: 0; }
 .supplier-order-cart > header > div:last-child { display: flex; align-items: center; gap: 8px; }
 .supplier-order-cart-input { min-width: 5ch; }
-.supplier-order-quantity-input { width: 5ch !important; min-width: 5ch; text-align: center; }
-.supplier-order-price-input { width: 8ch !important; min-width: 8ch; }
+.supplier-order-quantity-input { width: 5ch !important; min-width: 5ch; text-align: center !important; }
+.supplier-order-price-input { width: 11ch !important; min-width: 11ch; }
 .supplier-order-status button { margin-left: 4px; padding: 0; border: 0; background: transparent; color: #4d40bd; font: inherit; font-weight: 750; cursor: pointer; text-decoration: underline; }
 .supplier-order-table-wrap { overflow-x: auto; border: 1px solid #e2e6ef; border-radius: 14px; background: #fff; }
 .supplier-order-table { width: 100%; min-width: 850px; border-collapse: collapse; }
