@@ -4024,7 +4024,16 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     color:#4f596b !important;
     cursor:pointer;
 }
-.admin-menu-icon { display:block; width:20px; height:20px; background:currentColor; -webkit-mask:var(--menu-icon) center/contain no-repeat; mask:var(--menu-icon) center/contain no-repeat; }
+.admin-menu-icon { display:block; width:20px; height:20px; background:currentColor; -webkit-mask:center/contain no-repeat; mask:center/contain no-repeat; }
+.admin-nav-orders .admin-menu-icon { -webkit-mask-image:url('menu-icons/orders.png'); mask-image:url('menu-icons/orders.png'); }
+.admin-nav-deliveries .admin-menu-icon { -webkit-mask-image:url('menu-icons/deliveries.png'); mask-image:url('menu-icons/deliveries.png'); }
+.admin-nav-button[data-view="pos"] .admin-menu-icon { -webkit-mask-image:url('menu-icons/pos.png'); mask-image:url('menu-icons/pos.png'); }
+.admin-nav-button[data-view="products"] .admin-menu-icon { -webkit-mask-image:url('menu-icons/products.png'); mask-image:url('menu-icons/products.png'); }
+.admin-nav-button[data-view="supplier-order"] .admin-menu-icon { -webkit-mask-image:url('menu-icons/supplier-order.png'); mask-image:url('menu-icons/supplier-order.png'); }
+.admin-nav-button[data-view="statistics"] .admin-menu-icon { -webkit-mask-image:url('menu-icons/statistics.png'); mask-image:url('menu-icons/statistics.png'); }
+.admin-settings-icon .admin-menu-icon { -webkit-mask-image:url('menu-icons/settings.png'); mask-image:url('menu-icons/settings.png'); }
+.admin-sidebar-store-button .admin-menu-icon { -webkit-mask-image:url('menu-icons/store.png'); mask-image:url('menu-icons/store.png'); }
+.admin-logout-icon .admin-menu-icon { -webkit-mask-image:url('menu-icons/logout.png'); mask-image:url('menu-icons/logout.png'); }
 .admin-icon-sidebar .admin-nav { display:grid; width:32px; gap:12px; margin-top:0; }
 .admin-icon-sidebar .admin-nav-sales,
 .admin-icon-sidebar .admin-nav-products { display:contents; }

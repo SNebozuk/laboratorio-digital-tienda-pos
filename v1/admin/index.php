@@ -79,17 +79,17 @@ header('Referrer-Policy: same-origin');
             <aside class="admin-sidebar admin-icon-sidebar">
                 <nav class="admin-nav" aria-label="Navegación principal">
                     <div class="admin-nav-sales">
-                        <button class="admin-nav-button admin-nav-icon-button admin-nav-orders" type="button" data-view="orders" aria-label="Lista de Ventas (F1)" title="Lista de Ventas · F1"><span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/orders.png')" aria-hidden="true"></span><b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
-                        <button class="admin-nav-button admin-nav-icon-button admin-nav-deliveries" type="button" data-view="deliveries" aria-label="Entrega de pedidos (F2)" title="Entrega de pedidos · F2"><span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/deliveries.png')" aria-hidden="true"></span><b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
+                        <button class="admin-nav-button admin-nav-icon-button admin-nav-orders" type="button" data-view="orders" aria-label="Lista de Ventas (F1)" title="Lista de Ventas · F1"><span class="admin-menu-icon" aria-hidden="true"></span><b id="orders-badge" class="nav-notification-badge" hidden>0</b></button>
+                        <button class="admin-nav-button admin-nav-icon-button admin-nav-deliveries" type="button" data-view="deliveries" aria-label="Entrega de pedidos (F2)" title="Entrega de pedidos · F2"><span class="admin-menu-icon" aria-hidden="true"></span><b id="deliveries-badge" class="nav-notification-badge" hidden>0</b></button>
                     </div>
-                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/pos.png')" aria-hidden="true"></span></button>
+                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><span class="admin-menu-icon" aria-hidden="true"></span></button>
                     <div class="admin-nav-products">
-                        <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/products.png')" aria-hidden="true"></span></button>
+                        <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><span class="admin-menu-icon" aria-hidden="true"></span></button>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <button class="admin-nav-button admin-nav-icon-button admin-nav-subitem" type="button" data-view="supplier-order" aria-label="Pedido a proveedor (F5)" title="Pedido a proveedor · F5"><span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/supplier-order.png')" aria-hidden="true"></span></button>
+                            <button class="admin-nav-button admin-nav-icon-button admin-nav-subitem" type="button" data-view="supplier-order" aria-label="Pedido a proveedor (F5)" title="Pedido a proveedor · F5"><span class="admin-menu-icon" aria-hidden="true"></span></button>
                         <?php endif ?>
                     </div>
-                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/statistics.png')" aria-hidden="true"></span></button>
+                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><span class="admin-menu-icon" aria-hidden="true"></span></button>
                 </nav>
                 <?php if ($user['role'] === 'admin'): ?>
                     <div class="admin-sidebar-settings-menu" id="admin-sidebar-settings-menu" hidden>
@@ -196,14 +196,14 @@ header('Referrer-Policy: same-origin');
                     <div class="admin-user-icon-actions">
                         <?php if ($user['role'] === 'admin'): ?>
                             <button class="icon-button admin-settings-icon" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu" aria-label="Abrir configuración" title="Configuración">
-                                <span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/settings.png')" aria-hidden="true"></span>
+                                <span class="admin-menu-icon" aria-hidden="true"></span>
                             </button>
                         <?php endif ?>
                         <button class="icon-button admin-store-link admin-sidebar-store-button" id="admin-store-button" type="button" aria-label="Ver tienda" title="Ver tienda">
-                            <span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/store.png')" aria-hidden="true"></span>
+                            <span class="admin-menu-icon" aria-hidden="true"></span>
                         </button>
                         <button class="icon-button admin-logout-icon" id="logout-button" type="button" aria-label="Salir" title="Salir">
-                            <span class="admin-menu-icon" style="--menu-icon:url('assets/menu-icons/logout.png')" aria-hidden="true"></span>
+                            <span class="admin-menu-icon" aria-hidden="true"></span>
                         </button>
                     </div>
                 </div>
