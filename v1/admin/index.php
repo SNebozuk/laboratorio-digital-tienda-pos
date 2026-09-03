@@ -274,7 +274,7 @@ header('Referrer-Policy: same-origin');
                             </div>
                             <div class="supplier-order-actions">
                                 <button class="secondary-button fit-button" type="button" data-supplier-order-back>VOLVER</button>
-                                <button class="secondary-button fit-button" type="button" data-supplier-order-copy>COPIAR</button>
+                                <button class="icon-action-button" type="button" data-supplier-order-copy aria-label="Copiar pedido" title="Copiar pedido"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                                 <button class="danger-button fit-button" type="button" data-supplier-order-clear>VACIAR PEDIDO</button>
                             </div>
                         </div>
@@ -304,9 +304,6 @@ header('Referrer-Policy: same-origin');
                             </label>
                             <div class="supplier-order-filter-actions">
                                 <button class="primary-button fit-button" type="submit">BUSCAR PRODUCTOS</button>
-                                <button class="icon-action-button" type="button" data-supplier-order-reset-filters aria-label="Limpiar filtros" title="Limpiar filtros">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </button>
                             </div>
                         </form>
                         <p id="supplier-order-status" class="supplier-order-status" aria-live="polite"></p>
