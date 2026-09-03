@@ -86,7 +86,6 @@ header('Referrer-Policy: same-origin');
                     <div class="admin-nav-products">
                         <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 7l3 4 2-1v10h8V10l2 1 3-4-4-3-5 3z"></path></svg></button>
                     </div>
-                    <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M3 20h18"></path></svg></button>
                 </nav>
                 <?php if ($user['role'] === 'admin'): ?>
                     <div class="admin-sidebar-settings-menu" id="admin-sidebar-settings-menu" hidden>
@@ -191,6 +190,7 @@ header('Referrer-Policy: same-origin');
                 <?php endif ?>
                 <div class="admin-user">
                     <div class="admin-user-icon-actions">
+                        <button class="icon-button admin-nav-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M3 20h18"></path></svg></button>
                         <?php if ($user['role'] === 'admin'): ?>
                             <button class="icon-button admin-nav-button" type="button" data-view="supplier-order" aria-label="Pedido a proveedor" title="Pedido a proveedor"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
                             <button class="icon-button admin-settings-icon" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu" aria-label="Abrir configuración" title="Configuración">

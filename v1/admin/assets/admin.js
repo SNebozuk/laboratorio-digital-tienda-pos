@@ -6683,13 +6683,13 @@
         if (elements.ordersBadge) loadOrderNotifications();
         if (document.getElementById('view-orders')) {
             const requestedView = new URL(window.location.href).searchParams.get('view');
-            showView(requestedView || 'orders', Boolean(requestedView), false);
+            showView(requestedView || 'orders', true, false);
             if (elements.deliveriesBadge && requestedView !== 'deliveries') loadDeliverySlots();
         }
         window.addEventListener('popstate', () => {
             if (!document.getElementById('view-orders')) return;
             const previousView = new URL(window.location.href).searchParams.get('view');
-            showView(previousView || 'orders', Boolean(previousView), false);
+            showView(previousView || 'orders', true, false);
         });
         window.setInterval(refreshActiveAdminView, 2000);
         document.addEventListener('visibilitychange', () => {
