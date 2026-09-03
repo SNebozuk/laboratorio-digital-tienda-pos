@@ -4689,15 +4689,14 @@
         const lineMap = supplierOrderLines();
         const rows = (draft.results || []).map(product => {
             const multipleVariants = product.variants.length > 1;
-            const removeProductButton = `<button class="icon-action-button" type="button" data-supplier-order-remove-product="${Number(product.id)}" aria-label="Quitar ${escapeHtml(product.name)} del pedido" title="Quitar producto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
             const productHead = multipleVariants ? `
-                <tr class="supplier-order-product-head"><td colspan="4"><div class="supplier-order-product-title"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}${removeProductButton}</div></td></tr>
+                <tr class="supplier-order-product-head"><td colspan="3"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}</td></tr>
             ` : '';
             const variants = product.variants.map(variant => {
                 const label = supplierOrderVariantLabel(product, variant);
                 const productCell = multipleVariants
                     ? `<strong>${escapeHtml(label || 'Variante única')}</strong>`
-                    : `<div class="supplier-order-product-title"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}${removeProductButton}</div>`;
+                    : `<strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}`;
                 const details = [
                     label && !multipleVariants ? label : '',
                     variant.sku ? `SKU: ${variant.sku}` : '',
@@ -4707,14 +4706,13 @@
                     <td><input type="number" min="0" max="1000000" step="1" inputmode="numeric" data-supplier-order-plan-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
                     <td class="supplier-order-stock">${Number(variant.stock_on_hand)}</td>
                     <td class="supplier-order-product-cell">${productCell}<small>${details}</small></td>
-                    <td><button class="secondary-button fit-button" type="button" data-supplier-order-add="${Number(variant.id)}">AGREGAR</button></td>
                 </tr>`;
             }).join('');
             return productHead + variants;
         }).join('');
         elements.supplierOrderResults.innerHTML = rows ? `
             <div class="supplier-order-table-wrap"><table class="supplier-order-table">
-                <thead><tr><th>CANTIDAD</th><th>STOCK</th><th>PRODUCTO</th><th></th></tr></thead>
+                <thead><tr><th>CANTIDAD</th><th>STOCK</th><th>PRODUCTO</th></tr></thead>
                 <tbody>${rows}</tbody>
             </table></div>` : `<p class="empty-copy">${draft.searched ? 'No encontramos productos con esos filtros y ese stock.' : 'Elegí los filtros y buscá productos para empezar el pedido.'}</p>`;
         if (elements.supplierOrderCart) {
@@ -4942,6 +4940,23 @@
         state.supplierOrder.whatsapp_text = '';
         renderSupplierOrder();
         queueSupplierOrderSave(0);
+    }
+
+    function addSupplierOrderToCart(variantId, quantity) {
+        if (!state.supplierOrder || !Number.isInteger(quantity) || quantity < 1) return false;
+        const source = state.supplierOrder.results.find(product => product.variants.some(variant => Number(variant.id) === variantId));
+        const variant = source?.variants.find(item => Number(item.id) === variantId);
+        if (!source || !variant) return false;
+        const cartProduct = state.supplierOrder.cart.find(product => Number(product.id) === Number(source.id));
+        if (cartProduct) {
+            if (!cartProduct.variants.some(item => Number(item.id) === variantId)) cartProduct.variants.push(variant);
+        } else state.supplierOrder.cart.push({ ...source, variants: [variant] });
+        const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
+        if (line) line.quantity += quantity;
+        else state.supplierOrder.lines.push({ variant_id: variantId, quantity, unit_price_cents: null, subtotal_cents: null });
+        renderSupplierOrder();
+        queueSupplierOrderSave(0);
+        return true;
     }
 
     async function loadCash() {
@@ -6182,6 +6197,10 @@
     });
     document.addEventListener('change', event => {
         const target = event.target;
+        if (target instanceof HTMLInputElement && target.matches('[data-supplier-order-plan-quantity]')) {
+            const quantity = Number(target.value || 0);
+            if (quantity > 0 && addSupplierOrderToCart(Number(target.dataset.supplierOrderPlanQuantity), quantity)) return;
+        }
         if (!(target instanceof HTMLInputElement) || !target.matches('[data-supplier-order-category]') || !state.supplierOrder) return;
         state.supplierOrder.filters = {
             ...state.supplierOrder.filters,
