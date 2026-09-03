@@ -9,7 +9,7 @@ $storePath = $storePath === '/' ? '' : $storePath;
 $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
 $publicSettings = $app['settings']->values();
-$assetVersion = static fn (string $path): string => (string) (filemtime($path) ?: 1);
+$assetVersion = static fn (string $path): string => substr(hash_file('sha256', $path) ?: '1', 0, 12);
 $appCssVersion = $assetVersion(dirname(__DIR__) . '/assets/app.css');
 $adminCssVersion = $assetVersion(__DIR__ . '/assets/admin.css');
 $pulgaJsVersion = $assetVersion(dirname(__DIR__) . '/assets/pulga.js');
