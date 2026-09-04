@@ -2205,7 +2205,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-orders .order-list-head > :nth-child(4),
 #view-orders .order-list-row > :nth-child(4) { justify-self: end; text-align: right; transform: translateX(8px); }
 #view-orders .order-list-head > :nth-child(5),
-#view-orders .order-list-row > :nth-child(5) { transform: translateX(8px); }
+#view-orders .order-list-row > :nth-child(5) { transform: translateX(16px); }
 #view-orders .order-list-row:hover .order-list-number strong,
 #view-orders .order-list-row:hover > :nth-child(4) strong { text-decoration: none; }
 #view-orders .order-list-row small { color: #fff; }
