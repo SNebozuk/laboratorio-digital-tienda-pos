@@ -2295,16 +2295,20 @@
         ));
     }
 
-    function exactDeliveryCustomerOrderCount(order) {
+    function exactDeliveryCustomerOrders(order) {
         const customerKey = exactCustomerKey(order?.customer_name);
-        if (!customerKey || orderIsInDeliveries(order)) return 0;
-        return state.deliverySlots.reduce((count, slot) => {
-            if (!String(slot.order_numbers || '').trim()) return count;
+        if (!customerKey || orderIsInDeliveries(order)) return { count: 0, slotNumbers: [] };
+        return state.deliverySlots.reduce((matches, slot) => {
+            if (!String(slot.order_numbers || '').trim()) return matches;
             const linkedOrders = Array.isArray(slot.orders) ? slot.orders : [];
-            return count + linkedOrders.filter(linkedOrder => (
+            const count = linkedOrders.filter(linkedOrder => (
                 exactCustomerKey(linkedOrder.customer_name) === customerKey
             )).length;
-        }, 0);
+            if (!count) return matches;
+            matches.count += count;
+            matches.slotNumbers.push(Number(slot.slot_number));
+            return matches;
+        }, { count: 0, slotNumbers: [] });
     }
 
     function exactOrderCustomerCount(order) {
@@ -3407,9 +3411,9 @@
                     const orderCustomerCountIndicator = orderCustomerCount > 1
                         ? `<span class="order-customer-sales-count" role="status" aria-label="${orderCustomerCount} ventas en Lista de Ventas" title="${orderCustomerCount} ventas en Lista de Ventas">${orderCustomerCount}</span>`
                         : '';
-                    const deliveryCustomerOrderCount = exactDeliveryCustomerOrderCount(order);
-                    const deliveryCustomerMatches = deliveryCustomerOrderCount
-                        ? `<span class="order-delivery-customer-match" role="status" aria-label="${deliveryCustomerOrderCount} ventas activas en Entrega de pedidos" title="${deliveryCustomerOrderCount} ventas activas en Entrega de pedidos">+${deliveryCustomerOrderCount}</span>`
+                    const deliveryCustomerOrders = exactDeliveryCustomerOrders(order);
+                    const deliveryCustomerMatches = deliveryCustomerOrders.count
+                        ? `<span class="order-delivery-customer-match" role="status" aria-label="${deliveryCustomerOrders.count} ventas activas en Entrega de pedidos, filas ${deliveryCustomerOrders.slotNumbers.join(', ')}" title="${deliveryCustomerOrders.count} ventas activas en Entrega de pedidos, filas ${deliveryCustomerOrders.slotNumbers.join(', ')}">+${deliveryCustomerOrders.count} /f ${deliveryCustomerOrders.slotNumbers.join(', ')}</span>`
                         : '';
                     const stateIndicator = order.archived_at
                         ? '<span class="order-status-indicator order-status-indicator-archived" role="img" aria-label="Venta archivada" title="Venta archivada">A</span>'
