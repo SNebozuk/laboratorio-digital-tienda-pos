@@ -3248,6 +3248,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-search-page .pos-product img, .pos-search-page .pos-product-placeholder { width: 54px; height: 54px; transition: transform .18s ease, box-shadow .18s ease; position: relative; z-index: 1; }
 .pos-search-page .pos-product img:hover { transform: scale(2.35); box-shadow: 0 12px 34px rgba(0,0,0,.35); z-index: 8; }
 .pos-result-name { overflow: hidden; font-weight: 400; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; }
+.pos-add-simple-product { cursor: pointer; }
 .pos-result-name-toggle { padding: 0; border: 0; background: transparent; color: #252a3a; cursor: pointer; font: inherit; font-weight: 400; text-align: left; }
 .pos-result-meta { overflow: hidden; color: #667087; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 .pos-result-meta-toggle { padding: 0; border: 0; background: transparent; cursor: pointer; font: inherit; text-align: left; }

@@ -886,6 +886,11 @@
             .map(result => result.product);
     }
 
+    function posProductTitleMatches(product, query) {
+        const tokens = searchWords(query);
+        return tokens.every(token => tokenFieldScore(token, product.name, 0) >= 0);
+    }
+
     function variantDisplayName(product, variant) {
         const name = String(variant?.name || '').trim();
         return product?.variants?.length === 1 && fold(name) === 'unica'
@@ -1684,10 +1689,13 @@
         const products = rankedProducts(
             query,
             state.products.filter(product => product && product.active !== false)
-        ).filter(product => product.variants.some(variant => (
-            variant && variant.active !== false
-            && (query || Number(variant.available_stock) > 0)
-        )));
+        ).filter(product => (
+            posProductTitleMatches(product, query)
+            && product.variants.some(variant => (
+                variant && variant.active !== false
+                && (query || Number(variant.available_stock) > 0)
+            ))
+        ));
         elements.posProducts.innerHTML = products.length ? `
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
             ${products.map(product => {
@@ -1701,7 +1709,7 @@
                 const singleQuantity = single ? posQuantity(single.id) : 0;
                 const singleRemaining = single ? Math.max(0, Number(single.available_stock) - singleQuantity) : 0;
                 return `
-            <article class="pos-product pos-result-product ${expanded ? 'pos-expanded' : ''} ${product.variants.some(variant => state.posChangedAvailability.has(Number(variant.id))) ? 'availability-changed' : ''} ${product.variants.some(variant => state.posStockConflicts.has(Number(variant.id))) ? 'stock-conflict' : ''}">
+            <article class="pos-product pos-result-product ${!hasVariants && singleRemaining > 0 ? 'pos-add-simple-product' : ''} ${expanded ? 'pos-expanded' : ''} ${product.variants.some(variant => state.posChangedAvailability.has(Number(variant.id))) ? 'availability-changed' : ''} ${product.variants.some(variant => state.posStockConflicts.has(Number(variant.id))) ? 'stock-conflict' : ''}"${!hasVariants && singleRemaining > 0 ? ` data-pos-add-simple-product="${Number(single.id)}"` : ''}>
                 ${safeImage(product.image_path)
                     ? `<img src="${escapeHtml(safeImage(product.image_path))}" alt="${escapeHtml(product.name)}">`
                     : '<div class="pos-product-placeholder">SIN FOTO</div>'}
@@ -5725,12 +5733,18 @@
             showUserForm(user);
             return;
         }
-        const posQuantity = event.target.closest('[data-pos-quantity]');
-        if (posQuantity) {
+        const posQuantityButton = event.target.closest('[data-pos-quantity]');
+        if (posQuantityButton) {
             setPosQuantity(
-                Number(posQuantity.dataset.posQuantity),
-                Number(posQuantity.dataset.value)
+                Number(posQuantityButton.dataset.posQuantity),
+                Number(posQuantityButton.dataset.value)
             );
+            return;
+        }
+        const posAddSimpleProduct = event.target.closest('[data-pos-add-simple-product]');
+        if (posAddSimpleProduct && !event.target.closest('button, input, a, label')) {
+            const variantId = Number(posAddSimpleProduct.dataset.posAddSimpleProduct);
+            setPosQuantity(variantId, posQuantity(variantId) + 1);
             return;
         }
         const posOpenProduct = event.target.closest('[data-pos-open-product]');
