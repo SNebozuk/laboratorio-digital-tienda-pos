@@ -3413,7 +3413,7 @@
                         : '';
                     const deliveryCustomerOrders = exactDeliveryCustomerOrders(order);
                     const deliveryCustomerMatches = deliveryCustomerOrders.count
-                        ? `<span class="order-delivery-customer-match" role="status" aria-label="${deliveryCustomerOrders.count} ventas activas en Entrega de pedidos, filas ${deliveryCustomerOrders.slotNumbers.join(', ')}" title="${deliveryCustomerOrders.count} ventas activas en Entrega de pedidos, filas ${deliveryCustomerOrders.slotNumbers.join(', ')}">+${deliveryCustomerOrders.count} /f ${deliveryCustomerOrders.slotNumbers.join(', ')}</span>`
+                        ? `<span class="order-delivery-customer-match" role="status" aria-label="${deliveryCustomerOrders.count} ventas activas en Entrega de pedidos, filas ${deliveryCustomerOrders.slotNumbers.join(', ')}" title="${deliveryCustomerOrders.count} ventas activas en Entrega de pedidos, filas ${deliveryCustomerOrders.slotNumbers.join(', ')}">+${deliveryCustomerOrders.count} / ${deliveryCustomerOrders.slotNumbers.join(', ')}</span>`
                         : '';
                     const stateIndicator = order.archived_at
                         ? '<span class="order-status-indicator order-status-indicator-archived" role="img" aria-label="Venta archivada" title="Venta archivada">A</span>'
