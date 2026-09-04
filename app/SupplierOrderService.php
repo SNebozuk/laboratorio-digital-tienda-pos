@@ -35,8 +35,12 @@ final class SupplierOrderService
     public function search(array $filters): array
     {
         $filters = $this->filters($filters);
-        $where = ['p.deleted_at IS NULL', 'v.stock_on_hand <= :threshold'];
-        $parameters = ['threshold' => $filters['stock_threshold']];
+        $where = ['p.deleted_at IS NULL'];
+        $parameters = [];
+        if ($filters['stock_threshold'] !== null) {
+            $where[] = 'v.stock_on_hand <= :threshold';
+            $parameters['threshold'] = $filters['stock_threshold'];
+        }
 
         if ($filters['category_ids']) {
             $placeholders = [];
@@ -153,7 +157,7 @@ final class SupplierOrderService
     }
 
     /** @param array<string, mixed> $filters
-     *  @return array{category_ids:list<int>,keywords:string,stock_threshold:int}
+     *  @return array{category_ids:list<int>,keywords:string,stock_threshold:int|null}
      */
     private function filters(array $filters): array
     {
@@ -191,12 +195,9 @@ final class SupplierOrderService
         return [
             'category_ids' => $categoryIds,
             'keywords' => $keywords,
-            'stock_threshold' => $this->integer(
-                $filters['stock_threshold'] ?? null,
-                'El valor de stock',
-                0,
-                1000000
-            ),
+            'stock_threshold' => ($filters['stock_threshold'] ?? null) === '' || !isset($filters['stock_threshold'])
+                ? null
+                : $this->integer($filters['stock_threshold'], 'El valor de stock', 0, 1000000),
         ];
     }
 

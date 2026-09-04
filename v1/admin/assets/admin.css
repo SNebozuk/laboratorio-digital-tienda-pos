@@ -2455,7 +2455,9 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-clear-button { color: #a54c4c; }
 .supplier-order-clear-button:hover { background: #fff0f0; color: #8c2e2e; }
 .supplier-order-cart-input { min-width: 7ch; }
-.supplier-order-quantity-input { width: 7ch !important; min-width: 7ch; text-align: center !important; }
+.supplier-order-quantity-input { width: 7ch !important; min-width: 7ch; appearance: textfield; -moz-appearance: textfield; text-align: center !important; }
+.supplier-order-quantity-input::-webkit-inner-spin-button,
+.supplier-order-quantity-input::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
 .supplier-order-price-input { width: 13ch !important; min-width: 13ch; }
 .supplier-order-quantity-control { display: flex; align-items: center; gap: 4px; width: max-content; }
 .supplier-order-quantity-control .icon-action-button { border: 1px solid #cfd7e4; border-radius: 8px; background: #fff; color: #4d40bd; cursor: pointer; }

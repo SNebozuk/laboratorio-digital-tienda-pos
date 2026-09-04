@@ -4610,7 +4610,7 @@
     }
 
     const supplierOrderEmpty = () => ({
-        filters: { category_ids: [], keywords: '', stock_threshold: 1 },
+        filters: { category_ids: [], keywords: '', stock_threshold: null },
         results: [],
         cart: [],
         lines: [],
@@ -4756,7 +4756,7 @@
             filterSupplierOrderCategories();
         }
         if (elements.supplierOrderKeywords) elements.supplierOrderKeywords.value = String(filters.keywords || '');
-        if (elements.supplierOrderThreshold) elements.supplierOrderThreshold.value = String(filters.stock_threshold ?? 1);
+        if (elements.supplierOrderThreshold) elements.supplierOrderThreshold.value = filters.stock_threshold == null ? '' : String(filters.stock_threshold);
 
         const lineMap = supplierOrderLines();
         const rows = (draft.results || []).map(product => {
@@ -4841,7 +4841,9 @@
         return {
             category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
             keywords: String(elements.supplierOrderKeywords?.value || '').trim(),
-            stock_threshold: Number(elements.supplierOrderThreshold?.value),
+            stock_threshold: elements.supplierOrderThreshold?.value === ''
+                ? null
+                : Number(elements.supplierOrderThreshold?.value),
         };
     }
 
@@ -4918,7 +4920,7 @@
             const response = await apiGet('supplier_order_draft');
             state.supplierOrderCategories = response.categories || [];
             state.supplierOrder = response.draft || supplierOrderEmpty();
-            state.supplierOrder.filters ||= { category_ids: [], keywords: '', stock_threshold: 1 };
+            state.supplierOrder.filters ||= { category_ids: [], keywords: '', stock_threshold: null };
             state.supplierOrder.results ||= [];
             state.supplierOrder.cart ||= [];
             state.supplierOrder.lines ||= [];
@@ -4936,7 +4938,7 @@
     async function searchSupplierOrder(preserveResults = false) {
         if (!state.supplierOrderLoaded || !state.supplierOrder) return;
         const filters = supplierOrderFiltersFromForm();
-        if (!Number.isInteger(filters.stock_threshold) || filters.stock_threshold < 0 || filters.stock_threshold > 1000000) {
+        if (filters.stock_threshold !== null && (!Number.isInteger(filters.stock_threshold) || filters.stock_threshold < 0 || filters.stock_threshold > 1000000)) {
             toast('Ingresá un valor de stock válido.');
             return;
         }
@@ -5058,10 +5060,12 @@
         if (!source || !variant) return false;
         const cartProduct = state.supplierOrder.cart.find(product => Number(product.id) === Number(source.id));
         if (cartProduct) {
-            toast('Este producto ya está en el pedido actual.');
-            return false;
+            if (!cartProduct.variants.some(item => Number(item.id) === variantId)) {
+                cartProduct.variants.push(variant);
+            }
+        } else {
+            state.supplierOrder.cart.push({ ...source, variants: [variant] });
         }
-        state.supplierOrder.cart.push({ ...source, variants: [variant] });
         const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
         if (line) line.quantity += quantity;
         else state.supplierOrder.lines.push({ variant_id: variantId, quantity, unit_price_cents: null, subtotal_cents: null });
@@ -5339,7 +5343,7 @@
             return;
         }
         if (event.target.closest('[data-supplier-order-clear-plan]') && state.supplierOrder) {
-            state.supplierOrder.filters = { category_ids: [], keywords: '', stock_threshold: 1 };
+            state.supplierOrder.filters = { category_ids: [], keywords: '', stock_threshold: null };
             state.supplierOrder.results = [];
             state.supplierOrder.searched = false;
             renderSupplierOrder();
@@ -5394,11 +5398,13 @@
         }
         const removeCartProduct = event.target.closest('[data-supplier-order-remove-cart-product]');
         if (removeCartProduct && state.supplierOrder) {
-            const productId = Number(removeCartProduct.dataset.supplierOrderRemoveCartProduct);
-            const product = state.supplierOrder.cart.find(item => Number(item.id) === productId);
-            const variantIds = new Set((product?.variants || []).map(variant => Number(variant.id)));
-            state.supplierOrder.cart = state.supplierOrder.cart.filter(item => Number(item.id) !== productId);
-            state.supplierOrder.lines = state.supplierOrder.lines.filter(line => !variantIds.has(Number(line.variant_id)));
+            const variantId = Number(removeCartProduct.closest('tr')?.querySelector('[data-supplier-order-quantity]')?.dataset.supplierOrderQuantity);
+            if (!variantId) return;
+            state.supplierOrder.cart = state.supplierOrder.cart.map(product => ({
+                ...product,
+                variants: product.variants.filter(variant => Number(variant.id) !== variantId),
+            })).filter(product => product.variants.length);
+            state.supplierOrder.lines = state.supplierOrder.lines.filter(line => Number(line.variant_id) !== variantId);
             renderSupplierOrder();
             queueSupplierOrderSave(0);
             return;

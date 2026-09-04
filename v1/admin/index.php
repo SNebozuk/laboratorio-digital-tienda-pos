@@ -275,7 +275,7 @@ header('Referrer-Policy: same-origin');
                             <div class="search-input-field"><input id="supplier-order-keywords" name="keywords" type="search" autocomplete="off" placeholder="Nombre, descripción, SKU, código o variante" aria-label="Buscar productos por nombre, descripción, SKU, código o variante"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
                             <label>
                                 STOCK HASTA
-                                <input id="supplier-order-threshold" name="stock_threshold" type="number" inputmode="numeric" min="0" max="1000000" step="1" value="1" required>
+                                <input id="supplier-order-threshold" name="stock_threshold" type="number" inputmode="numeric" min="0" max="1000000" step="1" value="">
                             </label>
                             <div class="supplier-order-filter-actions">
                                 <button class="primary-button fit-button" type="submit">BUSCAR PRODUCTOS</button>
