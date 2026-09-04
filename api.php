@@ -68,6 +68,14 @@ try {
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'categories' => $app['categories']->tree()]);
 
+            case 'supplier_order_draft':
+                $user = $app['auth']->requireAdmin();
+                Http::json([
+                    'ok' => true,
+                    'draft' => $app['supplier_orders']->draft((int) $user['id']),
+                    'categories' => $app['categories']->tree(),
+                ]);
+
             case 'admin_tutorials':
                 $app['auth']->requireAdmin();
                 Http::json(['ok' => true, 'tutorials' => $app['tutorials']->adminList()]);
@@ -299,6 +307,30 @@ try {
                 'ok' => true,
                 'image_path' => $image['image_path'],
             ], 201);
+
+        case 'supplier_order_search':
+            $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'search' => $app['supplier_orders']->search(
+                    is_array($input['filters'] ?? null) ? $input['filters'] : []
+                ),
+            ]);
+
+        case 'supplier_order_save':
+            $user = $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'draft' => $app['supplier_orders']->save(
+                    (int) $user['id'],
+                    is_array($input['draft'] ?? null) ? $input['draft'] : []
+                ),
+            ]);
+
+        case 'supplier_order_clear':
+            $user = $app['auth']->requireAdmin();
+            $app['supplier_orders']->clear((int) $user['id']);
+            Http::json(['ok' => true]);
 
         case 'product_create':
             $user = $app['auth']->requireAdmin();

@@ -1077,13 +1077,12 @@
         });
     }
 
-    function setProductView(view, remember = alwaysUseProductView) {
+    function setProductView(view) {
         if (!PRODUCT_VIEWS.has(view)) return;
         productView = view;
-        alwaysUseProductView = Boolean(remember);
+        alwaysUseProductView = true;
         try {
-            if (alwaysUseProductView) window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view);
-            else window.localStorage.removeItem(PRODUCT_VIEW_STORAGE_KEY);
+            window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view);
         } catch (_) { /* La vista funciona aunque el navegador no permita guardar la preferencia. */ }
         if (productView === 'list') setCategoryMenuOpen(false);
         syncProductViewSwitcher();
@@ -1095,8 +1094,7 @@
             <section class="product-view-chooser" aria-labelledby="product-view-chooser-title">
                 <span class="product-view-chooser-icon" aria-hidden="true">◉</span>
                 <h2 id="product-view-chooser-title">Bienvenida a Laboratorio Digital</h2>
-                <p>Elegí cómo querés recorrer la tienda.</p>
-                <label class="product-view-remember"><input type="checkbox" name="remember-product-view"> Usar siempre esta selección</label>
+                <p>La vista elegida se guarda y podés cambiarla cuando quieras.</p>
                 <div>
                     <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos ordenados por categoría y subcategoría.</small></button>
                     <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
@@ -1850,8 +1848,7 @@
         const productViewButton = event.target.closest('[data-product-view]');
         if (productViewButton) {
             const chooser = productViewButton.closest('.product-view-chooser');
-            const remember = chooser?.querySelector('[name="remember-product-view"]')?.checked === true;
-            setProductView(productViewButton.dataset.productView, chooser ? remember : alwaysUseProductView);
+            setProductView(productViewButton.dataset.productView);
             if (chooser) closeModal();
             return;
         }
@@ -2261,7 +2258,7 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    if (!returnedFromQuote && !alwaysUseProductView) window.setTimeout(showProductViewChooser, 350);
+    if (!returnedFromQuote) window.setTimeout(showProductViewChooser, 350);
     // La lista completa es la vista inicial, por lo que el catálogo se carga
     // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();

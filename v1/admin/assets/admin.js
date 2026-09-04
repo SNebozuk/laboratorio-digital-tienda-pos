@@ -50,6 +50,16 @@
         posSaleConfirmationTimer: 0,
         posKlausTimer: 0,
         knownOrderIds: null,
+        supplierOrder: null,
+        supplierOrderCategories: [],
+        supplierOrderLoaded: false,
+        supplierOrderSaving: false,
+        supplierOrderSavePromise: null,
+        supplierOrderDirty: false,
+        supplierOrderSaveTimer: 0,
+        supplierOrderPreviewOpen: false,
+        supplierOrderCategoriesOpen: false,
+        supplierOrderStatus: '',
         view: 'orders',
     };
 
@@ -189,6 +199,18 @@
         ordersBadge: document.getElementById('orders-badge'),
         deliveriesBadge: document.getElementById('deliveries-badge'),
         statisticsContent: document.getElementById('statistics-content'),
+        supplierOrderCategories: document.getElementById('supplier-order-categories'),
+        supplierOrderCategoriesTrigger: document.getElementById('supplier-order-categories-trigger'),
+        supplierOrderCategoriesPopover: document.getElementById('supplier-order-category-popover'),
+        supplierOrderCategoriesSearch: document.getElementById('supplier-order-categories-search'),
+        supplierOrderCategoriesCount: document.getElementById('supplier-order-categories-count'),
+        supplierOrderKeywords: document.getElementById('supplier-order-keywords'),
+        supplierOrderThreshold: document.getElementById('supplier-order-threshold'),
+        supplierOrderResults: document.getElementById('supplier-order-results'),
+        supplierOrderCart: document.getElementById('supplier-order-cart'),
+        supplierOrderStatus: document.getElementById('supplier-order-status'),
+        supplierOrderPreview: document.getElementById('supplier-order-preview'),
+        supplierOrderWhatsappText: document.getElementById('supplier-order-whatsapp-text'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -398,7 +420,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'pos', 'statistics', 'products', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -424,6 +446,9 @@
         }
         if (view === 'products') {
             loadProducts();
+        }
+        if (view === 'supplier-order') {
+            loadSupplierOrder();
         }
         if (view === 'tutorials') loadTutorials();
         if (view === 'deliveries') {
@@ -4547,6 +4572,434 @@
         }
     }
 
+    const supplierOrderEmpty = () => ({
+        filters: { category_ids: [], keywords: '', stock_threshold: 1 },
+        results: [],
+        cart: [],
+        lines: [],
+        summary: { total_cents: 0, total_units: 0, included_count: 0, missing_price_count: 0 },
+        whatsapp_text: '',
+        whatsapp_edited: false,
+        searched: false,
+        updated_at: '',
+    });
+
+    const supplierOrderMoney = cents => new Intl.NumberFormat('es-AR', {
+        style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2,
+    }).format(Number(cents || 0) / 100);
+
+    const supplierOrderLines = () => new Map((state.supplierOrder?.lines || []).map(line => [
+        Number(line.variant_id),
+        {
+            variant_id: Number(line.variant_id),
+            quantity: Math.max(0, Number(line.quantity || 0)),
+            unit_price_cents: line.unit_price_cents == null ? null : Math.max(0, Number(line.unit_price_cents)),
+            subtotal_cents: line.subtotal_cents == null ? null : Math.max(0, Number(line.subtotal_cents)),
+        },
+    ]));
+
+    function supplierOrderSummary() {
+        let totalCents = 0, totalUnits = 0, includedCount = 0, missingPriceCount = 0;
+        (state.supplierOrder?.lines || []).forEach(line => {
+            const quantity = Math.max(0, Number(line.quantity || 0));
+            if (!quantity) return;
+            includedCount++;
+            totalUnits += quantity;
+            if (line.unit_price_cents == null) {
+                missingPriceCount++;
+                line.subtotal_cents = null;
+                return;
+            }
+            line.subtotal_cents = quantity * Number(line.unit_price_cents);
+            totalCents += line.subtotal_cents;
+        });
+        return { total_cents: totalCents, total_units: totalUnits, included_count: includedCount, missing_price_count: missingPriceCount };
+    }
+
+    function supplierOrderVariantLabel(product, variant) {
+        const name = String(variant?.name || '').trim();
+        return product?.variants?.length === 1 && fold(name) === 'unica' ? '' : name;
+    }
+
+    function supplierOrderCartProducts(cart = state.supplierOrder?.cart || []) {
+        return [...cart].sort((first, second) => String(first.name || '').localeCompare(String(second.name || ''), 'es', { sensitivity: 'base' }));
+    }
+
+    function supplierOrderCartVariants(product) {
+        return [...(product.variants || [])].sort((first, second) => supplierOrderVariantLabel(product, first).localeCompare(supplierOrderVariantLabel(product, second), 'es', { sensitivity: 'base' }));
+    }
+
+    function supplierOrderWhatsappText() {
+        const lineMap = supplierOrderLines();
+        return supplierOrderCartProducts().flatMap(product =>
+            supplierOrderCartVariants(product).map(variant => {
+                const line = lineMap.get(Number(variant.id));
+                if (!line || line.quantity < 1) return '';
+                const label = supplierOrderVariantLabel(product, variant);
+                return `- ${line.quantity} ${product.name}${label ? ` · ${label}` : ''}`;
+            })
+        ).filter(Boolean).join('\n');
+    }
+
+    function supplierOrderFlatCategories(categories = state.supplierOrderCategories) {
+        const rows = [];
+        const visit = (items, depth = 0) => (items || []).forEach(category => {
+            rows.push({ ...category, depth });
+            visit(category.children, depth + 1);
+        });
+        visit(categories);
+        return rows;
+    }
+
+    function supplierOrderStatus() {
+        if (!elements.supplierOrderStatus) return;
+        const status = state.supplierOrderStatus;
+        if (status === 'saving') {
+            elements.supplierOrderStatus.textContent = 'Guardando…';
+        } else if (status === 'saved') {
+            elements.supplierOrderStatus.textContent = 'Pedido guardado';
+        } else if (status === 'error') {
+            elements.supplierOrderStatus.innerHTML = 'Error al guardar. <button type="button" data-supplier-order-retry>Reintentar</button>';
+        } else {
+            elements.supplierOrderStatus.textContent = '';
+        }
+    }
+
+    function syncSupplierOrderCategoryChoices() {
+        const selected = new Set((state.supplierOrder?.filters?.category_ids || []).map(Number));
+        elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]').forEach(input => {
+            input.checked = selected.has(Number(input.value));
+        });
+    }
+
+    function updateSupplierOrderCategoriesCount() {
+        const count = elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked').length || 0;
+        if (elements.supplierOrderCategoriesCount) {
+            elements.supplierOrderCategoriesCount.textContent = String(count);
+            elements.supplierOrderCategoriesCount.setAttribute('aria-label', `${count} ${count === 1 ? 'categoría elegida' : 'categorías elegidas'}`);
+        }
+    }
+
+    function filterSupplierOrderCategories() {
+        const query = fold(elements.supplierOrderCategoriesSearch?.value);
+        elements.supplierOrderCategories?.querySelectorAll('.supplier-order-category-option').forEach(option => {
+            option.hidden = query !== '' && !fold(option.textContent).includes(query);
+        });
+    }
+
+    function setSupplierOrderCategoriesOpen(open, focus = false) {
+        syncSupplierOrderCategoryChoices();
+        updateSupplierOrderCategoriesCount();
+        state.supplierOrderCategoriesOpen = open;
+        if (elements.supplierOrderCategoriesPopover) elements.supplierOrderCategoriesPopover.hidden = !open;
+        elements.supplierOrderCategoriesTrigger?.setAttribute('aria-expanded', String(open));
+        if (focus) {
+            window.requestAnimationFrame(() => {
+                (open
+                    ? elements.supplierOrderCategoriesSearch || elements.supplierOrderCategories?.querySelector('[data-supplier-order-category]')
+                    : elements.supplierOrderCategoriesTrigger
+                )?.focus();
+            });
+        }
+    }
+
+    function renderSupplierOrder() {
+        if (!elements.supplierOrderResults || !state.supplierOrder) return;
+        const draft = state.supplierOrder;
+        const filters = draft.filters || {};
+        const selectedCategories = new Set((filters.category_ids || []).map(Number));
+        if (elements.supplierOrderCategories) {
+            elements.supplierOrderCategories.innerHTML = supplierOrderFlatCategories().map(category => `
+                <label class="supplier-order-category-option" style="--supplier-category-depth:${Number(category.depth || 0)}">
+                    <input type="checkbox" value="${Number(category.id)}" data-supplier-order-category ${selectedCategories.has(Number(category.id)) ? 'checked' : ''}>
+                    <span class="supplier-order-category-check" aria-hidden="true">✓</span>
+                    <span>${escapeHtml(category.name)}</span>
+                </label>
+            `).join('');
+            filterSupplierOrderCategories();
+        }
+        if (elements.supplierOrderKeywords) elements.supplierOrderKeywords.value = String(filters.keywords || '');
+        if (elements.supplierOrderThreshold) elements.supplierOrderThreshold.value = String(filters.stock_threshold ?? 1);
+
+        const lineMap = supplierOrderLines();
+        const rows = (draft.results || []).map(product => {
+            const multipleVariants = product.variants.length > 1;
+            const productHead = multipleVariants ? `
+                <tr class="supplier-order-product-head"><td colspan="3"><strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}</td></tr>
+            ` : '';
+            const variants = product.variants.map(variant => {
+                const plannedLine = lineMap.get(Number(variant.id));
+                const label = supplierOrderVariantLabel(product, variant);
+                const productCell = multipleVariants
+                    ? `<strong>${escapeHtml(label || 'Variante única')}</strong>`
+                    : `<strong>${escapeHtml(product.name)}</strong>${product.active ? '' : '<span class="supplier-order-hidden">Oculto</span>'}`;
+                const details = [
+                    label && !multipleVariants ? label : '',
+                    variant.sku ? `SKU: ${variant.sku}` : '',
+                    variant.barcode ? `Código: ${variant.barcode}` : '',
+                ].filter(Boolean).map(escapeHtml).join(' · ');
+                return `<tr class="supplier-order-line">
+                    <td><input class="supplier-order-quantity-input" type="number" min="0" max="99999" step="1" inputmode="numeric" value="${plannedLine?.quantity ? Number(plannedLine.quantity) : ''}" data-supplier-order-plan-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
+                    <td class="supplier-order-stock">${Number(variant.stock_on_hand)}</td>
+                    <td class="supplier-order-product-cell">${productCell}<small>${details}</small></td>
+                </tr>`;
+            }).join('');
+            return productHead + variants;
+        }).join('');
+        elements.supplierOrderResults.innerHTML = rows ? `
+            <div class="supplier-order-table-wrap"><table class="supplier-order-table">
+                <thead><tr><th>CANTIDAD</th><th>STOCK</th><th>PRODUCTO</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table></div>` : `<p class="empty-copy">${draft.searched ? 'No encontramos productos con esos filtros y ese stock.' : 'Elegí los filtros y buscá productos para empezar el pedido.'}</p>`;
+        if (elements.supplierOrderCart) {
+            const cartRows = supplierOrderCartProducts(draft.cart).map(product => {
+                const variants = supplierOrderCartVariants(product).map(variant => {
+                const line = lineMap.get(Number(variant.id)) || { quantity: 0, unit_price_cents: null };
+                const label = supplierOrderVariantLabel(product, variant);
+                const hasPrice = line.unit_price_cents != null;
+                return `<tr><td><input class="supplier-order-cart-input supplier-order-quantity-input" type="number" min="0" max="99999" step="1" value="${Number(line.quantity || 0)}" data-supplier-order-quantity="${Number(variant.id)}"></td><td>${escapeHtml(label)}</td><td><input class="supplier-order-cart-input supplier-order-price-input" type="text" maxlength="11" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}"></td><td data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(Number(line.quantity || 0) * Number(line.unit_price_cents)) : '—'}</td><td><button class="icon-action-button" type="button" data-supplier-order-remove-cart-product="${Number(product.id)}" aria-label="Quitar producto"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
+                }).join('');
+                return `<tr class="supplier-order-product-head"><td colspan="5"><strong>${escapeHtml(product.name)}</strong></td></tr>${variants}`;
+            }).join('');
+            const summary = supplierOrderSummary();
+            draft.summary = summary;
+            elements.supplierOrderCart.innerHTML = cartRows ? `<div class="supplier-order-table-wrap"><table class="supplier-order-table"><thead><tr><th>CANTIDAD</th><th>VARIANTE</th><th>PRECIO</th><th>SUBTOTAL</th><th></th></tr></thead><tbody>${cartRows}</tbody></table></div><div class="supplier-order-summary"><strong>TOTAL DEL PEDIDO: <span id="supplier-order-total">${supplierOrderMoney(summary.total_cents)}</span></strong><span id="supplier-order-units">${summary.total_units} u</span></div>` : '<p class="empty-copy">El carrito está vacío.</p>';
+        }
+        if (elements.supplierOrderPreview) elements.supplierOrderPreview.hidden = !state.supplierOrderPreviewOpen;
+        if (elements.supplierOrderWhatsappText) {
+            elements.supplierOrderWhatsappText.value = draft.whatsapp_edited ? String(draft.whatsapp_text || '') : supplierOrderWhatsappText();
+        }
+        setSupplierOrderCategoriesOpen(state.supplierOrderCategoriesOpen);
+        updateSupplierOrderSummary();
+        supplierOrderStatus();
+    }
+
+    function updateSupplierOrderSummary() {
+        if (!state.supplierOrder) return;
+        const summary = supplierOrderSummary();
+        state.supplierOrder.summary = summary;
+        document.getElementById('supplier-order-total')?.replaceChildren(document.createTextNode(supplierOrderMoney(summary.total_cents)));
+        document.getElementById('supplier-order-units')?.replaceChildren(document.createTextNode(`${summary.total_units} u`));
+        document.getElementById('supplier-order-included')?.replaceChildren(document.createTextNode(`${summary.included_count} ${summary.included_count === 1 ? 'producto o variante incluido' : 'productos o variantes incluidos'}`));
+        const missing = document.getElementById('supplier-order-missing');
+        if (missing) {
+            missing.hidden = summary.missing_price_count === 0;
+            missing.textContent = `Falta cargar el precio de ${summary.missing_price_count} ${summary.missing_price_count === 1 ? 'producto' : 'productos'}`;
+        }
+        (state.supplierOrder.cart || []).forEach(product => product.variants.forEach(variant => {
+            const line = supplierOrderLines().get(Number(variant.id));
+            const row = document.querySelector(`[data-supplier-order-line="${Number(variant.id)}"]`);
+            const subtotal = document.querySelector(`[data-supplier-order-subtotal="${Number(variant.id)}"]`);
+            if (!line || !subtotal) return;
+            const hasPrice = line.unit_price_cents != null;
+            subtotal.textContent = hasPrice ? supplierOrderMoney(line.quantity * Number(line.unit_price_cents)) : '—';
+            row?.classList.toggle('is-missing-price', line.quantity > 0 && !hasPrice);
+        }));
+        if (!state.supplierOrder.whatsapp_edited && elements.supplierOrderWhatsappText) {
+            elements.supplierOrderWhatsappText.value = supplierOrderWhatsappText();
+        }
+    }
+
+    function supplierOrderFiltersFromForm() {
+        return {
+            category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
+            keywords: String(elements.supplierOrderKeywords?.value || '').trim(),
+            stock_threshold: Number(elements.supplierOrderThreshold?.value),
+        };
+    }
+
+    function supplierOrderPayload() {
+        const draft = state.supplierOrder || supplierOrderEmpty();
+        return {
+            filters: draft.filters,
+            results: (draft.results || []).map(product => ({
+                product_id: Number(product.id),
+                variants: product.variants.map(variant => ({ id: Number(variant.id) })),
+            })),
+            cart: (draft.cart || []).map(product => ({
+                product_id: Number(product.id),
+                variants: product.variants.map(variant => ({ id: Number(variant.id) })),
+            })),
+            lines: (draft.lines || []).map(line => ({
+                variant_id: Number(line.variant_id),
+                quantity: Math.max(0, Number(line.quantity || 0)),
+                unit_price_cents: line.unit_price_cents == null ? null : Math.max(0, Number(line.unit_price_cents)),
+            })),
+            whatsapp_text: draft.whatsapp_edited ? String(draft.whatsapp_text || '') : supplierOrderWhatsappText(),
+            whatsapp_edited: Boolean(draft.whatsapp_edited),
+            searched: Boolean(draft.searched),
+        };
+    }
+
+    function queueSupplierOrderSave(delay = 650) {
+        if (!state.supplierOrderLoaded || !state.supplierOrder) return;
+        state.supplierOrderDirty = true;
+        state.supplierOrderStatus = 'saving';
+        supplierOrderStatus();
+        window.clearTimeout(state.supplierOrderSaveTimer);
+        state.supplierOrderSaveTimer = window.setTimeout(() => persistSupplierOrder(), delay);
+    }
+
+    async function persistSupplierOrder() {
+        if (!state.supplierOrderLoaded || !state.supplierOrder || state.supplierOrderSaving) return;
+        window.clearTimeout(state.supplierOrderSaveTimer);
+        state.supplierOrderDirty = false;
+        state.supplierOrderSaving = true;
+        state.supplierOrderStatus = 'saving';
+        supplierOrderStatus();
+        try {
+            state.supplierOrderSavePromise = apiPost({ action: 'supplier_order_save', draft: supplierOrderPayload() });
+            const response = await state.supplierOrderSavePromise;
+            state.supplierOrder.updated_at = response.draft?.updated_at || state.supplierOrder.updated_at;
+            state.supplierOrderStatus = 'saved';
+            document.getElementById('supplier-order-updated')?.replaceChildren(document.createTextNode(
+                `Última modificación: ${argentinaDateLabel(state.supplierOrder.updated_at)}`
+            ));
+        } catch (error) {
+            state.supplierOrderStatus = 'error';
+        } finally {
+            state.supplierOrderSaving = false;
+            state.supplierOrderSavePromise = null;
+            supplierOrderStatus();
+            if (state.supplierOrderDirty) queueSupplierOrderSave();
+        }
+    }
+
+    async function flushSupplierOrder() {
+        if (!state.supplierOrderLoaded || !state.supplierOrder) return;
+        if (state.supplierOrderSaving && state.supplierOrderSavePromise) {
+            await state.supplierOrderSavePromise.catch(() => {});
+        }
+        if (state.supplierOrderDirty) await persistSupplierOrder();
+    }
+
+    async function loadSupplierOrder() {
+        if (!elements.supplierOrderResults || app.user?.role !== 'admin' || state.supplierOrderLoaded) {
+            return;
+        }
+        try {
+            const response = await apiGet('supplier_order_draft');
+            state.supplierOrderCategories = response.categories || [];
+            state.supplierOrder = response.draft || supplierOrderEmpty();
+            state.supplierOrder.filters ||= { category_ids: [], keywords: '', stock_threshold: 1 };
+            state.supplierOrder.results ||= [];
+            state.supplierOrder.cart ||= [];
+            state.supplierOrder.lines ||= [];
+            state.supplierOrder.whatsapp_edited = Boolean(state.supplierOrder.whatsapp_edited);
+            state.supplierOrder.searched = Boolean(state.supplierOrder.searched);
+            state.supplierOrderLoaded = true;
+            renderSupplierOrder();
+        } catch (error) {
+            state.supplierOrderStatus = 'error';
+            supplierOrderStatus();
+            toast(error.message);
+        }
+    }
+
+    async function searchSupplierOrder(preserveResults = false) {
+        if (!state.supplierOrderLoaded || !state.supplierOrder) return;
+        const filters = supplierOrderFiltersFromForm();
+        if (!Number.isInteger(filters.stock_threshold) || filters.stock_threshold < 0 || filters.stock_threshold > 1000000) {
+            toast('Ingresá un valor de stock válido.');
+            return;
+        }
+        try {
+            const response = await apiPost({ action: 'supplier_order_search', filters });
+            state.supplierOrder.filters = response.search.filters;
+            const results = response.search.results || [];
+            if (preserveResults) {
+                const existing = (state.supplierOrder.results || []).map(product => ({
+                    ...product,
+                    variants: [...product.variants],
+                }));
+                const productsById = new Map(existing.map(product => [Number(product.id), product]));
+                results.forEach(product => {
+                    const current = productsById.get(Number(product.id));
+                    if (!current) {
+                        existing.push(product);
+                        productsById.set(Number(product.id), product);
+                        return;
+                    }
+                    const variantIds = new Set(current.variants.map(variant => Number(variant.id)));
+                    product.variants.forEach(variant => {
+                        if (!variantIds.has(Number(variant.id))) current.variants.push(variant);
+                    });
+                });
+                state.supplierOrder.results = existing;
+            } else {
+                state.supplierOrder.results = results;
+            }
+            state.supplierOrder.searched = true;
+            if (!state.supplierOrder.whatsapp_edited) state.supplierOrder.whatsapp_text = supplierOrderWhatsappText();
+            renderSupplierOrder();
+            await persistSupplierOrder();
+        } catch (error) {
+            toast(error.message);
+        }
+    }
+
+    function updateSupplierOrderLine(variantId, changes) {
+        if (!state.supplierOrder) return;
+        const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === Number(variantId));
+        if (!line) return;
+        Object.assign(line, changes);
+        line.subtotal_cents = line.unit_price_cents == null ? null : Number(line.quantity) * Number(line.unit_price_cents);
+        if (!state.supplierOrder.whatsapp_edited) state.supplierOrder.whatsapp_text = supplierOrderWhatsappText();
+        updateSupplierOrderSummary();
+        queueSupplierOrderSave();
+    }
+
+    async function copySupplierOrder() {
+        const text = state.supplierOrder?.whatsapp_edited
+            ? String(state.supplierOrder.whatsapp_text || '')
+            : supplierOrderWhatsappText();
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const field = document.createElement('textarea');
+                field.value = text;
+                field.style.position = 'fixed';
+                field.style.opacity = '0';
+                document.body.appendChild(field);
+                field.select();
+                if (!document.execCommand('copy')) throw new Error('No se pudo copiar el pedido.');
+                field.remove();
+            }
+            toast('Pedido copiado. Ya podés pegarlo en WhatsApp.');
+        } catch (error) {
+            toast('No pudimos copiar el pedido. Volvé a intentarlo.');
+        }
+    }
+
+    async function clearSupplierOrder() {
+        if (!state.supplierOrder) return;
+        state.supplierOrder.cart = [];
+        state.supplierOrder.lines = [];
+        state.supplierOrder.whatsapp_text = '';
+        renderSupplierOrder();
+        queueSupplierOrderSave(0);
+    }
+
+    function addSupplierOrderToCart(variantId, quantity) {
+        if (!state.supplierOrder || !Number.isInteger(quantity) || quantity < 1) return false;
+        const source = state.supplierOrder.results.find(product => product.variants.some(variant => Number(variant.id) === variantId));
+        const variant = source?.variants.find(item => Number(item.id) === variantId);
+        if (!source || !variant) return false;
+        const cartProduct = state.supplierOrder.cart.find(product => Number(product.id) === Number(source.id));
+        if (cartProduct) {
+            toast('Este producto ya está en el pedido actual.');
+            return false;
+        }
+        state.supplierOrder.cart.push({ ...source, variants: [variant] });
+        const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
+        if (line) line.quantity += quantity;
+        else state.supplierOrder.lines.push({ variant_id: variantId, quantity, unit_price_cents: null, subtotal_cents: null });
+        renderSupplierOrder();
+        queueSupplierOrderSave(0);
+        return true;
+    }
+
     async function loadCash() {
         if (!elements.cashContent) {
             return;
@@ -4711,6 +5164,10 @@
             event.preventDefault();
             saveSizeGuide(event.target);
         }
+        if (event.target.id === 'supplier-order-filters') {
+            event.preventDefault();
+            searchSupplierOrder();
+        }
         if (event.target.id === 'user-form') {
             event.preventDefault();
             saveUser(event.target);
@@ -4764,6 +5221,119 @@
     });
 
     document.addEventListener('click', async event => {
+        if (event.target.closest('#supplier-order-categories-trigger')) {
+            setSupplierOrderCategoriesOpen(!state.supplierOrderCategoriesOpen, true);
+            return;
+        }
+        if (event.target.closest('[data-close-supplier-order-categories]')) {
+            setSupplierOrderCategoriesOpen(false, true);
+            return;
+        }
+        if (event.target.closest('[data-apply-supplier-order-categories]')) {
+            if (!state.supplierOrder) return;
+            state.supplierOrder.filters = {
+                ...state.supplierOrder.filters,
+                category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
+            };
+            setSupplierOrderCategoriesOpen(false, true);
+            await searchSupplierOrder(true);
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-preview]')) {
+            state.supplierOrderPreviewOpen = !state.supplierOrderPreviewOpen;
+            renderSupplierOrder();
+            if (state.supplierOrderPreviewOpen) {
+                window.requestAnimationFrame(() => elements.supplierOrderWhatsappText?.focus());
+            }
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-copy]')) {
+            copySupplierOrder();
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-clear-plan]') && state.supplierOrder) {
+            state.supplierOrder.filters = { category_ids: [], keywords: '', stock_threshold: 1 };
+            state.supplierOrder.results = [];
+            state.supplierOrder.searched = false;
+            renderSupplierOrder();
+            queueSupplierOrderSave(0);
+            return;
+        }
+        const addSupplierOrder = event.target.closest('[data-supplier-order-add]');
+        if (addSupplierOrder && state.supplierOrder) {
+            const variantId = Number(addSupplierOrder.dataset.supplierOrderAdd);
+            const quantity = Number(document.querySelector(`[data-supplier-order-plan-quantity="${variantId}"]`)?.value || 0);
+            const source = state.supplierOrder.results.find(product => product.variants.some(variant => Number(variant.id) === variantId));
+            const variant = source?.variants.find(item => Number(item.id) === variantId);
+            if (!source || !variant || !Number.isInteger(quantity) || quantity < 1) { toast('Ingresá una cantidad para agregar al carrito.'); return; }
+            const cartProduct = state.supplierOrder.cart.find(product => Number(product.id) === Number(source.id));
+            if (cartProduct) {
+                if (!cartProduct.variants.some(item => Number(item.id) === variantId)) cartProduct.variants.push(variant);
+            } else {
+                state.supplierOrder.cart.push({ ...source, variants: [variant] });
+            }
+            const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
+            if (line) line.quantity += quantity;
+            else state.supplierOrder.lines.push({ variant_id: variantId, quantity, unit_price_cents: null, subtotal_cents: null });
+            renderSupplierOrder();
+            queueSupplierOrderSave(0);
+            return;
+        }
+        const removeCartProduct = event.target.closest('[data-supplier-order-remove-cart-product]');
+        if (removeCartProduct && state.supplierOrder) {
+            const productId = Number(removeCartProduct.dataset.supplierOrderRemoveCartProduct);
+            const product = state.supplierOrder.cart.find(item => Number(item.id) === productId);
+            const variantIds = new Set((product?.variants || []).map(variant => Number(variant.id)));
+            state.supplierOrder.cart = state.supplierOrder.cart.filter(item => Number(item.id) !== productId);
+            state.supplierOrder.lines = state.supplierOrder.lines.filter(line => !variantIds.has(Number(line.variant_id)));
+            renderSupplierOrder();
+            queueSupplierOrderSave(0);
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-retry]')) {
+            persistSupplierOrder();
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-reset-filters]')) {
+            try {
+                await clearSupplierOrder();
+                toast('El pedido fue vaciado');
+            } catch (error) {
+                toast(error.message);
+            }
+            return;
+        }
+        const removeSupplierOrderProduct = event.target.closest('[data-supplier-order-remove-product]');
+        if (removeSupplierOrderProduct && state.supplierOrder) {
+            const productId = Number(removeSupplierOrderProduct.dataset.supplierOrderRemoveProduct);
+            const product = state.supplierOrder.results.find(item => Number(item.id) === productId);
+            if (!product) return;
+            state.supplierOrder.results = state.supplierOrder.results.filter(item => Number(item.id) !== productId);
+            renderSupplierOrder();
+            queueSupplierOrderSave(0);
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-clear]')) {
+            openModal(`
+                <h2 id="modal-title">VACIAR CARRITO</h2>
+                <p>¿Querés vaciar el carrito? Se eliminarán sus productos, cantidades, precios y totales. La planilla no se modifica.</p>
+                <div class="button-row">
+                    <button class="secondary-button" type="button" data-close-modal>CANCELAR</button>
+                    <button class="danger-button" type="button" data-supplier-order-confirm-clear>SÍ, VACIAR CARRITO</button>
+                </div>
+            `);
+            return;
+        }
+        if (event.target.closest('[data-supplier-order-confirm-clear]')) {
+            try {
+                await clearSupplierOrder();
+                closeModal();
+                toast('El pedido fue vaciado');
+            } catch (error) {
+                toast(error.message);
+            }
+            return;
+        }
         const editTutorial = event.target.closest('[data-edit-tutorial]');
         if (editTutorial) {
             const tutorial = state.tutorials.find(item => Number(item.id) === Number(editTutorial.dataset.editTutorial));
@@ -5618,6 +6188,68 @@
             reopenSelectedOrders(ids);
         }
     });
+    document.addEventListener('input', event => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
+        if (target === elements.supplierOrderCategoriesSearch) {
+            filterSupplierOrderCategories();
+            return;
+        }
+        if (target.matches('[data-supplier-order-category]')) {
+            updateSupplierOrderCategoriesCount();
+            return;
+        }
+        if (target.matches('[data-supplier-order-quantity]')) {
+            let quantity = Number(target.value);
+            if (!Number.isInteger(quantity) || quantity < 0) quantity = 0;
+            if (quantity > 99999) quantity = 99999;
+            if (target.value !== '' && Number(target.value) !== quantity) target.value = String(quantity);
+            updateSupplierOrderLine(Number(target.dataset.supplierOrderQuantity), { quantity });
+            return;
+        }
+        if (target.matches('[data-supplier-order-price]')) {
+            const raw = target.value.trim();
+            const normalized = raw.replace(',', '.');
+            let priceCents = null;
+            if (raw !== '') {
+                if (!/^\d+(?:\.\d{0,2})?$/.test(normalized)) return;
+                const value = Number(normalized);
+                if (!Number.isFinite(value) || value < 0 || value > 9999999.99) return;
+                priceCents = Math.round(value * 100);
+            }
+            updateSupplierOrderLine(Number(target.dataset.supplierOrderPrice), { unit_price_cents: priceCents });
+            return;
+        }
+        if (target === elements.supplierOrderKeywords || target === elements.supplierOrderThreshold) {
+            if (!state.supplierOrder) return;
+            state.supplierOrder.filters = supplierOrderFiltersFromForm();
+            queueSupplierOrderSave();
+            return;
+        }
+        if (target === elements.supplierOrderWhatsappText) {
+            if (!state.supplierOrder) return;
+            state.supplierOrder.whatsapp_edited = true;
+            state.supplierOrder.whatsapp_text = target.value;
+            queueSupplierOrderSave();
+        }
+    });
+    document.addEventListener('change', event => {
+        const target = event.target;
+        if (target instanceof HTMLInputElement && target.matches('[data-supplier-order-plan-quantity]')) {
+            const quantity = Number(target.value || 0);
+            if (quantity > 0) {
+                if (!addSupplierOrderToCart(Number(target.dataset.supplierOrderPlanQuantity), quantity)) renderSupplierOrder();
+                return;
+            }
+        }
+        if (!(target instanceof HTMLInputElement) || !target.matches('[data-supplier-order-category]') || !state.supplierOrder) return;
+        state.supplierOrder.filters = {
+            ...state.supplierOrder.filters,
+            category_ids: Array.from(elements.supplierOrderCategories?.querySelectorAll('[data-supplier-order-category]:checked') || []).map(input => Number(input.value)),
+        };
+        updateSupplierOrderCategoriesCount();
+        queueSupplierOrderSave();
+    });
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;
         state.posProductId = null;
@@ -5686,6 +6318,23 @@
     }, true);
     document.addEventListener('keydown', event => {
         if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && state.view === 'supplier-order'
+            && state.supplierOrderCategoriesOpen
+        ) {
+            event.preventDefault();
+            setSupplierOrderCategoriesOpen(false, true);
+        } else if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && state.view === 'supplier-order'
+            && state.supplierOrderPreviewOpen
+        ) {
+            event.preventDefault();
+            state.supplierOrderPreviewOpen = false;
+            renderSupplierOrder();
+        } else if (
             event.key === 'Escape'
             && !event.defaultPrevented
             && elements.modal?.classList.contains('open')
@@ -5962,6 +6611,7 @@
     });
     document.getElementById('logout-button')?.addEventListener('click', async () => {
         try {
+            await flushSupplierOrder();
             await apiPost({ action: 'logout' });
             window.location.reload();
         } catch (error) {
@@ -6049,6 +6699,19 @@
             if (!state.sizeGuideDirty) return;
             event.preventDefault();
             event.returnValue = '';
+        });
+        window.addEventListener('pagehide', () => {
+            if (!state.supplierOrderLoaded || !state.supplierOrder || !state.supplierOrderDirty) return;
+            fetch(app.api_url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': app.csrf_token },
+                body: JSON.stringify({
+                    action: 'supplier_order_save',
+                    draft: supplierOrderPayload(),
+                    csrf_token: app.csrf_token,
+                }),
+                keepalive: true,
+            }).catch(() => {});
         });
     }
 })();
