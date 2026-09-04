@@ -72,12 +72,6 @@ CREATE INDEX IF NOT EXISTS idx_variants_product
 CREATE INDEX IF NOT EXISTS idx_variants_barcode
     ON product_variants(barcode);
 
-CREATE TABLE IF NOT EXISTS supplier_order_drafts (
-    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    payload_json TEXT NOT NULL DEFAULT '{}',
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS tutorials (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL COLLATE NOCASE,

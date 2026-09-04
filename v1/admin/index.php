@@ -188,7 +188,6 @@ header('Referrer-Policy: same-origin');
                     <div class="admin-user-icon-actions">
                         <button class="icon-button admin-nav-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M3 20h18"></path></svg></button>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <button class="icon-button admin-nav-button" type="button" data-view="supplier-order" aria-label="Pedidos" title="Pedidos"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
                             <button class="icon-button admin-settings-icon" id="admin-sidebar-settings-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-settings-menu" aria-label="Abrir configuración" title="Configuración">
                                 <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.1 2.1-.06-.06A1.7 1.7 0 0 0 15.76 18a1.7 1.7 0 0 0-1.04 1.55V20h-3v-.45A1.7 1.7 0 0 0 10.68 18a1.7 1.7 0 0 0-1.88.34l-.06.06-2.1-2.1.06-.06A1.7 1.7 0 0 0 7.04 14.4 1.7 1.7 0 0 0 5.5 13.36H5v-3h.5A1.7 1.7 0 0 0 7.04 9.32 1.7 1.7 0 0 0 6.7 7.44l-.06-.06 2.1-2.1.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.04-1.55V3.7h3v.43a1.7 1.7 0 0 0 1.04 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.1 2.1-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.04h.45v3h-.45A1.7 1.7 0 0 0 19.4 15Z"></path></svg>
                             </button>
@@ -211,9 +210,6 @@ header('Referrer-Policy: same-origin');
                         <option value="deliveries">Entrega de Pedidos</option>
                         <option value="statistics">Estadísticas</option>
                         <option value="products">Productos</option>
-                        <?php if ($user['role'] === 'admin'): ?>
-                            <option value="supplier-order">Pedidos</option>
-                        <?php endif ?>
                         <option value="pos">Punto de Venta</option>
                         <?php if ($user['role'] === 'admin'): ?>
                             <option value="tutorials">Aprende</option>
@@ -247,52 +243,6 @@ header('Referrer-Policy: same-origin');
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>
-                    <section class="admin-view supplier-order-view" id="view-supplier-order">
-                        <div class="view-heading supplier-order-heading">
-                            <div>
-                                <p class="eyebrow">REPOSICIÓN DE STOCK</p>
-                                <h1 class="admin-page-title">PEDIDOS</h1>
-                                <p>Armá el pedido sin modificar el stock ni los precios de venta.</p>
-                            </div>
-                        </div>
-                        <form id="supplier-order-filters" class="supplier-order-filters">
-                            <div class="supplier-order-category-filter">
-                                <button id="supplier-order-categories-trigger" class="icon-action-button supplier-order-category-trigger" type="button" aria-expanded="false" aria-controls="supplier-order-category-popover" aria-label="Filtrar por categorías" title="Filtrar por categorías"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                                <div id="supplier-order-category-popover" class="supplier-order-category-popover" hidden>
-                                    <div class="supplier-order-category-backdrop" data-close-supplier-order-categories></div>
-                                    <section class="supplier-order-category-dialog" role="dialog" aria-modal="true" aria-labelledby="supplier-order-category-title" tabindex="-1">
-                                        <header>
-                                            <div><p class="eyebrow">FILTRO DEL PEDIDO</p><h2 id="supplier-order-category-title">CATEGORÍAS</h2></div>
-                                            <button class="icon-action-button" type="button" data-close-supplier-order-categories aria-label="Cerrar categorías" title="Cerrar categorías"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                                        </header>
-                                        <p>Podés elegir más de una categoría.</p>
-                                        <input id="supplier-order-categories-search" class="supplier-order-category-search" type="search" autocomplete="off" placeholder="Buscar categoría" aria-label="Buscar categoría">
-                                        <div id="supplier-order-categories" class="supplier-order-category-list" role="group" aria-label="Categorías"></div>
-                                        <footer><span id="supplier-order-categories-count" class="supplier-order-categories-count" aria-label="0 categorías elegidas">0</span><button class="primary-button fit-button" type="button" data-apply-supplier-order-categories>APLICAR</button></footer>
-                                    </section>
-                                </div>
-                            </div>
-                            <label>
-                                PALABRAS CLAVE
-                                <input id="supplier-order-keywords" name="keywords" type="search" autocomplete="off" placeholder="Nombre, descripción, SKU, código o variante">
-                            </label>
-                            <label>
-                                STOCK HASTA
-                                <input id="supplier-order-threshold" name="stock_threshold" type="number" inputmode="numeric" min="0" max="1000000" step="1" value="1" required>
-                            </label>
-                            <div class="supplier-order-filter-actions">
-                                <button class="primary-button fit-button" type="submit">BUSCAR PRODUCTOS</button>
-                            </div>
-                        </form>
-                        <p id="supplier-order-status" class="supplier-order-status" aria-live="polite"></p>
-                        <div class="supplier-order-plan-header"><button class="supplier-order-clear-plan" type="button" data-supplier-order-clear-plan>LIMPIAR PLANILLA</button></div>
-                        <div id="supplier-order-results" class="supplier-order-results"></div>
-                        <section class="supplier-order-cart">
-                            <header><h2>PEDIDO ACTUAL</h2><div><button class="icon-action-button" type="button" data-supplier-order-copy aria-label="Copiar pedido" title="Copiar pedido"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 5.5 16H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="danger-button fit-button" type="button" data-supplier-order-clear>VACIAR CARRITO</button></div></header>
-                            <div id="supplier-order-cart"></div>
-                        </section>
-                    </section>
-
                     <section class="admin-view" id="view-tutorials">
                         <div class="view-heading">
                             <div>
