@@ -2449,9 +2449,13 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-cart > header h2 { margin: 2px 0 0; color: #252a3a; font-size: 22px; }
 .supplier-order-cart > header .eyebrow { margin: 0; }
 .supplier-order-cart > header > div:last-child { display: flex; align-items: center; gap: 8px; }
-.supplier-order-cart-input { min-width: 5ch; }
-.supplier-order-quantity-input { width: 5ch !important; min-width: 5ch; text-align: center !important; }
-.supplier-order-price-input { width: 11ch !important; min-width: 11ch; }
+.supplier-order-cart-input { min-width: 7ch; }
+.supplier-order-quantity-input { width: 7ch !important; min-width: 7ch; text-align: center !important; }
+.supplier-order-price-input { width: 13ch !important; min-width: 13ch; }
+.supplier-order-quantity-control { display: flex; align-items: center; gap: 4px; width: max-content; }
+.supplier-order-quantity-control .icon-action-button { border: 1px solid #cfd7e4; border-radius: 8px; background: #fff; color: #4d40bd; cursor: pointer; }
+.supplier-order-quantity-control .icon-action-button:hover { border-color: #b5a9e5; background: #f1efff; color: #392bb2; }
+.supplier-order-quantity-control .icon-action-button:focus-visible { outline: 2px solid #5b4fc7; outline-offset: 2px; }
 .supplier-order-status button { margin-left: 4px; padding: 0; border: 0; background: transparent; color: #4d40bd; font: inherit; font-weight: 750; cursor: pointer; text-decoration: underline; }
 .supplier-order-table-wrap { overflow-x: auto; border: 1px solid #e2e6ef; border-radius: 14px; background: #fff; }
 .supplier-order-table { width: 100%; min-width: 850px; border-collapse: collapse; }
@@ -3885,6 +3889,10 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 /* El lateral no desplaza su contenido ni muestra barras laterales. */
 .admin-sidebar,
 .admin-sidebar .admin-nav { overflow:hidden; }
+
+/* Los contadores de Ventas y Entregas sobresalen del ícono sin quedar tapados. */
+.admin-icon-sidebar { position:relative; z-index:2; overflow:visible; }
+.admin-icon-sidebar .admin-nav { overflow:visible; }
 
 .admin-user-icon-actions { display:flex; align-items:center; gap:8px; }
 .admin-user-icon-actions .icon-button {

@@ -4757,7 +4757,7 @@
                 const line = lineMap.get(Number(variant.id)) || { quantity: 0, unit_price_cents: null };
                 const label = supplierOrderVariantLabel(product, variant);
                 const hasPrice = line.unit_price_cents != null;
-                return `<tr><td><input class="supplier-order-cart-input supplier-order-quantity-input" type="number" min="0" max="99999" step="1" value="${Number(line.quantity || 0)}" data-supplier-order-quantity="${Number(variant.id)}"></td><td>${escapeHtml(label)}</td><td><input class="supplier-order-cart-input supplier-order-price-input" type="text" maxlength="11" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}"></td><td data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(Number(line.quantity || 0) * Number(line.unit_price_cents)) : '—'}</td><td><button class="icon-action-button" type="button" data-supplier-order-remove-cart-product="${Number(product.id)}" aria-label="Quitar producto"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
+                return `<tr><td><div class="supplier-order-quantity-control"><button class="icon-action-button" type="button" data-supplier-order-adjust-quantity="${Number(variant.id)}" data-quantity-adjustment="-1" aria-label="Restar una unidad"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><input class="supplier-order-cart-input supplier-order-quantity-input" type="number" min="0" max="99999" step="1" value="${Number(line.quantity || 0)}" data-supplier-order-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"><button class="icon-action-button" type="button" data-supplier-order-adjust-quantity="${Number(variant.id)}" data-quantity-adjustment="1" aria-label="Sumar una unidad"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></td><td>${escapeHtml(label)}</td><td><input class="supplier-order-cart-input supplier-order-price-input" type="text" maxlength="13" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}"></td><td data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(Number(line.quantity || 0) * Number(line.unit_price_cents)) : '—'}</td><td><button class="icon-action-button" type="button" data-supplier-order-remove-cart-product="${Number(product.id)}" aria-label="Quitar producto"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
                 }).join('');
                 return `<tr class="supplier-order-product-head"><td colspan="5"><strong>${escapeHtml(product.name)}</strong></td></tr>${variants}`;
             }).join('');
@@ -5257,6 +5257,19 @@
             state.supplierOrder.searched = false;
             renderSupplierOrder();
             queueSupplierOrderSave(0);
+            return;
+        }
+        const adjustSupplierOrderQuantity = event.target.closest('[data-supplier-order-adjust-quantity]');
+        if (adjustSupplierOrderQuantity && state.supplierOrder) {
+            const variantId = Number(adjustSupplierOrderQuantity.dataset.supplierOrderAdjustQuantity);
+            const adjustment = Number(adjustSupplierOrderQuantity.dataset.quantityAdjustment);
+            const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
+            if (!line || !Number.isInteger(adjustment)) return;
+            const quantity = Math.min(99999, Math.max(0, Number(line.quantity || 0) + adjustment));
+            if (quantity === Number(line.quantity || 0)) return;
+            updateSupplierOrderLine(variantId, { quantity });
+            const input = document.querySelector(`[data-supplier-order-quantity="${variantId}"]`);
+            if (input instanceof HTMLInputElement) input.value = String(quantity);
             return;
         }
         const addSupplierOrder = event.target.closest('[data-supplier-order-add]');
