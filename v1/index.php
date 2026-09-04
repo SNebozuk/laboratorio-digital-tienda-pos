@@ -110,7 +110,6 @@ header('Referrer-Policy: same-origin');
                 </section>
             <?php endif; ?>
             <div class="search-wrap">
-                <label for="product-search">Buscar productos</label>
                 <div class="search-field">
                     <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
                         <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path>
@@ -125,7 +124,8 @@ header('Referrer-Policy: same-origin');
                         aria-autocomplete="none"
                         inputmode="search"
                         enterkeyhint="search"
-                        placeholder="Buscar por nombre, descripción, variante o código"
+                        aria-label="Buscar productos por nombre, descripción, variante o código"
+                        placeholder="Nombre, descripción, variante o código"
                     >
                 </div>
             </div>

@@ -240,7 +240,7 @@ header('Referrer-Policy: same-origin');
                         <div class="order-page-actions product-page-actions"><button class="secondary-button" type="button" data-open-featured-products>DESTACADOS</button><button class="primary-button fit-button" id="new-product-button" type="button">NUEVO PRODUCTO</button></div>
                     </div>
                     <div class="admin-search product-search-tools">
-                        <input id="admin-product-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" placeholder="Buscar por título, variante, SKU o código">
+                        <div class="search-input-field"><input id="admin-product-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" aria-label="Buscar productos por título, variante, SKU o código" placeholder="Título, variante, SKU o código"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
                         <button class="small-button" id="copy-product-search-link" type="button" disabled>COPIAR ENLACE DE BÚSQUEDA</button>
                     </div>
                     <div id="admin-product-list"></div>
@@ -266,16 +266,13 @@ header('Referrer-Policy: same-origin');
                                             <button class="icon-action-button" type="button" data-close-supplier-order-categories aria-label="Cerrar categorías" title="Cerrar categorías"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                                         </header>
                                         <p>Podés elegir más de una categoría.</p>
-                                        <input id="supplier-order-categories-search" class="supplier-order-category-search" type="search" autocomplete="off" placeholder="Buscar categoría" aria-label="Buscar categoría">
+                                        <div class="search-input-field supplier-order-category-search-field"><input id="supplier-order-categories-search" class="supplier-order-category-search" type="search" autocomplete="off" placeholder="Categoría" aria-label="Buscar categoría"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
                                         <div id="supplier-order-categories" class="supplier-order-category-list" role="group" aria-label="Categorías"></div>
                                         <footer><span id="supplier-order-categories-count" class="supplier-order-categories-count" aria-label="0 categorías elegidas">0</span><button class="primary-button fit-button" type="button" data-apply-supplier-order-categories>APLICAR</button></footer>
                                     </section>
                                 </div>
                             </div>
-                            <label>
-                                PALABRAS CLAVE
-                                <input id="supplier-order-keywords" name="keywords" type="search" autocomplete="off" placeholder="Nombre, descripción, SKU, código o variante">
-                            </label>
+                            <div class="search-input-field"><input id="supplier-order-keywords" name="keywords" type="search" autocomplete="off" placeholder="Nombre, descripción, SKU, código o variante" aria-label="Buscar productos por nombre, descripción, SKU, código o variante"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
                             <label>
                                 STOCK HASTA
                                 <input id="supplier-order-threshold" name="stock_threshold" type="number" inputmode="numeric" min="0" max="1000000" step="1" value="1" required>
@@ -288,7 +285,7 @@ header('Referrer-Policy: same-origin');
                         <div class="supplier-order-plan-header"><button class="supplier-order-clear-plan" type="button" data-supplier-order-clear-plan>LIMPIAR PLANILLA</button></div>
                         <div id="supplier-order-results" class="supplier-order-results"></div>
                         <section class="supplier-order-cart">
-                            <header><h2>PEDIDO ACTUAL</h2><div><button class="icon-action-button" type="button" data-supplier-order-copy aria-label="Copiar pedido" title="Copiar pedido"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 5.5 16H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="danger-button fit-button" type="button" data-supplier-order-clear>VACIAR CARRITO</button></div></header>
+                            <header><h2>PEDIDO ACTUAL</h2><div><button class="icon-action-button" type="button" data-supplier-order-copy aria-label="Copiar pedido" title="Copiar pedido"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 5.5 16H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="icon-action-button" type="button" data-supplier-order-print aria-label="Imprimir pedido" title="Imprimir pedido"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7z"/></svg></button><button class="icon-action-button supplier-order-clear-button" type="button" data-supplier-order-clear aria-label="Vaciar carrito" title="Vaciar carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13"/></svg></button></div></header>
                             <div id="supplier-order-cart"></div>
                         </section>
                     </section>
@@ -429,10 +426,7 @@ header('Referrer-Policy: same-origin');
                         </div>
                     </div>
                     <div class="order-toolbar">
-                        <label class="order-filter-search">
-                            <span>BUSCAR</span>
-                            <input id="order-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" placeholder="N.º de venta, nombre o apellido">
-                        </label>
+                        <div class="order-filter-search search-input-field"><input id="order-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" aria-label="Buscar ventas por número, nombre o apellido" placeholder="N.º de venta, nombre o apellido"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
                         <label class="archive-orders-toggle">
                             <input id="show-archived-orders" type="checkbox">
                             <span>MOSTRAR TODAS</span>
@@ -468,10 +462,7 @@ header('Referrer-Policy: same-origin');
                         </div>
                     </div>
                     <div id="delivery-copy-guide" class="delivery-copy-guide" hidden></div>
-                    <label class="delivery-search" for="delivery-search">
-                        <span>BUSCAR EN ENTREGAS Y LISTA DE VENTAS</span>
-                        <input id="delivery-search" type="search" placeholder="N.º de venta, nombre o apellido" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none">
-                    </label>
+                    <div class="delivery-search search-input-field"><input id="delivery-search" type="search" placeholder="N.º de venta, nombre o apellido" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" aria-label="Buscar en entregas y lista de ventas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
                     <div class="delivery-table-wrap">
                         <table class="delivery-table">
                             <thead><tr><th>N.º</th><th></th><th>Ubicación</th><th></th><th># Orden</th><th>Nombre y Apellido</th><th></th><th>Importe</th><th></th><th>Transferencias</th></tr></thead>

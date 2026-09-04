@@ -45,9 +45,7 @@ header('Referrer-Policy: same-origin');
         <section class="pos-page-intro">
             <div class="pos-page-title"><p class="eyebrow">PRODUCTOS</p><h1>AGREGAR PRODUCTOS</h1></div>
             <div class="search-wrap pos-search-wrap">
-                <label for="pos-search">Buscar o escanear</label>
-                <input id="pos-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" autofocus placeholder="Producto, talle, SKU o código de barras">
-                <div id="pos-suggestions" class="suggestions"></div>
+                <div class="search-input-field"><input id="pos-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" aria-label="Buscar o escanear producto" autofocus placeholder="Producto, talle, SKU o código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg><div id="pos-suggestions" class="suggestions"></div></div>
             </div>
         </section>
         <section class="pos-search-results"><div id="pos-products" class="pos-products"></div></section>

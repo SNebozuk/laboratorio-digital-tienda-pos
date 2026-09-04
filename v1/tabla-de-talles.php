@@ -62,8 +62,7 @@ header('Referrer-Policy: same-origin');
             </section>
         <?php else: ?>
             <div class="size-guide-search" role="search">
-                <label for="size-guide-search">BUSCAR EN LA TABLA</label>
-                <input id="size-guide-search" type="search" placeholder="Ej.: body, mangas largas o talle 5" autocomplete="off">
+                <div class="search-field"><input id="size-guide-search" type="search" placeholder="Ej.: body, mangas largas o talle 5" aria-label="Buscar medidas por prenda o talle" autocomplete="off"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
             </div>
             <p class="size-guide-search-empty" id="size-guide-search-empty" role="status" hidden>No encontramos medidas que coincidan con tu búsqueda.</p>
             <div class="size-guide-groups">

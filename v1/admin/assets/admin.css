@@ -2427,7 +2427,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-category-dialog h2 { margin: 2px 0 0; color: #252a3a; font-size: 22px; }
 .supplier-order-category-dialog .eyebrow { margin: 0; }
 .supplier-order-category-dialog > p { margin: 7px 0 14px; color: #70798b; font-size: 13px; }
-.supplier-order-category-search { width: 100%; min-height: 40px; margin-bottom: 10px; padding: 8px 10px; border: 1px solid #cfd7e4; border-radius: 8px; background: #fff; color: #252a3a; font: inherit; }
+.supplier-order-category-search { width: 100%; min-height: 40px; margin: 0; padding: 8px 10px; border: 1px solid #cfd7e4; border-radius: 8px; background: #fff; color: #252a3a; font: inherit; }
+.supplier-order-category-search-field { margin-bottom: 10px; }
 .supplier-order-category-list { display: grid; max-height: min(400px, calc(100vh - 280px)); overflow-y: auto; padding: 6px; border: 1px solid #dce1ec; border-radius: 10px; background: #f8f9fc; }
 .supplier-order-category-dialog footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .supplier-order-category-dialog footer .primary-button { height: 46px; min-height: 46px; padding: 0 18px; border: 1px solid #1769e0; border-radius: 10px; background: #1769e0; color: #fff; }
@@ -2449,6 +2450,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-cart > header h2 { margin: 2px 0 0; color: #252a3a; font-size: 22px; }
 .supplier-order-cart > header .eyebrow { margin: 0; }
 .supplier-order-cart > header > div:last-child { display: flex; align-items: center; gap: 8px; }
+.supplier-order-clear-button { color: #a54c4c; }
+.supplier-order-clear-button:hover { background: #fff0f0; color: #8c2e2e; }
 .supplier-order-cart-input { min-width: 7ch; }
 .supplier-order-quantity-input { width: 7ch !important; min-width: 7ch; text-align: center !important; }
 .supplier-order-price-input { width: 13ch !important; min-width: 13ch; }
@@ -2464,6 +2467,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .supplier-order-table tbody tr:last-child td { border-bottom: 0; }
 .supplier-order-product-head td { padding: 13px 14px 8px; border-bottom: 1px solid #edf0f5; background: #f7f8fc; color: #252a3a; }
 .supplier-order-product-head strong { font-size: 15px; }
+.supplier-order-product-category { display: block; margin-top: 3px; color: #778195; font-size: 11px; font-weight: 700; }
 .supplier-order-product-title { display: flex; align-items: center; gap: 7px; }
 .supplier-order-product-title .icon-action-button { margin-left: auto; color: #a54c4c; }
 .supplier-order-product-cell strong { color: #252a3a; font-size: 14px; }
@@ -3060,6 +3064,31 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 #view-orders .order-list-chevron { color: #596176; }
 #view-orders .order-list-number strong,
 #view-orders button.order-list-units { color: #315fa9 !important; }
+#view-orders .order-customer-sales-count {
+    display: inline-grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border: 1px solid #aeb8c8;
+    border-radius: 50%;
+    background: #fff;
+    color: #4d586b;
+    font-size: 11px !important;
+    line-height: 1;
+}
+#view-orders .order-delivery-customer-match {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 1px 6px;
+    border: 1px solid #9dc0ef;
+    border-radius: 999px;
+    background: #edf5ff;
+    color: #315fa9;
+    font-size: 11px !important;
+    line-height: 1;
+    white-space: nowrap;
+}
 #view-orders .order-list-print { border: 0; background: transparent; color: #315fa9; }
 #view-orders .status-pill { color: #334155; background: #eef2f7; border-color: #d9e0e8; }
 #view-orders .status-cancelled { color: #a12a2a; background: #fff0f0; border-color: #f2caca; }
@@ -4135,3 +4164,27 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .pos-embedded .pos-sale-details { grid-template-columns: minmax(0, 1fr); }
 .pos-main-total,
 .pos-embedded .pos-main-total { min-width: 0; padding-left: 0; border-left: 0; }
+
+/* Buscadores: el criterio queda dentro del campo y la lupa a la derecha. */
+.search-input-field { position: relative; min-width: 0; }
+.search-input-field > input { width: 100%; padding-right: 50px !important; }
+.search-input-field > svg {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    color: #697386;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+.search-input-field:focus-within > svg { color: #5b4fc7; }
+.product-search-tools .search-input-field { flex: 1 1 auto; min-width: 0; }
+.delivery-search .search-input-field { width: 100%; }
+.barcode-assignment-search-field { margin: 7px 0 14px; }
+.barcode-assignment > input { margin: 0; }

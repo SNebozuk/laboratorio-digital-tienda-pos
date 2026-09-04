@@ -1986,8 +1986,7 @@
                 <p class="eyebrow">CÓDIGO NO ASIGNADO</p>
                 <h2 id="modal-title">${escapeHtml(state.pendingBarcode)}</h2>
                 <p>Buscá el producto y elegí la variante. El código quedará guardado y se agregará a la venta.</p>
-                <label for="barcode-assignment-search">PRODUCTO O VARIANTE</label>
-                <input id="barcode-assignment-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" placeholder="Nombre, talle, SKU o descripción">
+                <div class="search-input-field barcode-assignment-search-field"><input id="barcode-assignment-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" aria-label="Buscar producto o variante" placeholder="Nombre, talle, SKU o descripción"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
                 <div id="barcode-assignment-results" class="barcode-assignment-results"></div>
             </div>
         `);
@@ -2250,6 +2249,10 @@
             .trim());
     }
 
+    function exactCustomerKey(value) {
+        return fold(String(value || '').replace(/\s+/g, ' ').trim());
+    }
+
     function deliveryNameSimilarity(first, second) {
         if (!first || !second) return 0;
         if (first === second) return 1;
@@ -2290,6 +2293,31 @@
             String(slot.order_numbers || '').trim()
             && isLikelySameDeliveryCustomer(slot.customer_name, order.customer_name)
         ));
+    }
+
+    function exactDeliveryCustomerSlots(order) {
+        const customerKey = exactCustomerKey(order?.customer_name);
+        if (!customerKey || orderIsInDeliveries(order)) return [];
+        return state.deliverySlots.filter(slot => {
+            if (!String(slot.order_numbers || '').trim()) return false;
+            const linkedOrders = Array.isArray(slot.orders) ? slot.orders : [];
+            if (linkedOrders.length) {
+                return linkedOrders.some(linkedOrder => (
+                    exactCustomerKey(linkedOrder.customer_name) === customerKey
+                ));
+            }
+            return deliveryCustomerKey(slot.customer_name) === customerKey;
+        }).sort((first, second) => Number(first.slot_number) - Number(second.slot_number));
+    }
+
+    function exactOrderCustomerCount(order) {
+        const customerKey = exactCustomerKey(order?.customer_name);
+        if (!customerKey || order.archived_at || order.status === 'cancelled') return 0;
+        return state.orders.filter(candidate => (
+            !candidate.archived_at
+            && candidate.status !== 'cancelled'
+            && exactCustomerKey(candidate.customer_name) === customerKey
+        )).length;
     }
 
     function pendingDeliveryOrders() {
@@ -2398,6 +2426,7 @@
             const data = await apiGet('delivery_slots');
             state.deliverySlots = data.slots || [];
             renderDeliverySlots();
+            if (state.view === 'orders') renderOrders();
         } catch (error) { toast(error.message); }
     }
 
@@ -3377,6 +3406,15 @@
                 ${matchingOrders.map(order => {
                     const inDeliveries = orderIsInDeliveries(order);
                     const deliverySlot = inDeliveries ? Number(order.delivery_slot_number) : null;
+                    const orderCustomerCount = exactOrderCustomerCount(order);
+                    const orderCustomerCountIndicator = orderCustomerCount > 1
+                        ? `<span class="order-customer-sales-count" role="status" aria-label="${orderCustomerCount} ventas en Lista de Ventas" title="${orderCustomerCount} ventas en Lista de Ventas">${orderCustomerCount}</span>`
+                        : '';
+                    const matchingDeliverySlots = exactDeliveryCustomerSlots(order);
+                    const deliveryCustomerMatches = matchingDeliverySlots.map(slot => {
+                        const slotNumber = Number(slot.slot_number);
+                        return `<span class="order-delivery-customer-match" role="status" aria-label="Coincide con cliente en Entregas, fila ${slotNumber}" title="Cliente con una compra en Entregas · fila ${slotNumber}">+${slotNumber}</span>`;
+                    }).join('');
                     const stateIndicator = order.archived_at
                         ? '<span class="order-status-indicator order-status-indicator-archived" role="img" aria-label="Venta archivada" title="Venta archivada">A</span>'
                         : (order.status === 'cancelled'
@@ -3386,7 +3424,7 @@
                     return `
                     <div class="order-list-row ${inDeliveries && !order.archived_at && order.status !== 'cancelled' ? 'order-list-row-in-deliveries' : ''}" role="button" tabindex="0" data-view-order="${Number(order.id)}">
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
-                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${stateIndicator}${inDeliveries && !order.archived_at && order.status !== 'cancelled' ? `<small class="order-delivery-note">✓ EN ENTREGAS · FILA ${deliverySlot}</small>` : ''}</span>
+                        <span class="order-list-number"><strong>${escapeHtml(order.public_number)}</strong>${orderCustomerCountIndicator}${deliveryCustomerMatches}${stateIndicator}${inDeliveries && !order.archived_at && order.status !== 'cancelled' ? `<small class="order-delivery-note">✓ EN ENTREGAS · FILA ${deliverySlot}</small>` : ''}</span>
                         <button class="order-list-customer" type="button" data-customer-history="${escapeHtml(order.customer_name)}" aria-label="Ver historial de ${escapeHtml(order.customer_name)}">${escapeHtml(order.customer_name)}</button>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
@@ -3455,8 +3493,7 @@
                 </p>
                 <form id="order-edit-form">
                     <div class="search-wrap order-edit-search-wrap">
-                        <label for="order-edit-search">AGREGAR PRODUCTO</label>
-                        <input
+                        <div class="search-input-field"><input
                             id="order-edit-search"
                             type="search"
                             autocomplete="off"
@@ -3464,9 +3501,9 @@
                             autocapitalize="none"
                             spellcheck="false"
                             aria-autocomplete="none"
+                            aria-label="Agregar producto o variante"
                             placeholder="Producto o variante"
-                        >
-                        <div id="order-edit-suggestions" class="suggestions"></div>
+                        ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg><div id="order-edit-suggestions" class="suggestions"></div></div>
                     </div>
                     <div id="order-edit-lines" class="order-edit-lines"></div>
                     <div class="order-total">
@@ -4739,7 +4776,7 @@
                     variant.barcode ? `Código: ${variant.barcode}` : '',
                 ].filter(Boolean).map(escapeHtml).join(' · ');
                 return `<tr class="supplier-order-line">
-                    <td><input class="supplier-order-quantity-input" type="number" min="0" max="99999" step="1" inputmode="numeric" value="${plannedLine?.quantity ? Number(plannedLine.quantity) : ''}" data-supplier-order-plan-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"></td>
+                    <td><div class="supplier-order-quantity-control"><button class="icon-action-button" type="button" data-supplier-order-adjust-plan-quantity="${Number(variant.id)}" data-quantity-adjustment="-1" aria-label="Restar una unidad"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><input class="supplier-order-quantity-input" type="number" min="0" max="99999" step="1" inputmode="numeric" value="${plannedLine?.quantity ? Number(plannedLine.quantity) : ''}" data-supplier-order-plan-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"><button class="icon-action-button" type="button" data-supplier-order-adjust-plan-quantity="${Number(variant.id)}" data-quantity-adjustment="1" aria-label="Sumar una unidad"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></td>
                     <td class="supplier-order-stock">${Number(variant.stock_on_hand)}</td>
                     <td class="supplier-order-product-cell">${productCell}<small>${details}</small></td>
                 </tr>`;
@@ -4759,7 +4796,7 @@
                 const hasPrice = line.unit_price_cents != null;
                 return `<tr><td><div class="supplier-order-quantity-control"><button class="icon-action-button" type="button" data-supplier-order-adjust-quantity="${Number(variant.id)}" data-quantity-adjustment="-1" aria-label="Restar una unidad"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><input class="supplier-order-cart-input supplier-order-quantity-input" type="number" min="0" max="99999" step="1" value="${Number(line.quantity || 0)}" data-supplier-order-quantity="${Number(variant.id)}" aria-label="Cantidad de ${escapeHtml(product.name)} ${escapeHtml(label)}"><button class="icon-action-button" type="button" data-supplier-order-adjust-quantity="${Number(variant.id)}" data-quantity-adjustment="1" aria-label="Sumar una unidad"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></td><td>${escapeHtml(label)}</td><td><input class="supplier-order-cart-input supplier-order-price-input" type="text" maxlength="13" inputmode="decimal" value="${hasPrice ? escapeHtml((Number(line.unit_price_cents) / 100).toFixed(2).replace('.', ',')) : ''}" data-supplier-order-price="${Number(variant.id)}"></td><td data-supplier-order-subtotal="${Number(variant.id)}">${hasPrice ? supplierOrderMoney(Number(line.quantity || 0) * Number(line.unit_price_cents)) : '—'}</td><td><button class="icon-action-button" type="button" data-supplier-order-remove-cart-product="${Number(product.id)}" aria-label="Quitar producto"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
                 }).join('');
-                return `<tr class="supplier-order-product-head"><td colspan="5"><strong>${escapeHtml(product.name)}</strong></td></tr>${variants}`;
+                return `<tr class="supplier-order-product-head"><td colspan="5"><strong>${escapeHtml(product.name)}</strong><small class="supplier-order-product-category">${escapeHtml(String(product.category?.name || 'Sin categoría'))}</small></td></tr>${variants}`;
             }).join('');
             const summary = supplierOrderSummary();
             draft.summary = summary;
@@ -4972,6 +5009,39 @@
         }
     }
 
+    function printSupplierOrder() {
+        const lineMap = supplierOrderLines();
+        const rows = supplierOrderCartProducts().flatMap(product =>
+            supplierOrderCartVariants(product).map(variant => {
+                const line = lineMap.get(Number(variant.id));
+                if (!line || line.quantity < 1) return '';
+                const label = supplierOrderVariantLabel(product, variant) || 'Variante única';
+                const category = String(product.category?.name || 'Sin categoría');
+                const price = line.unit_price_cents == null ? '—' : supplierOrderMoney(line.unit_price_cents);
+                const subtotal = line.unit_price_cents == null ? '—' : supplierOrderMoney(line.quantity * line.unit_price_cents);
+                return `<tr><td><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(category)} · ${escapeHtml(label)}</small></td><td>${line.quantity}</td><td>${price}</td><td>${subtotal}</td></tr>`;
+            })
+        ).filter(Boolean);
+        if (!rows.length) {
+            toast('Agregá al menos un producto antes de imprimir.');
+            return;
+        }
+        const summary = supplierOrderSummary();
+        const printedAt = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            toast('No pudimos abrir la impresión. Revisá si el navegador bloqueó la ventana.');
+            return;
+        }
+        printWindow.document.title = 'Pedido a proveedor';
+        printWindow.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Pedido a proveedor</title><style>@page{margin:15mm}body{font:13px Arial,sans-serif;color:#202534}h1{margin:0 0 4px;font-size:23px}p{margin:0 0 18px;color:#5e687b}table{width:100%;border-collapse:collapse}th,td{padding:9px 7px;border-bottom:1px solid #dfe4ec;text-align:left}th{font-size:10px;letter-spacing:.06em;color:#5e687b}td:nth-child(n+2),th:nth-child(n+2){text-align:right}small{display:block;margin-top:3px;color:#697487;font-size:11px}tfoot td{border-top:2px solid #39415a;border-bottom:0;font-size:15px;font-weight:700}</style></head><body><h1>PEDIDO A PROVEEDOR</h1><p>Generado ${escapeHtml(printedAt)}</p><table><thead><tr><th>PRODUCTO</th><th>CANTIDAD</th><th>PRECIO</th><th>SUBTOTAL</th></tr></thead><tbody>${rows.join('')}</tbody><tfoot><tr><td colspan="3">TOTAL DEL PEDIDO</td><td>${supplierOrderMoney(summary.total_cents)}</td></tr></tfoot></table></body></html>`);
+        printWindow.document.close();
+        window.setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+        }, 100);
+    }
+
     async function clearSupplierOrder() {
         if (!state.supplierOrder) return;
         state.supplierOrder.cart = [];
@@ -4997,6 +5067,19 @@
         else state.supplierOrder.lines.push({ variant_id: variantId, quantity, unit_price_cents: null, subtotal_cents: null });
         renderSupplierOrder();
         queueSupplierOrderSave(0);
+        return true;
+    }
+
+    function setSupplierOrderPlanQuantity(variantId, quantity) {
+        if (!state.supplierOrder) return false;
+        const normalizedQuantity = Math.min(99999, Math.max(0, Number(quantity) || 0));
+        const line = state.supplierOrder.lines.find(item => Number(item.variant_id) === variantId);
+        if (!line) {
+            return normalizedQuantity === 0 || addSupplierOrderToCart(variantId, normalizedQuantity);
+        }
+        updateSupplierOrderLine(variantId, { quantity: normalizedQuantity });
+        const cartInput = document.querySelector(`[data-supplier-order-quantity="${variantId}"]`);
+        if (cartInput instanceof HTMLInputElement) cartInput.value = String(normalizedQuantity);
         return true;
     }
 
@@ -5251,12 +5334,29 @@
             copySupplierOrder();
             return;
         }
+        if (event.target.closest('[data-supplier-order-print]')) {
+            printSupplierOrder();
+            return;
+        }
         if (event.target.closest('[data-supplier-order-clear-plan]') && state.supplierOrder) {
             state.supplierOrder.filters = { category_ids: [], keywords: '', stock_threshold: 1 };
             state.supplierOrder.results = [];
             state.supplierOrder.searched = false;
             renderSupplierOrder();
             queueSupplierOrderSave(0);
+            return;
+        }
+        const adjustSupplierOrderPlanQuantity = event.target.closest('[data-supplier-order-adjust-plan-quantity]');
+        if (adjustSupplierOrderPlanQuantity && state.supplierOrder) {
+            const variantId = Number(adjustSupplierOrderPlanQuantity.dataset.supplierOrderAdjustPlanQuantity);
+            const adjustment = Number(adjustSupplierOrderPlanQuantity.dataset.quantityAdjustment);
+            const input = document.querySelector(`[data-supplier-order-plan-quantity="${variantId}"]`);
+            const currentQuantity = Number(input?.value || 0);
+            const quantity = Math.min(99999, Math.max(0, currentQuantity + adjustment));
+            if (!Number.isInteger(adjustment) || quantity === currentQuantity) return;
+            if (!setSupplierOrderPlanQuantity(variantId, quantity)) return;
+            const updatedInput = document.querySelector(`[data-supplier-order-plan-quantity="${variantId}"]`);
+            if (updatedInput instanceof HTMLInputElement) updatedInput.value = quantity ? String(quantity) : '';
             return;
         }
         const adjustSupplierOrderQuantity = event.target.closest('[data-supplier-order-adjust-quantity]');
@@ -6249,11 +6349,12 @@
     document.addEventListener('change', event => {
         const target = event.target;
         if (target instanceof HTMLInputElement && target.matches('[data-supplier-order-plan-quantity]')) {
-            const quantity = Number(target.value || 0);
-            if (quantity > 0) {
-                if (!addSupplierOrderToCart(Number(target.dataset.supplierOrderPlanQuantity), quantity)) renderSupplierOrder();
-                return;
-            }
+            let quantity = Number(target.value || 0);
+            if (!Number.isInteger(quantity) || quantity < 0) quantity = 0;
+            if (quantity > 99999) quantity = 99999;
+            if (target.value !== '' && Number(target.value) !== quantity) target.value = String(quantity);
+            if (!setSupplierOrderPlanQuantity(Number(target.dataset.supplierOrderPlanQuantity), quantity)) renderSupplierOrder();
+            return;
         }
         if (!(target instanceof HTMLInputElement) || !target.matches('[data-supplier-order-category]') || !state.supplierOrder) return;
         state.supplierOrder.filters = {
