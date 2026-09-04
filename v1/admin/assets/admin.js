@@ -1686,7 +1686,7 @@
                 </div>`;
             return;
         }
-        const products = rankedProducts(
+        const matchedProducts = rankedProducts(
             query,
             state.products.filter(product => product && product.active !== false)
         ).filter(product => (
@@ -1696,6 +1696,9 @@
                 && (query || Number(variant.available_stock) > 0)
             ))
         ));
+        const products = state.posProductId
+            ? matchedProducts.filter(product => Number(product.id) === Number(state.posProductId))
+            : matchedProducts;
         elements.posProducts.innerHTML = products.length ? `
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
             ${products.map(product => {
@@ -1730,7 +1733,7 @@
                             Number(variant.available_stock) - quantity
                         );
                         return `
-                            <div class="pos-variant-row ${state.posChangedAvailability.has(Number(variant.id)) ? 'availability-changed' : ''} ${state.posStockConflicts.has(Number(variant.id)) ? 'stock-conflict' : ''}">
+                            <div class="pos-variant-row ${remaining > 0 ? 'pos-add-variant' : ''} ${state.posChangedAvailability.has(Number(variant.id)) ? 'availability-changed' : ''} ${state.posStockConflicts.has(Number(variant.id)) ? 'stock-conflict' : ''}"${remaining > 0 ? ` data-pos-add-variant="${Number(variant.id)}"` : ''}>
                                 <span class="pos-variant-name">
                                     ${variantDisplayName(product, variant)
                                         ? `<strong>${escapeHtml(variantDisplayName(product, variant))}</strong><br>`
@@ -5747,6 +5750,12 @@
             setPosQuantity(variantId, posQuantity(variantId) + 1);
             return;
         }
+        const posAddVariant = event.target.closest('[data-pos-add-variant]');
+        if (posAddVariant && !event.target.closest('button, input, a, label')) {
+            const variantId = Number(posAddVariant.dataset.posAddVariant);
+            setPosQuantity(variantId, posQuantity(variantId) + 1);
+            return;
+        }
         const posOpenProduct = event.target.closest('[data-pos-open-product]');
         if (posOpenProduct) {
             const productId = Number(posOpenProduct.dataset.posOpenProduct);
@@ -6439,6 +6448,19 @@
     });
     // Esc sigue el historial también desde la búsqueda del PDV.
     document.addEventListener('keydown', event => {
+        if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && state.posProductId
+            && document.querySelector('.pos-page')
+            && !elements.modal?.classList.contains('open')
+        ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            state.posProductId = null;
+            renderPos();
+            return;
+        }
         if (
             event.key === 'Escape'
             && !event.defaultPrevented
