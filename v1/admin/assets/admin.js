@@ -2350,6 +2350,7 @@
             return;
         }
         const matchingOrders = state.orders
+            .filter(order => !order.archived_at && order.status !== 'cancelled')
             .filter(order => fold([
                 order.public_number,
                 order.customer_name,

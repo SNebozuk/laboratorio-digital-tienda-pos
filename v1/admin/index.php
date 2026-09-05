@@ -470,7 +470,7 @@ header('Referrer-Policy: same-origin');
                         </table>
                     </div>
                     <section id="delivery-sales-search-results" class="delivery-sales-search-results" hidden>
-                        <h2>LISTA DE VENTAS</h2>
+                        <h2>ENTREGA DE PEDIDOS</h2>
                         <div class="delivery-table-wrap">
                             <table class="delivery-table delivery-sales-search-table">
                                 <thead><tr><th>N.º venta</th><th>Nombre y Apellido</th><th>Total</th><th>Productos</th><th>Estado</th><th>Fecha</th></tr></thead>
