@@ -1690,8 +1690,7 @@
             query,
             state.products.filter(product => product && product.active !== false)
         ).filter(product => (
-            posProductTitleMatches(product, query)
-            && product.variants.some(variant => (
+            product.variants.some(variant => (
                 variant && variant.active !== false
                 && (query || Number(variant.available_stock) > 0)
             ))
