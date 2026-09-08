@@ -1077,13 +1077,15 @@
         });
     }
 
-    function setProductView(view) {
+    function setProductView(view, remember = false) {
         if (!PRODUCT_VIEWS.has(view)) return;
         productView = view;
-        alwaysUseProductView = true;
-        try {
-            window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view);
-        } catch (_) { /* La vista funciona aunque el navegador no permita guardar la preferencia. */ }
+        if (remember) {
+            alwaysUseProductView = true;
+            try {
+                window.localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, view);
+            } catch (_) { /* La vista funciona aunque el navegador no permita guardar la preferencia. */ }
+        }
         if (productView === 'list') setCategoryMenuOpen(false);
         syncProductViewSwitcher();
         renderCatalog();
@@ -1094,11 +1096,15 @@
             <section class="product-view-chooser" aria-labelledby="product-view-chooser-title">
                 <span class="product-view-chooser-icon" aria-hidden="true">◉</span>
                 <h2 id="product-view-chooser-title">Bienvenida a Laboratorio Digital</h2>
-                <p>La vista elegida se guarda y podés cambiarla cuando quieras.</p>
-                <div>
+                <p>Elegí cómo querés recorrer los productos.</p>
+                <div class="product-view-choices">
                     <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos ordenados por categoría y subcategoría.</small></button>
                     <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
                     <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Elegí una categoría desde el menú para ver solo esa sección.</small></button>
+                </div>
+                <div class="product-view-chooser-actions">
+                    <button type="button" data-continue-product-view>Continuar</button>
+                    <button type="button" data-remember-product-view>Usar siempre esta opción</button>
                 </div>
                 <button class="klaus-welcome" type="button" aria-label="Acariciar a Klaus"><img class="klaus-image" src="${escapeHtml(app.asset_url)}/klaus_home_petting_prompt.png" alt=""><span>Bienvenida<br>soy <strong>Klaus</strong><small>¿Me hacés mimitos?</small></span></button>
             </section>
@@ -1849,7 +1855,20 @@
         if (productViewButton) {
             const chooser = productViewButton.closest('.product-view-chooser');
             setProductView(productViewButton.dataset.productView);
-            if (chooser) closeModal();
+            if (chooser) {
+                chooser.querySelectorAll('[data-product-view]').forEach(button => {
+                    button.classList.toggle('active', button === productViewButton);
+                });
+            }
+            return;
+        }
+        if (event.target.closest('[data-continue-product-view]')) {
+            closeModal();
+            return;
+        }
+        if (event.target.closest('[data-remember-product-view]')) {
+            setProductView(productView, true);
+            closeModal();
             return;
         }
         if (event.target.closest('[data-dismiss-stock-warning]')) {
@@ -2258,7 +2277,7 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    if (!returnedFromQuote) window.setTimeout(showProductViewChooser, 350);
+    if (!returnedFromQuote && !alwaysUseProductView) window.setTimeout(showProductViewChooser, 350);
     // La lista completa es la vista inicial, por lo que el catálogo se carga
     // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();
