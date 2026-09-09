@@ -1,0 +1,63 @@
+name: Migrar datos desde DonWeb al Cloud
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Instalar cliente FTPS
+        run: sudo apt-get update && sudo apt-get install --yes lftp sqlite3
+
+      - name: Descargar datos persistentes de DonWeb
+        env:
+          FTP_SERVER: ${{ secrets.DONWEB_FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.DONWEB_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.DONWEB_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.DONWEB_FTP_PORT }}
+          FTP_REMOTE_DIR: ${{ secrets.DONWEB_FTP_REMOTE_DIR }}
+        run: |
+          set -eu
+          mkdir snapshot
+          lftp -e "
+            set ftp:ssl-force true
+            set ssl:verify-certificate yes
+            open -p $FTP_PORT -u \"$FTP_USERNAME\",\"$FTP_PASSWORD\" $FTP_SERVER
+            cd $FTP_REMOTE_DIR
+            get config.local.php -o snapshot/config.local.php
+            mirror --verbose storage snapshot/storage
+            mirror --verbose v1/uploads/products snapshot/v1/uploads/products
+            bye
+          "
+          lftp -e "
+            set ftp:ssl-force true
+            set ssl:verify-certificate yes
+            open -p $FTP_PORT -u \"$FTP_USERNAME\",\"$FTP_PASSWORD\" $FTP_SERVER
+            cd $FTP_REMOTE_DIR
+            get config.mail.local.php -o snapshot/config.mail.local.php
+            bye
+          " || true
+          test -f snapshot/config.local.php
+          test -f snapshot/storage/app.sqlite
+          test -d snapshot/v1/uploads/products
+          test "$(sqlite3 snapshot/storage/app.sqlite 'PRAGMA integrity_check;')" = ok
+
+      - name: Transferir e importar en el Cloud
+        env:
+          CLOUD_HOST: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_HOST }}
+          CLOUD_KEY_B64: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_DEPLOY_KEY_B64 }}
+        run: |
+          set -eu
+          install -d -m 700 ~/.ssh
+          printf '%s' "$CLOUD_KEY_B64" | base64 --decode > ~/.ssh/laboratorio_digital_cloud
+          chmod 600 ~/.ssh/laboratorio_digital_cloud
+          tar -czf laboratorio-digital-donweb-data.tar.gz -C snapshot .
+          scp -i ~/.ssh/laboratorio_digital_cloud -o StrictHostKeyChecking=accept-new -P 5058 \
+            laboratorio-digital-donweb-data.tar.gz root@"$CLOUD_HOST":/tmp/laboratorio-digital-donweb-data.tar.gz
+          ssh -i ~/.ssh/laboratorio_digital_cloud -o StrictHostKeyChecking=accept-new -p 5058 \
+            root@"$CLOUD_HOST" '/usr/local/sbin/laboratorio-digital-import /tmp/laboratorio-digital-donweb-data.tar.gz'
