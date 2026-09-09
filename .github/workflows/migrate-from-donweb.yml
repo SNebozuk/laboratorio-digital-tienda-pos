@@ -24,20 +24,18 @@ jobs:
         run: |
           set -eu
           mkdir snapshot
-          lftp -e "
+          lftp -p "$FTP_PORT" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
             set ftp:ssl-force true
             set ssl:verify-certificate yes
-            open -p $FTP_PORT -u \"$FTP_USERNAME\",\"$FTP_PASSWORD\" $FTP_SERVER
             cd $FTP_REMOTE_DIR
             get config.local.php -o snapshot/config.local.php
             mirror --verbose storage snapshot/storage
             mirror --verbose v1/uploads/products snapshot/v1/uploads/products
             bye
           "
-          lftp -e "
+          lftp -p "$FTP_PORT" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
             set ftp:ssl-force true
             set ssl:verify-certificate yes
-            open -p $FTP_PORT -u \"$FTP_USERNAME\",\"$FTP_PASSWORD\" $FTP_SERVER
             cd $FTP_REMOTE_DIR
             get config.mail.local.php -o snapshot/config.mail.local.php
             bye
