@@ -39,6 +39,7 @@
         barcodeBuffer: '',
         barcodeStartedAt: 0,
         barcodeLastAt: 0,
+        barcodeTimer: 0,
         barcodeTarget: null,
         barcodeOriginalValue: '',
         posCartRestored: false,
@@ -1844,11 +1845,15 @@
         renderPos();
     }
 
+    function barcodeCode(value) {
+        return String(value || '').replace(/[^A-Za-z0-9._-]/g, '');
+    }
+
     function scanBarcode(value) {
-        const query = fold(value.trim());
+        const query = fold(barcodeCode(value));
         if (!query) return false;
         const indexed = Array.from(variantIndex().values()).find(item => (
-            fold(item.variant.barcode) === query || fold(item.variant.sku) === query
+            fold(barcodeCode(item.variant.barcode)) === query || fold(barcodeCode(item.variant.sku)) === query
         ));
         if (!indexed) {
             return false;
@@ -1869,10 +1874,13 @@
         state.posProductId = null;
         closePosSuggestions();
         renderPos();
+        elements.posSearch?.focus();
         return true;
     }
 
     function resetBarcodeCapture() {
+        window.clearTimeout(state.barcodeTimer);
+        state.barcodeTimer = 0;
         state.barcodeBuffer = '';
         state.barcodeStartedAt = 0;
         state.barcodeLastAt = 0;
@@ -1887,6 +1895,23 @@
         }
         target.value = state.barcodeOriginalValue;
         target.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function finishBarcodeCapture() {
+        const barcode = barcodeCode(state.barcodeBuffer);
+        const duration = state.barcodeLastAt - state.barcodeStartedAt;
+        const averageGap = barcode.length > 1
+            ? duration / (barcode.length - 1)
+            : Number.POSITIVE_INFINITY;
+        const scannerSpeed = barcode.length >= 3 && averageGap <= 250;
+        if (!scannerSpeed) {
+            resetBarcodeCapture();
+            return false;
+        }
+        restoreInputAfterBarcodeScan();
+        resetBarcodeCapture();
+        if (!scanBarcode(barcode)) offerBarcodeAssignment(barcode);
+        return true;
     }
 
     function captureGlobalBarcode(event) {
@@ -1922,6 +1947,8 @@
             }
             state.barcodeBuffer += event.key;
             state.barcodeLastAt = now;
+            window.clearTimeout(state.barcodeTimer);
+            state.barcodeTimer = window.setTimeout(finishBarcodeCapture, 350);
             return;
         }
 
@@ -1929,26 +1956,7 @@
             return;
         }
 
-        const barcode = state.barcodeBuffer.trim();
-        const duration = state.barcodeLastAt - state.barcodeStartedAt;
-        const averageGap = barcode.length > 1
-            ? duration / (barcode.length - 1)
-            : Number.POSITIVE_INFINITY;
-        const scannerSpeed = barcode.length >= 3
-            && now - state.barcodeLastAt <= 150
-            && averageGap <= 100;
-
-        if (!scannerSpeed) {
-            resetBarcodeCapture();
-            return;
-        }
-
-        event.preventDefault();
-        restoreInputAfterBarcodeScan();
-        resetBarcodeCapture();
-        if (!scanBarcode(barcode)) {
-            offerBarcodeAssignment(barcode);
-        }
+        if (finishBarcodeCapture()) event.preventDefault();
     }
 
     function barcodeAssignmentResults(query) {
@@ -6428,7 +6436,7 @@
         if (event.key === 'Enter') {
             event.preventDefault();
             if (!scanBarcode(event.target.value)) {
-                const value = event.target.value.trim();
+                const value = barcodeCode(event.target.value);
                 const looksLikeCode = /^[A-Za-z0-9._\-]{3,80}$/.test(value)
                     && (
                         /\d/.test(value)
