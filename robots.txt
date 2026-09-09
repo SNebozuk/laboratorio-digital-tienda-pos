@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /v1/admin/
+Disallow: /tienda/admin/
+Disallow: /storage/
+Disallow: /app/
+Disallow: /database/
+Disallow: /tasks/
+Disallow: /payment.php
+Disallow: /v1/payment.php
+Disallow: /tienda/payment.php
+
+Sitemap: https://laboratoriodigital.com.ar/sitemap.xml

@@ -47,6 +47,26 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
 $logoIsText = ($design['logo_mode'] ?? 'image') === 'text' && trim((string) ($design['logo_text'] ?? '')) !== '';
 $logoText = trim((string) ($design['logo_text'] ?? '')) ?: 'Laboratorio Digital';
 $logoHref = trim((string) ($design['logo_link'] ?? '')) ?: $storeUrl;
+$seoCatalog = $app['products']->publicCatalog();
+$seoProduct = null;
+$requestedProductId = filter_input(INPUT_GET, 'producto', FILTER_VALIDATE_INT);
+foreach ($seoCatalog as $product) {
+    if ($requestedProductId === $product['id']) {
+        $seoProduct = $product;
+        break;
+    }
+}
+if (isset($_GET['producto']) && $seoProduct === null) {
+    http_response_code(404);
+    header('X-Robots-Tag: noindex');
+}
+$seoBaseUrl = 'https://laboratoriodigital.com.ar' . $storeUrl;
+$canonicalUrl = $seoBaseUrl . ($seoProduct ? '?producto=' . $seoProduct['id'] : '');
+$seoTitle = $seoProduct ? $seoProduct['name'] . ' · Laboratorio Digital' : 'Laboratorio Digital · Catálogo mayorista';
+$seoDescription = trim(strip_tags((string) ($seoProduct['description'] ?? $design['hero_text'])));
+if ($seoDescription === '') {
+    $seoDescription = $seoTitle . '. Consultá las variantes disponibles y armá tu pedido online.';
+}
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
 header('X-Content-Type-Options: nosniff');
@@ -58,7 +78,13 @@ header('Referrer-Policy: same-origin');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="<?= $escape((string) ($design['color_background'] ?? '#f7faf7')) ?>">
-    <title>Laboratorio Digital · Catálogo mayorista</title>
+    <title><?= $escape($seoTitle) ?></title>
+    <meta name="description" content="<?= $escape($seoDescription) ?>">
+    <link rel="canonical" href="<?= $escape($canonicalUrl) ?>">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="<?= $escape($seoTitle) ?>">
+    <meta property="og:description" content="<?= $escape($seoDescription) ?>">
+    <meta property="og:url" content="<?= $escape($canonicalUrl) ?>">
     <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
@@ -158,6 +184,25 @@ header('Referrer-Policy: same-origin');
             </nav>
 
             <div id="catalog-results" class="catalog-results"></div>
+            <details>
+                <summary>Catálogo de productos y descripciones</summary>
+                <?php if (isset($_GET['producto']) && $seoProduct === null): ?>
+                    <p>Este producto no está disponible. Podés consultar el catálogo actual.</p>
+                <?php endif ?>
+                <?php foreach ($seoProduct ? [$seoProduct] : $seoCatalog as $product): ?>
+                    <article>
+                        <h2><a href="<?= $escape($storeUrl . '?producto=' . $product['id']) ?>"><?= $escape((string) $product['name']) ?></a></h2>
+                        <p><?= nl2br($escape((string) $product['description'])) ?></p>
+                        <p>Categoría: <?= $escape((string) $product['category']['name']) ?></p>
+                        <ul>
+                            <?php foreach ($product['variants'] as $variant): ?>
+                                <li><?= $escape((string) $variant['name']) ?> · <?= $variant['price_cents'] === null ? 'Consultar precio' : '$ ' . number_format($variant['price_cents'] / 100, 2, ',', '.') . ' ARS' ?> · <?= $variant['available_stock'] === null ? 'Consultar disponibilidad' : ($variant['available_stock'] > 0 ? 'Disponible' : 'Sin stock') ?></li>
+                            <?php endforeach ?>
+                        </ul>
+                    </article>
+                <?php endforeach ?>
+                <?php if ($seoProduct): ?><a href="<?= $escape($storeUrl) ?>">Ver todos los productos</a><?php endif ?>
+            </details>
         </section>
 
         <aside class="cart-benefits-panel" aria-labelledby="cart-benefits-title">
