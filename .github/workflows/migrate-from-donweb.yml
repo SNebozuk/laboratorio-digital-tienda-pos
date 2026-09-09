@@ -23,14 +23,13 @@ jobs:
           FTP_REMOTE_DIR: ${{ secrets.DONWEB_FTP_REMOTE_DIR }}
         run: |
           set -eu
-          mkdir snapshot
+          mkdir -p snapshot/storagedir/laboratorio-digital
           lftp -p "$FTP_PORT" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
             set ftp:ssl-force true
             set ssl:verify-certificate yes
             cd $FTP_REMOTE_DIR
             get config.local.php -o snapshot/config.local.php
-            mirror --verbose storage snapshot/storage
-            mirror --verbose v1/uploads/products snapshot/v1/uploads/products
+            get ../storagedir/laboratorio-digital/app.sqlite -o snapshot/storagedir/laboratorio-digital/app.sqlite
             bye
           "
           lftp -p "$FTP_PORT" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
@@ -40,18 +39,9 @@ jobs:
             get config.mail.local.php -o snapshot/config.mail.local.php
             bye
           " || true
-          lftp -p "$FTP_PORT" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
-            set ftp:ssl-force true
-            set ssl:verify-certificate yes
-            cd $FTP_REMOTE_DIR
-            mirror --verbose data snapshot/data
-            get app.sqlite -o snapshot/app.sqlite
-            bye
-          " || true
           test -f snapshot/config.local.php
-          test -f snapshot/storage/app.sqlite
-          test -d snapshot/v1/uploads/products
-          test "$(sqlite3 snapshot/storage/app.sqlite 'PRAGMA integrity_check;')" = ok
+          test -f snapshot/storagedir/laboratorio-digital/app.sqlite
+          test "$(sqlite3 snapshot/storagedir/laboratorio-digital/app.sqlite 'PRAGMA integrity_check;')" = ok
 
       - name: Transferir e importar en el Cloud
         env:
