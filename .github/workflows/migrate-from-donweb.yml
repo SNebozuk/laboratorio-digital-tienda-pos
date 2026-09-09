@@ -40,6 +40,14 @@ jobs:
             get config.mail.local.php -o snapshot/config.mail.local.php
             bye
           " || true
+          lftp -p "$FTP_PORT" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
+            set ftp:ssl-force true
+            set ssl:verify-certificate yes
+            cd $FTP_REMOTE_DIR
+            mirror --verbose data snapshot/data
+            get app.sqlite -o snapshot/app.sqlite
+            bye
+          " || true
           test -f snapshot/config.local.php
           test -f snapshot/storage/app.sqlite
           test -d snapshot/v1/uploads/products
