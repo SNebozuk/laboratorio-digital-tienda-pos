@@ -13,8 +13,9 @@ $config = Config::load($projectRoot);
 date_default_timezone_set($config['timezone']);
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
-    // Conserva el acceso administrativo durante 30 días, sin volverlo permanente.
-    $sessionLifetime = 60 * 60 * 24 * 30;
+    // Mantiene el acceso administrativo iniciado mientras el usuario no cierre
+    // sesión explícitamente ni elimine las cookies del navegador.
+    $sessionLifetime = 60 * 60 * 24 * 365 * 10;
     ini_set('session.gc_maxlifetime', (string) $sessionLifetime);
     session_name($config['session_name']);
     session_set_cookie_params([

@@ -846,31 +846,38 @@
         if (!tokens.length) {
             return 0;
         }
-        const fields = [
+        const commonFields = [
             [product.name, 150],
             [product.description, 45],
             [product.category?.name, 35],
-            ...product.variants.flatMap(variant => [
-                [variant.name, 80],
-                [variant.sku, 210],
-                [variant.barcode, 260],
-            ]),
         ];
-        let score = fold(product.name) === fold(query) ? 500 : 0;
-        for (const token of tokens) {
-            const best = fields.reduce(
-                (maximum, [value, weight]) => Math.max(
-                    maximum,
-                    tokenFieldScore(token, value, weight)
-                ),
-                -1
-            );
-            if (best < 0) {
-                return null;
-            }
-            score += best;
+        const fieldGroups = product.variants.map(variant => [
+            ...commonFields,
+            [variant.name, 80],
+            [variant.sku, 210],
+            [variant.barcode, 260],
+        ]);
+        if (!fieldGroups.length) {
+            fieldGroups.push(commonFields);
         }
-        return score;
+        const scores = fieldGroups.map(fields => {
+            let score = fold(product.name) === fold(query) ? 500 : 0;
+            for (const token of tokens) {
+                const best = fields.reduce(
+                    (maximum, [value, weight]) => Math.max(
+                        maximum,
+                        tokenFieldScore(token, value, weight)
+                    ),
+                    -1
+                );
+                if (best < 0) {
+                    return null;
+                }
+                score += best;
+            }
+            return score;
+        }).filter(score => score !== null);
+        return scores.length ? Math.max(...scores) : null;
     }
 
     function rankedProducts(query, products = state.products) {
@@ -1412,6 +1419,12 @@
         }
         const priceInput = document.querySelector(`[data-quick-price="${variantId}"]`);
         const stockInput = document.querySelector(`[data-quick-stock="${variantId}"]`);
+        const priceCents = priceInput.value.trim() === ''
+            ? null
+            : Math.round(Number(priceInput.value) * 100);
+        const stockOnHand = stockInput.value.trim() === ''
+            ? null
+            : Number(stockInput.value);
         input.disabled = true;
         quickUpdateInFlight += 1;
         try {
@@ -1419,26 +1432,34 @@
                 action: 'variant_quick_update',
                 variant_id: variantId,
                 changes: {
-                    price_cents: priceInput.value.trim() === '' ? null : Math.round(Number(priceInput.value) * 100),
-                    stock_on_hand: stockInput.value.trim() === '' ? null : Number(stockInput.value),
+                    price_cents: priceCents,
+                    stock_on_hand: stockOnHand,
                     reset_stock_reservations: Boolean(input.dataset.quickStock),
                 },
             });
+            variant.price_cents = priceCents;
+            variant.stock_on_hand = stockOnHand;
+            variant.available_stock = stockOnHand;
             if (input.dataset.quickStock) {
                 quickStockSaved.add(variantId);
+                const field = input.closest('.product-inline-field');
+                field?.classList.add('is-saved');
+                field?.classList.toggle('is-empty', stockOnHand === 0);
                 window.clearTimeout(quickStockSavedTimers.get(variantId));
                 quickStockSavedTimers.set(variantId, window.setTimeout(() => {
                     quickStockSaved.delete(variantId);
                     quickStockSavedTimers.delete(variantId);
-                    renderProducts();
+                    field?.classList.remove('is-saved');
                 }, 2200));
             }
-            await loadProducts();
             toast('Variante actualizada.');
         } catch (error) {
             toast(error.message);
             await loadProducts();
         } finally {
+            if (input.isConnected) {
+                input.disabled = false;
+            }
             quickUpdateInFlight = Math.max(0, quickUpdateInFlight - 1);
         }
     }
