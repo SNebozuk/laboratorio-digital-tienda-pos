@@ -12,6 +12,7 @@ DirectoryIndex index.php
 
   RewriteRule ^$ v1/index.php [L,QSA]
   RewriteRule ^sitemap\.xml$ sitemap.php [L]
+  RewriteRule ^uploads/products/(.+)$ v1/uploads/products/$1 [L]
   RewriteRule ^tienda$ tienda/ [R=302,L]
   RewriteRule ^admin$ admin/ [R=302,L]
 
