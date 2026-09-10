@@ -1,4 +1,4 @@
-name: Desplegar en DonWeb
+name: Desplegar en Cloud
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: donweb-production
+  group: cloud-production
   cancel-in-progress: false
 
 jobs:
@@ -17,77 +17,33 @@ jobs:
     # Permite que el mismo archivo funcione si la rama principal se llama main o master.
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - name: Descargar versión aprobada
-        uses: actions/checkout@v6
-
-      - name: Verificar que estén cargados los Secrets de DonWeb
+      - name: Verificar configuración del Cloud
         id: configuration
         env:
-          FTP_SERVER: ${{ secrets.DONWEB_FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.DONWEB_FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.DONWEB_FTP_PASSWORD }}
-          FTP_PORT: ${{ secrets.DONWEB_FTP_PORT }}
-          FTP_REMOTE_DIR: ${{ secrets.DONWEB_FTP_REMOTE_DIR }}
+          CLOUD_HOST: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_HOST }}
+          CLOUD_KEY_B64: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_DEPLOY_KEY_B64 }}
         run: |
-          if [ -z "$FTP_SERVER" ] || [ -z "$FTP_USERNAME" ] || [ -z "$FTP_PASSWORD" ] || [ -z "$FTP_PORT" ] || [ -z "$FTP_REMOTE_DIR" ]; then
+          if [ -z "$CLOUD_HOST" ] || [ -z "$CLOUD_KEY_B64" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "El deploy se omitió: todavía faltan Secrets de DonWeb."
+            echo "El deploy se omitió: faltan los Secrets del Cloud."
           else
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Sincronizar cambios por FTPS
+      - name: Desplegar versión aprobada por SSH
         if: steps.configuration.outputs.configured == 'true'
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ secrets.DONWEB_FTP_SERVER }}
-          username: ${{ secrets.DONWEB_FTP_USERNAME }}
-          password: ${{ secrets.DONWEB_FTP_PASSWORD }}
-          port: ${{ secrets.DONWEB_FTP_PORT }}
-          # DonWeb exige TLS en el canal FTP; usa FTPS explícito sobre el puerto 21.
-          protocol: ftps
-          security: strict
-          local-dir: ./
-          server-dir: ${{ secrets.DONWEB_FTP_REMOTE_DIR }}
-          dangerous-clean-slate: false
-          log-level: standard
-          exclude: |
-            **/.git*
-            **/.git*/**
-            .devcontainer/
-            .devcontainer/**
-            .github/**
-            .idea/**
-            .vscode/**
-            node_modules/**
-            vendor/**
-            .env
-            .env.*
-            config.local.php
-            config.mail.local.php
-            storage/**
-            uploads/**
-            data/**
-            backups/**
-            logs/**
-            cache/**
-            tests/**
-            docs/**
-            outputs/**
-            tools/**
-            work/**
-            git-history/**
-            maintenance/**
-            preview.html
-            README.md
-            SECURITY.md
-            AGENTS.md
-            CHANGELOG.md
-            config.example.php
-            database/catalog_seed.sql
-            **/*.log
-            **/*.tmp
-            **/*.bak
-            .ftp-deploy-sync-state.json
+        env:
+          CLOUD_HOST: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_HOST }}
+          CLOUD_KEY_B64: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_DEPLOY_KEY_B64 }}
+        run: |
+          set -eu
+          install -d -m 700 ~/.ssh
+          printf '%s' "$CLOUD_KEY_B64" | base64 --decode > ~/.ssh/laboratorio_digital_cloud
+          chmod 600 ~/.ssh/laboratorio_digital_cloud
+          trap 'rm -f ~/.ssh/laboratorio_digital_cloud' EXIT
+          ssh -i ~/.ssh/laboratorio_digital_cloud \
+            -o StrictHostKeyChecking=accept-new \
+            -p 5058 root@"$CLOUD_HOST" \
+            '/usr/local/sbin/laboratorio-digital-deploy'
