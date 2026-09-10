@@ -1014,7 +1014,13 @@ final class OrderService
         $items->execute(['order_id' => $orderId]);
         $order['items'] = array_map(static function (array $item): array {
             $path = trim((string) ($item['image_path'] ?? ''));
-            $item['image_path'] = str_starts_with($path, '/v1/uploads/products/') ? substr($path, 3) : $path;
+            foreach (['/v1/uploads/products/', '/uploads/products/'] as $prefix) {
+                if (str_starts_with($path, $prefix)) {
+                    $item['image_path'] = '/image.php?path=' . rawurlencode(substr($path, strlen($prefix)));
+                    return $item;
+                }
+            }
+            $item['image_path'] = $path;
             return $item;
         }, $items->fetchAll());
 

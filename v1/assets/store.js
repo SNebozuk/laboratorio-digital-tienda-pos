@@ -278,8 +278,10 @@
 
     const safeImage = value => {
         const url = String(value || '').trim();
-        if (url.startsWith('/v1/uploads/products/')) {
-            return url.slice(3);
+        for (const prefix of ['/v1/uploads/products/', '/uploads/products/']) {
+            if (url.startsWith(prefix)) {
+                return `/image.php?path=${encodeURIComponent(url.slice(prefix.length))}`;
+            }
         }
         if (url.startsWith('/')) {
             return url;

@@ -41,8 +41,7 @@ final class ProductImageService
 
         return [
             'image_path' => $this->publicRoot()
-                . '/'
-                . $relativeDirectory
+                . rawurlencode($relativeDirectory . '/')
                 . '/'
                 . $filename,
             'size_bytes' => $file['size_bytes'],
@@ -76,7 +75,7 @@ final class ProductImageService
             $destination = $directory . '/' . $filename;
             if (!rename($temporary, $destination)) throw new \RuntimeException('No se pudo guardar la foto importada.');
             @chmod($destination, 0644);
-            return ['image_path' => $this->publicRoot() . '/' . $relativeDirectory . '/' . $filename, 'size_bytes' => strlen($bytes), 'mime_type' => $mime];
+            return ['image_path' => $this->publicRoot() . rawurlencode($relativeDirectory . '/') . '/' . $filename, 'size_bytes' => strlen($bytes), 'mime_type' => $mime];
         } finally {
             if (is_file($temporary)) @unlink($temporary);
         }
@@ -145,14 +144,6 @@ final class ProductImageService
 
     private function publicRoot(): string
     {
-        $storePath = '/' . trim(
-            (string) ($this->config['public_store_path'] ?? '/v1'),
-            '/'
-        );
-        if ($storePath === '/') {
-            $storePath = '';
-        }
-
-        return $storePath . '/uploads/products';
+        return '/image.php?path=';
     }
 }

@@ -74,7 +74,13 @@ final class TutorialService
             return null;
         }
 
-        return str_starts_with($path, '/v1/uploads/products/') ? substr($path, 3) : $path;
+        foreach (['/v1/uploads/products/', '/uploads/products/'] as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                return '/image.php?path=' . rawurlencode(substr($path, strlen($prefix)));
+            }
+        }
+
+        return $path;
     }
 
     /** @return array{title:string,content:string,image_path:?string,active:int,sort_order:int} */
