@@ -30,6 +30,7 @@ jobs:
             cd $FTP_REMOTE_DIR
             get config.local.php -o snapshot/config.local.php
             get ../storagedir/laboratorio-digital/app.sqlite -o snapshot/storagedir/laboratorio-digital/app.sqlite
+            mirror --verbose v1/uploads/products snapshot/v1/uploads/products
             bye
           "
           lftp -p "$FTP_PORT" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
@@ -41,6 +42,7 @@ jobs:
           " || true
           test -f snapshot/config.local.php
           test -f snapshot/storagedir/laboratorio-digital/app.sqlite
+          test -d snapshot/v1/uploads/products
           test "$(sqlite3 snapshot/storagedir/laboratorio-digital/app.sqlite 'PRAGMA integrity_check;')" = ok
 
       - name: Transferir e importar en el Cloud
