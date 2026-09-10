@@ -164,7 +164,7 @@ final class DeliveryService
                 $numbers = array_values(array_filter(array_map('trim', explode('/', (string) $existing['order_numbers'])), static fn (string $number): bool => $number !== '' && $number !== (string) $order['public_number']));
                 $remaining = implode(' / ', $numbers);
                 $total = max(0, (int) $existing['order_total_cents'] - (int) $order['total_cents']);
-                $customer = $remaining === '' ? preg_replace('/\s*·?\s*(ARMAR|AGREGAR|📦)\s*$/iu', '', (string) $existing['customer_name']) : (string) $existing['customer_name'];
+                $customer = $remaining === '' ? preg_replace('/\s*·?\s*(ARMAR|AGREGAR|📦|✓)\s*$/iu', '', (string) $existing['customer_name']) : (string) $existing['customer_name'];
                 $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, customer_name = :customer, order_total_cents = :total, revision = revision + 1, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
                     ->execute(['orders' => $remaining, 'customer' => trim((string) $customer), 'total' => $total, 'slot' => $slot]);
             }

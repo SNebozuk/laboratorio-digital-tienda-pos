@@ -2263,7 +2263,7 @@
 
     function deliveryCustomerKey(value) {
         return fold(String(value || '')
-            .replace(/\b(ARMAR|AGREGAR)\b|📦/gi, '')
+            .replace(/\b(ARMAR|AGREGAR)\b|📦|✓/gi, '')
             .replace(/\s+/g, ' ')
             .trim());
     }
@@ -2379,8 +2379,6 @@
             : '<tr><td class="delivery-no-results" colspan="6">No encontramos ventas en la Lista de Ventas para esta búsqueda.</td></tr>';
     }
 
-    const deliveryPackedConfirmations = new Map();
-
     function renderDeliverySlots() {
         renderDeliveryBadge();
         if (!elements.deliverySlots) return;
@@ -2410,15 +2408,12 @@
             if (query && !fold(`${slot.order_numbers} ${slot.customer_name}`).includes(query)) return '';
             const tone = slotTone(slot);
             const linkedOrders = Array.isArray(slot.orders) ? slot.orders : [];
-            const confirmingPacked = deliveryPackedConfirmations.get(number) === slot.customer_name;
-            const field = (key, label) => `<input type="text" value="${escapeHtml(key === 'customer_name' && confirmingPacked ? String(slot[key] || '').replace(/\s*·?\s*📦\s*$/, '') : (slot[key] || ''))}" ${key === 'customer_name' && confirmingPacked ? 'disabled' : ''} data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
+            const field = (key, label) => `<input type="text" value="${escapeHtml(slot[key] || '')}" data-delivery-field="${key}" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="${label} ubicación ${number}">`;
             const orderNumbers = linkedOrders.length
                 ? `<div class="delivery-order-links">${linkedOrders.map(order => `<button type="button" data-view-delivery-order="${Number(order.id)}" aria-label="Abrir venta ${escapeHtml(order.public_number)}">${escapeHtml(order.public_number)}</button>`).join('<span aria-hidden="true">/</span>')}</div>`
                 : field('order_numbers', 'Órdenes');
             const location = `<input type="text" value="${escapeHtml(slot.location || '')}" data-delivery-field="location" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="Ubicación fila ${number}">`;
-            const markerButton = confirmingPacked
-                ? '<span class="delivery-marker-clear is-packed" role="status" aria-label="Pedido armado">✓</span>'
-                : (/\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear icon-button" type="button" data-mark-delivery-packed="${number}" aria-label="Pendiente: marcar pedido armado" title="Pendiente: marcar pedido armado"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>` : '');
+            const markerButton = /\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear icon-button" type="button" data-mark-delivery-packed="${number}" aria-label="Pendiente: marcar pedido armado" title="Pendiente: marcar pedido armado"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>` : '';
             const statusAttention = tone === 'delivery-slot-add'
                 ? '<span class="delivery-status-attention delivery-add-attention" role="img" aria-label="Atención: pedido agregado a una fila existente" title="Atención: este pedido se agregó a una fila existente">!</span>'
                 : (tone === 'delivery-slot-build' ? '<span class="delivery-status-attention delivery-build-attention" role="img" aria-label="Atención: pedido pendiente de armar" title="Atención: este pedido está pendiente de armar">!</span>' : '');
@@ -2456,7 +2451,7 @@
         } catch (error) { toast(error.message); }
     }
 
-    async function saveDeliverySlot(slotNumber, source, confirmPacked = false) {
+    async function saveDeliverySlot(slotNumber, source) {
         const row = source.closest('[data-delivery-row]');
         if (!row) return;
         const field = key => row.querySelector(`[data-delivery-field="${key}"]`);
@@ -2466,25 +2461,13 @@
             const payload = {
                 action: 'delivery_slot_update', slot_number: Number(slotNumber), revision,
                 location: field('location')?.value || '',
-                customer_name: field('customer_name')?.disabled ? (state.deliverySlots.find(slot => Number(slot.slot_number) === Number(slotNumber))?.customer_name || '') : (field('customer_name')?.value || ''),
+                customer_name: field('customer_name')?.value || '',
                 transfers: field('transfers')?.value || '',
                 cash_due: field('cash_due')?.value || '',
             };
             if (orderNumbers) payload.order_numbers = orderNumbers.value;
             const data = await apiPost(payload);
             const next = data.slot;
-            if (confirmPacked) {
-                deliveryPackedConfirmations.set(Number(slotNumber), next.customer_name);
-                setTimeout(() => {
-                    deliveryPackedConfirmations.delete(Number(slotNumber));
-                    const currentInput = elements.deliverySlots?.querySelector('[data-delivery-row="' + Number(slotNumber) + '"] [data-delivery-field="customer_name"]');
-                    if (currentInput?.disabled) {
-                        currentInput.value = next.customer_name;
-                        currentInput.disabled = false;
-                        currentInput.closest('[data-delivery-row]').querySelector('.is-packed')?.remove();
-                    }
-                }, 3000);
-            }
             state.deliverySlots = state.deliverySlots.filter(slot => Number(slot.slot_number) !== Number(slotNumber));
             if (Number(next.revision || 0) > 0) state.deliverySlots.push(next);
             renderDeliverySlots();
@@ -5893,7 +5876,7 @@
         if (markDeliveryPacked) {
             const row = markDeliveryPacked.closest('[data-delivery-row]');
             const input = row?.querySelector('[data-delivery-field="customer_name"]');
-            if (input) { input.value = String(input.value).replace(/\s*·?\s*(ARMAR|AGREGAR)\s*$/i, ' · 📦').trim(); markDeliveryPacked.disabled = true; saveDeliverySlot(Number(markDeliveryPacked.dataset.markDeliveryPacked), input, true); }
+            if (input) { input.value = String(input.value).replace(/\s*·?\s*(ARMAR|AGREGAR)\s*$/i, ' · ✓').trim(); markDeliveryPacked.disabled = true; saveDeliverySlot(Number(markDeliveryPacked.dataset.markDeliveryPacked), input); }
             return;
         }
         const printDelivery = event.target.closest('[data-print-delivery-order]');
