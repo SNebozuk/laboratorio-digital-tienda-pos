@@ -2,19 +2,12 @@ name: Migrar datos desde DonWeb al Cloud
 
 on:
   workflow_dispatch:
-    inputs:
-      inspect_cloud:
-        description: Inspeccionar el almacenamiento Cloud sin importar datos
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
 
 jobs:
   migrate:
-    if: inputs.inspect_cloud != true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -66,19 +59,3 @@ jobs:
             laboratorio-digital-donweb-data.tar.gz root@"$CLOUD_HOST":/tmp/laboratorio-digital-donweb-data.tar.gz
           ssh -i ~/.ssh/laboratorio_digital_cloud -o StrictHostKeyChecking=accept-new -p 5058 \
             root@"$CLOUD_HOST" '/usr/local/sbin/laboratorio-digital-import /tmp/laboratorio-digital-donweb-data.tar.gz'
-
-  inspect-cloud:
-    if: inputs.inspect_cloud == true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Inspeccionar almacenamiento de fotos en el Cloud
-        env:
-          CLOUD_HOST: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_HOST }}
-          CLOUD_KEY_B64: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_DEPLOY_KEY_B64 }}
-        run: |
-          set -eu
-          install -d -m 700 ~/.ssh
-          printf '%s' "$CLOUD_KEY_B64" | base64 --decode > ~/.ssh/laboratorio_digital_cloud
-          chmod 600 ~/.ssh/laboratorio_digital_cloud
-          ssh -i ~/.ssh/laboratorio_digital_cloud -o StrictHostKeyChecking=accept-new -p 5058 \
-            root@"$CLOUD_HOST" 'sed -n "1,240p" /usr/local/sbin/laboratorio-digital-import; find /var/lib /srv /opt /var/www -type d -path "*uploads/products" -printf "%p %k KB\\n" 2>/dev/null | head -n 40'
