@@ -2,12 +2,18 @@ name: Migrar datos desde DonWeb al Cloud
 
 on:
   workflow_dispatch:
+    inputs:
+      single_photo:
+        description: Ruta relativa de una foto para restaurar
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 jobs:
   migrate:
+    if: inputs.single_photo == ''
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -59,3 +65,37 @@ jobs:
             laboratorio-digital-donweb-data.tar.gz root@"$CLOUD_HOST":/tmp/laboratorio-digital-donweb-data.tar.gz
           ssh -i ~/.ssh/laboratorio_digital_cloud -o StrictHostKeyChecking=accept-new -p 5058 \
             root@"$CLOUD_HOST" '/usr/local/sbin/laboratorio-digital-import /tmp/laboratorio-digital-donweb-data.tar.gz'
+
+  single-photo:
+    if: inputs.single_photo != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restaurar una foto en el Cloud
+        env:
+          FTP_SERVER: ${{ secrets.DONWEB_FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.DONWEB_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.DONWEB_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.DONWEB_FTP_PORT }}
+          FTP_REMOTE_DIR: ${{ secrets.DONWEB_FTP_REMOTE_DIR }}
+          CLOUD_HOST: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_HOST }}
+          CLOUD_KEY_B64: ${{ secrets.LABORATORIO_DIGITAL_CLOUD_DEPLOY_KEY_B64 }}
+          IMAGE_PATH: ${{ inputs.single_photo }}
+        run: |
+          set -eu
+          case "$IMAGE_PATH" in
+            [0-9][0-9][0-9][0-9]/[0-9][0-9]/*.jpg|[0-9][0-9][0-9][0-9]/[0-9][0-9]/*.png|[0-9][0-9][0-9][0-9]/[0-9][0-9]/*.webp) ;;
+            *) echo 'Ruta de foto inválida.' >&2; exit 1;;
+          esac
+          sudo apt-get update && sudo apt-get install --yes lftp
+          lftp -p "$FTP_PORT" -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
+            set ftp:ssl-force true
+            set ssl:verify-certificate yes
+            cd $FTP_REMOTE_DIR
+            get v1/uploads/products/$IMAGE_PATH -o product-image
+            bye
+          "
+          install -d -m 700 ~/.ssh
+          printf '%s' "$CLOUD_KEY_B64" | base64 --decode > ~/.ssh/laboratorio_digital_cloud
+          chmod 600 ~/.ssh/laboratorio_digital_cloud
+          scp -i ~/.ssh/laboratorio_digital_cloud -o StrictHostKeyChecking=accept-new -P 5058 product-image root@"$CLOUD_HOST":/tmp/laboratorio-digital-single-image
+          ssh -i ~/.ssh/laboratorio_digital_cloud -o StrictHostKeyChecking=accept-new -p 5058 root@"$CLOUD_HOST" "install -D -m 0644 -o www-data -g www-data /tmp/laboratorio-digital-single-image /var/lib/laboratorio-digital/uploads/products/$IMAGE_PATH && rm -f /tmp/laboratorio-digital-single-image"
