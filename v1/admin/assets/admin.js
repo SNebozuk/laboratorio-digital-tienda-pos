@@ -1720,7 +1720,14 @@
         const titleMatches = matchedProducts.filter(product => (
             posProductTitleMatches(product, query)
         ));
-        const preferredProducts = titleMatches.length ? titleMatches : matchedProducts;
+        const barcodeMatches = matchedProducts.filter(product => (
+            product.variants.some(variant => (
+                fold(barcodeCode(variant?.barcode)) === fold(barcodeCode(query))
+            ))
+        ));
+        const preferredProducts = barcodeMatches.length
+            ? barcodeMatches
+            : (titleMatches.length ? titleMatches : matchedProducts);
         const products = state.posProductId
             ? preferredProducts.filter(product => Number(product.id) === Number(state.posProductId))
             : preferredProducts;
