@@ -1717,9 +1717,13 @@
                 && (query || Number(variant.available_stock) > 0)
             ))
         ));
+        const titleMatches = matchedProducts.filter(product => (
+            posProductTitleMatches(product, query)
+        ));
+        const preferredProducts = titleMatches.length ? titleMatches : matchedProducts;
         const products = state.posProductId
-            ? matchedProducts.filter(product => Number(product.id) === Number(state.posProductId))
-            : matchedProducts;
+            ? preferredProducts.filter(product => Number(product.id) === Number(state.posProductId))
+            : preferredProducts;
         elements.posProducts.innerHTML = products.length ? `
             ${query ? `<div class="pos-search-summary"><strong>${products.length}</strong> productos encontrados en todo el catálogo</div>` : ''}
             ${products.map(product => {
