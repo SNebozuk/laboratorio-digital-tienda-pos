@@ -53,7 +53,7 @@ final class BackupService
                 $directory . DIRECTORY_SEPARATOR . 'proofs'
             );
             $productImageStats = $this->copyProofs(
-                $this->projectRoot . DIRECTORY_SEPARATOR . 'v1' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'products',
+                $this->storageRoot() . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'products',
                 $directory . DIRECTORY_SEPARATOR . 'product-images'
             );
             $createdAt = (new DateTimeImmutable())->format(DATE_ATOM);

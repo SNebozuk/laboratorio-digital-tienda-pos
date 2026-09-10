@@ -138,7 +138,7 @@ final class ProductImageService
     private function storageRoot(): string
     {
         return rtrim(
-            $this->projectRoot . '/v1/uploads/products',
+            (string) ($this->config['storage_path'] ?? $this->projectRoot . '/storage') . '/uploads/products',
             '/\\'
         );
     }
