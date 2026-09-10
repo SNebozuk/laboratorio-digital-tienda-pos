@@ -1012,7 +1012,11 @@ final class OrderService
              ORDER BY oi.id'
         );
         $items->execute(['order_id' => $orderId]);
-        $order['items'] = $items->fetchAll();
+        $order['items'] = array_map(static function (array $item): array {
+            $path = trim((string) ($item['image_path'] ?? ''));
+            $item['image_path'] = str_starts_with($path, '/v1/uploads/products/') ? substr($path, 3) : $path;
+            return $item;
+        }, $items->fetchAll());
 
         $proof = $this->pdo->prepare(
             'SELECT

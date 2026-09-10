@@ -278,6 +278,9 @@
 
     const safeImage = value => {
         const url = String(value || '').trim();
+        if (url.startsWith('/v1/uploads/products/')) {
+            return url.slice(3);
+        }
         if (url.startsWith('/')) {
             return url;
         }

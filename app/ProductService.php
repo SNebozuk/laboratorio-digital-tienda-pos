@@ -725,7 +725,7 @@ final class ProductService
                     'id' => $productId,
                     'name' => $row['product_name'],
                     'description' => $row['description'],
-                    'image_path' => $row['image_path'],
+                    'image_path' => $this->publicImagePath($row['image_path']),
                     'category' => [
                         'id' => isset($row['category_id']) ? (int) $row['category_id'] : null,
                         'name' => $row['category_name'] ?? 'Sin categoría',
@@ -756,6 +756,16 @@ final class ProductService
         }
 
         return array_values($products);
+    }
+
+    private function publicImagePath(mixed $path): ?string
+    {
+        $path = trim((string) $path);
+        if ($path === '') {
+            return null;
+        }
+
+        return str_starts_with($path, '/v1/uploads/products/') ? substr($path, 3) : $path;
     }
 
     /**

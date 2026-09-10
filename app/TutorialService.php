@@ -61,10 +61,20 @@ final class TutorialService
             'id' => (int) $row['id'],
             'title' => (string) $row['title'],
             'content' => (string) $row['content'],
-            'image_path' => $row['image_path'] ?: null,
+            'image_path' => self::publicImagePath($row['image_path']),
             'active' => (bool) $row['active'],
             'sort_order' => (int) $row['sort_order'],
         ], $rows);
+    }
+
+    private static function publicImagePath(mixed $path): ?string
+    {
+        $path = trim((string) $path);
+        if ($path === '') {
+            return null;
+        }
+
+        return str_starts_with($path, '/v1/uploads/products/') ? substr($path, 3) : $path;
     }
 
     /** @return array{title:string,content:string,image_path:?string,active:int,sort_order:int} */
