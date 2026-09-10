@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-$app = require __DIR__ . '/app/container.php';
+$app = require dirname(__DIR__) . '/app/container.php';
 $path = (string) ($_GET['path'] ?? '');
 if (!preg_match('#^\d{4}/\d{2}/[a-f0-9]{48}\.(?:jpg|png|webp)$#', $path)) {
     http_response_code(404);
