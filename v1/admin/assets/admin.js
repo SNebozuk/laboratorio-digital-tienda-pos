@@ -996,6 +996,20 @@
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Búsqueda</dt><dd>${escapeHtml(query)}</dd></div><div><dt>Resultados</dt><dd>${cards.length}</dd></div><div><dt>Palabras</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
     }
 
+    async function testAiCatalogTool() {
+        const query = String(elements.aiSearchInput?.value || '').trim();
+        const match = query.match(/^(variantes|stock|alternativas)\s+(\d+)$/i);
+        const tool = match ? ({ variantes: 'obtenerVariantes', stock: 'consultarStock', alternativas: 'buscarAlternativas' }[fold(match[1])]) : 'buscarProductos';
+        const parameters = match
+            ? (tool === 'obtenerVariantes' ? { producto_id: match[2] } : tool === 'consultarStock' ? { variante_id: match[2] } : { filters: JSON.stringify({ variante_id: Number(match[2]) }) })
+            : { filters: JSON.stringify({ texto: query }) };
+        try {
+            const data = await apiGet('ai_catalog_tool', { tool, ...parameters });
+            const count = Array.isArray(data.result) ? data.result.length : (data.result ? 1 : 0);
+            elements.aiSearchInterpretation.innerHTML = `<div><dt>Herramienta</dt><dd>${escapeHtml(tool)}</dd></div><div><dt>Resultados</dt><dd>${count}</dd></div><div><dt>JSON</dt><dd>Consulta correcta</dd></div>`;
+        } catch (error) { toast(error.message); }
+    }
+
     function productSearchShareUrl(query) {
         const url = new URL(app.store_url || '/', window.location.href);
         url.searchParams.set('buscar', String(query || '').trim());
@@ -6365,7 +6379,7 @@
         renderProducts();
     });
     elements.aiSearchInput?.addEventListener('input', renderAiSearch);
-    elements.aiSearchSubmit?.addEventListener('click', renderAiSearch);
+    elements.aiSearchSubmit?.addEventListener('click', () => { renderAiSearch(); testAiCatalogTool(); });
     elements.aiSearchInput?.addEventListener('keydown', event => {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();

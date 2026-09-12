@@ -64,6 +64,20 @@ try {
                     'featured_product_ids' => $app['settings']->featuredProductIds(),
                 ]);
 
+            case 'ai_catalog_tool':
+                $app['auth']->requireUser();
+                $tool = (string) ($_GET['tool'] ?? 'buscarProductos');
+                $filters = json_decode((string) ($_GET['filters'] ?? '{}'), true);
+                $filters = is_array($filters) ? $filters : [];
+                $result = match ($tool) {
+                    'buscarProductos' => $app['catalog_ai_tools']->buscarProductos($filters),
+                    'obtenerVariantes' => $app['catalog_ai_tools']->obtenerVariantes((int) ($_GET['producto_id'] ?? 0)),
+                    'consultarStock' => $app['catalog_ai_tools']->consultarStock((int) ($_GET['variante_id'] ?? 0)),
+                    'buscarAlternativas' => $app['catalog_ai_tools']->buscarAlternativas($filters),
+                    default => throw new ValidationException('Herramienta de catálogo inválida.'),
+                };
+                Http::json(['ok' => true, 'tool' => $tool, 'result' => $result]);
+
             case 'admin_categories':
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'categories' => $app['categories']->tree()]);
