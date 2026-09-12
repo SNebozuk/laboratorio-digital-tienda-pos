@@ -58,6 +58,7 @@ header('Referrer-Policy: same-origin');
         </section>
     </main>
     <script>window.aiSearchPreview = { apiUrl: <?= json_encode($storePath . '/api.php', JSON_UNESCAPED_SLASHES) ?>, storeUrl: <?= json_encode($storePath === '' ? '/' : $storePath . '/', JSON_UNESCAPED_SLASHES) ?> };</script>
+    <script src="<?= $escape($assetPath) ?>/search-normalizer.js?v=<?= $escape($assetVersion(__DIR__ . '/assets/search-normalizer.js')) ?>"></script>
     <script src="<?= $escape($assetPath) ?>/ai-search-preview.js?v=<?= $escape($assetVersion(__DIR__ . '/assets/ai-search-preview.js')) ?>"></script>
 </body>
 </html>

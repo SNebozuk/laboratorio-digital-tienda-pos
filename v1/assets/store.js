@@ -264,6 +264,7 @@
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase();
+    const normalizeSearchQuery = value => window.LDSearch?.normalizeQuery(value) || String(value || '').trim();
 
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
         '&': '&amp;',
@@ -524,7 +525,8 @@
     }
 
     function localSearchScore(product, query) {
-        const tokens = searchWords(query);
+        const normalizedQuery = normalizeSearchQuery(query);
+        const tokens = searchWords(normalizedQuery);
         if (!tokens.length) {
             return null;
         }
@@ -534,7 +536,7 @@
             [product.category?.name, 35],
             ...product.variants.map(variant => [variant.name, 80]),
         ];
-        let score = fold(product.name) === fold(query) ? 500 : 0;
+        let score = fold(product.name) === fold(normalizedQuery) ? 500 : 0;
         for (const token of tokens) {
             const best = fields.reduce(
                 (maximum, [value, weight]) => Math.max(

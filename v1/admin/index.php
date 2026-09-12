@@ -680,6 +680,7 @@ header('Referrer-Policy: same-origin');
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
     <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($klausJsVersion) ?>" defer></script><?php endif ?>
+    <script src="<?= $escape($storeAssetPath) ?>/search-normalizer.js?v=<?= $escape($assetVersion(dirname(__DIR__) . '/assets/search-normalizer.js')) ?>" defer></script>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($adminJsVersion) ?>" defer></script>
 </body>
 </html>

@@ -15,6 +15,7 @@
     const fold = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const words = value => fold(value).match(/[a-z0-9]+(?:[.,][0-9]+)*/g) || [];
     const money = cents => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(Number(cents || 0) / 100);
+    const normalizeSearchQuery = value => window.LDSearch?.normalizeQuery(value) || String(value || '').trim();
 
     function productMatches(product, tokens) {
         const searchable = fold([
@@ -27,7 +28,7 @@
     }
 
     function variantTokens(query) {
-        const tokens = words(query);
+        const tokens = words(normalizeSearchQuery(query));
         const markers = new Set(['talle', 'talles', 'color', 'colores', 'variante', 'variantes', 'atributo', 'atributos']);
         return tokens.filter((token, index) => markers.has(tokens[index - 1] || '') && !markers.has(token));
     }
@@ -39,7 +40,7 @@
 
     function render() {
         const query = String(input?.value || '').trim();
-        const tokens = words(query).filter(token => !['talle', 'talles', 'color', 'colores', 'de', 'del', 'para', 'con', 'en', 'la', 'el', 'los', 'las', 'un', 'una'].includes(token));
+        const tokens = words(normalizeSearchQuery(query)).filter(token => !['talle', 'talles', 'color', 'colores', 'de', 'del', 'para', 'con', 'en', 'la', 'el', 'los', 'las', 'un', 'una'].includes(token));
         const filters = variantTokens(query);
         if (!query) {
             messages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Escribí una búsqueda para consultar el catálogo real.</p></div>';

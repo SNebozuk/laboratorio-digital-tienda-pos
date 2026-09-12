@@ -53,6 +53,7 @@ header('Referrer-Policy: same-origin');
     <div class="modal" id="modal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><section class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close" type="button" data-close-modal aria-label="Cerrar">×</button><div id="modal-content"></div></section></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script id="admin-app-data" type="application/json"><?= json_encode(['api_url' => $apiUrl, 'csrf_token' => $app['csrf_token'], 'user' => $user, 'setup_required' => false, 'size_guide_url' => $storePath . '/tabla-de-talles.php', 'store_url' => $storeUrl], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
+    <script src="<?= $escape($storeAssetPath) ?>/search-normalizer.js?v=<?= $escape(substr(hash_file('sha256', dirname(__DIR__) . '/assets/search-normalizer.js') ?: '1', 0, 12)) ?>" defer></script>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>

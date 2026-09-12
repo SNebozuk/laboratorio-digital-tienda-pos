@@ -31,6 +31,7 @@ $assetVersion = substr(hash('sha256',
     . (string) @file_get_contents(__DIR__ . '/assets/pulga.js')
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
 ), 0, 12);
+$searchNormalizerJsVersion = substr(hash_file('sha256', __DIR__ . '/assets/search-normalizer.js') ?: '1', 0, 12);
 $creatorLogoVersion = substr((string) hash_file('sha256', __DIR__ . '/assets/kauri-logo.png'), 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
@@ -308,6 +309,7 @@ header('Referrer-Policy: same-origin');
     ?></script>
     <script src="<?= $escape($assetPath) ?>/klaus.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script>
+    <script src="<?= $escape($assetPath) ?>/search-normalizer.js?v=<?= $escape($searchNormalizerJsVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>

@@ -148,6 +148,7 @@
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase();
+    const normalizeSearchQuery = value => window.LDSearch?.normalizeQuery(value) || String(value || '').trim();
 
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
         '&': '&amp;',
@@ -859,7 +860,8 @@
     }
 
     function productSearchScore(product, query) {
-        const tokens = searchWords(query);
+        const normalizedQuery = normalizeSearchQuery(query);
+        const tokens = searchWords(normalizedQuery);
         if (!tokens.length) {
             return 0;
         }
@@ -878,7 +880,7 @@
             fieldGroups.push(commonFields);
         }
         const scores = fieldGroups.map(fields => {
-            let score = fold(product.name) === fold(query) ? 500 : 0;
+            let score = fold(product.name) === fold(normalizedQuery) ? 500 : 0;
             for (const token of tokens) {
                 const best = fields.reduce(
                     (maximum, [value, weight]) => Math.max(
@@ -912,7 +914,7 @@
     }
 
     function posProductTitleMatches(product, query) {
-        const tokens = searchWords(query);
+        const tokens = searchWords(normalizeSearchQuery(query));
         return tokens.every(token => tokenFieldScore(token, product.name, 0) >= 0);
     }
 
@@ -946,13 +948,13 @@
     }
 
     function aiSearchQueryTokens(query) {
-        return searchWords(query).filter(token => ![
+        return searchWords(normalizeSearchQuery(query)).filter(token => ![
             'talle', 'talles', 'color', 'colores', 'de', 'del', 'para', 'con', 'en', 'la', 'el', 'los', 'las', 'un', 'una',
         ].includes(token));
     }
 
     function aiSearchVariantTokens(query) {
-        const tokens = searchWords(query);
+        const tokens = searchWords(normalizeSearchQuery(query));
         const markers = new Set(['talle', 'talles', 'color', 'colores', 'variante', 'variantes', 'atributo', 'atributos']);
         return tokens.filter((token, index) => markers.has(tokens[index - 1] || '') && !markers.has(token));
     }
