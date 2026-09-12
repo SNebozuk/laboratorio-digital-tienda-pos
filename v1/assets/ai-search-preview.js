@@ -32,6 +32,11 @@
         return tokens.filter((token, index) => markers.has(tokens[index - 1] || '') && !markers.has(token));
     }
 
+    function variantMatches(product, variant, tokens) {
+        const values = [product.name, product.description, product.category?.name, variant.name];
+        return tokens.every(token => values.some(value => words(value).some(word => word === token || word.startsWith(token))));
+    }
+
     function render() {
         const query = String(input?.value || '').trim();
         const tokens = words(query).filter(token => !['talle', 'talles', 'color', 'colores', 'de', 'del', 'para', 'con', 'en', 'la', 'el', 'los', 'las', 'un', 'una'].includes(token));
@@ -43,7 +48,7 @@
             return;
         }
         const cards = tokens.length ? catalog.filter(product => productMatches(product, tokens)).flatMap(product => (product.variants || [])
-            .filter(variant => filters.every(token => words(variant.name).some(word => word === token || word.startsWith(token))))
+            .filter(variant => variantMatches(product, variant, filters))
             .map(variant => ({ product, variant }))
         ).sort((left, right) => Number(right.variant.available_stock || 0) - Number(left.variant.available_stock || 0)).slice(0, 12) : [];
         messages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>${cards.length ? `Encontré ${cards.length} coincidencia${cards.length === 1 ? '' : 's'} en el catálogo.` : 'No encontré coincidencias en el catálogo.'}</p></div>`;
