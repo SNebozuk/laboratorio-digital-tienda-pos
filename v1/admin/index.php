@@ -508,44 +508,27 @@ header('Referrer-Policy: same-origin');
 
                     <div class="ai-search-layout">
                         <section class="ai-search-chat settings-card" aria-label="Conversación de prueba">
-                            <div class="ai-search-messages">
-                                <div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>tenes remera talle 8</p></div>
-                                <div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Sí, encontré varias opciones en talle 8. ¿Buscás de niño o unisex?</p></div>
-                                <div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>de niño para sublimar</p></div>
-                                <div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Perfecto. Encontré estas opciones disponibles.</p></div>
+                            <div class="ai-search-messages" id="ai-search-messages">
+                                <div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Escribí una búsqueda para consultar el catálogo real.</p></div>
                             </div>
 
-                            <div class="ai-search-products" aria-label="Productos simulados">
-                                <article class="ai-search-product-card">
-                                    <img src="<?= $escape($storeAssetPath) ?>/catalog/remera-infantil-ranglan-verde-61385579cc2ce38c6317160469951416-1024-1024.webp" alt="Remera infantil ranglan verde">
-                                    <div><strong>Remera infantil ranglan</strong><small>Variante: Manga ranglan</small><span>Talle 8 · Verde</span><b>$ 12.500</b><em>Stock: 14</em></div>
-                                    <button class="secondary-button" type="button">VER PRODUCTO</button>
-                                </article>
-                                <article class="ai-search-product-card">
-                                    <img src="<?= $escape($storeAssetPath) ?>/catalog/jersey-infantil-blanco-5e3a8ab173eb9c8c3f17612260176626-1024-1024.webp" alt="Jersey infantil blanco">
-                                    <div><strong>Jersey infantil</strong><small>Variante: Cuello redondo</small><span>Talle 8 · Blanco</span><b>$ 11.900</b><em>Stock: 8</em></div>
-                                    <button class="secondary-button" type="button">VER PRODUCTO</button>
-                                </article>
-                            </div>
+                            <div class="ai-search-products" id="ai-search-products" aria-label="Resultados del catálogo"></div>
 
                             <div class="ai-search-composer">
-                                <textarea rows="2" placeholder="Escribí como lo haría un cliente…" aria-label="Mensaje de prueba"></textarea>
+                                <textarea id="ai-search-input" rows="2" placeholder="Escribí como lo haría un cliente…" aria-label="Mensaje de prueba"></textarea>
                                 <div class="ai-search-composer-actions">
                                     <label class="ai-search-voice-toggle"><span>Respuesta por voz</span><input type="checkbox" checked><i aria-hidden="true"></i></label>
                                     <button class="secondary-button ai-search-talk-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"></path></svg>HABLAR</button>
-                                    <button class="primary-button" type="button">ENVIAR</button>
+                                    <button class="primary-button" id="ai-search-submit" type="button">ENVIAR</button>
                                 </div>
                             </div>
                         </section>
 
                         <aside class="ai-search-interpretation settings-card">
                             <p class="eyebrow">INTERPRETACIÓN</p>
-                            <dl>
-                                <div><dt>Producto</dt><dd>Remera</dd></div>
-                                <div><dt>Talle</dt><dd>8</dd></div>
-                                <div><dt>Tipo</dt><dd>Niño</dd></div>
-                                <div><dt>Uso</dt><dd>Sublimación</dd></div>
-                                <div><dt>Color</dt><dd>No especificado</dd></div>
+                            <dl id="ai-search-interpretation">
+                                <div><dt>Búsqueda</dt><dd>Sin consulta</dd></div>
+                                <div><dt>Resultados</dt><dd>—</dd></div>
                             </dl>
                         </aside>
                     </div>

@@ -214,6 +214,11 @@
         supplierOrderStatus: document.getElementById('supplier-order-status'),
         supplierOrderPreview: document.getElementById('supplier-order-preview'),
         supplierOrderWhatsappText: document.getElementById('supplier-order-whatsapp-text'),
+        aiSearchInput: document.getElementById('ai-search-input'),
+        aiSearchSubmit: document.getElementById('ai-search-submit'),
+        aiSearchMessages: document.getElementById('ai-search-messages'),
+        aiSearchProducts: document.getElementById('ai-search-products'),
+        aiSearchInterpretation: document.getElementById('ai-search-interpretation'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -450,6 +455,9 @@
         if (view === 'products') {
             loadProducts();
         }
+        if (view === 'ai-search' && !state.productsLoaded) {
+            loadProducts();
+        }
         if (view === 'supplier-order') {
             loadSupplierOrder();
         }
@@ -609,6 +617,7 @@
             renderPos();
             renderPosCart();
             state.productsLoaded = true;
+            renderAiSearch();
             if (state.pendingBarcodeScan) {
                 const barcode = state.pendingBarcodeScan;
                 state.pendingBarcodeScan = '';
@@ -934,6 +943,42 @@
         const url = new URL(app.store_url || '/', window.location.href);
         url.searchParams.set('producto', String(Number(productId)));
         return url.href;
+    }
+
+    function aiSearchQueryTokens(query) {
+        return searchWords(query).filter(token => ![
+            'talle', 'talles', 'color', 'colores', 'de', 'del', 'para', 'con', 'en', 'la', 'el', 'los', 'las', 'un', 'una',
+        ].includes(token));
+    }
+
+    function renderAiSearch() {
+        if (!elements.aiSearchProducts || !elements.aiSearchMessages || !elements.aiSearchInterpretation) return;
+        const query = String(elements.aiSearchInput?.value || '').trim();
+        const tokens = aiSearchQueryTokens(query);
+        if (!query) {
+            elements.aiSearchMessages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Escribí una búsqueda para consultar el catálogo real.</p></div>';
+            elements.aiSearchProducts.innerHTML = '';
+            elements.aiSearchInterpretation.innerHTML = '<div><dt>Búsqueda</dt><dd>Sin consulta</dd></div><div><dt>Resultados</dt><dd>—</dd></div>';
+            return;
+        }
+        if (!state.productsLoaded) {
+            elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Consultando catálogo…</p></div>`;
+            return;
+        }
+        const searchQuery = tokens.join(' ');
+        const results = searchQuery ? rankedProducts(searchQuery, state.products.filter(product => product.active)) : [];
+        const cards = results.slice(0, 12).flatMap(product => product.variants
+            .filter(variant => variant.active !== false)
+            .map(variant => ({ product, variant }))
+        ).slice(0, 12);
+        elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>${cards.length ? `Encontré ${cards.length} coincidencia${cards.length === 1 ? '' : 's'} en el catálogo.` : 'No encontré coincidencias en el catálogo.'}</p></div>`;
+        elements.aiSearchProducts.innerHTML = cards.map(({ product, variant }) => {
+            const image = safeImage(product.image_path);
+            const price = variant.price_cents === null ? 'Precio a consultar' : money(variant.price_cents);
+            const stock = variant.available_stock === null ? 'Stock a consultar' : `Stock: ${Number(variant.available_stock)}`;
+            return `<article class="ai-search-product-card">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}">` : '<div class="product-admin-placeholder">SIN FOTO</div>'}<div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category?.name || 'Sin categoría')}</small><span>Variante: ${escapeHtml(variant.name || 'Única')}</span><b>${escapeHtml(price)}</b><em>${escapeHtml(stock)}</em></div><a class="secondary-button" href="${escapeHtml(productShareUrl(product.id))}" target="_blank" rel="noopener">VER PRODUCTO</a></article>`;
+        }).join('');
+        elements.aiSearchInterpretation.innerHTML = `<div><dt>Búsqueda</dt><dd>${escapeHtml(query)}</dd></div><div><dt>Resultados</dt><dd>${cards.length}</dd></div><div><dt>Palabras</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
     }
 
     function productSearchShareUrl(query) {
@@ -6303,6 +6348,14 @@
         const canShare = String(elements.productSearch.value || '').trim().length >= 3;
         if (elements.productSearchShare) elements.productSearchShare.disabled = !canShare;
         renderProducts();
+    });
+    elements.aiSearchInput?.addEventListener('input', renderAiSearch);
+    elements.aiSearchSubmit?.addEventListener('click', renderAiSearch);
+    elements.aiSearchInput?.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            renderAiSearch();
+        }
     });
     elements.productSearchShare?.addEventListener('click', shareProductSearch);
     elements.orderSearch?.addEventListener('input', event => {
