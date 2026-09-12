@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 40;
+    private const CURRENT_MIGRATION_VERSION = 41;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -85,6 +85,7 @@ final class Database
                 self::migrateSizeGuideRemeraNames($pdo);
                 self::migrateSupplierOrderDrafts($pdo);
                 self::migrateRestoreSupplierOrderDrafts($pdo);
+                self::migratePersistentSessions($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -140,8 +141,36 @@ final class Database
         self::migrateSizeGuideRemeraNames($pdo);
         self::migrateSupplierOrderDrafts($pdo);
         self::migrateRestoreSupplierOrderDrafts($pdo);
+        self::migratePersistentSessions($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    private static function migratePersistentSessions(PDO $pdo): void
+    {
+        $version = 41;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) {
+            return;
+        }
+
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS persistent_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_used_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )'
+        );
+        $pdo->exec(
+            'CREATE INDEX IF NOT EXISTS idx_persistent_sessions_user
+             ON persistent_sessions(user_id, expires_at)'
+        );
+        $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')
+            ->execute(['version' => $version]);
     }
 
     /** Guarda el borrador de pedido a proveedor de forma aislada por administrador. */

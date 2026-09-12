@@ -5,6 +5,7 @@
     if (document.querySelector('.pos-page')) window.name = 'laboratorio-digital-pos';
     const state = {
         products: [],
+        productsLoaded: false,
         tutorials: [],
         featuredProductIds: new Set(),
         categories: [],
@@ -36,6 +37,7 @@
         posQuery: '',
         posProductId: null,
         pendingBarcode: '',
+        pendingBarcodeScan: '',
         barcodeBuffer: '',
         barcodeStartedAt: 0,
         barcodeLastAt: 0,
@@ -606,6 +608,12 @@
             renderProducts();
             renderPos();
             renderPosCart();
+            state.productsLoaded = true;
+            if (state.pendingBarcodeScan) {
+                const barcode = state.pendingBarcodeScan;
+                state.pendingBarcodeScan = '';
+                if (!scanBarcode(barcode)) offerBarcodeAssignment(barcode);
+            }
             if (adjusted && state.posCartRestored) {
                 toast('Recuperamos la venta pendiente y ajustamos las cantidades al stock actual.');
             }
@@ -1910,6 +1918,17 @@
         return true;
     }
 
+    function scanOrQueueBarcode(value) {
+        const barcode = barcodeCode(value);
+        if (!barcode) return false;
+        if (!state.productsLoaded) {
+            state.pendingBarcodeScan = barcode;
+            toast('Cargando productos. El código se procesará automáticamente.');
+            return true;
+        }
+        return scanBarcode(barcode);
+    }
+
     function resetBarcodeCapture() {
         window.clearTimeout(state.barcodeTimer);
         state.barcodeTimer = 0;
@@ -1942,7 +1961,7 @@
         }
         restoreInputAfterBarcodeScan();
         resetBarcodeCapture();
-        if (!scanBarcode(barcode)) offerBarcodeAssignment(barcode);
+        if (!scanOrQueueBarcode(barcode)) offerBarcodeAssignment(barcode);
         return true;
     }
 
@@ -6442,7 +6461,7 @@
     });
     elements.posSearch?.addEventListener('keydown', event => {
         if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && !event.isComposing) {
-            if (scanBarcode(event.target.value)) {
+            if (scanOrQueueBarcode(event.target.value)) {
                 event.preventDefault();
                 resetBarcodeCapture();
             }
@@ -6450,7 +6469,7 @@
         }
         if (event.key === 'Enter') {
             event.preventDefault();
-            if (!scanBarcode(event.target.value)) {
+            if (!scanOrQueueBarcode(event.target.value)) {
                 const value = barcodeCode(event.target.value);
                 const looksLikeCode = /^[A-Za-z0-9._\-]{3,80}$/.test(value)
                     && (

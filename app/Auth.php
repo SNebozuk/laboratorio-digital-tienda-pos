@@ -8,6 +8,9 @@ use PDOException;
 
 final class Auth
 {
+    private const PERSISTENT_COOKIE = 'ld_admin_session';
+    private const PERSISTENT_LIFETIME = 60 * 60 * 24 * 400;
+
     public function __construct(private readonly PDO $pdo)
     {
     }
@@ -17,7 +20,10 @@ final class Auth
     {
         $userId = (int) ($_SESSION['user_id'] ?? 0);
         if ($userId < 1) {
-            return null;
+            $userId = $this->restorePersistentSession();
+            if ($userId < 1) {
+                return null;
+            }
         }
 
         $query = $this->pdo->prepare(
@@ -30,7 +36,12 @@ final class Auth
 
         if (!$user) {
             unset($_SESSION['user_id']);
+            $this->forgetPersistentSession();
             return null;
+        }
+
+        if (empty($_COOKIE[self::PERSISTENT_COOKIE])) {
+            $this->createPersistentSession((int) $user['id']);
         }
 
         return $user;
@@ -104,6 +115,8 @@ final class Auth
         $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['login_attempts'] = [];
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $this->forgetPersistentSession();
+        $this->createPersistentSession((int) $user['id']);
 
         $update = $this->pdo->prepare(
             'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = :id'
@@ -117,9 +130,82 @@ final class Auth
 
     public function logout(): void
     {
+        $this->forgetPersistentSession();
         $_SESSION = [];
         session_regenerate_id(true);
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    private function restorePersistentSession(): int
+    {
+        $token = (string) ($_COOKIE[self::PERSISTENT_COOKIE] ?? '');
+        if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+            return 0;
+        }
+
+        $query = $this->pdo->prepare(
+            'SELECT ps.id, ps.user_id
+             FROM persistent_sessions ps
+             JOIN users u ON u.id = ps.user_id
+             WHERE ps.token_hash = :token_hash
+               AND ps.expires_at > CURRENT_TIMESTAMP
+               AND u.active = 1'
+        );
+        $query->execute(['token_hash' => hash('sha256', $token)]);
+        $session = $query->fetch();
+        if (!$session) {
+            $this->forgetPersistentSession();
+            return 0;
+        }
+
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = (int) $session['user_id'];
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $this->pdo->prepare(
+            'UPDATE persistent_sessions SET last_used_at = CURRENT_TIMESTAMP WHERE id = :id'
+        )->execute(['id' => $session['id']]);
+
+        return (int) $session['user_id'];
+    }
+
+    private function createPersistentSession(int $userId): void
+    {
+        $token = bin2hex(random_bytes(32));
+        $this->pdo->prepare(
+            "INSERT INTO persistent_sessions(user_id, token_hash, expires_at)
+             VALUES(:user_id, :token_hash, datetime('now', '+400 days'))"
+        )->execute([
+            'user_id' => $userId,
+            'token_hash' => hash('sha256', $token),
+        ]);
+        setcookie(self::PERSISTENT_COOKIE, $token, $this->persistentCookieOptions(time() + self::PERSISTENT_LIFETIME));
+        $_COOKIE[self::PERSISTENT_COOKIE] = $token;
+    }
+
+    private function forgetPersistentSession(): void
+    {
+        $token = (string) ($_COOKIE[self::PERSISTENT_COOKIE] ?? '');
+        if (preg_match('/^[a-f0-9]{64}$/', $token)) {
+            $this->pdo->prepare('DELETE FROM persistent_sessions WHERE token_hash = :token_hash')
+                ->execute(['token_hash' => hash('sha256', $token)]);
+        }
+        setcookie(self::PERSISTENT_COOKIE, '', $this->persistentCookieOptions(time() - 3600));
+        unset($_COOKIE[self::PERSISTENT_COOKIE]);
+    }
+
+    /** @return array<string, mixed> */
+    private function persistentCookieOptions(int $expires): array
+    {
+        return [
+            'expires' => $expires,
+            'path' => '/',
+            'secure' => (
+                (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+            ),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
     }
 
     public function newOrderCount(int $userId): int
