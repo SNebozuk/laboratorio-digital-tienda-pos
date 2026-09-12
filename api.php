@@ -71,7 +71,7 @@ try {
                 $filters = is_array($filters) ? $filters : [];
                 $result = match ($tool) {
                     'buscarProductos' => $app['catalog_ai_tools']->buscarProductos($filters),
-                    'obtenerVariantes' => $app['catalog_ai_tools']->obtenerVariantes((int) ($_GET['producto_id'] ?? 0)),
+                    'obtenerVariantes' => $app['catalog_ai_tools']->obtenerVariantesPorCodigo((string) ($_GET['producto_codigo'] ?? '')),
                     'consultarStock' => $app['catalog_ai_tools']->consultarStock((int) ($_GET['variante_id'] ?? 0)),
                     'buscarAlternativas' => $app['catalog_ai_tools']->buscarAlternativas($filters),
                     default => throw new ValidationException('Herramienta de catálogo inválida.'),

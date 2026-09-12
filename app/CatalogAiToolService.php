@@ -35,6 +35,16 @@ final class CatalogAiToolService
         return [];
     }
 
+    /** @return list<array<string, mixed>> */
+    public function obtenerVariantesPorCodigo(string $code): array
+    {
+        $code = trim($code);
+        foreach ($this->products->publicCodeMatches($code, 1) as $productId) {
+            return $this->obtenerVariantes($productId);
+        }
+        return ctype_digit($code) ? $this->obtenerVariantes((int) $code) : [];
+    }
+
     /** @return array<string, int>|null */
     public function consultarStock(int $variantId): ?array
     {

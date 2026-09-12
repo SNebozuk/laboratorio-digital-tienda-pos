@@ -999,15 +999,17 @@
     async function testAiCatalogTool() {
         const query = String(elements.aiSearchInput?.value || '').trim();
         const match = query.match(/^(variantes|stock|alternativas)\s+(\d+)$/i);
-        const tool = match ? ({ variantes: 'obtenerVariantes', stock: 'consultarStock', alternativas: 'buscarAlternativas' }[fold(match[1])]) : 'buscarProductos';
-        const parameters = match
-            ? (tool === 'obtenerVariantes' ? { producto_id: match[2] } : tool === 'consultarStock' ? { variante_id: match[2] } : { filters: JSON.stringify({ variante_id: Number(match[2]) }) })
-            : { filters: JSON.stringify({ texto: query }) };
+        if (!match) return false;
+        const tool = ({ variantes: 'obtenerVariantes', stock: 'consultarStock', alternativas: 'buscarAlternativas' }[fold(match[1])]);
+        const parameters = tool === 'obtenerVariantes' ? { producto_codigo: match[2] } : tool === 'consultarStock' ? { variante_id: match[2] } : { filters: JSON.stringify({ variante_id: Number(match[2]) }) };
         try {
             const data = await apiGet('ai_catalog_tool', { tool, ...parameters });
             const count = Array.isArray(data.result) ? data.result.length : (data.result ? 1 : 0);
+            elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>${count ? `La herramienta devolvió ${count} resultado${count === 1 ? '' : 's'}.` : 'La herramienta no devolvió resultados.'}</p></div>`;
+            elements.aiSearchProducts.innerHTML = '';
             elements.aiSearchInterpretation.innerHTML = `<div><dt>Herramienta</dt><dd>${escapeHtml(tool)}</dd></div><div><dt>Resultados</dt><dd>${count}</dd></div><div><dt>JSON</dt><dd>Consulta correcta</dd></div>`;
         } catch (error) { toast(error.message); }
+        return true;
     }
 
     function productSearchShareUrl(query) {
@@ -6379,11 +6381,13 @@
         renderProducts();
     });
     elements.aiSearchInput?.addEventListener('input', renderAiSearch);
-    elements.aiSearchSubmit?.addEventListener('click', () => { renderAiSearch(); testAiCatalogTool(); });
+    elements.aiSearchSubmit?.addEventListener('click', async () => {
+        if (!await testAiCatalogTool()) renderAiSearch();
+    });
     elements.aiSearchInput?.addEventListener('keydown', event => {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            renderAiSearch();
+            elements.aiSearchSubmit?.click();
         }
     });
     elements.productSearchShare?.addEventListener('click', shareProductSearch);
