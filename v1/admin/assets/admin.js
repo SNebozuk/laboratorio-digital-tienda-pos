@@ -64,6 +64,7 @@
         supplierOrderCategoriesOpen: false,
         supplierOrderStatus: '',
         view: 'orders',
+        aiHistory: [],
     };
 
     const money = cents => new Intl.NumberFormat('es-AR', {
@@ -994,6 +995,22 @@
             return `<article class="ai-search-product-card">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}">` : '<div class="product-admin-placeholder">SIN FOTO</div>'}<div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category?.name || 'Sin categoría')}</small><span>Variante: ${escapeHtml(variant.name || 'Única')}</span><b>${escapeHtml(price)}</b><em>${escapeHtml(stock)}</em></div><a class="secondary-button" href="${escapeHtml(productShareUrl(product.id))}" target="_blank" rel="noopener">VER PRODUCTO</a></article>`;
         }).join('');
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Búsqueda</dt><dd>${escapeHtml(query)}</dd></div><div><dt>Resultados</dt><dd>${cards.length}</dd></div><div><dt>Palabras</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
+    }
+
+    async function sendAiChat() {
+        const message = String(elements.aiSearchInput?.value || '').trim();
+        if (!message) return;
+        state.aiHistory.push({ role: 'user', content: message });
+        elements.aiSearchInput.value = '';
+        elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('') + '<div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Consultando catálogo…</p></div>';
+        const tokens = aiSearchQueryTokens(message);
+        elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Atributos</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
+        try {
+            const data = await apiPost({ action: 'ai_catalog_chat', history: state.aiHistory });
+            const reply = String(data.reply?.message || 'No pude preparar una respuesta.');
+            state.aiHistory.push({ role: 'assistant', content: reply });
+            elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
+        } catch (error) { toast(error.message); renderAiSearch(); }
     }
 
     async function testAiCatalogTool() {
@@ -6382,7 +6399,7 @@
     });
     elements.aiSearchInput?.addEventListener('input', renderAiSearch);
     elements.aiSearchSubmit?.addEventListener('click', async () => {
-        if (!await testAiCatalogTool()) renderAiSearch();
+        if (!await testAiCatalogTool()) sendAiChat();
     });
     elements.aiSearchInput?.addEventListener('keydown', event => {
         if (event.key === 'Enter' && !event.shiftKey) {
@@ -6390,6 +6407,7 @@
             elements.aiSearchSubmit?.click();
         }
     });
+    document.getElementById('ai-search-new-conversation')?.addEventListener('click', () => { state.aiHistory = []; renderAiSearch(); });
     elements.productSearchShare?.addEventListener('click', shareProductSearch);
     elements.orderSearch?.addEventListener('input', event => {
         state.orderQuery = event.target.value;

@@ -221,6 +221,11 @@ try {
     Http::requireCsrf($input);
 
     switch ($action) {
+        case 'ai_catalog_chat':
+            $app['auth']->requireUser();
+            $history = is_array($input['history'] ?? null) ? array_slice($input['history'], -12) : [];
+            Http::json(['ok' => true, 'reply' => $app['catalog_ai_chat']->reply($history)]);
+
         case 'setup_admin':
             $app['auth']->createInitialAdmin(
                 (string) ($input['setup_token'] ?? ''),
