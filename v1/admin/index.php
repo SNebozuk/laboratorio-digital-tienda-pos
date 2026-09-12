@@ -186,6 +186,7 @@ header('Referrer-Policy: same-origin');
                 <?php endif ?>
                 <div class="admin-user">
                     <div class="admin-user-icon-actions">
+                        <button class="icon-button admin-nav-button" type="button" data-view="ai-search" aria-label="IA Admin" title="IA Admin"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m14.5 14.5 4.5 4.5M18 4v3M16.5 5.5h3"></path></svg></button>
                         <button class="icon-button admin-nav-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M3 20h18"></path></svg></button>
                         <?php if ($user['role'] === 'admin'): ?>
                             <button class="icon-button admin-nav-button" type="button" data-view="supplier-order" aria-label="Pedidos" title="Pedidos"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
@@ -209,6 +210,7 @@ header('Referrer-Policy: same-origin');
                     <select id="mobile-view">
                         <option value="orders">Lista de Ventas</option>
                         <option value="deliveries">Entrega de Pedidos</option>
+                        <option value="ai-search">IA Admin</option>
                         <option value="statistics">Estadísticas</option>
                         <option value="products">Productos</option>
                         <?php if ($user['role'] === 'admin'): ?>
@@ -493,6 +495,60 @@ header('Referrer-Policy: same-origin');
                         </form>
                     </div>
                     <div id="statistics-content" class="statistics-content"><p class="empty-copy">Calculando estadísticas…</p></div>
+                </section>
+
+                <section class="admin-view ai-search-view" id="view-ai-search">
+                    <div class="view-heading ai-search-heading">
+                        <div>
+                            <h1 class="admin-page-title">IA ADMIN</h1>
+                            <p>Probá cómo el asistente respondería a las consultas de un cliente.</p>
+                        </div>
+                        <button class="secondary-button" type="button">NUEVA CONVERSACIÓN</button>
+                    </div>
+
+                    <div class="ai-search-layout">
+                        <section class="ai-search-chat settings-card" aria-label="Conversación de prueba">
+                            <div class="ai-search-messages">
+                                <div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>tenes remera talle 8</p></div>
+                                <div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Sí, encontré varias opciones en talle 8. ¿Buscás de niño o unisex?</p></div>
+                                <div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>de niño para sublimar</p></div>
+                                <div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Perfecto. Encontré estas opciones disponibles.</p></div>
+                            </div>
+
+                            <div class="ai-search-products" aria-label="Productos simulados">
+                                <article class="ai-search-product-card">
+                                    <img src="<?= $escape($storeAssetPath) ?>/catalog/remera-infantil-ranglan-verde-61385579cc2ce38c6317160469951416-1024-1024.webp" alt="Remera infantil ranglan verde">
+                                    <div><strong>Remera infantil ranglan</strong><small>Variante: Manga ranglan</small><span>Talle 8 · Verde</span><b>$ 12.500</b><em>Stock: 14</em></div>
+                                    <button class="secondary-button" type="button">VER PRODUCTO</button>
+                                </article>
+                                <article class="ai-search-product-card">
+                                    <img src="<?= $escape($storeAssetPath) ?>/catalog/jersey-infantil-blanco-5e3a8ab173eb9c8c3f17612260176626-1024-1024.webp" alt="Jersey infantil blanco">
+                                    <div><strong>Jersey infantil</strong><small>Variante: Cuello redondo</small><span>Talle 8 · Blanco</span><b>$ 11.900</b><em>Stock: 8</em></div>
+                                    <button class="secondary-button" type="button">VER PRODUCTO</button>
+                                </article>
+                            </div>
+
+                            <div class="ai-search-composer">
+                                <textarea rows="2" placeholder="Escribí como lo haría un cliente…" aria-label="Mensaje de prueba"></textarea>
+                                <div class="ai-search-composer-actions">
+                                    <label class="ai-search-voice-toggle"><span>Respuesta por voz</span><input type="checkbox" checked><i aria-hidden="true"></i></label>
+                                    <button class="secondary-button ai-search-talk-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"></path></svg>HABLAR</button>
+                                    <button class="primary-button" type="button">ENVIAR</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <aside class="ai-search-interpretation settings-card">
+                            <p class="eyebrow">INTERPRETACIÓN</p>
+                            <dl>
+                                <div><dt>Producto</dt><dd>Remera</dd></div>
+                                <div><dt>Talle</dt><dd>8</dd></div>
+                                <div><dt>Tipo</dt><dd>Niño</dd></div>
+                                <div><dt>Uso</dt><dd>Sublimación</dd></div>
+                                <div><dt>Color</dt><dd>No especificado</dd></div>
+                            </dl>
+                        </aside>
+                    </div>
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>

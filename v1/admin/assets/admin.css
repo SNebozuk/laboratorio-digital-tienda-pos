@@ -4199,3 +4199,42 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .delivery-search .search-input-field { width: 100%; }
 .barcode-assignment-search-field { margin: 7px 0 14px; }
 .barcode-assignment > input { margin: 0; }
+
+/* Buscador IA: maqueta local dentro del lenguaje visual del administrador. */
+.ai-search-layout { display:grid; grid-template-columns:minmax(0,1fr) 245px; gap:18px; align-items:start; }
+.ai-search-chat { max-width:none; padding:20px; }
+.ai-search-messages { display:grid; gap:12px; }
+.ai-search-message { max-width:min(580px,88%); padding:11px 13px; border:1px solid #e2e6ef; border-radius:12px; background:#f7f8fb; color:#343c4d; }
+.ai-search-message small { display:block; margin-bottom:4px; color:#7a8497; font-size:10px; font-weight:800; letter-spacing:.06em; }
+.ai-search-message p { margin:0; font-size:13px; line-height:1.45; }
+.ai-search-message-client { justify-self:end; border-color:#e2dffb; background:#f1efff; }
+.ai-search-message-client small { color:#5b4fc7; }
+.ai-search-products { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:16px 0; }
+.ai-search-product-card { display:grid; grid-template-columns:62px minmax(0,1fr); gap:10px; padding:10px; border:1px solid #e2e6ef; border-radius:12px; background:#fff; box-shadow:0 3px 12px rgba(30,40,70,.025); }
+.ai-search-product-card img { grid-row:span 2; width:62px; height:62px; border-radius:8px; object-fit:cover; background:#f1f2f6; }
+.ai-search-product-card strong,.ai-search-product-card small,.ai-search-product-card span,.ai-search-product-card b,.ai-search-product-card em { display:block; }
+.ai-search-product-card strong { margin-bottom:3px; color:#30394a; font-size:12px; }
+.ai-search-product-card small,.ai-search-product-card span { color:#7a8497; font-size:11px; line-height:1.35; }
+.ai-search-product-card b { margin-top:5px; color:#30394a; font-size:13px; }
+.ai-search-product-card em { margin-top:2px; color:#4b8a63; font-size:11px; font-style:normal; font-weight:700; }
+.ai-search-product-card .secondary-button { grid-column:2; justify-self:start; min-height:30px; padding:5px 9px; font-size:10px; }
+.ai-search-composer { padding-top:14px; border-top:1px solid #e6e9ef; }
+.ai-search-composer textarea { width:100%; min-height:76px; padding:11px 12px; border:1px solid #dfe3ea; border-radius:10px; resize:vertical; background:#fff; color:#30394a; font:inherit; font-size:13px; }
+.ai-search-composer textarea:focus { border-color:#5b4fc7; outline:0; }
+.ai-search-composer-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-top:10px; }
+.ai-search-voice-toggle { display:flex; align-items:center; gap:7px; margin-right:auto; color:#596176; font-size:12px; font-weight:650; cursor:pointer; }
+.ai-search-voice-toggle input { position:absolute; opacity:0; pointer-events:none; }
+.ai-search-voice-toggle i { position:relative; width:31px; height:18px; border-radius:999px; background:#c8ced8; transition:background .16s ease; }
+.ai-search-voice-toggle i::after { position:absolute; top:3px; left:3px; width:12px; height:12px; border-radius:50%; background:#fff; content:""; transition:transform .16s ease; }
+.ai-search-voice-toggle input:checked + i { background:#5b4fc7; }
+.ai-search-voice-toggle input:checked + i::after { transform:translateX(13px); }
+.ai-search-talk-button { display:inline-flex; align-items:center; gap:6px; }
+.ai-search-talk-button svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.ai-search-interpretation { padding:17px; }
+.ai-search-interpretation .eyebrow { margin:0 0 12px; color:#5b4fc7; font-size:10px; }
+.ai-search-interpretation dl { display:grid; gap:8px; margin:0; }
+.ai-search-interpretation dl div { display:flex; justify-content:space-between; gap:10px; font-size:12px; }
+.ai-search-interpretation dt { color:#7a8497; }
+.ai-search-interpretation dd { margin:0; color:#30394a; font-weight:700; text-align:right; }
+@media (max-width:900px) { .ai-search-layout { grid-template-columns:1fr; }.ai-search-interpretation { max-width:none; }.ai-search-interpretation dl { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:620px) { .ai-search-heading .secondary-button { width:100%; }.ai-search-products { grid-template-columns:1fr; }.ai-search-composer-actions { flex-wrap:wrap; }.ai-search-voice-toggle { width:100%; margin-bottom:4px; }.ai-search-interpretation dl { grid-template-columns:1fr; } }

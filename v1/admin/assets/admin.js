@@ -423,7 +423,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'pos', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
