@@ -76,13 +76,13 @@ final class CatalogAiToolService
         preg_match('/\btalle\s*([[:alnum:].-]+)/iu', $variantName, $size);
         $parts = preg_split('/\s+-\s+/', (string) $product['name']);
         $color = count($parts) > 1 ? trim((string) end($parts)) : null;
-        return ['producto_id' => (int) $product['id'], 'producto' => $product['name'], 'categoria' => $product['category']['name'] ?? null, 'variante_id' => (int) $variant['id'], 'variante' => $variantName, 'atributos' => ['nombre' => $variantName], 'talle' => $size[1] ?? null, 'color' => $color, 'precio' => $variant['price_cents'] === null ? null : (int) $variant['price_cents'] / 100, 'stock' => $variant['available_stock'] === null ? null : (int) $variant['available_stock'], 'imagen' => $product['image_path'] ?? null];
+        return ['producto_id' => (int) $product['id'], 'producto' => $product['name'], 'descripcion' => $product['description'] ?? '', 'categoria' => $product['category']['name'] ?? null, 'variante_id' => (int) $variant['id'], 'variante' => $variantName, 'atributos' => ['nombre' => $variantName], 'talle' => $size[1] ?? null, 'color' => $color, 'precio' => $variant['price_cents'] === null ? null : (int) $variant['price_cents'] / 100, 'stock' => $variant['available_stock'] === null ? null : (int) $variant['available_stock'], 'imagen' => $product['image_path'] ?? null];
     }
 
     /** @param array<string, mixed> $filters @return array<string, string|int> */
     private function filters(array $filters): array
     {
-        $allowed = ['texto', 'categoria', 'talle', 'color', 'tipo', 'uso', 'atributos', 'variante_id']; $out = [];
+        $allowed = ['texto', 'marca', 'categoria', 'talle', 'color', 'tipo', 'uso', 'atributos', 'variante_id']; $out = [];
         foreach ($allowed as $key) if (isset($filters[$key]) && is_scalar($filters[$key])) $out[$key] = $key === 'variante_id' ? (int) $filters[$key] : (function_exists('mb_strtolower') ? mb_strtolower(trim((string) $filters[$key])) : strtolower(trim((string) $filters[$key])));
         return $out;
     }
@@ -91,10 +91,28 @@ final class CatalogAiToolService
     private function matches(array $row, array $filters): bool
     {
         if (isset($filters['variante_id']) && $row['variante_id'] !== $filters['variante_id']) return false;
-        foreach (['texto' => 'producto', 'categoria' => 'categoria', 'talle' => 'talle', 'color' => 'color', 'tipo' => 'producto', 'uso' => 'producto', 'atributos' => 'variante'] as $filter => $field) {
-            if (isset($filters[$filter]) && !str_contains($this->fold((string) $row[$field]), $this->fold((string) $filters[$filter]))) return false;
+        foreach (['texto' => 'busqueda', 'marca' => 'busqueda', 'categoria' => 'categoria', 'talle' => 'talle', 'color' => 'color', 'tipo' => 'busqueda', 'uso' => 'busqueda', 'atributos' => 'variante'] as $filter => $field) {
+            $value = $field === 'busqueda' ? implode(' ', [$row['producto'], $row['descripcion'], $row['categoria'], $row['variante']]) : (string) ($row[$field] ?? '');
+            if (isset($filters[$filter]) && !$this->textMatches($value, (string) $filters[$filter])) return false;
         }
         return true;
+    }
+    private function textMatches(string $value, string $query): bool
+    {
+        $value = $this->fold($value); $query = $this->fold($query);
+        if ($query === '' || str_contains($value, $query)) return true;
+        $compactValue = preg_replace('/[^a-z0-9]/', '', $value); $compactQuery = preg_replace('/[^a-z0-9]/', '', $query);
+        if ($compactQuery !== '' && str_contains($compactValue, $compactQuery)) return true;
+        $words = preg_split('/[^a-z0-9]+/', $value, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $terms = preg_split('/[^a-z0-9]+/', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        foreach ($terms as $term) {
+            $found = false;
+            foreach ($words as $word) {
+                if (str_starts_with($word, $term) || str_starts_with($term, $word) || levenshtein($word, $term) <= max(1, (int) floor(min(strlen($word), strlen($term)) / 4))) { $found = true; break; }
+            }
+            if (!$found) return false;
+        }
+        return $terms !== [];
     }
     private function sourceVariant(int $id): ?array { foreach ($this->products->publicCatalog() as $p) foreach ($p['variants'] as $v) if ((int) $v['id'] === $id) return $this->row($p, $v); return null; }
     private function fold(string $value): string { $value = function_exists('mb_strtolower') ? mb_strtolower($value) : strtolower($value); return preg_replace('/[áàä]/u','a',preg_replace('/[éèë]/u','e',preg_replace('/[íìï]/u','i',preg_replace('/[óòö]/u','o',preg_replace('/[úùü]/u','u',$value))))); }
