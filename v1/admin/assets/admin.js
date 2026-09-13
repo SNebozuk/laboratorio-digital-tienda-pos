@@ -1041,13 +1041,9 @@
         if (!state.aiStatusTimer) state.aiStatusTimer = window.setInterval(checkAiServiceStatus, 60000);
     }
 
-    async function fallbackAiCatalogSearch(message) {
-        const data = await apiGet('ai_catalog_tool', { tool: 'buscarProductos', filters: JSON.stringify({ texto: message }) });
-        const rows = Array.isArray(data.result) ? data.result : [];
-        state.aiHistory.push({ role: 'assistant', content: rows.length ? `Encontré ${rows.length} coincidencia${rows.length === 1 ? '' : 's'} reales en el catálogo.` : 'No encontré coincidencias en el catálogo.' });
+    function showAiUnavailable() {
+        state.aiHistory.push({ role: 'assistant', content: 'La IA no está disponible en este momento.' });
         elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
-        renderAiCatalogCards(rows);
-        elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Resultados</dt><dd>${rows.length}</dd></div>`;
     }
 
     async function sendAiChat() {
@@ -1062,7 +1058,7 @@
         try {
             const status = await apiGet('ai_catalog_status');
             if (!status.status?.connected) {
-                await fallbackAiCatalogSearch(message);
+                showAiUnavailable();
                 return;
             }
             const data = await apiPost({ action: 'ai_catalog_chat', history: state.aiHistory });
@@ -1079,13 +1075,8 @@
             const known = Object.entries(interpretation).filter(([, value]) => value !== null && value !== '').map(([key, value]) => `${key}: ${value}`);
             elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Datos conocidos</dt><dd>${escapeHtml(known.join(', ') || 'Por confirmar')}</dd></div>`;
         } catch (_) {
-            try {
-                await fallbackAiCatalogSearch(message);
-                setAiServiceStatus('unavailable');
-            } catch (error) {
-                toast(error.message);
-                renderAiSearch();
-            }
+            showAiUnavailable();
+            setAiServiceStatus('unavailable');
         }
     }
 
