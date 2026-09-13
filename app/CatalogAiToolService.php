@@ -116,7 +116,9 @@ final class CatalogAiToolService
                 $prefixMatch = $shortest >= 4 && (str_starts_with($word, $term) || str_starts_with($term, $word));
                 $rootLength = strspn($word ^ $term, "\0");
                 $rootMatch = $shortest >= 5 && $rootLength >= 5 && $rootLength >= (int) ceil($shortest * 0.7);
-                $fuzzyMatch = $shortest >= 4 && levenshtein($word, $term) <= 1;
+                $singularWord = strlen($word) > 4 ? preg_replace('/s$/', '', $word) : $word;
+                $singularTerm = strlen($term) > 4 ? preg_replace('/s$/', '', $term) : $term;
+                $fuzzyMatch = $shortest >= 4 && levenshtein($singularWord, $singularTerm) <= 1;
                 if ($word === $term || $prefixMatch || $rootMatch || $fuzzyMatch) { $found = true; break; }
             }
             if (!$found) return false;

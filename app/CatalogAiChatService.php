@@ -25,7 +25,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Usá conocimiento general para determinar qué quiere hacer, uso final, familia de producto, propiedades relevantes e incompatibilidades conceptuales. Conservá todo dato vigente de la conversación: una frase breve agrega o modifica una condición, no borra las anteriores. No inventes propiedades de productos del negocio. Generá de una a seis búsquedas razonables y progresivas para consultar después el catálogo: empezá por la intención más precisa y agregá alternativas conceptuales más amplias. Si el cliente da un código o SKU, conservalo en codigo. No copies necesariamente la frase literal. Tolerá singular/plural, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si un dato cambia sustancialmente la recomendación; si podés avanzar razonablemente, no preguntes.',
+            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Usá conocimiento general para determinar qué quiere hacer, uso final, familia de producto, propiedades relevantes e incompatibilidades conceptuales. Conservá todo dato vigente de la conversación: una frase breve agrega o modifica una condición, no borra las anteriores. No inventes propiedades de productos del negocio. En core_product_term escribí solamente el sustantivo comercial central normalizado, en singular y sin explicaciones (por ejemplo, si piden una familia de productos, el nombre común de esa familia). Generá de una a cinco búsquedas razonables y progresivas para consultar después el catálogo: empezá por la intención más precisa y agregá alternativas conceptuales más amplias. Si el cliente da un código o SKU, conservalo en codigo. No copies necesariamente la frase literal. Tolerá singular/plural, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si un dato cambia sustancialmente la recomendación; si podés avanzar razonablemente, no preguntes.',
             $this->historyInput($history)
         );
 
@@ -38,11 +38,11 @@ final class CatalogAiChatService
             ];
         }
 
-        [$rows, $searchLog] = $this->searchCandidates($interpretation['searches'] ?? []);
+        [$rows, $searchLog] = $this->searchCandidates($interpretation);
         $evaluation = $this->structuredRequest(
             'evaluacion_catalogo',
             $this->evaluationSchema(),
-            'Actuá como vendedor detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles alternativas ni productos POSIBLE o NO_APTO. Si falta un dato decisivo, hacé una sola pregunta concreta. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
+            'Actuá como vendedor detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Si el cliente pidió solamente una familia de producto sin imponer uso, material u otras condiciones, los productos cuyo nombre corresponde realmente a esa familia son APTO: no inventes requisitos ni digas que no están disponibles si el catálogo muestra stock. En ese caso seleccioná algunas variantes con stock como muestra y respondé que sí hay, aunque luego puedas hacer una pregunta breve para precisar. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles accesorios, alternativas ni productos POSIBLE o NO_APTO. Si falta un dato decisivo para recomendar, hacé una sola pregunta concreta, pero no ocultes la disponibilidad ya comprobada. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
             [[
                 'role' => 'user',
                 'content' => [[
@@ -91,12 +91,15 @@ final class CatalogAiChatService
         }, $history);
     }
 
-    /** @param list<mixed> $searches @return array{0:list<array<string,mixed>>,1:list<array<string,mixed>>} */
-    private function searchCandidates(array $searches): array
+    /** @param array<string,mixed> $interpretation @return array{0:list<array<string,mixed>>,1:list<array<string,mixed>>} */
+    private function searchCandidates(array $interpretation): array
     {
         $rowsByVariant = [];
         $log = [];
-        foreach (array_slice($searches, 0, 6) as $filters) {
+        $searches = is_array($interpretation['searches'] ?? null) ? array_slice($interpretation['searches'], 0, 5) : [];
+        $coreTerm = trim((string) ($interpretation['core_product_term'] ?? ''));
+        if ($coreTerm !== '') array_unshift($searches, ['texto' => $coreTerm]);
+        foreach ($searches as $filters) {
             if (!is_array($filters)) continue;
             $code = trim((string) ($filters['codigo'] ?? ''));
             unset($filters['codigo']);
@@ -175,6 +178,7 @@ final class CatalogAiChatService
             'properties' => [
                 'need' => ['type' => 'string'],
                 'product_family' => ['type' => 'string'],
+                'core_product_term' => ['type' => 'string'],
                 'use' => ['type' => 'string'],
                 'relevant_factors' => ['type' => 'array', 'items' => ['type' => 'string']],
                 'incompatibilities' => ['type' => 'array', 'items' => ['type' => 'string']],
@@ -182,7 +186,7 @@ final class CatalogAiChatService
                 'question' => ['type' => ['string', 'null']],
                 'searches' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => false, 'properties' => $filterProperties, 'required' => array_keys($filterProperties)]],
             ],
-            'required' => ['need', 'product_family', 'use', 'relevant_factors', 'incompatibilities', 'needs_clarification', 'question', 'searches'],
+            'required' => ['need', 'product_family', 'core_product_term', 'use', 'relevant_factors', 'incompatibilities', 'needs_clarification', 'question', 'searches'],
         ];
     }
 
