@@ -4202,6 +4202,9 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 
 /* Buscador IA: maqueta local dentro del lenguaje visual del administrador. */
 .ai-search-layout { display:grid; grid-template-columns:minmax(0,1fr) 245px; gap:18px; align-items:start; }
+.ai-search-service-status { margin-left:auto; color:#8a6a20; font-size:11px; font-weight:700; white-space:nowrap; }
+.ai-search-service-status.is-connected { color:#367a4e; }
+.ai-search-service-status.is-unavailable { color:#b34a4a; }
 .ai-search-chat { max-width:none; padding:20px; }
 .ai-search-messages { display:grid; gap:12px; }
 .ai-search-message { max-width:min(580px,88%); padding:11px 13px; border:1px solid #e2e6ef; border-radius:12px; background:#f7f8fb; color:#343c4d; }

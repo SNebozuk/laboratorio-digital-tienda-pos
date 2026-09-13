@@ -78,6 +78,10 @@ try {
                 };
                 Http::json(['ok' => true, 'tool' => $tool, 'result' => $result]);
 
+            case 'ai_catalog_status':
+                $app['auth']->requireUser();
+                Http::json(['ok' => true, 'status' => $app['catalog_ai_chat']->status()]);
+
             case 'admin_categories':
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'categories' => $app['categories']->tree()]);

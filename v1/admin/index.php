@@ -503,6 +503,7 @@ header('Referrer-Policy: same-origin');
                             <h1 class="admin-page-title">IA ADMIN</h1>
                             <p>Probá cómo el asistente respondería a las consultas de un cliente.</p>
                         </div>
+                        <span class="ai-search-service-status is-checking" id="ai-search-service-status" role="status">🟡 Verificando IA…</span>
                         <button class="secondary-button" id="ai-search-new-conversation" type="button">NUEVA CONVERSACIÓN</button>
                     </div>
 

@@ -65,6 +65,7 @@
         supplierOrderStatus: '',
         view: 'orders',
         aiHistory: [],
+        aiStatusTimer: 0,
     };
 
     const money = cents => new Intl.NumberFormat('es-AR', {
@@ -221,6 +222,7 @@
         aiSearchMessages: document.getElementById('ai-search-messages'),
         aiSearchProducts: document.getElementById('ai-search-products'),
         aiSearchInterpretation: document.getElementById('ai-search-interpretation'),
+        aiSearchServiceStatus: document.getElementById('ai-search-service-status'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -459,6 +461,12 @@
         }
         if (view === 'ai-search' && !state.productsLoaded) {
             loadProducts();
+        }
+        if (view === 'ai-search') {
+            startAiStatusChecks();
+        } else if (state.aiStatusTimer) {
+            window.clearInterval(state.aiStatusTimer);
+            state.aiStatusTimer = 0;
         }
         if (view === 'supplier-order') {
             loadSupplierOrder();
@@ -997,6 +1005,51 @@
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Búsqueda</dt><dd>${escapeHtml(query)}</dd></div><div><dt>Resultados</dt><dd>${cards.length}</dd></div><div><dt>Palabras</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
     }
 
+    function renderAiCatalogCards(rows) {
+        elements.aiSearchProducts.innerHTML = rows.slice(0, 12).map(row => {
+            const image = safeImage(row.imagen);
+            const price = row.precio === null ? 'Precio a consultar' : money(Number(row.precio) * 100);
+            const stock = row.stock === null ? 'Stock a consultar' : Number(row.stock) > 0 ? `Stock: ${Number(row.stock)}` : 'Sin stock';
+            return `<article class="ai-search-product-card">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(row.producto)}">` : '<div class="product-admin-placeholder">SIN FOTO</div>'}<div><strong>${escapeHtml(row.producto)}</strong><small>${escapeHtml(row.categoria || 'Sin categoría')}</small><span>Variante: ${escapeHtml(row.variante || 'Única')}</span><b>${escapeHtml(price)}</b><em>${escapeHtml(stock)}</em></div><a class="secondary-button" href="${escapeHtml(productShareUrl(row.producto_id))}" target="_blank" rel="noopener">VER PRODUCTO</a></article>`;
+        }).join('');
+    }
+
+    function setAiServiceStatus(status) {
+        if (!elements.aiSearchServiceStatus) return;
+        const states = {
+            checking: ['🟡 Verificando IA…', 'is-checking'],
+            connected: ['🟢 IA conectada', 'is-connected'],
+            unavailable: ['🔴 IA sin conexión', 'is-unavailable'],
+        };
+        const [label, className] = states[status] || states.unavailable;
+        elements.aiSearchServiceStatus.textContent = label;
+        elements.aiSearchServiceStatus.className = `ai-search-service-status ${className}`;
+    }
+
+    async function checkAiServiceStatus() {
+        setAiServiceStatus('checking');
+        try {
+            const data = await apiGet('ai_catalog_status');
+            setAiServiceStatus(data.status?.connected ? 'connected' : 'unavailable');
+        } catch (_) {
+            setAiServiceStatus('unavailable');
+        }
+    }
+
+    function startAiStatusChecks() {
+        checkAiServiceStatus();
+        if (!state.aiStatusTimer) state.aiStatusTimer = window.setInterval(checkAiServiceStatus, 60000);
+    }
+
+    async function fallbackAiCatalogSearch(message) {
+        const data = await apiGet('ai_catalog_tool', { tool: 'buscarProductos', filters: JSON.stringify({ texto: message }) });
+        const rows = Array.isArray(data.result) ? data.result : [];
+        state.aiHistory.push({ role: 'assistant', content: rows.length ? `Encontré ${rows.length} coincidencia${rows.length === 1 ? '' : 's'} reales en el catálogo.` : 'No encontré coincidencias en el catálogo.' });
+        elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
+        renderAiCatalogCards(rows);
+        elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Resultados</dt><dd>${rows.length}</dd></div>`;
+    }
+
     async function sendAiChat() {
         const message = String(elements.aiSearchInput?.value || '').trim();
         if (!message) return;
@@ -1007,6 +1060,11 @@
         const tokens = aiSearchQueryTokens(message);
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Atributos</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
         try {
+            const status = await apiGet('ai_catalog_status');
+            if (!status.status?.connected) {
+                await fallbackAiCatalogSearch(message);
+                return;
+            }
             const data = await apiPost({ action: 'ai_catalog_chat', history: state.aiHistory });
             const reply = String(data.reply?.message || 'No pude preparar una respuesta.');
             state.aiHistory.push({ role: 'assistant', content: reply });
@@ -1015,17 +1073,20 @@
             const resultCall = [...calls].reverse().find(call => Array.isArray(call.result) && call.result.some(row => row && row.producto_id && row.variante_id));
             const rows = (resultCall?.result || []).filter(row => row && row.producto_id && row.variante_id);
             if (!reply.includes('?')) {
-                elements.aiSearchProducts.innerHTML = rows.slice(0, 12).map(row => {
-                    const image = safeImage(row.imagen);
-                    const price = row.precio === null ? 'Precio a consultar' : money(Number(row.precio) * 100);
-                    const stock = row.stock === null ? 'Stock a consultar' : Number(row.stock) > 0 ? `Stock: ${Number(row.stock)}` : 'Sin stock';
-                    return `<article class="ai-search-product-card">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(row.producto)}">` : '<div class="product-admin-placeholder">SIN FOTO</div>'}<div><strong>${escapeHtml(row.producto)}</strong><small>${escapeHtml(row.categoria || 'Sin categoría')}</small><span>Variante: ${escapeHtml(row.variante || 'Única')}</span><b>${escapeHtml(price)}</b><em>${escapeHtml(stock)}</em></div><a class="secondary-button" href="${escapeHtml(productShareUrl(row.producto_id))}" target="_blank" rel="noopener">VER PRODUCTO</a></article>`;
-                }).join('');
+                renderAiCatalogCards(rows);
             }
             const interpretation = data.reply?.interpretation && typeof data.reply.interpretation === 'object' ? data.reply.interpretation : {};
             const known = Object.entries(interpretation).filter(([, value]) => value !== null && value !== '').map(([key, value]) => `${key}: ${value}`);
             elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Datos conocidos</dt><dd>${escapeHtml(known.join(', ') || 'Por confirmar')}</dd></div>`;
-        } catch (error) { toast(error.message); renderAiSearch(); }
+        } catch (_) {
+            try {
+                await fallbackAiCatalogSearch(message);
+                setAiServiceStatus('unavailable');
+            } catch (error) {
+                toast(error.message);
+                renderAiSearch();
+            }
+        }
     }
 
     async function testAiCatalogTool() {

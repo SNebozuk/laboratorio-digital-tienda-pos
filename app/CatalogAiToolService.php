@@ -13,11 +13,12 @@ final class CatalogAiToolService
     public function buscarProductos(array $filters = []): array
     {
         $filters = $this->filters($filters);
+        $codeProductIds = isset($filters['texto']) ? array_flip($this->products->publicCodeMatches((string) $filters['texto'])) : [];
         $matches = [];
         foreach ($this->products->publicCatalog() as $product) {
             foreach ($product['variants'] as $variant) {
                 $row = $this->row($product, $variant);
-                if ($this->matches($row, $filters)) $matches[] = $row;
+                if (isset($codeProductIds[(int) $product['id']]) || $this->matches($row, $filters)) $matches[] = $row;
             }
         }
         usort($matches, static fn (array $a, array $b): int => ($b['stock'] > 0 <=> $a['stock'] > 0) ?: strcmp($a['producto'], $b['producto']));
@@ -96,5 +97,5 @@ final class CatalogAiToolService
         return true;
     }
     private function sourceVariant(int $id): ?array { foreach ($this->products->publicCatalog() as $p) foreach ($p['variants'] as $v) if ((int) $v['id'] === $id) return $this->row($p, $v); return null; }
-    private function fold(string $value): string { $value = mb_strtolower($value); return preg_replace('/[áàä]/u','a',preg_replace('/[éèë]/u','e',preg_replace('/[íìï]/u','i',preg_replace('/[óòö]/u','o',preg_replace('/[úùü]/u','u',$value))))); }
+    private function fold(string $value): string { $value = function_exists('mb_strtolower') ? mb_strtolower($value) : strtolower($value); return preg_replace('/[áàä]/u','a',preg_replace('/[éèë]/u','e',preg_replace('/[íìï]/u','i',preg_replace('/[óòö]/u','o',preg_replace('/[úùü]/u','u',$value))))); }
 }

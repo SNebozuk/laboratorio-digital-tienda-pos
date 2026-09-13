@@ -5,6 +5,20 @@ namespace LaboratorioDigital;
 final class CatalogAiChatService
 {
     public function __construct(private readonly array $config, private readonly CatalogAiToolService $tools) {}
+
+    /** @return array{connected:bool} */
+    public function status(): array
+    {
+        $key = trim((string) ($this->config['openai_api_key'] ?? ''));
+        if ($key === '') return ['connected' => false];
+        $handle = curl_init(rtrim((string) $this->config['openai_base_url'], '/') . '/models/gpt-5.6-terra');
+        if (!$handle) return ['connected' => false];
+        curl_setopt_array($handle, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $key], CURLOPT_TIMEOUT => 5]);
+        curl_exec($handle);
+        $status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+        curl_close($handle);
+        return ['connected' => $status >= 200 && $status < 300];
+    }
     /** @param list<array{role:string,content:string}> $history @return array<string,mixed> */
     public function reply(array $history): array
     {
