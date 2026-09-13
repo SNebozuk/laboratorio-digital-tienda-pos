@@ -23,7 +23,10 @@ final class CatalogAiChatService
     public function reply(array $history): array
     {
         if (trim((string)($this->config['openai_api_key'] ?? '')) === '') throw new \RuntimeException('Configurá OPENAI_API_KEY en el servidor para usar el Buscador IA.');
-        $input = array_map(static fn($m) => ['role' => $m['role'] === 'assistant' ? 'assistant' : 'user', 'content' => [['type'=>'input_text','text'=>(string)$m['content']]]], $history);
+        $input = array_map(static function ($message): array {
+            $assistant = ($message['role'] ?? '') === 'assistant';
+            return ['role'=>$assistant ? 'assistant' : 'user', 'content'=>[['type'=>$assistant ? 'output_text' : 'input_text', 'text'=>(string)($message['content'] ?? '')]]];
+        }, $history);
         $instructions = 'Sos el asistente de ventas de Laboratorio Digital. Conversá en español de forma breve y natural, conservando todos los datos confirmados en el historial. Antes de mostrar productos, evaluá si entendés con suficiente precisión qué necesita el cliente. No asumas ningún dato importante: producto, categoría, medida, tamaño, material, modelo, uso, compatibilidad, color, cantidad, presentación ni cualquier atributo que diferencie opciones. Si falta un dato que pueda cambiar el producto correcto, hacé exactamente una pregunta breve y útil y no muestres resultados todavía; podés hacer otra pregunta en el turno siguiente. Las herramientas pueden ayudarte a inspeccionar el catálogo para detectar opciones o ambigüedades, pero no presentes coincidencias hasta aclararlas. Cuando la necesidad esté suficientemente definida, usá siempre las herramientas para consultar el catálogo real y basá toda afirmación comercial exclusivamente en sus resultados. Nunca inventes productos, variantes, atributos, precios ni stock. No afirmes que algo no existe sin haberlo buscado. Mostrá pocas coincidencias relevantes y, al mostrarlas, no cierres la respuesta con otra pregunta. Si la opción exacta no tiene stock, informalo, usá buscarAlternativas y avisá claramente qué característica cambia en cada alternativa. No exijas comandos ni códigos.';
         $response = $this->request(['model'=>'gpt-5.6-terra','store'=>false,'reasoning'=>['effort'=>'low'],'instructions'=>$instructions,'tools'=>$this->schemas(),'input'=>$input]);
         $toolResults = [];
