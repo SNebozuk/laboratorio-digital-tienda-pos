@@ -82,7 +82,7 @@ final class CatalogAiToolService
     /** @param array<string, mixed> $filters @return array<string, string|int> */
     private function filters(array $filters): array
     {
-        $allowed = ['texto', 'marca', 'categoria', 'talle', 'color', 'tipo', 'uso', 'atributos', 'variante_id']; $out = [];
+        $allowed = ['texto', 'marca', 'categoria', 'material', 'talle', 'color', 'tipo', 'uso', 'atributos', 'variante_id']; $out = [];
         foreach ($allowed as $key) if (isset($filters[$key]) && is_scalar($filters[$key])) $out[$key] = $key === 'variante_id' ? (int) $filters[$key] : (function_exists('mb_strtolower') ? mb_strtolower(trim((string) $filters[$key])) : strtolower(trim((string) $filters[$key])));
         return $out;
     }
@@ -91,8 +91,12 @@ final class CatalogAiToolService
     private function matches(array $row, array $filters): bool
     {
         if (isset($filters['variante_id']) && $row['variante_id'] !== $filters['variante_id']) return false;
-        foreach (['texto' => 'busqueda', 'marca' => 'busqueda', 'categoria' => 'categoria', 'talle' => 'talle', 'color' => 'color', 'tipo' => 'busqueda', 'uso' => 'busqueda', 'atributos' => 'variante'] as $filter => $field) {
-            $value = $field === 'busqueda' ? implode(' ', [$row['producto'], $row['descripcion'], $row['categoria'], $row['variante']]) : (string) ($row[$field] ?? '');
+        foreach (['texto' => 'identidad', 'marca' => 'detalles', 'categoria' => 'categoria', 'material' => 'detalles', 'talle' => 'talle', 'color' => 'color', 'tipo' => 'identidad', 'uso' => 'detalles', 'atributos' => 'detalles'] as $filter => $field) {
+            $value = match ($field) {
+                'identidad' => implode(' ', [$row['producto'], $row['categoria'], $row['variante']]),
+                'detalles' => implode(' ', [$row['producto'], $row['descripcion'], $row['categoria'], $row['variante']]),
+                default => (string) ($row[$field] ?? ''),
+            };
             if (isset($filters[$filter]) && !$this->textMatches($value, (string) $filters[$filter])) return false;
         }
         return true;
@@ -108,7 +112,10 @@ final class CatalogAiToolService
         foreach ($terms as $term) {
             $found = false;
             foreach ($words as $word) {
-                if (str_starts_with($word, $term) || str_starts_with($term, $word) || levenshtein($word, $term) <= max(1, (int) floor(min(strlen($word), strlen($term)) / 4))) { $found = true; break; }
+                $shortest = min(strlen($word), strlen($term));
+                $prefixMatch = $shortest >= 4 && (str_starts_with($word, $term) || str_starts_with($term, $word));
+                $fuzzyMatch = $shortest >= 4 && levenshtein($word, $term) <= max(1, (int) ceil($shortest / 4));
+                if ($word === $term || $prefixMatch || $fuzzyMatch) { $found = true; break; }
             }
             if (!$found) return false;
         }

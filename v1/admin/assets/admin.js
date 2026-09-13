@@ -1060,12 +1060,8 @@
             const reply = String(data.reply?.message || 'No pude preparar una respuesta.');
             state.aiHistory.push({ role: 'assistant', content: reply });
             elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
-            const calls = Array.isArray(data.reply?.raw_tools) ? data.reply.raw_tools : [];
-            const resultCall = [...calls].reverse().find(call => Array.isArray(call.result) && call.result.some(row => row && row.producto_id && row.variante_id));
-            const rows = (resultCall?.result || []).filter(row => row && row.producto_id && row.variante_id);
-            if (!reply.includes('?')) {
-                renderAiCatalogCards(rows);
-            }
+            const rows = (Array.isArray(data.reply?.display_results) ? data.reply.display_results : []).filter(row => row && row.producto_id && row.variante_id);
+            renderAiCatalogCards(rows);
             const interpretation = data.reply?.interpretation && typeof data.reply.interpretation === 'object' ? data.reply.interpretation : {};
             const known = Object.entries(interpretation).filter(([, value]) => value !== null && value !== '').map(([key, value]) => `${key}: ${value}`);
             elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Datos conocidos</dt><dd>${escapeHtml(known.join(', ') || 'Por confirmar')}</dd></div>`;
