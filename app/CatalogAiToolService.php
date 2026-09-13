@@ -114,8 +114,10 @@ final class CatalogAiToolService
             foreach ($words as $word) {
                 $shortest = min(strlen($word), strlen($term));
                 $prefixMatch = $shortest >= 4 && (str_starts_with($word, $term) || str_starts_with($term, $word));
-                $fuzzyMatch = $shortest >= 4 && levenshtein($word, $term) <= max(1, (int) ceil($shortest / 4));
-                if ($word === $term || $prefixMatch || $fuzzyMatch) { $found = true; break; }
+                $rootLength = strspn($word ^ $term, "\0");
+                $rootMatch = $shortest >= 5 && $rootLength >= 5 && $rootLength >= (int) ceil($shortest * 0.7);
+                $fuzzyMatch = $shortest >= 4 && levenshtein($word, $term) <= 1;
+                if ($word === $term || $prefixMatch || $rootMatch || $fuzzyMatch) { $found = true; break; }
             }
             if (!$found) return false;
         }
