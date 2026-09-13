@@ -1056,11 +1056,6 @@
         const tokens = aiSearchQueryTokens(message);
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Atributos</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
         try {
-            const status = await apiGet('ai_catalog_status');
-            if (!status.status?.connected) {
-                showAiUnavailable();
-                return;
-            }
             const data = await apiPost({ action: 'ai_catalog_chat', history: state.aiHistory });
             const reply = String(data.reply?.message || 'No pude preparar una respuesta.');
             state.aiHistory.push({ role: 'assistant', content: reply });
