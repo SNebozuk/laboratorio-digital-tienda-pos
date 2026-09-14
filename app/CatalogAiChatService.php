@@ -26,6 +26,15 @@ final class CatalogAiChatService
             throw new \RuntimeException('Configurá OPENAI_API_KEY en el servidor para usar el Vendedor IA.');
         }
 
+        if ($this->isGreetingOnly($history)) {
+            return [
+                'message' => '¿Qué producto estás buscando?',
+                'raw_tools' => [],
+                'display_results' => [],
+                'interpretation' => [],
+            ];
+        }
+
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
@@ -67,6 +76,8 @@ final class CatalogAiChatService
                         'necesidad_interpretada' => $interpretation,
                         'candidatos_catalogo' => $this->compactCandidates($rows),
                         'tabla_de_talles_relevante' => $sizeGuide,
+                        'reglas_de_saludo' => 'El saludo inicial ya está en la conversación. Si el cliente escribe solo un saludo, no respondas con otro saludo ni presentación: preguntá qué producto busca. Si su nombre está disponible de forma confiable en la conversación, podés usarlo una sola vez con buen día, buenas tardes o buenas noches según la hora local argentina indicada.',
+                        'hora_local_argentina' => (new \DateTimeImmutable('now', new \DateTimeZone('America/Argentina/Buenos_Aires')))->format('H:i'),
                     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE),
                 ]],
             ]]
@@ -267,6 +278,16 @@ final class CatalogAiChatService
     {
         $value = function_exists('mb_strtolower') ? mb_strtolower($value) : strtolower($value);
         return strtr($value, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u']);
+    }
+
+    /** @param list<array{role:string,content:string}> $history */
+    private function isGreetingOnly(array $history): bool
+    {
+        foreach (array_reverse($history) as $message) {
+            if (($message['role'] ?? '') !== 'user') continue;
+            return (bool) preg_match('/^\s*(hola|buenas|buen dia|buen día|buenas tardes|buenas noches)[!.?\s]*$/iu', (string) ($message['content'] ?? ''));
+        }
+        return false;
     }
 
     /** @param list<array<string,mixed>> $rows @param array<string,mixed> $interpretation @return list<array<string,mixed>> */

@@ -4208,7 +4208,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .ai-search-dialog .view-heading .admin-page-title,.ai-search-dialog .view-heading p { color:#fff; }
 .ai-search-dialog .view-heading p { margin:4px 0 0; opacity:.85; }
 .ai-search-dialog .ai-search-service-status { color:#d9fdd3; }
-.ai-search-dialog .ai-search-layout { padding:18px; }
+.ai-search-dialog .ai-search-layout { grid-template-columns:1fr; padding:18px; }
 .ai-search-dialog .ai-search-chat { padding:18px; border:0; border-radius:0; background:transparent; box-shadow:none; }
 .ai-search-dialog .ai-search-messages { min-height:260px; padding:14px; border-radius:8px; background:#e9e3d8; }
 .ai-search-dialog .ai-search-message { max-width:78%; border:0; border-radius:8px; background:#fff; box-shadow:0 1px 1px rgba(0,0,0,.08); }
@@ -4225,12 +4225,13 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .ai-search-service-status.is-connected { color:#367a4e; }
 .ai-search-service-status.is-unavailable { color:#b34a4a; }
 .ai-search-chat { max-width:none; padding:20px; }
-.ai-search-messages { display:grid; gap:12px; }
+.ai-search-messages { display:grid; max-height:420px; gap:12px; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none; }
+.ai-search-messages::-webkit-scrollbar { display:none; }
 .ai-search-message { max-width:min(580px,88%); padding:11px 13px; border:1px solid #e2e6ef; border-radius:12px; background:#f7f8fb; color:#343c4d; }
 .ai-search-message small { display:block; margin-bottom:4px; color:#7a8497; font-size:10px; font-weight:800; letter-spacing:.06em; }
 .ai-search-message p { margin:0; font-size:13px; line-height:1.45; }
 .ai-search-progress { display:flex; align-items:center; gap:8px; }
-.ai-search-progress i { width:15px; height:15px; flex:0 0 15px; border:2px solid #d4d0f7; border-top-color:#5b4fc7; border-radius:50%; animation:ai-search-spin .72s linear infinite; }
+.ai-search-progress i { width:15px; height:15px; flex:0 0 15px; border:2px solid #a9d9d1; border-top-color:#128c7e; border-radius:50%; animation:ai-search-spin .72s linear infinite; }
 @keyframes ai-search-spin { to { transform:rotate(360deg); } }
 .ai-search-message-client { justify-self:end; border-color:#e2dffb; background:#f1efff; }
 .ai-search-message-client small { color:#5b4fc7; }

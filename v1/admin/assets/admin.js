@@ -1010,6 +1010,7 @@
             elements.aiSearchMessages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>¡Hola! Soy el Vendedor IA de Laboratorio Digital. ¿En qué te ayudo?</p></div>';
             elements.aiSearchProducts.innerHTML = '';
             elements.aiSearchInterpretation.innerHTML = '<div><dt>Búsqueda</dt><dd>Sin consulta</dd></div><div><dt>Resultados</dt><dd>—</dd></div>';
+            scrollAiChatToBottom();
             return;
         }
         if (!state.productsLoaded) {
@@ -1031,6 +1032,11 @@
             return `<article class="ai-search-product-card">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}">` : '<div class="product-admin-placeholder">SIN FOTO</div>'}<div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category?.name || 'Sin categoría')}</small><span>Variante: ${escapeHtml(variant.name || 'Única')}</span><b>${escapeHtml(price)}</b><em>${escapeHtml(stock)}</em></div><a class="secondary-button" href="${escapeHtml(productShareUrl(product.id))}" target="_blank" rel="noopener">VER PRODUCTO</a></article>`;
         }).join('');
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Búsqueda</dt><dd>${escapeHtml(query)}</dd></div><div><dt>Resultados</dt><dd>${cards.length}</dd></div><div><dt>Palabras</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
+        scrollAiChatToBottom();
+    }
+
+    function scrollAiChatToBottom() {
+        window.requestAnimationFrame(() => elements.aiSearchMessages?.scrollTo({ top: elements.aiSearchMessages.scrollHeight, behavior: 'smooth' }));
     }
 
     function openAiChatDialog() {
@@ -1253,6 +1259,7 @@
         elements.aiSearchInput.value = '';
         elements.aiSearchProducts.innerHTML = '';
         elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'VENDEDOR IA'}</small><p>${escapeHtml(item.content)}</p></div>`).join('') + '<div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p class="ai-search-progress"><i aria-hidden="true"></i>Ya te digo, voy a buscarlo en el catálogo.</p></div>';
+        scrollAiChatToBottom();
         const tokens = aiSearchQueryTokens(message);
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Atributos</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
         try {
@@ -1260,6 +1267,7 @@
             const reply = String(data.reply?.message || 'No pude preparar una respuesta.');
             state.aiHistory.push({ role: 'assistant', content: reply });
             elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'VENDEDOR IA'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
+            scrollAiChatToBottom();
             const rows = (Array.isArray(data.reply?.display_results) ? data.reply.display_results : []).filter(row => row && row.producto_id && row.variante_id);
             renderAiCatalogCards(rows);
             const interpretation = data.reply?.interpretation && typeof data.reply.interpretation === 'object' ? data.reply.interpretation : {};

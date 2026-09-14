@@ -526,7 +526,7 @@ header('Referrer-Policy: same-origin');
                             </div>
                         </section>
 
-                        <aside class="ai-search-interpretation settings-card">
+                <aside class="ai-search-interpretation settings-card" hidden>
                             <p class="eyebrow">INTERPRETACIÓN</p>
                             <dl id="ai-search-interpretation">
                                 <div><dt>Búsqueda</dt><dd>Sin consulta</dd></div>
