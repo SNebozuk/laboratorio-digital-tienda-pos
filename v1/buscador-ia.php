@@ -19,7 +19,7 @@ header('Referrer-Policy: same-origin');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Buscador IA · Laboratorio Digital</title>
+    <title>Vendedor IA · Laboratorio Digital</title>
     <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion(__DIR__ . '/assets/app.css')) ?>">
     <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($assetVersion(__DIR__ . '/admin/assets/admin.css')) ?>">
@@ -29,7 +29,7 @@ header('Referrer-Policy: same-origin');
         <section class="admin-view active ai-search-view" id="view-ai-search">
             <div class="view-heading ai-search-heading">
                 <div>
-                    <h1 class="admin-page-title">BUSCADOR IA</h1>
+                    <h1 class="admin-page-title">VENDEDOR IA</h1>
                     <p>Probá búsquedas sobre el catálogo real. Esta página es solo de consulta.</p>
                 </div>
             </div>
@@ -37,7 +37,7 @@ header('Referrer-Policy: same-origin');
             <div class="ai-search-layout">
                 <section class="ai-search-chat settings-card" aria-label="Búsqueda de productos">
                     <div class="ai-search-messages" id="ai-search-messages">
-                        <div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Escribí una búsqueda para consultar el catálogo real.</p></div>
+                        <div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>¡Hola! Soy el Vendedor IA de Laboratorio Digital. ¿En qué te ayudo?</p></div>
                     </div>
                     <div class="ai-search-products" id="ai-search-products" aria-label="Resultados del catálogo"></div>
                     <div class="ai-search-composer">

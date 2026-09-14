@@ -23,13 +23,13 @@ final class CatalogAiChatService
     public function reply(array $history): array
     {
         if (trim((string) ($this->config['openai_api_key'] ?? '')) === '') {
-            throw new \RuntimeException('Configurá OPENAI_API_KEY en el servidor para usar el Buscador IA.');
+            throw new \RuntimeException('Configurá OPENAI_API_KEY en el servidor para usar el Vendedor IA.');
         }
 
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Usá conocimiento general para determinar qué quiere hacer, uso final, familia de producto, propiedades relevantes e incompatibilidades conceptuales. Conservá los datos previos solo cuando el cliente siga hablando del mismo producto: una frase breve puede agregar o modificar una condición. Si nombra otro producto, usa expresiones como "ahora", "en cambio" o "también", o pregunta por otra familia, detectá el cambio y no arrastres talle, color, material ni uso del producto anterior. Si pide varios productos en el mismo mensaje, marcá mode como multiple, completá product_requests con uno por producto y mantené sus atributos separados. Para un cambio, mode es changed; para una continuación, continued; para una única consulta nueva, new. Reglas de negocio: para bebé por ahora solo se ofrecen bodys; un body nunca es una remera aunque comparta categoría, por lo que jamás lo incluyas en una búsqueda o recomendación de remeras. En papel, el tamaño estándar es A4 y debés tomarlo como opción por defecto si no se indica medida; no hay papeles para impresoras láser. No inventes propiedades de productos del negocio. En core_product_term escribí solamente el sustantivo comercial central de la consulta actual, normalizado, en singular y sin explicaciones. Generá búsquedas para cada producto pedido: empezá por la intención más precisa y agregá alternativas conceptuales más amplias. Si el cliente da un código o SKU, conservalo en codigo. No copies necesariamente la frase literal. Tolerá singular/plural, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si un dato cambia sustancialmente la recomendación; si podés avanzar razonablemente, no preguntes.',
+            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Usá conocimiento general para determinar qué quiere hacer, uso final, familia de producto, propiedades relevantes e incompatibilidades conceptuales. Conservá los datos previos solo cuando el cliente siga hablando del mismo producto: una frase breve puede agregar o modificar una condición. Si nombra otro producto, usa expresiones como "ahora", "en cambio" o "también", o pregunta por otra familia, detectá el cambio y no arrastres talle, color, material ni uso del producto anterior. Si pide varios productos en el mismo mensaje, marcá mode como multiple, completá product_requests con uno por producto y mantené sus atributos separados. Para un cambio, mode es changed; para una continuación, continued; para una única consulta nueva, new. Reglas de negocio: para bebé por ahora solo se ofrecen bodys; un body nunca es una remera aunque comparta categoría, por lo que jamás lo incluyas en una búsqueda o recomendación de remeras. Cuando el cliente pide solamente remeras, interpretalo como remeras unisex, aptas tanto para hombre como para mujer. Las remeras sublimables estándar son las de modal. Las de spum o jersey también son sublimables, pero son alternativas secundarias: solo consideralas después de modal o cuando el cliente las pida. En papel, el tamaño estándar es A4 y debés tomarlo como opción por defecto si no se indica medida; no hay papeles para impresoras láser. No inventes propiedades de productos del negocio. En core_product_term escribí solamente el sustantivo comercial central de la consulta actual, normalizado, en singular y sin explicaciones. Generá búsquedas para cada producto pedido: empezá por la intención más precisa y agregá alternativas conceptuales más amplias. Si el cliente da un código o SKU, conservalo en codigo. No copies necesariamente la frase literal. Tolerá singular/plural, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si un dato cambia sustancialmente la recomendación; si podés avanzar razonablemente, no preguntes.',
             $this->historyInput($history)
         );
 
@@ -52,22 +52,12 @@ final class CatalogAiChatService
             $rowsByVariant[(int) $row['variante_id']] = $row;
         }
         $rows = array_values($rowsByVariant);
-        $searchedGlobally = false;
-        if ($rows === []) {
-            $searchedGlobally = true;
-            $globalSearches = $this->globalCatalogSearches($interpretation, $history);
-            if ($globalSearches !== []) {
-                [$rows, $globalLog] = $this->searchCandidates(['searches' => $globalSearches]);
-                $searchLog[] = ['tool' => 'busquedaGlobal', 'arguments' => $globalSearches];
-                $searchLog = [...$searchLog, ...$globalLog];
-            }
-        }
         $rows = $this->applyBusinessRules($rows, $interpretation);
         $sizeGuide = $this->relevantSizeGuide($interpretation, $history, $rows);
         $evaluation = $this->structuredRequest(
             'evaluacion_catalogo',
             $this->evaluationSchema(),
-            'Actuá como vendedor detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Para bebé, por ahora solo ofrecemos bodys. Un body no es una remera y nunca debe mostrarse ni proponerse a alguien que pide remeras, aunque pertenezcan a la misma categoría. Para papel, si no se pide otro tamaño, la referencia estándar es A4; no ofrecemos papeles para impresoras láser, así que indicalo con claridad y no sugieras otro papel como apto para una impresora láser. Si el cliente pidió solamente una familia de producto sin imponer uso, material u otras condiciones, los productos cuyo nombre corresponde realmente a esa familia son APTO: no inventes requisitos ni digas que no están disponibles si el catálogo muestra stock. En ese caso seleccioná algunas variantes con stock como muestra. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles accesorios, alternativas ni productos POSIBLE o NO_APTO. Si se suministra una tabla de talles, usala solo para responder consultas de medidas o talles y solo cuando corresponda al producto. Respondé con tono cálido, cercano y rioplatense, como una persona que ayuda a elegir: saludá o confirmá brevemente, evitá tono técnico y no repitas nombre, precio, talle ni stock porque se verán ordenados aparte. No cierres con una sugerencia genérica: la aplicación agregará una continuación basada en las opciones reales mostradas. Si falta un dato decisivo para recomendar, hacé una sola pregunta concreta, pero no ocultes la disponibilidad ya comprobada. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
+            'Actuá como Vendedor IA detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Para bebé, por ahora solo ofrecemos bodys. Un body no es una remera y nunca debe mostrarse ni proponerse a alguien que pide remeras, aunque pertenezcan a la misma categoría. Si pide solamente remeras, son unisex y aptas para hombre y mujer. Para remeras sublimables, las de modal son la opción estándar y prioritaria; las de spum o jersey son alternativas sublimables secundarias, no las propongas salvo que el cliente las pida o no haya modal disponible. Para papel, si no se pide otro tamaño, la referencia estándar es A4; no ofrecemos papeles para impresoras láser, así que indicalo con claridad y no sugieras otro papel como apto para una impresora láser. Si el cliente pidió solamente una familia de producto sin imponer uso, material u otras condiciones, los productos cuyo nombre corresponde realmente a esa familia son APTO: no inventes requisitos ni digas que no están disponibles si el catálogo muestra stock. En ese caso seleccioná algunas variantes con stock como muestra. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles accesorios, alternativas ni productos POSIBLE o NO_APTO. No centres la respuesta en ofrecer otros colores: negro y blanco son los colores prioritarios. Mencioná u ofrecé colores alternativos solo si el cliente los pide o si no hay stock de negro o blanco en lo que busca. Si se suministra una tabla de talles, usala solo para responder consultas de medidas o talles y solo cuando corresponda al producto. Respondé con tono cálido, cercano y rioplatense, como una persona que ayuda a elegir: en el primer saludo presentate brevemente como Vendedor IA de Laboratorio Digital y ofrecé ayuda. Luego respondé rápido y breve; evitá tono técnico y no repitas nombre, precio, talle ni stock porque se verán ordenados aparte. No cierres con una sugerencia genérica: la aplicación agregará una continuación basada en las opciones reales mostradas. Si falta un dato decisivo para recomendar, hacé una sola pregunta concreta, pero no ocultes la disponibilidad ya comprobada. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
             [[
                 'role' => 'user',
                 'content' => [[
@@ -124,7 +114,7 @@ final class CatalogAiChatService
             'raw_tools' => $searchLog,
             'display_results' => array_slice($displayRows, 0, 12),
             'interpretation' => $this->publicInterpretation($interpretation) + [
-                'origen_busqueda' => $searchedGlobally ? 'Catálogo + búsqueda global' : 'Catálogo',
+                'origen_busqueda' => 'Catálogo',
             ],
         ];
     }
@@ -300,12 +290,11 @@ final class CatalogAiChatService
     /** @param list<array<string,mixed>> $rows */
     private function continuationSuggestion(array $rows): string
     {
-        if ($rows === []) return 'Si querés, también podemos buscar otro producto.';
+        if ($rows === []) return 'Si querés, puedo buscar otro producto del catálogo.';
         $sizes = array_filter(array_unique(array_map(static fn (array $row): string => trim((string) ($row['talle'] ?? '')), $rows)));
         $colors = array_filter(array_unique(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $rows)));
-        if ($sizes !== [] && $colors !== []) return '¿Querés que revisemos otros talles o colores de estas mismas opciones?';
+        if ($sizes !== [] && $colors !== []) return '¿Querés que revisemos otros talles de estas mismas opciones?';
         if ($sizes !== []) return '¿Querés que revisemos otros talles de estas mismas opciones?';
-        if ($colors !== []) return '¿Querés que revisemos otros colores de estas mismas opciones?';
         return 'Si querés, puedo comparar estas opciones o buscar otro producto.';
     }
 

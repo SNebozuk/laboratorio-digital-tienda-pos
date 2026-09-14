@@ -66,6 +66,8 @@
         view: 'orders',
         aiHistory: [],
         aiStatusTimer: 0,
+        aiDialogOpen: false,
+        aiDialogPlaceholder: null,
     };
 
     const money = cents => new Intl.NumberFormat('es-AR', {
@@ -409,6 +411,20 @@
             showCustomerHistory(customerName);
             return;
         }
+        if (state.aiDialogOpen) {
+            const aiView = document.getElementById('view-ai-search');
+            if (aiView && state.aiDialogPlaceholder) {
+                state.aiDialogPlaceholder.replaceWith(aiView);
+                aiView.classList.remove('ai-search-dialog');
+            }
+            state.aiDialogOpen = false;
+            state.aiDialogPlaceholder = null;
+            if (state.aiStatusTimer) {
+                window.clearInterval(state.aiStatusTimer);
+                state.aiStatusTimer = 0;
+            }
+            if (elements.mobileView) elements.mobileView.value = state.view;
+        }
         elements.modal.classList.remove('open');
         elements.modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
@@ -439,6 +455,10 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
+        if (view === 'ai-search') {
+            openAiChatDialog();
+            return;
+        }
         const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
@@ -986,13 +1006,13 @@
         const tokens = aiSearchQueryTokens(query);
         const variantTokens = aiSearchVariantTokens(query);
         if (!query) {
-            elements.aiSearchMessages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Escribí una búsqueda para consultar el catálogo real.</p></div>';
+            elements.aiSearchMessages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>¡Hola! Soy el Vendedor IA de Laboratorio Digital. ¿En qué te ayudo?</p></div>';
             elements.aiSearchProducts.innerHTML = '';
             elements.aiSearchInterpretation.innerHTML = '<div><dt>Búsqueda</dt><dd>Sin consulta</dd></div><div><dt>Resultados</dt><dd>—</dd></div>';
             return;
         }
         if (!state.productsLoaded) {
-            elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Consultando catálogo…</p></div>`;
+            elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p class="ai-search-progress"><i aria-hidden="true"></i>Ya te digo, voy a buscarlo en el catálogo.</p></div>`;
             return;
         }
         const searchQuery = tokens.join(' ');
@@ -1002,7 +1022,7 @@
             .filter(variant => aiSearchVariantMatches(product, variant, variantTokens))
             .map(variant => ({ product, variant }))
         ).sort((left, right) => Number(right.variant.available_stock || 0) - Number(left.variant.available_stock || 0)).slice(0, 12);
-        elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>${cards.length ? `Encontré ${cards.length} coincidencia${cards.length === 1 ? '' : 's'} en el catálogo.` : 'No encontré coincidencias en el catálogo.'}</p></div>`;
+        elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>${cards.length ? `Hay ${cards.length} coincidencia${cards.length === 1 ? '' : 's'} en el catálogo.` : 'No hay coincidencias en el catálogo.'}</p></div>`;
         elements.aiSearchProducts.innerHTML = cards.map(({ product, variant }) => {
             const image = safeImage(product.image_path);
             const price = variant.price_cents === null ? 'Precio a consultar' : money(variant.price_cents);
@@ -1010,6 +1030,28 @@
             return `<article class="ai-search-product-card">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}">` : '<div class="product-admin-placeholder">SIN FOTO</div>'}<div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category?.name || 'Sin categoría')}</small><span>Variante: ${escapeHtml(variant.name || 'Única')}</span><b>${escapeHtml(price)}</b><em>${escapeHtml(stock)}</em></div><a class="secondary-button" href="${escapeHtml(productShareUrl(product.id))}" target="_blank" rel="noopener">VER PRODUCTO</a></article>`;
         }).join('');
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Búsqueda</dt><dd>${escapeHtml(query)}</dd></div><div><dt>Resultados</dt><dd>${cards.length}</dd></div><div><dt>Palabras</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
+    }
+
+    function openAiChatDialog() {
+        if (state.aiDialogOpen) {
+            elements.aiSearchInput?.focus();
+            return;
+        }
+        const aiView = document.getElementById('view-ai-search');
+        if (!aiView) return;
+        const placeholder = document.createComment('Vendedor IA');
+        aiView.before(placeholder);
+        openModal('');
+        elements.modalContent.appendChild(aiView);
+        aiView.classList.add('ai-search-dialog');
+        state.aiDialogOpen = true;
+        state.aiDialogPlaceholder = placeholder;
+        state.aiHistory = [];
+        elements.aiSearchInput.value = '';
+        if (!state.productsLoaded) loadProducts();
+        renderAiSearch();
+        startAiStatusChecks();
+        window.requestAnimationFrame(() => elements.aiSearchInput?.focus());
     }
 
     function renderAiCatalogCards(rows) {
@@ -1053,7 +1095,7 @@
 
     function showAiUnavailable() {
         state.aiHistory.push({ role: 'assistant', content: 'La IA no está disponible en este momento.' });
-        elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
+        elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'VENDEDOR IA'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
     }
 
     async function speakAiReply(message) {
@@ -1209,15 +1251,14 @@
         state.aiHistory.push({ role: 'user', content: message });
         elements.aiSearchInput.value = '';
         elements.aiSearchProducts.innerHTML = '';
-        elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('') + '<div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Analizando consulta…</p></div>';
+        elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'VENDEDOR IA'}</small><p>${escapeHtml(item.content)}</p></div>`).join('') + '<div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p class="ai-search-progress"><i aria-hidden="true"></i>Ya te digo, voy a buscarlo en el catálogo.</p></div>';
         const tokens = aiSearchQueryTokens(message);
         elements.aiSearchInterpretation.innerHTML = `<div><dt>Consulta</dt><dd>${escapeHtml(message)}</dd></div><div><dt>Atributos</dt><dd>${escapeHtml(tokens.join(', ') || '—')}</dd></div>`;
         try {
             const data = await apiPost({ action: 'ai_catalog_chat', history: state.aiHistory });
             const reply = String(data.reply?.message || 'No pude preparar una respuesta.');
             state.aiHistory.push({ role: 'assistant', content: reply });
-            elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
-            speakAiReply(reply);
+            elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'VENDEDOR IA'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
             const rows = (Array.isArray(data.reply?.display_results) ? data.reply.display_results : []).filter(row => row && row.producto_id && row.variante_id);
             renderAiCatalogCards(rows);
             const interpretation = data.reply?.interpretation && typeof data.reply.interpretation === 'object' ? data.reply.interpretation : {};
@@ -1238,7 +1279,7 @@
         try {
             const data = await apiGet('ai_catalog_tool', { tool, ...parameters });
             const count = Array.isArray(data.result) ? data.result.length : (data.result ? 1 : 0);
-            elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>${count ? `La herramienta devolvió ${count} resultado${count === 1 ? '' : 's'}.` : 'La herramienta no devolvió resultados.'}</p></div>`;
+            elements.aiSearchMessages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>${count ? `La herramienta devolvió ${count} resultado${count === 1 ? '' : 's'}.` : 'La herramienta no devolvió resultados.'}</p></div>`;
             elements.aiSearchProducts.innerHTML = '';
             elements.aiSearchInterpretation.innerHTML = `<div><dt>Herramienta</dt><dd>${escapeHtml(tool)}</dd></div><div><dt>Resultados</dt><dd>${count}</dd></div><div><dt>JSON</dt><dd>Consulta correcta</dd></div>`;
         } catch (error) { toast(error.message); }

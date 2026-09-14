@@ -43,7 +43,7 @@
         const tokens = words(normalizeSearchQuery(query)).filter(token => !['talle', 'talles', 'color', 'colores', 'de', 'del', 'para', 'con', 'en', 'la', 'el', 'los', 'las', 'un', 'una'].includes(token));
         const filters = variantTokens(query);
         if (!query) {
-            messages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>Escribí una búsqueda para consultar el catálogo real.</p></div>';
+            messages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>¡Hola! Soy el Vendedor IA de Laboratorio Digital. ¿En qué te ayudo?</p></div>';
             products.innerHTML = '';
             interpretation.innerHTML = '<div><dt>Búsqueda</dt><dd>Sin consulta</dd></div><div><dt>Resultados</dt><dd>—</dd></div>';
             return;
@@ -52,7 +52,7 @@
             .filter(variant => variantMatches(product, variant, filters))
             .map(variant => ({ product, variant }))
         ).sort((left, right) => Number(right.variant.available_stock || 0) - Number(left.variant.available_stock || 0)).slice(0, 12) : [];
-        messages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>${cards.length ? `Encontré ${cards.length} coincidencia${cards.length === 1 ? '' : 's'} en el catálogo.` : 'No encontré coincidencias en el catálogo.'}</p></div>`;
+        messages.innerHTML = `<div class="ai-search-message ai-search-message-client"><small>CLIENTE</small><p>${escapeHtml(query)}</p></div><div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>${cards.length ? `Hay ${cards.length} coincidencia${cards.length === 1 ? '' : 's'} en el catálogo.` : 'No hay coincidencias en el catálogo.'}</p></div>`;
         products.innerHTML = cards.map(({ product, variant }) => {
             const image = String(product.image_path || '').startsWith('/') ? product.image_path : '';
             const price = variant.price_cents === null ? 'Precio a consultar' : money(variant.price_cents);
@@ -67,7 +67,7 @@
     fetch(`${config.apiUrl}?action=catalog`, { headers: { Accept: 'application/json' }, cache: 'no-store' })
         .then(response => response.json())
         .then(data => { catalog = Array.isArray(data.products) ? data.products : []; render(); })
-        .catch(() => { messages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>ASISTENTE</small><p>No pudimos consultar el catálogo.</p></div>'; });
+        .catch(() => { messages.innerHTML = '<div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>No pude consultar el catálogo.</p></div>'; });
     input?.addEventListener('input', render);
     submit?.addEventListener('click', render);
     input?.addEventListener('keydown', event => {
