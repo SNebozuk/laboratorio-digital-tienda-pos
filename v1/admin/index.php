@@ -504,6 +504,7 @@ header('Referrer-Policy: same-origin');
                             <p>Historial e interpretaciones del chat público.</p>
                         </div>
                         <span class="ai-search-service-status is-checking" id="ai-search-service-status" role="status">🟡 Verificando IA…</span>
+                        <a class="primary-button fit-button" href="<?= $escape($storeUrl) ?>?chat_ia=1" target="_blank" rel="noopener">ABRIR CHAT IA</a>
                     </div>
 
                     <section class="settings-card ai-conversation-history" id="ai-conversation-history"><p class="eyebrow">INTERPRETACIONES RECIENTES</p><div id="ai-conversation-history-list"><p class="empty-copy">Cargando conversaciones…</p></div></section>
