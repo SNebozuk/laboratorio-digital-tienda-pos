@@ -4245,12 +4245,14 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .ai-search-voice-toggle input:checked + i::after { transform:translateX(13px); }
 .ai-search-talk-button { display:inline-flex; align-items:center; gap:6px; }
 .ai-search-talk-button svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.ai-search-mic-level { display:inline-flex; align-items:center; gap:6px; color:#7a8497; font-size:10px; font-weight:800; letter-spacing:.04em; }
-.ai-search-mic-bars { display:inline-flex; align-items:center; gap:2px; height:17px; }
-.ai-search-mic-bars i { display:block; width:3px; height:16px; border-radius:999px; background:#c8ced8; transform:scaleY(.2); transform-origin:center; transition:transform .08s ease,background .16s ease; }
-.ai-search-mic-level[data-state="active"] { color:#5b4fc7; }
-.ai-search-mic-level[data-state="active"] .ai-search-mic-bars i { background:#5b4fc7; transform:scaleY(var(--bar-level,.2)); }
-.ai-search-mic-level[data-state="error"] { color:#b84242; }
+.ai-search-mic-level { display:inline-flex; align-items:center; gap:7px; min-height:30px; padding:0 8px; border:1px solid #c8ced8; border-radius:8px; color:#7a8497; font-size:10px; font-weight:800; letter-spacing:.04em; }
+.ai-search-mic-bars { display:inline-flex; align-items:center; gap:3px; height:20px; }
+.ai-search-mic-bars i { display:block; width:4px; height:20px; border-radius:999px; background:#aeb7c5; transform:scaleY(.35); transform-origin:center; transition:transform .08s ease,background .16s ease; }
+.ai-search-mic-bars i:nth-child(2),.ai-search-mic-bars i:nth-child(5) { transform:scaleY(.5); }
+.ai-search-mic-bars i:nth-child(3),.ai-search-mic-bars i:nth-child(4) { transform:scaleY(.65); }
+.ai-search-mic-level[data-state="active"] { border-color:#9a91e3; color:#5b4fc7; }
+.ai-search-mic-level[data-state="active"] .ai-search-mic-bars i { background:#5b4fc7; transform:scaleY(var(--bar-level,.35)); }
+.ai-search-mic-level[data-state="error"] { border-color:#d98b8b; color:#b84242; }
 .ai-search-mic-level[data-state="error"] .ai-search-mic-bars i { background:#d98b8b; }
 .ai-search-interpretation { padding:17px; }
 .ai-search-interpretation .eyebrow { margin:0 0 12px; color:#5b4fc7; font-size:10px; }

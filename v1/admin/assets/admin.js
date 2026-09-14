@@ -1112,7 +1112,7 @@
         aiMicAudioContext = null;
         if (elements.aiSearchMicLevel) {
             elements.aiSearchMicLevel.dataset.state = 'inactive';
-            elements.aiSearchMicLevel.lastElementChild.textContent = 'MICRÓFONO';
+            elements.aiSearchMicLevel.lastElementChild.textContent = 'MICRÓFONO APAGADO';
         }
     }
 
@@ -1136,7 +1136,18 @@
             toast('Sin acceso al micrófono.');
             return;
         }
-        const recorder = new MediaRecorder(stream, MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : undefined);
+        let recorder;
+        try {
+            recorder = new MediaRecorder(stream, MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : undefined);
+        } catch (_) {
+            stream.getTracks().forEach(track => track.stop());
+            if (elements.aiSearchMicLevel) {
+                elements.aiSearchMicLevel.dataset.state = 'error';
+                elements.aiSearchMicLevel.lastElementChild.textContent = 'SIN ACCESO AL MICRÓFONO';
+            }
+            toast('Sin acceso al micrófono.');
+            return;
+        }
         aiRecorder = recorder;
         const chunks = [];
         elements.aiSearchTalkButton.disabled = true;
@@ -1144,6 +1155,12 @@
         startAiMicLevel(stream);
         recorder.ondataavailable = event => {
             if (event.data.size) chunks.push(event.data);
+        };
+        recorder.onerror = () => {
+            if (elements.aiSearchMicLevel) {
+                elements.aiSearchMicLevel.dataset.state = 'error';
+                elements.aiSearchMicLevel.lastElementChild.textContent = 'SIN ACCESO AL MICRÓFONO';
+            }
         };
         recorder.onstop = async () => {
             stopAiMicLevel();
