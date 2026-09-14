@@ -75,6 +75,7 @@
         currency: 'ARS',
         maximumFractionDigits: 0,
     }).format(Number(cents || 0) / 100);
+    const aiGreeting = '¡Hola! Soy el Vendedor IA de Laboratorio Digital. ¿En qué te ayudo?';
 
     const emptyOrdersMessages = [
         'Si no llegan ventas, no esperes. Cambiá algo.',
@@ -1046,7 +1047,7 @@
         aiView.classList.add('ai-search-dialog');
         state.aiDialogOpen = true;
         state.aiDialogPlaceholder = placeholder;
-        state.aiHistory = [];
+        state.aiHistory = [{ role: 'assistant', content: aiGreeting }];
         elements.aiSearchInput.value = '';
         if (!state.productsLoaded) loadProducts();
         renderAiSearch();
@@ -6664,7 +6665,7 @@
         }
     });
     elements.aiSearchTalkButton?.addEventListener('click', startAiDictation);
-    document.getElementById('ai-search-new-conversation')?.addEventListener('click', () => { state.aiHistory = []; renderAiSearch(); });
+    document.getElementById('ai-search-new-conversation')?.addEventListener('click', () => { state.aiHistory = [{ role: 'assistant', content: aiGreeting }]; renderAiSearch(); });
     elements.productSearchShare?.addEventListener('click', shareProductSearch);
     elements.orderSearch?.addEventListener('input', event => {
         state.orderQuery = event.target.value;

@@ -29,7 +29,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Usá conocimiento general para determinar qué quiere hacer, uso final, familia de producto, propiedades relevantes e incompatibilidades conceptuales. Conservá los datos previos solo cuando el cliente siga hablando del mismo producto: una frase breve puede agregar o modificar una condición. Si nombra otro producto, usa expresiones como "ahora", "en cambio" o "también", o pregunta por otra familia, detectá el cambio y no arrastres talle, color, material ni uso del producto anterior. Si pide varios productos en el mismo mensaje, marcá mode como multiple, completá product_requests con uno por producto y mantené sus atributos separados. Para un cambio, mode es changed; para una continuación, continued; para una única consulta nueva, new. Reglas de negocio: para bebé por ahora solo se ofrecen bodys; un body nunca es una remera aunque comparta categoría, por lo que jamás lo incluyas en una búsqueda o recomendación de remeras. Cuando el cliente pide solamente remeras, interpretalo como remeras unisex, aptas tanto para hombre como para mujer. Las remeras sublimables estándar son las de modal. Las de spum o jersey también son sublimables, pero son alternativas secundarias: solo consideralas después de modal o cuando el cliente las pida. En papel, el tamaño estándar es A4 y debés tomarlo como opción por defecto si no se indica medida; no hay papeles para impresoras láser. No inventes propiedades de productos del negocio. En core_product_term escribí solamente el sustantivo comercial central de la consulta actual, normalizado, en singular y sin explicaciones. Generá búsquedas para cada producto pedido: empezá por la intención más precisa y agregá alternativas conceptuales más amplias. Si el cliente da un código o SKU, conservalo en codigo. No copies necesariamente la frase literal. Tolerá singular/plural, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si un dato cambia sustancialmente la recomendación; si podés avanzar razonablemente, no preguntes.',
+            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Conservá datos previos solo si continúa con el mismo producto; detectá cambios y mantené separados los atributos de cada producto cuando el pedido es múltiple. Para bebé solo se ofrecen bodys y nunca se incluyen al pedir remeras. Si pide solamente remeras, son unisex. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, el tamaño estándar es A4 y no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central, normalizado y en singular. Generá búsquedas precisas y alternativas amplias para cada producto. Si hay código o SKU, conserválo en codigo. Tolerá plurales, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si cambia sustancialmente la recomendación.',
             $this->historyInput($history)
         );
 
@@ -57,7 +57,7 @@ final class CatalogAiChatService
         $evaluation = $this->structuredRequest(
             'evaluacion_catalogo',
             $this->evaluationSchema(),
-            'Actuá como Vendedor IA detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Para bebé, por ahora solo ofrecemos bodys. Un body no es una remera y nunca debe mostrarse ni proponerse a alguien que pide remeras, aunque pertenezcan a la misma categoría. Si pide solamente remeras, son unisex y aptas para hombre y mujer. Para remeras sublimables, las de modal son la opción estándar y prioritaria; las de spum o jersey son alternativas sublimables secundarias, no las propongas salvo que el cliente las pida o no haya modal disponible. Para papel, si no se pide otro tamaño, la referencia estándar es A4; no ofrecemos papeles para impresoras láser, así que indicalo con claridad y no sugieras otro papel como apto para una impresora láser. Si el cliente pidió solamente una familia de producto sin imponer uso, material u otras condiciones, los productos cuyo nombre corresponde realmente a esa familia son APTO: no inventes requisitos ni digas que no están disponibles si el catálogo muestra stock. En ese caso seleccioná algunas variantes con stock como muestra. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles accesorios, alternativas ni productos POSIBLE o NO_APTO. No centres la respuesta en ofrecer otros colores: negro y blanco son los colores prioritarios. Mencioná u ofrecé colores alternativos solo si el cliente los pide o si no hay stock de negro o blanco en lo que busca. Si se suministra una tabla de talles, usala solo para responder consultas de medidas o talles y solo cuando corresponda al producto. Respondé con tono cálido, cercano y rioplatense, como una persona que ayuda a elegir: en el primer saludo presentate brevemente como Vendedor IA de Laboratorio Digital y ofrecé ayuda. Luego respondé rápido y breve; evitá tono técnico y no repitas nombre, precio, talle ni stock porque se verán ordenados aparte. No cierres con una sugerencia genérica: la aplicación agregará una continuación basada en las opciones reales mostradas. Si falta un dato decisivo para recomendar, hacé una sola pregunta concreta, pero no ocultes la disponibilidad ya comprobada. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
+            'Actuá como Vendedor IA detrás del mostrador. El catálogo suministrado es la única fuente de verdad sobre productos, precio y stock. Clasificá candidatos como APTO, POSIBLE o NO_APTO; seleccioná y mostrá únicamente los APTO. No confundas productos por palabras compartidas: los bodys nunca responden a remeras. Las remeras sin otra especificación son unisex. Para sublimables, modal es estándar; spum o jersey solo se proponen si se piden o no hay modal. Para papel el tamaño estándar es A4 y no hay opciones para impresora láser. La G después de un número de papel indica gramaje: 200G significa 200 gramos. El gramaje pedido es exacto: 180G no es APTO si se pidió 200G. No inventes propiedades ni disponibilidad. Cuando no se pidió otra condición, las variantes reales de esa familia con stock son APTAS. No ofrezcas colores alternativos salvo pedido expreso o falta de stock en negro/blanco. Usá tabla de talles solo si corresponde. La aplicación ya mostró el saludo inicial: no vuelvas a saludar ni a presentarte. Respondé breve, cálido y rioplatense; no repitas nombre, precio, talle ni stock porque aparecen aparte. Solo preguntá si falta un dato decisivo. No expliques la búsqueda ni uses "Encontré", "la búsqueda devolvió" o "estos son los resultados".',
             [[
                 'role' => 'user',
                 'content' => [[
@@ -144,7 +144,7 @@ final class CatalogAiChatService
         foreach (array_reverse($productRequests) as $request) {
             if (!is_array($request) || trim((string) ($request['product_term'] ?? '')) === '') continue;
             $filters = ['texto' => trim((string) $request['product_term'])];
-            foreach (['talle', 'color', 'material'] as $field) {
+            foreach (['talle', 'color', 'material', 'gramaje'] as $field) {
                 if (($request[$field] ?? null) !== null && trim((string) $request[$field]) !== '') {
                     $filters[$field] = trim((string) $request[$field]);
                 }
@@ -277,12 +277,21 @@ final class CatalogAiChatService
             (string) ($interpretation['product_family'] ?? ''),
             (string) ($interpretation['core_product_term'] ?? ''),
         ]));
-        return array_values(array_filter($rows, function (array $row) use ($need): bool {
+        $paperGramajes = [];
+        foreach ((array) ($interpretation['product_requests'] ?? []) as $request) {
+            if (!is_array($request) || !str_contains($this->fold((string) ($request['product_term'] ?? '')), 'papel')) continue;
+            if (preg_match('/\d+/', (string) ($request['gramaje'] ?? ''), $match)) $paperGramajes[] = $match[0];
+        }
+        return array_values(array_filter($rows, function (array $row) use ($need, $paperGramajes): bool {
             $product = $this->fold((string) ($row['producto'] ?? ''));
             $isBody = (bool) preg_match('/\bbody(s)?\b/u', $product);
             if (str_contains($need, 'remera') && $isBody) return false;
             if (str_contains($need, 'bebe') && !$isBody) return false;
             if (str_contains($need, 'papel') && str_contains($this->fold((string) ($row['producto'] ?? '') . ' ' . (string) ($row['descripcion'] ?? '')), 'laser')) return false;
+            if ($paperGramajes !== [] && str_contains($product, 'papel')) {
+                $details = $this->fold((string) ($row['producto'] ?? '') . ' ' . (string) ($row['descripcion'] ?? ''));
+                if (!array_filter($paperGramajes, static fn (string $gramaje): bool => (bool) preg_match('/\b' . preg_quote($gramaje, '/') . '\s*g\b/u', $details))) return false;
+            }
             return true;
         }));
     }
@@ -351,7 +360,7 @@ final class CatalogAiChatService
     private function interpretationSchema(): array
     {
         $filterProperties = [];
-        foreach (['texto', 'marca', 'categoria', 'material', 'talle', 'color', 'tipo', 'uso', 'atributos', 'codigo'] as $field) {
+        foreach (['texto', 'marca', 'categoria', 'material', 'talle', 'color', 'gramaje', 'tipo', 'uso', 'atributos', 'codigo'] as $field) {
             $filterProperties[$field] = ['type' => ['string', 'null']];
         }
         $requestProperties = [
@@ -359,6 +368,7 @@ final class CatalogAiChatService
             'talle' => ['type' => ['string', 'null']],
             'color' => ['type' => ['string', 'null']],
             'material' => ['type' => ['string', 'null']],
+            'gramaje' => ['type' => ['string', 'null']],
         ];
         return [
             'type' => 'object',

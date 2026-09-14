@@ -82,7 +82,7 @@ final class CatalogAiToolService
     /** @param array<string, mixed> $filters @return array<string, string|int> */
     private function filters(array $filters): array
     {
-        $allowed = ['texto', 'marca', 'categoria', 'material', 'talle', 'color', 'tipo', 'uso', 'atributos', 'variante_id']; $out = [];
+        $allowed = ['texto', 'marca', 'categoria', 'material', 'talle', 'color', 'gramaje', 'tipo', 'uso', 'atributos', 'variante_id']; $out = [];
         foreach ($allowed as $key) if (isset($filters[$key]) && is_scalar($filters[$key])) $out[$key] = $key === 'variante_id' ? (int) $filters[$key] : (function_exists('mb_strtolower') ? mb_strtolower(trim((string) $filters[$key])) : strtolower(trim((string) $filters[$key])));
         return $out;
     }
@@ -91,7 +91,7 @@ final class CatalogAiToolService
     private function matches(array $row, array $filters): bool
     {
         if (isset($filters['variante_id']) && $row['variante_id'] !== $filters['variante_id']) return false;
-        foreach (['texto' => 'identidad', 'marca' => 'detalles', 'categoria' => 'categoria', 'material' => 'detalles', 'talle' => 'talle', 'color' => 'color', 'tipo' => 'identidad', 'uso' => 'detalles', 'atributos' => 'detalles'] as $filter => $field) {
+        foreach (['texto' => 'identidad', 'marca' => 'detalles', 'categoria' => 'categoria', 'material' => 'detalles', 'talle' => 'talle', 'color' => 'color', 'gramaje' => 'detalles', 'tipo' => 'identidad', 'uso' => 'detalles', 'atributos' => 'detalles'] as $filter => $field) {
             $value = match ($field) {
                 'identidad' => implode(' ', [$row['producto'], $row['categoria'], $row['variante']]),
                 'detalles' => implode(' ', [$row['producto'], $row['descripcion'], $row['categoria'], $row['variante']]),
