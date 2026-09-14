@@ -507,6 +507,8 @@ header('Referrer-Policy: same-origin');
                         <button class="secondary-button" id="ai-search-new-conversation" type="button">NUEVA CONVERSACIÓN</button>
                     </div>
 
+                    <section class="settings-card ai-conversation-history" id="ai-conversation-history"><p class="eyebrow">INTERPRETACIONES RECIENTES</p><div id="ai-conversation-history-list"><p class="empty-copy">Cargando conversaciones…</p></div></section>
+
                     <div class="ai-search-layout">
                         <section class="ai-search-chat settings-card" aria-label="Conversación de prueba">
                             <div class="ai-search-messages" id="ai-search-messages">

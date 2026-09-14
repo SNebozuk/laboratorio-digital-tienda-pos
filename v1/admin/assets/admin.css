@@ -4202,6 +4202,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 
 /* Vendedor IA: maqueta local dentro del lenguaje visual del administrador. */
 .ai-search-layout { display:grid; grid-template-columns:minmax(0,1fr) 245px; gap:18px; align-items:start; }
+.ai-conversation-history { margin-bottom:18px; }#ai-conversation-history-list { display:grid; gap:8px; }.ai-conversation-history article { display:grid; gap:3px; padding:9px; border-bottom:1px solid #e7eee8; }.ai-conversation-history article small { color:#667781; }
 .modal:has(.ai-search-dialog) .admin-modal-card { width:min(900px, calc(100vw - 32px)); max-height:min(860px, calc(100vh - 32px)); padding:0; overflow:hidden; background:#efeae2; }
 .ai-search-dialog { display:block !important; }
 .ai-search-dialog .view-heading { min-height:0; margin:0; padding:18px 54px 18px 22px; background:#075e54; color:#fff; }

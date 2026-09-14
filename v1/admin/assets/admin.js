@@ -229,6 +229,7 @@
         aiSearchVoiceEnabled: document.getElementById('ai-search-voice-enabled'),
         aiSearchTalkButton: document.getElementById('ai-search-talk-button'),
         aiSearchMicLevel: document.getElementById('ai-search-mic-level'),
+        aiConversationHistoryList: document.getElementById('ai-conversation-history-list'),
     };
     let aiMicStream = null;
     let aiMicAudioContext = null;
@@ -1058,7 +1059,21 @@
         if (!state.productsLoaded) loadProducts();
         renderAiSearch();
         startAiStatusChecks();
+        loadAiConversationHistory();
         window.requestAnimationFrame(() => elements.aiSearchInput?.focus());
+    }
+
+    async function loadAiConversationHistory() {
+        if (!elements.aiConversationHistoryList) return;
+        try {
+            const data = await apiGet('ai_conversations');
+            const rows = Array.isArray(data.conversations) ? data.conversations : [];
+            elements.aiConversationHistoryList.innerHTML = rows.length ? rows.map(row => {
+                let interpretation = {};
+                try { interpretation = JSON.parse(row.interpretation_json || '{}'); } catch (_) { }
+                return `<article><strong>${escapeHtml(row.last_message || 'Sin mensaje')}</strong><small>${escapeHtml(Object.values(interpretation).filter(value => typeof value === 'string').join(' · ') || 'Sin interpretación')}</small></article>`;
+            }).join('') : '<p class="empty-copy">Todavía no hay conversaciones.</p>';
+        } catch (_) { elements.aiConversationHistoryList.innerHTML = '<p class="empty-copy">No pude cargar las conversaciones.</p>'; }
     }
 
     function renderAiCatalogCards(rows) {

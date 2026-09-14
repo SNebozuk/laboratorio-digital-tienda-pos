@@ -32,6 +32,7 @@ $assetVersion = substr(hash('sha256',
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
 ), 0, 12);
 $searchNormalizerJsVersion = substr(hash_file('sha256', __DIR__ . '/assets/search-normalizer.js') ?: '1', 0, 12);
+$vendorAiJsVersion = substr(hash_file('sha256', __DIR__ . '/assets/vendor-ai.js') ?: '1', 0, 12);
 $creatorLogoVersion = substr((string) hash_file('sha256', __DIR__ . '/assets/kauri-logo.png'), 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
@@ -267,6 +268,15 @@ header('Referrer-Policy: same-origin');
         </svg>
     </a>
 
+    <section class="vendor-ai" id="vendor-ai" aria-label="Vendedor IA" data-state="minimized">
+        <header class="vendor-ai-head" data-vendor-ai-drag>
+            <span class="vendor-ai-status" id="vendor-ai-status">● Verificando IA</span>
+            <div class="vendor-ai-controls"><button class="icon-button" type="button" data-vendor-ai-minimize aria-label="Minimizar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><button class="icon-button" type="button" data-vendor-ai-close aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+        </header>
+        <div class="vendor-ai-body"><div class="vendor-ai-messages" id="vendor-ai-messages"></div><div class="vendor-ai-typing" id="vendor-ai-typing" hidden><i></i>Ya te digo, lo busco en el catálogo.</div><form id="vendor-ai-form"><textarea id="vendor-ai-input" rows="1" placeholder="Escribí tu consulta…"></textarea><button type="submit">ENVIAR</button></form></div>
+    </section>
+    <button class="vendor-ai-launcher" id="vendor-ai-launcher" type="button" aria-label="Abrir Vendedor IA">IA</button>
+
     <div class="modal" id="modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
         <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -311,5 +321,6 @@ header('Referrer-Policy: same-origin');
     <script src="<?= $escape($assetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/search-normalizer.js?v=<?= $escape($searchNormalizerJsVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>
+    <script src="<?= $escape($assetPath) ?>/vendor-ai.js?v=<?= $escape($vendorAiJsVersion) ?>" defer></script>
 </body>
 </html>
