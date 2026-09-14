@@ -729,6 +729,29 @@
         if (quantity > 0 && wasEmpty) checkSurprise();
     }
 
+    function addAiCartItem(variantId, quantity) {
+        const id = Number(variantId);
+        const units = Math.max(1, Math.floor(Number(quantity) || 0));
+        if (!catalogLoaded) {
+            refreshCatalog().then(() => { if (catalogLoaded) addAiCartItem(id, units); });
+            return;
+        }
+        if (!variantIndex.has(id)) return;
+        setQuantity(id, cartQuantity(id) + units);
+    }
+
+    window.addEventListener('laboratorio:ai-search', event => {
+        const query = String(event.detail?.query || '').trim();
+        if (!query) return;
+        elements.search.value = query;
+        elements.search.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    window.addEventListener('laboratorio:ai-add-to-cart', event => addAiCartItem(event.detail?.variantId, event.detail?.quantity));
+    window.addEventListener('laboratorio:ai-open-cart', () => {
+        if (isMobileStorefront()) openMobileCart();
+        else elements.checkout?.focus({ preventScroll: true });
+    });
+
     async function checkSurprise() {
         if (surpriseChecked || !rewardOn('reward_surprise_enabled')) return;
         surpriseChecked = true;

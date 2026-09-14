@@ -323,9 +323,9 @@ final class CatalogAiChatService
         if ($rows === []) return 'Si querés, puedo buscar otro producto del catálogo.';
         $sizes = array_filter(array_unique(array_map(static fn (array $row): string => trim((string) ($row['talle'] ?? '')), $rows)));
         $colors = array_filter(array_unique(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $rows)));
-        if ($sizes !== [] && $colors !== []) return '¿Querés que revisemos otros talles de estas mismas opciones?';
-        if ($sizes !== []) return '¿Querés que revisemos otros talles de estas mismas opciones?';
-        return 'Si querés, puedo comparar estas opciones o buscar otro producto.';
+        if ($sizes !== [] && $colors !== []) return '¿Querés agregar alguna al carrito? Elegí una opción y decime cuántas unidades necesitás.';
+        if ($sizes !== []) return '¿Querés agregar alguna al carrito? Elegí una opción y decime cuántas unidades necesitás.';
+        return '¿Querés agregar alguna al carrito? Elegí una opción y decime cuántas unidades necesitás.';
     }
 
     /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
