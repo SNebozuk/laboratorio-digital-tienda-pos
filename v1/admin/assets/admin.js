@@ -1069,6 +1069,15 @@
             audio.addEventListener('ended', () => URL.revokeObjectURL(audio.src), { once: true });
             await audio.play();
         } catch (_) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.lang = 'es-AR';
+                utterance.rate = 0.96;
+                utterance.pitch = 1.05;
+                window.speechSynthesis.speak(utterance);
+                return;
+            }
             toast('No pude reproducir la voz de respuesta.');
         }
     }
@@ -1127,7 +1136,7 @@
         }
         let stream = aiMicStream?.active ? aiMicStream : null;
         try {
-            if (!stream) stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            if (!stream) stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
         } catch (_) {
             if (elements.aiSearchMicLevel) {
                 elements.aiSearchMicLevel.dataset.state = 'error';

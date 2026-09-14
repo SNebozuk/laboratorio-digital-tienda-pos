@@ -23,7 +23,7 @@ final class CatalogAiAudioService
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . (string) $this->config['openai_api_key']],
-            CURLOPT_POSTFIELDS => ['file' => $audio, 'model' => 'gpt-4o-mini-transcribe', 'language' => 'es', 'prompt' => 'Consulta de catálogo en español rioplatense.'],
+            CURLOPT_POSTFIELDS => ['file' => $audio, 'model' => 'gpt-4o-mini-transcribe', 'language' => 'es'],
             CURLOPT_TIMEOUT => 45,
         ]);
         $body = curl_exec($handle);
