@@ -225,7 +225,11 @@
         aiSearchServiceStatus: document.getElementById('ai-search-service-status'),
         aiSearchVoiceEnabled: document.getElementById('ai-search-voice-enabled'),
         aiSearchTalkButton: document.getElementById('ai-search-talk-button'),
+        aiSearchMicLevel: document.getElementById('ai-search-mic-level'),
     };
+    let aiMicStream = null;
+    let aiMicAudioContext = null;
+    let aiMicAnimationFrame = 0;
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
     const ADMIN_SIDEBAR_COLLAPSED_STORAGE_KEY = 'laboratorio-digital:admin-sidebar-collapsed';
@@ -1056,8 +1060,47 @@
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(message);
         utterance.lang = 'es-AR';
-        utterance.rate = 1;
+        const voices = window.speechSynthesis.getVoices();
+        utterance.voice = voices.find(voice => (
+            /^es(?:-|_)/i.test(voice.lang)
+            && /(female|mujer|elena|helena|sabina|dalia|zira|paulina|luciana|monica|natural)/i.test(voice.name)
+        )) || voices.find(voice => /^es(?:-|_)/i.test(voice.lang)) || null;
+        utterance.rate = 0.96;
+        utterance.pitch = 1.05;
         window.speechSynthesis.speak(utterance);
+    }
+
+    async function startAiMicLevel() {
+        if (!elements.aiSearchMicLevel || !navigator.mediaDevices?.getUserMedia) return;
+        stopAiMicLevel();
+        try {
+            aiMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            aiMicAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = aiMicAudioContext.createAnalyser();
+            analyser.fftSize = 256;
+            aiMicAudioContext.createMediaStreamSource(aiMicStream).connect(analyser);
+            const samples = new Uint8Array(analyser.fftSize);
+            elements.aiSearchMicLevel.hidden = false;
+            const update = () => {
+                analyser.getByteTimeDomainData(samples);
+                const level = samples.reduce((sum, sample) => sum + Math.abs(sample - 128), 0) / samples.length;
+                elements.aiSearchMicLevel.style.setProperty('--mic-level', `${Math.min(100, Math.round(level * 4))}%`);
+                aiMicAnimationFrame = window.requestAnimationFrame(update);
+            };
+            update();
+        } catch (_) {
+            elements.aiSearchMicLevel.hidden = true;
+        }
+    }
+
+    function stopAiMicLevel() {
+        if (aiMicAnimationFrame) window.cancelAnimationFrame(aiMicAnimationFrame);
+        aiMicAnimationFrame = 0;
+        aiMicStream?.getTracks().forEach(track => track.stop());
+        aiMicStream = null;
+        aiMicAudioContext?.close();
+        aiMicAudioContext = null;
+        if (elements.aiSearchMicLevel) elements.aiSearchMicLevel.hidden = true;
     }
 
     function startAiDictation() {
@@ -1070,12 +1113,25 @@
         recognition.lang = 'es-AR';
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
+        elements.aiSearchTalkButton.disabled = true;
+        elements.aiSearchTalkButton.textContent = 'ESCUCHANDO…';
+        startAiMicLevel();
         recognition.onresult = event => {
             elements.aiSearchInput.value = event.results[0][0].transcript;
-            elements.aiSearchInput.focus();
+            sendAiChat();
         };
         recognition.onerror = () => toast('No pude escuchar el mensaje. Intentá de nuevo.');
-        recognition.start();
+        recognition.onend = () => {
+            stopAiMicLevel();
+            elements.aiSearchTalkButton.disabled = false;
+            elements.aiSearchTalkButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"></path></svg>HABLAR';
+        };
+        try {
+            recognition.start();
+        } catch (_) {
+            recognition.onend();
+            toast('No pude iniciar el micrófono. Revisá el permiso del navegador.');
+        }
     }
 
     async function sendAiChat() {

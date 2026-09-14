@@ -4245,6 +4245,9 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .ai-search-voice-toggle input:checked + i::after { transform:translateX(13px); }
 .ai-search-talk-button { display:inline-flex; align-items:center; gap:6px; }
 .ai-search-talk-button svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.ai-search-mic-level { display:inline-flex; align-items:center; gap:6px; color:#5b4fc7; font-size:10px; font-weight:800; letter-spacing:.04em; }
+.ai-search-mic-level i { display:block; width:42px; height:7px; overflow:hidden; border-radius:999px; background:#e1dff2; }
+.ai-search-mic-level i::after { display:block; width:var(--mic-level, 0%); height:100%; border-radius:inherit; background:#5b4fc7; content:""; transition:width .08s ease; }
 .ai-search-interpretation { padding:17px; }
 .ai-search-interpretation .eyebrow { margin:0 0 12px; color:#5b4fc7; font-size:10px; }
 .ai-search-interpretation dl { display:grid; gap:8px; margin:0; }
