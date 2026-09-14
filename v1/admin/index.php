@@ -520,7 +520,7 @@ header('Referrer-Policy: same-origin');
                                 <div class="ai-search-composer-actions">
                                     <label class="ai-search-voice-toggle"><span>Respuesta por voz</span><input id="ai-search-voice-enabled" type="checkbox" checked><i aria-hidden="true"></i></label>
                                     <button class="secondary-button ai-search-talk-button" id="ai-search-talk-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"></path></svg>HABLAR</button>
-                                    <span class="ai-search-mic-level" id="ai-search-mic-level" role="status" hidden><i></i><span>MICRÓFONO</span></span>
+                                    <span class="ai-search-mic-level" id="ai-search-mic-level" role="status" data-state="inactive"><span class="ai-search-mic-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span><span>MICRÓFONO</span></span>
                                     <button class="primary-button" id="ai-search-submit" type="button">ENVIAR</button>
                                 </div>
                             </div>

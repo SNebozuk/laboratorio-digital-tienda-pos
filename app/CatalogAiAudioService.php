@@ -35,4 +35,22 @@ final class CatalogAiAudioService
         if ($text === '') throw new ValidationException('No pude reconocer un mensaje en el audio.');
         return $text;
     }
+
+    public function speech(string $text): string
+    {
+        $handle = curl_init(rtrim((string) ($this->config['openai_base_url'] ?? 'https://api.openai.com/v1'), '/') . '/audio/speech');
+        if (!$handle) throw new \RuntimeException('No se pudo iniciar la voz.');
+        curl_setopt_array($handle, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . (string) $this->config['openai_api_key'], 'Content-Type: application/json'],
+            CURLOPT_POSTFIELDS => json_encode(['model' => 'gpt-4o-mini-tts', 'voice' => 'marin', 'input' => function_exists('mb_substr') ? mb_substr($text, 0, 4096) : substr($text, 0, 4096), 'instructions' => 'Voz femenina joven, cálida, natural y simpática. Español rioplatense, ritmo conversacional.'], JSON_UNESCAPED_UNICODE),
+            CURLOPT_TIMEOUT => 45,
+        ]);
+        $audio = curl_exec($handle);
+        $status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+        curl_close($handle);
+        if ($status < 200 || $status >= 300 || $audio === false) throw new \RuntimeException('No pude generar la voz.');
+        return $audio;
+    }
 }

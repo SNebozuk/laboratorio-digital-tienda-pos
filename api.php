@@ -229,6 +229,14 @@ try {
             $app['auth']->requireUser();
             Http::json(['ok' => true, 'text' => $app['catalog_ai_audio']->transcribe($_FILES['audio'] ?? [])]);
 
+        case 'ai_catalog_speech':
+            $app['auth']->requireUser();
+            $audio = $app['catalog_ai_audio']->speech(trim((string) ($input['text'] ?? '')));
+            header('Content-Type: audio/mpeg');
+            header('Cache-Control: no-store');
+            echo $audio;
+            exit;
+
         case 'ai_catalog_chat':
             $app['auth']->requireUser();
             $history = is_array($input['history'] ?? null) ? array_slice($input['history'], -12) : [];
