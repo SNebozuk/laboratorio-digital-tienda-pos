@@ -225,6 +225,10 @@ try {
     Http::requireCsrf($input);
 
     switch ($action) {
+        case 'ai_catalog_transcribe':
+            $app['auth']->requireUser();
+            Http::json(['ok' => true, 'text' => $app['catalog_ai_audio']->transcribe($_FILES['audio'] ?? [])]);
+
         case 'ai_catalog_chat':
             $app['auth']->requireUser();
             $history = is_array($input['history'] ?? null) ? array_slice($input['history'], -12) : [];

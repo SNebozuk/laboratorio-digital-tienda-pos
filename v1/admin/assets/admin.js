@@ -230,6 +230,7 @@
     let aiMicStream = null;
     let aiMicAudioContext = null;
     let aiMicAnimationFrame = 0;
+    let aiRecorder = null;
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
     const ADMIN_SIDEBAR_COLLAPSED_STORAGE_KEY = 'laboratorio-digital:admin-sidebar-collapsed';
@@ -1063,18 +1064,18 @@
         const voices = window.speechSynthesis.getVoices();
         utterance.voice = voices.find(voice => (
             /^es(?:-|_)/i.test(voice.lang)
-            && /(female|mujer|elena|helena|sabina|dalia|zira|paulina|luciana|monica|natural)/i.test(voice.name)
+            && /(female|mujer|sofia|sofía|mia|mía|laura|elena|helena|sabina|dalia|zira|paulina|luciana|monica|aria|jenny|natural)/i.test(voice.name)
         )) || voices.find(voice => /^es(?:-|_)/i.test(voice.lang)) || null;
         utterance.rate = 0.96;
         utterance.pitch = 1.05;
         window.speechSynthesis.speak(utterance);
     }
 
-    async function startAiMicLevel() {
-        if (!elements.aiSearchMicLevel || !navigator.mediaDevices?.getUserMedia) return;
+    function startAiMicLevel(stream) {
+        if (!elements.aiSearchMicLevel || !stream) return;
         stopAiMicLevel();
         try {
-            aiMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            aiMicStream = stream;
             aiMicAudioContext = new (window.AudioContext || window.webkitAudioContext)();
             const analyser = aiMicAudioContext.createAnalyser();
             analyser.fftSize = 256;
@@ -1103,35 +1104,55 @@
         if (elements.aiSearchMicLevel) elements.aiSearchMicLevel.hidden = true;
     }
 
-    function startAiDictation() {
-        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Recognition) {
-            toast('El navegador no admite dictado por voz.');
+    async function startAiDictation() {
+        if (aiRecorder?.state === 'recording') {
+            aiRecorder.stop();
             return;
         }
-        const recognition = new Recognition();
-        recognition.lang = 'es-AR';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
+        if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+            toast('El navegador no admite captura de audio.');
+            return;
+        }
+        let stream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (_) {
+            toast('No pude iniciar el micrófono. Revisá el permiso del navegador.');
+            return;
+        }
+        const recorder = new MediaRecorder(stream, MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : undefined);
+        aiRecorder = recorder;
+        const chunks = [];
         elements.aiSearchTalkButton.disabled = true;
         elements.aiSearchTalkButton.textContent = 'ESCUCHANDO…';
-        startAiMicLevel();
-        recognition.onresult = event => {
-            elements.aiSearchInput.value = event.results[0][0].transcript;
-            sendAiChat();
+        startAiMicLevel(stream);
+        recorder.ondataavailable = event => {
+            if (event.data.size) chunks.push(event.data);
         };
-        recognition.onerror = () => toast('No pude escuchar el mensaje. Intentá de nuevo.');
-        recognition.onend = () => {
+        recorder.onstop = async () => {
             stopAiMicLevel();
-            elements.aiSearchTalkButton.disabled = false;
-            elements.aiSearchTalkButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"></path></svg>HABLAR';
+            elements.aiSearchTalkButton.textContent = 'TRANSCRIBIENDO…';
+            try {
+                const payload = new FormData();
+                payload.append('action', 'ai_catalog_transcribe');
+                payload.append('csrf_token', app.csrf_token);
+                payload.append('audio', new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }), 'consulta.webm');
+                const response = await fetch(app.api_url, { method: 'POST', headers: { 'X-CSRF-Token': app.csrf_token }, body: payload });
+                const data = await response.json();
+                if (!response.ok || !data.ok) throw new Error(data.error || 'No pude transcribir el audio.');
+                elements.aiSearchInput.value = String(data.text || '');
+                await sendAiChat();
+            } catch (error) {
+                toast(error.message);
+            } finally {
+                aiRecorder = null;
+                elements.aiSearchTalkButton.disabled = false;
+                elements.aiSearchTalkButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"></path></svg>HABLAR';
+            }
         };
-        try {
-            recognition.start();
-        } catch (_) {
-            recognition.onend();
-            toast('No pude iniciar el micrófono. Revisá el permiso del navegador.');
-        }
+        recorder.start();
+        window.setTimeout(() => recorder.state === 'recording' && recorder.stop(), 15000);
+        elements.aiSearchTalkButton.disabled = false;
     }
 
     async function sendAiChat() {
