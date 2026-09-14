@@ -44,8 +44,9 @@ require_once __DIR__ . '/SettingsService.php';
 
 $app['auth'] = new Auth($app['pdo']);
 $app['products'] = new ProductService($app['pdo']);
+$app['settings'] = new SettingsService($app['pdo']);
 $app['catalog_ai_tools'] = new CatalogAiToolService($app['products']);
-$app['catalog_ai_chat'] = new CatalogAiChatService($app['config'], $app['catalog_ai_tools']);
+$app['catalog_ai_chat'] = new CatalogAiChatService($app['config'], $app['catalog_ai_tools'], $app['settings']);
 $app['categories'] = new CategoryService($app['pdo']);
 $app['tutorials'] = new TutorialService($app['pdo']);
 $app['deliveries'] = new DeliveryService($app['pdo']);
@@ -71,6 +72,5 @@ $app['proofs'] = new PaymentProofService(
     $app['receipt_ai']
 );
 $app['backups'] = new BackupService($app['pdo'], $app['config'], $app['root']);
-$app['settings'] = new SettingsService($app['pdo']);
 
 return $app;
