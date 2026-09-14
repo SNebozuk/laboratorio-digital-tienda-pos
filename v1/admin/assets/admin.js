@@ -223,6 +223,8 @@
         aiSearchProducts: document.getElementById('ai-search-products'),
         aiSearchInterpretation: document.getElementById('ai-search-interpretation'),
         aiSearchServiceStatus: document.getElementById('ai-search-service-status'),
+        aiSearchVoiceEnabled: document.getElementById('ai-search-voice-enabled'),
+        aiSearchTalkButton: document.getElementById('ai-search-talk-button'),
     };
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
@@ -1049,6 +1051,33 @@
         elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
     }
 
+    function speakAiReply(message) {
+        if (!elements.aiSearchVoiceEnabled?.checked || !('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'es-AR';
+        utterance.rate = 1;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function startAiDictation() {
+        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Recognition) {
+            toast('El navegador no admite dictado por voz.');
+            return;
+        }
+        const recognition = new Recognition();
+        recognition.lang = 'es-AR';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onresult = event => {
+            elements.aiSearchInput.value = event.results[0][0].transcript;
+            elements.aiSearchInput.focus();
+        };
+        recognition.onerror = () => toast('No pude escuchar el mensaje. Intentá de nuevo.');
+        recognition.start();
+    }
+
     async function sendAiChat() {
         const message = String(elements.aiSearchInput?.value || '').trim();
         if (!message) return;
@@ -1063,6 +1092,7 @@
             const reply = String(data.reply?.message || 'No pude preparar una respuesta.');
             state.aiHistory.push({ role: 'assistant', content: reply });
             elements.aiSearchMessages.innerHTML = state.aiHistory.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASISTENTE'}</small><p>${escapeHtml(item.content)}</p></div>`).join('');
+            speakAiReply(reply);
             const rows = (Array.isArray(data.reply?.display_results) ? data.reply.display_results : []).filter(row => row && row.producto_id && row.variante_id);
             renderAiCatalogCards(rows);
             const interpretation = data.reply?.interpretation && typeof data.reply.interpretation === 'object' ? data.reply.interpretation : {};
@@ -6467,6 +6497,7 @@
             elements.aiSearchSubmit?.click();
         }
     });
+    elements.aiSearchTalkButton?.addEventListener('click', startAiDictation);
     document.getElementById('ai-search-new-conversation')?.addEventListener('click', () => { state.aiHistory = []; renderAiSearch(); });
     elements.productSearchShare?.addEventListener('click', shareProductSearch);
     elements.orderSearch?.addEventListener('input', event => {

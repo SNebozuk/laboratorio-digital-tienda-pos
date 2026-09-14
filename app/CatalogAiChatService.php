@@ -29,7 +29,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Usá conocimiento general para determinar qué quiere hacer, uso final, familia de producto, propiedades relevantes e incompatibilidades conceptuales. Conservá todo dato vigente de la conversación: una frase breve agrega o modifica una condición, no borra las anteriores. No inventes propiedades de productos del negocio. En core_product_term escribí solamente el sustantivo comercial central normalizado, en singular y sin explicaciones (por ejemplo, si piden una familia de productos, el nombre común de esa familia). Generá de una a cinco búsquedas razonables y progresivas para consultar después el catálogo: empezá por la intención más precisa y agregá alternativas conceptuales más amplias. Si el cliente da un código o SKU, conservalo en codigo. No copies necesariamente la frase literal. Tolerá singular/plural, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si un dato cambia sustancialmente la recomendación; si podés avanzar razonablemente, no preguntes.',
+            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Usá conocimiento general para determinar qué quiere hacer, uso final, familia de producto, propiedades relevantes e incompatibilidades conceptuales. Conservá los datos previos solo cuando el cliente siga hablando del mismo producto: una frase breve puede agregar o modificar una condición. Si nombra otro producto, usa expresiones como "ahora", "en cambio" o "también", o pregunta por otra familia, detectá el cambio y no arrastres talle, color, material ni uso del producto anterior. Si pide varios productos en el mismo mensaje, marcá mode como multiple, completá product_requests con uno por producto y mantené sus atributos separados. Para un cambio, mode es changed; para una continuación, continued; para una única consulta nueva, new. Reglas de negocio: para bebé por ahora solo se ofrecen bodys; un body nunca es una remera aunque comparta categoría, por lo que jamás lo incluyas en una búsqueda o recomendación de remeras. En papel, el tamaño estándar es A4 y debés tomarlo como opción por defecto si no se indica medida; no hay papeles para impresoras láser. No inventes propiedades de productos del negocio. En core_product_term escribí solamente el sustantivo comercial central de la consulta actual, normalizado, en singular y sin explicaciones. Generá búsquedas para cada producto pedido: empezá por la intención más precisa y agregá alternativas conceptuales más amplias. Si el cliente da un código o SKU, conservalo en codigo. No copies necesariamente la frase literal. Tolerá singular/plural, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si un dato cambia sustancialmente la recomendación; si podés avanzar razonablemente, no preguntes.',
             $this->historyInput($history)
         );
 
@@ -62,11 +62,12 @@ final class CatalogAiChatService
                 $searchLog = [...$searchLog, ...$globalLog];
             }
         }
+        $rows = $this->applyBusinessRules($rows, $interpretation);
         $sizeGuide = $this->relevantSizeGuide($interpretation, $history, $rows);
         $evaluation = $this->structuredRequest(
             'evaluacion_catalogo',
             $this->evaluationSchema(),
-            'Actuá como vendedor detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Si el cliente pidió solamente una familia de producto sin imponer uso, material u otras condiciones, los productos cuyo nombre corresponde realmente a esa familia son APTO: no inventes requisitos ni digas que no están disponibles si el catálogo muestra stock. En ese caso seleccioná algunas variantes con stock como muestra. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles accesorios, alternativas ni productos POSIBLE o NO_APTO. Si se suministra una tabla de talles, usala solo para responder consultas de medidas o talles y solo cuando corresponda al producto. Respondé con tono cálido, cercano y rioplatense, como una persona que ayuda a elegir: saludá o confirmá brevemente, evitá tono técnico y no repitas nombre, precio, talle ni stock porque se verán ordenados aparte. Terminá siempre con una pregunta breve que proponga una próxima acción útil y concreta, como ver otros colores, talles, materiales o alternativas. Si falta un dato decisivo para recomendar, hacé una sola pregunta concreta, pero no ocultes la disponibilidad ya comprobada. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
+            'Actuá como vendedor detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Para bebé, por ahora solo ofrecemos bodys. Un body no es una remera y nunca debe mostrarse ni proponerse a alguien que pide remeras, aunque pertenezcan a la misma categoría. Para papel, si no se pide otro tamaño, la referencia estándar es A4; no ofrecemos papeles para impresoras láser, así que indicalo con claridad y no sugieras otro papel como apto para una impresora láser. Si el cliente pidió solamente una familia de producto sin imponer uso, material u otras condiciones, los productos cuyo nombre corresponde realmente a esa familia son APTO: no inventes requisitos ni digas que no están disponibles si el catálogo muestra stock. En ese caso seleccioná algunas variantes con stock como muestra. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles accesorios, alternativas ni productos POSIBLE o NO_APTO. Si se suministra una tabla de talles, usala solo para responder consultas de medidas o talles y solo cuando corresponda al producto. Respondé con tono cálido, cercano y rioplatense, como una persona que ayuda a elegir: saludá o confirmá brevemente, evitá tono técnico y no repitas nombre, precio, talle ni stock porque se verán ordenados aparte. No cierres con una sugerencia genérica: la aplicación agregará una continuación basada en las opciones reales mostradas. Si falta un dato decisivo para recomendar, hacé una sola pregunta concreta, pero no ocultes la disponibilidad ya comprobada. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
             [[
                 'role' => 'user',
                 'content' => [[
@@ -111,12 +112,15 @@ final class CatalogAiChatService
             ?: strcmp((string) $a['variante'], (string) $b['variante'])
         );
 
-        return [
-            'message' => $usedExplicitFallback
+        $message = $usedExplicitFallback
                 ? 'Sí, hay opciones disponibles que coinciden con lo que pediste.'
                 : ($usedSimilarFallback
-                    ? 'No hay una coincidencia exacta disponible; estas son las opciones más parecidas que sí tenemos. ¿Querés que siga buscando otro color, talle o material?'
-                    : trim((string) ($evaluation['message'] ?? 'No pude preparar una respuesta.'))),
+                    ? 'No hay una coincidencia exacta disponible; estas son las opciones más parecidas que sí tenemos.'
+                    : trim((string) ($evaluation['message'] ?? 'No pude preparar una respuesta.')));
+        $continuation = $this->continuationSuggestion($displayRows);
+
+        return [
+            'message' => trim($message . ($continuation === '' ? '' : ' ' . $continuation)),
             'raw_tools' => $searchLog,
             'display_results' => array_slice($displayRows, 0, 12),
             'interpretation' => $this->publicInterpretation($interpretation) + [
@@ -146,6 +150,17 @@ final class CatalogAiChatService
         $rowsByVariant = [];
         $log = [];
         $searches = is_array($interpretation['searches'] ?? null) ? array_slice($interpretation['searches'], 0, 5) : [];
+        $productRequests = is_array($interpretation['product_requests'] ?? null) ? array_slice($interpretation['product_requests'], 0, 4) : [];
+        foreach (array_reverse($productRequests) as $request) {
+            if (!is_array($request) || trim((string) ($request['product_term'] ?? '')) === '') continue;
+            $filters = ['texto' => trim((string) $request['product_term'])];
+            foreach (['talle', 'color', 'material'] as $field) {
+                if (($request[$field] ?? null) !== null && trim((string) $request[$field]) !== '') {
+                    $filters[$field] = trim((string) $request[$field]);
+                }
+            }
+            array_unshift($searches, $filters);
+        }
         $coreTerm = trim((string) ($interpretation['core_product_term'] ?? ''));
         if ($coreTerm !== '') array_unshift($searches, ['texto' => $coreTerm]);
         foreach ($searches as $filters) {
@@ -264,6 +279,36 @@ final class CatalogAiChatService
         return strtr($value, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u']);
     }
 
+    /** @param list<array<string,mixed>> $rows @param array<string,mixed> $interpretation @return list<array<string,mixed>> */
+    private function applyBusinessRules(array $rows, array $interpretation): array
+    {
+        $need = $this->fold(implode(' ', [
+            (string) ($interpretation['need'] ?? ''),
+            (string) ($interpretation['product_family'] ?? ''),
+            (string) ($interpretation['core_product_term'] ?? ''),
+        ]));
+        return array_values(array_filter($rows, function (array $row) use ($need): bool {
+            $product = $this->fold((string) ($row['producto'] ?? ''));
+            $isBody = (bool) preg_match('/\bbody(s)?\b/u', $product);
+            if (str_contains($need, 'remera') && $isBody) return false;
+            if (str_contains($need, 'bebe') && !$isBody) return false;
+            if (str_contains($need, 'papel') && str_contains($this->fold((string) ($row['producto'] ?? '') . ' ' . (string) ($row['descripcion'] ?? '')), 'laser')) return false;
+            return true;
+        }));
+    }
+
+    /** @param list<array<string,mixed>> $rows */
+    private function continuationSuggestion(array $rows): string
+    {
+        if ($rows === []) return 'Si querés, también podemos buscar otro producto.';
+        $sizes = array_filter(array_unique(array_map(static fn (array $row): string => trim((string) ($row['talle'] ?? '')), $rows)));
+        $colors = array_filter(array_unique(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $rows)));
+        if ($sizes !== [] && $colors !== []) return '¿Querés que revisemos otros talles o colores de estas mismas opciones?';
+        if ($sizes !== []) return '¿Querés que revisemos otros talles de estas mismas opciones?';
+        if ($colors !== []) return '¿Querés que revisemos otros colores de estas mismas opciones?';
+        return 'Si querés, puedo comparar estas opciones o buscar otro producto.';
+    }
+
     /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
     private function compactCandidates(array $rows): array
     {
@@ -320,6 +365,12 @@ final class CatalogAiChatService
         foreach (['texto', 'marca', 'categoria', 'material', 'talle', 'color', 'tipo', 'uso', 'atributos', 'codigo'] as $field) {
             $filterProperties[$field] = ['type' => ['string', 'null']];
         }
+        $requestProperties = [
+            'product_term' => ['type' => 'string'],
+            'talle' => ['type' => ['string', 'null']],
+            'color' => ['type' => ['string', 'null']],
+            'material' => ['type' => ['string', 'null']],
+        ];
         return [
             'type' => 'object',
             'additionalProperties' => false,
@@ -327,6 +378,8 @@ final class CatalogAiChatService
                 'need' => ['type' => 'string'],
                 'product_family' => ['type' => 'string'],
                 'core_product_term' => ['type' => 'string'],
+                'mode' => ['type' => 'string', 'enum' => ['new', 'continued', 'changed', 'multiple']],
+                'product_requests' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => false, 'properties' => $requestProperties, 'required' => array_keys($requestProperties)]],
                 'use' => ['type' => 'string'],
                 'relevant_factors' => ['type' => 'array', 'items' => ['type' => 'string']],
                 'incompatibilities' => ['type' => 'array', 'items' => ['type' => 'string']],
@@ -334,7 +387,7 @@ final class CatalogAiChatService
                 'question' => ['type' => ['string', 'null']],
                 'searches' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => false, 'properties' => $filterProperties, 'required' => array_keys($filterProperties)]],
             ],
-            'required' => ['need', 'product_family', 'core_product_term', 'use', 'relevant_factors', 'incompatibilities', 'needs_clarification', 'question', 'searches'],
+            'required' => ['need', 'product_family', 'core_product_term', 'mode', 'product_requests', 'use', 'relevant_factors', 'incompatibilities', 'needs_clarification', 'question', 'searches'],
         ];
     }
 
