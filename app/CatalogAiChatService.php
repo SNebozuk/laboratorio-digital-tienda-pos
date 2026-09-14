@@ -42,7 +42,16 @@ final class CatalogAiChatService
             ];
         }
 
+        $explicitRows = $this->explicitCatalogMatches($interpretation, $history);
+        $similarRows = $explicitRows === [] && $this->hasExplicitVariantAttribute($history)
+            ? $this->similarCatalogMatches($interpretation)
+            : [];
         [$rows, $searchLog] = $this->searchCandidates($interpretation);
+        $rowsByVariant = [];
+        foreach ([...$rows, ...$explicitRows] as $row) {
+            $rowsByVariant[(int) $row['variante_id']] = $row;
+        }
+        $rows = array_values($rowsByVariant);
         $searchedGlobally = false;
         if ($rows === []) {
             $searchedGlobally = true;
@@ -57,7 +66,7 @@ final class CatalogAiChatService
         $evaluation = $this->structuredRequest(
             'evaluacion_catalogo',
             $this->evaluationSchema(),
-            'Actuá como vendedor detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Si el cliente pidió solamente una familia de producto sin imponer uso, material u otras condiciones, los productos cuyo nombre corresponde realmente a esa familia son APTO: no inventes requisitos ni digas que no están disponibles si el catálogo muestra stock. En ese caso seleccioná algunas variantes con stock como muestra y respondé que sí hay, aunque luego puedas hacer una pregunta breve para precisar. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles accesorios, alternativas ni productos POSIBLE o NO_APTO. Si se suministra una tabla de talles, usala solo para responder consultas de medidas o talles y solo cuando corresponda al producto. Si falta un dato decisivo para recomendar, hacé una sola pregunta concreta, pero no ocultes la disponibilidad ya comprobada. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
+            'Actuá como vendedor detrás del mostrador. Evaluá los candidatos reales contra la necesidad ya interpretada usando conocimiento general para decidir compatibilidad, pero tratá el catálogo suministrado como única fuente de verdad sobre nombre, descripción, categoría, variante, precio y stock. Clasificá cada candidato relevante como APTO, POSIBLE o NO_APTO. Un producto que comparte una palabra no es necesariamente recomendable: descartá como NO_APTO cualquier incompatibilidad de uso. Si el cliente pidió solamente una familia de producto sin imponer uso, material u otras condiciones, los productos cuyo nombre corresponde realmente a esa familia son APTO: no inventes requisitos ni digas que no están disponibles si el catálogo muestra stock. En ese caso seleccioná algunas variantes con stock como muestra. Seleccioná para mostrar únicamente variantes APTO que respondan a la intención actual; no mezcles accesorios, alternativas ni productos POSIBLE o NO_APTO. Si se suministra una tabla de talles, usala solo para responder consultas de medidas o talles y solo cuando corresponda al producto. Respondé con tono cálido, cercano y rioplatense, como una persona que ayuda a elegir: saludá o confirmá brevemente, evitá tono técnico y no repitas nombre, precio, talle ni stock porque se verán ordenados aparte. Terminá siempre con una pregunta breve que proponga una próxima acción útil y concreta, como ver otros colores, talles, materiales o alternativas. Si falta un dato decisivo para recomendar, hacé una sola pregunta concreta, pero no ocultes la disponibilidad ya comprobada. Respondé breve y natural, sin explicar búsquedas ni usar frases como "Encontré", "la búsqueda devolvió" o "estos son los resultados". No inventes productos ni propiedades.',
             [[
                 'role' => 'user',
                 'content' => [[
@@ -83,6 +92,19 @@ final class CatalogAiChatService
             $rows,
             static fn (array $row): bool => isset($selectedIds[(int) $row['variante_id']], $aptIds[(int) $row['variante_id']])
         ));
+        $usedExplicitFallback = false;
+        if ($displayRows === [] && $explicitRows !== []) {
+            $displayRows = array_values(array_filter(
+                $explicitRows,
+                static fn (array $row): bool => $row['stock'] === null || (int) $row['stock'] > 0
+            ));
+            $usedExplicitFallback = $displayRows !== [];
+        }
+        $usedSimilarFallback = false;
+        if ($displayRows === [] && $similarRows !== []) {
+            $displayRows = $similarRows;
+            $usedSimilarFallback = true;
+        }
         usort($displayRows, static fn (array $a, array $b): int =>
             (($b['stock'] > 0) <=> ($a['stock'] > 0))
             ?: strcmp((string) $a['producto'], (string) $b['producto'])
@@ -90,7 +112,11 @@ final class CatalogAiChatService
         );
 
         return [
-            'message' => trim((string) ($evaluation['message'] ?? 'No pude preparar una respuesta.')),
+            'message' => $usedExplicitFallback
+                ? 'Sí, hay opciones disponibles que coinciden con lo que pediste.'
+                : ($usedSimilarFallback
+                    ? 'No hay una coincidencia exacta disponible; estas son las opciones más parecidas que sí tenemos. ¿Querés que siga buscando otro color, talle o material?'
+                    : trim((string) ($evaluation['message'] ?? 'No pude preparar una respuesta.'))),
             'raw_tools' => $searchLog,
             'display_results' => array_slice($displayRows, 0, 12),
             'interpretation' => $this->publicInterpretation($interpretation) + [
@@ -137,6 +163,48 @@ final class CatalogAiChatService
             foreach ($result as $row) $rowsByVariant[(int) $row['variante_id']] = $row;
         }
         return [array_values($rowsByVariant), $log];
+    }
+
+    /** @param array<string,mixed> $interpretation @param list<array{role:string,content:string}> $history @return list<array<string,mixed>> */
+    private function explicitCatalogMatches(array $interpretation, array $history): array
+    {
+        $lastMessage = '';
+        foreach (array_reverse($history) as $message) {
+            if (($message['role'] ?? '') === 'user') {
+                $lastMessage = (string) ($message['content'] ?? '');
+                break;
+            }
+        }
+        $filters = ['texto' => trim((string) ($interpretation['core_product_term'] ?? ''))];
+        if (preg_match('/\btalle\s*([[:alnum:].-]+)/iu', $lastMessage, $size)) {
+            $filters['talle'] = $size[1];
+        }
+        $colors = ['negro', 'negra', 'blanco', 'blanca', 'rojo', 'roja', 'azul', 'verde', 'gris', 'rosa', 'amarillo', 'amarilla', 'violeta', 'naranja', 'beige', 'marron', 'marrón'];
+        foreach ($colors as $color) {
+            if (preg_match('/\b' . preg_quote($color, '/') . '\b/iu', $lastMessage)) {
+                $filters['color'] = $color;
+                break;
+            }
+        }
+        return $filters['texto'] === '' ? [] : $this->tools->buscarProductos($filters);
+    }
+
+    /** @param list<array{role:string,content:string}> $history */
+    private function hasExplicitVariantAttribute(array $history): bool
+    {
+        $text = implode(' ', array_map(static fn (array $message): string => (string) ($message['content'] ?? ''), $history));
+        return (bool) preg_match('/\btalle\s*[[:alnum:].-]+\b|\b(negro|negra|blanco|blanca|rojo|roja|azul|verde|gris|rosa|amarillo|amarilla|violeta|naranja|beige|marron|marrón)\b/iu', $text);
+    }
+
+    /** @param array<string,mixed> $interpretation @return list<array<string,mixed>> */
+    private function similarCatalogMatches(array $interpretation): array
+    {
+        $term = trim((string) ($interpretation['core_product_term'] ?? ''));
+        if ($term === '') return [];
+        return array_slice(array_values(array_filter(
+            $this->tools->buscarProductos(['texto' => $term]),
+            static fn (array $row): bool => $row['stock'] === null || (int) $row['stock'] > 0
+        )), 0, 12);
     }
 
     /** @param array<string,mixed> $interpretation @param list<array{role:string,content:string}> $history @return list<array<string,mixed>> */

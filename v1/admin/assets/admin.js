@@ -1006,12 +1006,15 @@
     }
 
     function renderAiCatalogCards(rows) {
-        elements.aiSearchProducts.innerHTML = rows.slice(0, 12).map(row => {
-            const image = safeImage(row.imagen);
+        if (!rows.length) {
+            elements.aiSearchProducts.innerHTML = '';
+            return;
+        }
+        elements.aiSearchProducts.innerHTML = `<section class="ai-search-results" aria-label="Productos ofrecidos"><p class="eyebrow">PRODUCTOS OFRECIDOS</p><div class="ai-search-results-table-wrap"><table class="ai-search-results-table"><thead><tr><th>PRODUCTO</th><th>VARIANTE</th><th>PRECIO</th><th>STOCK</th><th><span class="sr-only">Ver producto</span></th></tr></thead><tbody>${rows.slice(0, 12).map(row => {
             const price = row.precio === null ? 'Precio a consultar' : money(Number(row.precio) * 100);
             const stock = row.stock === null ? 'Stock a consultar' : Number(row.stock) > 0 ? `Stock: ${Number(row.stock)}` : 'Sin stock';
-            return `<article class="ai-search-product-card">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(row.producto)}">` : '<div class="product-admin-placeholder">SIN FOTO</div>'}<div><strong>${escapeHtml(row.producto)}</strong><small>${escapeHtml(row.categoria || 'Sin categoría')}</small><span>Variante: ${escapeHtml(row.variante || 'Única')}</span><b>${escapeHtml(price)}</b><em>${escapeHtml(stock)}</em></div><a class="secondary-button" href="${escapeHtml(productShareUrl(row.producto_id))}" target="_blank" rel="noopener">VER PRODUCTO</a></article>`;
-        }).join('');
+            return `<tr><td><strong>${escapeHtml(row.producto)}</strong><small>${escapeHtml(row.categoria || 'Sin categoría')}</small></td><td>${escapeHtml(row.variante || 'Única')}</td><td><b>${escapeHtml(price)}</b></td><td><em class="${row.stock !== null && Number(row.stock) === 0 ? 'is-empty' : ''}">${escapeHtml(stock)}</em></td><td><a class="secondary-button" href="${escapeHtml(productShareUrl(row.producto_id))}" target="_blank" rel="noopener">VER</a></td></tr>`;
+        }).join('')}</tbody></table></div></section>`;
     }
 
     function setAiServiceStatus(status) {
