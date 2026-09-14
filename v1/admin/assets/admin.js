@@ -457,10 +457,6 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        if (view === 'ai-search') {
-            openAiChatDialog();
-            return;
-        }
         const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
@@ -488,10 +484,8 @@
         if (view === 'products') {
             loadProducts();
         }
-        if (view === 'ai-search' && !state.productsLoaded) {
-            loadProducts();
-        }
         if (view === 'ai-search') {
+            loadAiConversationHistory();
             startAiStatusChecks();
         } else if (state.aiStatusTimer) {
             window.clearInterval(state.aiStatusTimer);

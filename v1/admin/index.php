@@ -501,41 +501,12 @@ header('Referrer-Policy: same-origin');
                     <div class="view-heading ai-search-heading">
                         <div>
                             <h1 class="admin-page-title">VENDEDOR IA</h1>
-                            <p>Probá cómo el Vendedor IA respondería a las consultas de un cliente.</p>
+                            <p>Historial e interpretaciones del chat público.</p>
                         </div>
                         <span class="ai-search-service-status is-checking" id="ai-search-service-status" role="status">🟡 Verificando IA…</span>
-                        <button class="secondary-button" id="ai-search-new-conversation" type="button">NUEVA CONVERSACIÓN</button>
                     </div>
 
                     <section class="settings-card ai-conversation-history" id="ai-conversation-history"><p class="eyebrow">INTERPRETACIONES RECIENTES</p><div id="ai-conversation-history-list"><p class="empty-copy">Cargando conversaciones…</p></div></section>
-
-                    <div class="ai-search-layout">
-                        <section class="ai-search-chat settings-card" aria-label="Conversación de prueba">
-                            <div class="ai-search-messages" id="ai-search-messages">
-                                <div class="ai-search-message ai-search-message-assistant"><small>VENDEDOR IA</small><p>¡Hola! Soy el Vendedor IA de Laboratorio Digital. ¿En qué te ayudo?</p></div>
-                            </div>
-
-                            <div class="ai-search-products" id="ai-search-products" aria-label="Resultados del catálogo"></div>
-
-                            <div class="ai-search-composer">
-                                <textarea id="ai-search-input" rows="2" placeholder="Escribí como lo haría un cliente…" aria-label="Mensaje de prueba"></textarea>
-                                <div class="ai-search-composer-actions">
-                                    <label class="ai-search-voice-toggle" hidden><span>Respuesta por voz</span><input id="ai-search-voice-enabled" type="checkbox"><i aria-hidden="true"></i></label>
-                                    <button class="secondary-button ai-search-talk-button" id="ai-search-talk-button" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"></path></svg>HABLAR</button>
-                                    <span class="ai-search-mic-level" id="ai-search-mic-level" role="status" data-state="inactive" hidden><span class="ai-search-mic-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span><span>MICRÓFONO APAGADO</span></span>
-                                    <button class="primary-button" id="ai-search-submit" type="button">ENVIAR</button>
-                                </div>
-                            </div>
-                        </section>
-
-                <aside class="ai-search-interpretation settings-card" hidden>
-                            <p class="eyebrow">INTERPRETACIÓN</p>
-                            <dl id="ai-search-interpretation">
-                                <div><dt>Búsqueda</dt><dd>Sin consulta</dd></div>
-                                <div><dt>Resultados</dt><dd>—</dd></div>
-                            </dl>
-                        </aside>
-                    </div>
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>
