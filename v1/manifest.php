@@ -9,17 +9,25 @@ header('X-Content-Type-Options: nosniff');
   "short_name": "Laboratorio Digital",
   "description": "Catálogo mayorista de Laboratorio Digital.",
   "lang": "es-AR",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "prefer_related_applications": false,
   "background_color": "#f7faf7",
   "theme_color": "#f7faf7",
   "icons": [
     {
-      "src": "assets/favicon.png",
-      "sizes": "1254x1254",
+      "src": "assets/pwa-icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

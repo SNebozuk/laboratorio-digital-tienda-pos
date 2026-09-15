@@ -21,7 +21,7 @@
         if (!isStandalone && !isDismissed()) prompt.hidden = false;
     };
 
-    navigator.serviceWorker.register('./service-worker.js').catch(() => {
+    navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' }).catch(() => {
         // La tienda funciona normalmente si el navegador no puede registrar la PWA.
     });
 

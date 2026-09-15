@@ -22,6 +22,7 @@
     let checkoutStep = null;
     const checkoutCustomer = {};
     const escape = value => String(value || '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
+    const fold = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const appendMessage = (role, content) => {
         messages.insertAdjacentHTML('beforeend', `<div class="vendor-ai-message ${role === 'user' ? 'is-user' : ''}">${escape(content)}</div>`);
         messages.scrollTop = messages.scrollHeight;
@@ -74,6 +75,79 @@
                 },
             },
         }));
+    };
+    const cartCommand = (action, detail = {}) => new Promise(resolve => {
+        window.dispatchEvent(new CustomEvent('laboratorio:ai-cart-command', { detail: { action, ...detail, onResult: resolve } }));
+    });
+    const cartDescription = items => items.length
+        ? items.map(item => `${item.quantity} × ${item.name}`).join(', ')
+        : '';
+    const cartTarget = text => text
+        .replace(/\b(?:sac[áa]|quit[áa]|elimin[áa]|borr[áa]|remov[ée]|sum[áa]|agreg[áa]|aument[áa]|rest[áa]|descont[áa]|baj[áa]|cambi[áa]|pon[ée]|dej[áa])\w*\b/giu, ' ')
+        .replace(/\b\d+\b/g, ' ')
+        .replace(/\b(?:del?|al?|en|el|la|los|las|mi|carrito|pedido|cantidad|unidades?|productos?|m[áa]s|menos)\b/giu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const reportCartResult = (result, success) => {
+        if (result?.ok) {
+            appendMessage('assistant', success(result));
+            return;
+        }
+        if (result?.reason === 'empty') appendMessage('assistant', 'El carrito está vacío. Primero elegí un producto del catálogo.');
+        else if (result?.reason === 'stock') appendMessage('assistant', `No puedo dejar esa cantidad de ${result.item.name}: hay ${result.available} disponible${result.available === 1 ? '' : 's'}.`);
+        else if (result?.reason === 'ambiguous') appendMessage('assistant', `Encontré más de una coincidencia en el carrito: ${cartDescription(result.matches)}. Decime cuál querés modificar.`);
+        else if (result?.reason === 'maintenance') appendMessage('assistant', 'El carrito está pausado por mantenimiento y no puedo modificarlo ahora.');
+        else if (result?.reason === 'invalid_quantity') appendMessage('assistant', 'Indicame una cantidad válida, igual o mayor que cero.');
+        else appendMessage('assistant', 'No encontré ese producto en el carrito. Podés preguntarme qué contiene para identificarlo.');
+    };
+    const handleCartMessage = async text => {
+        const normalized = fold(text);
+        const quantityMatch = normalized.match(/\b(\d+)\b/);
+        const quantity = quantityMatch ? Number(quantityMatch[1]) : null;
+        if (/\b(vaci\w*|limpi\w*)\b[\s\S]*\b(carrito|pedido)\b|\b(elimin\w*|borr\w*|quit\w*)\b[\s\S]*\b(todo|todos)\b/iu.test(normalized)) {
+            const result = await cartCommand('clear');
+            reportCartResult(result, () => 'Listo, vacié el carrito.');
+            return true;
+        }
+        if (/\b(finaliz\w*|termin\w*|complet\w*|confirm\w*)\b[\s\S]*\b(compra|carrito|pedido)\b|\bcheckout\b|^\s*(finaliz\w*|termin\w*)\s*[.!]?\s*$/iu.test(normalized)) {
+            const result = await cartCommand('checkout');
+            reportCartResult(result, () => 'Abrí la confirmación del pedido para que completes o revises tus datos.');
+            return true;
+        }
+        if (/\b(que|qué)\b[\s\S]*\b(hay|tengo|tenemos|contiene)\b[\s\S]*\b(carrito|pedido)\b|\b(resumen|contenido)\b[\s\S]*\b(carrito|pedido)\b/iu.test(normalized)) {
+            const result = await cartCommand('summary');
+            reportCartResult(result, value => value.items.length ? `En el carrito tenés ${cartDescription(value.items)}.` : 'El carrito está vacío.');
+            return true;
+        }
+        if (/\b(abr\w*|mostr\w*|ver)\b[\s\S]*\b(carrito|pedido)\b/iu.test(normalized)) {
+            const result = await cartCommand('open');
+            reportCartResult(result, value => value.items.length ? `Te muestro el carrito: ${cartDescription(value.items)}.` : 'Te muestro el carrito; por ahora está vacío.');
+            return true;
+        }
+        const target = cartTarget(text);
+        if (/\b(sac\w*|quit\w*|elimin\w*|borr\w*|remov\w*)\b/iu.test(normalized) && !/\b(todo|todos)\b/iu.test(normalized)) {
+            const result = await cartCommand('remove', { query: target });
+            reportCartResult(result, value => `Listo, quité ${value.item.name} del carrito.`);
+            return true;
+        }
+        if (quantity !== null && /\b(cambi\w*|pon\w*|dej\w*|fij\w*)\b/iu.test(normalized)) {
+            const result = await cartCommand('set', { query: target, quantity });
+            reportCartResult(result, value => quantity === 0 ? `Listo, quité ${value.item.name} del carrito.` : `Listo, dejé ${quantity} unidad${quantity === 1 ? '' : 'es'} de ${value.item.name}.`);
+            return true;
+        }
+        if (/\b(rest\w*|descont\w*|baj\w*)\b/iu.test(normalized)) {
+            const change = -(quantity || 1);
+            const result = await cartCommand('change', { query: target, quantity: change });
+            reportCartResult(result, value => value.item.quantity > 0 ? `Listo, quedaron ${value.item.quantity} unidad${value.item.quantity === 1 ? '' : 'es'} de ${value.item.name}.` : `Listo, quité ${value.item.name} del carrito.`);
+            return true;
+        }
+        if (/\b(sum\w*|aument\w*)\b|\bagreg\w*\b[\s\S]*\bm[áa]s\b/iu.test(normalized)) {
+            const change = quantity || 1;
+            const result = await cartCommand('change', { query: target, quantity: change });
+            reportCartResult(result, value => `Listo, ahora hay ${value.item.quantity} unidad${value.item.quantity === 1 ? '' : 'es'} de ${value.item.name}.`);
+            return true;
+        }
+        return false;
     };
 
     launcher.hidden = true;
@@ -140,6 +214,7 @@
             }
             return;
         }
+        if (await handleCartMessage(text)) return;
         renderResults([]);
         typing.hidden = false;
         try {

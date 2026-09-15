@@ -23,6 +23,9 @@ final class CatalogAiChatService
     /** @param list<array{role:string,content:string}> $history @return array<string,mixed> */
     public function reply(array $history): array
     {
+        $basicReply = $this->basicStoreReply($history);
+        if ($basicReply !== null) return $basicReply;
+
         if (trim((string) ($this->config['openai_api_key'] ?? '')) === '') {
             throw new \RuntimeException('Configurá OPENAI_API_KEY en el servidor para usar el Asesor IA.');
         }
@@ -138,6 +141,52 @@ final class CatalogAiChatService
             'interpretation' => $this->publicInterpretation($interpretation) + [
                 'origen_busqueda' => 'Catálogo',
             ],
+        ];
+    }
+
+    /** @param list<array{role:string,content:string}> $history @return array<string,mixed>|null */
+    private function basicStoreReply(array $history): ?array
+    {
+        $message = '';
+        foreach (array_reverse($history) as $item) {
+            if (($item['role'] ?? '') === 'user') {
+                $message = $this->fold((string) ($item['content'] ?? ''));
+                break;
+            }
+        }
+        if ($message === '') return null;
+
+        $settings = $this->settings->values();
+        $answers = [];
+        if (preg_match('/\b(horario|horarios|hora|horas|atienden|atencion|abren|abre|abierto|abierta|cierran|cierra)\b/u', $message)) {
+            $hours = trim((string) ($settings['business_hours'] ?? ''));
+            $answers[] = $hours !== '' ? 'Nuestro horario de atención es: ' . $hours . '.' : 'El horario de atención no está publicado en este momento.';
+        }
+        if (preg_match('/\b(formas?|medios?)\s+de\s+pago\b|\b(como|donde)\s+(puedo\s+)?pagar\b|\b(pagar|pago|pagos|transferencia|efectivo|tarjeta|mercado\s*pago)\b/u', $message)) {
+            $answers[] = 'En la tienda web, el pago se realiza únicamente por transferencia bancaria. Los datos aparecen después de confirmar el pedido.';
+        }
+        if (preg_match('/\b(whatsapp|telefono|contacto|contactar|comunicar)\b/u', $message)) {
+            $phone = preg_replace('/\D+/', '', (string) ($settings['whatsapp_number'] ?? ''));
+            $answers[] = $phone !== '' ? 'Podés contactarnos por WhatsApp al +' . $phone . '.' : 'El número de WhatsApp no está publicado en este momento.';
+        }
+        if (preg_match('/\b(direccion|ubicacion|donde\s+estan|donde\s+queda|retirar|retiro|local)\b/u', $message)) {
+            $address = trim((string) ($settings['pickup_address'] ?? ''));
+            $answers[] = $address !== '' ? 'El retiro es en ' . $address . '.' : 'La dirección de retiro no está publicada en este momento.';
+        }
+        if (preg_match('/\b(envio|envios|entrega|entregas|despacho|despachos)\b/u', $message)) {
+            $phone = preg_replace('/\D+/', '', (string) ($settings['whatsapp_number'] ?? ''));
+            $answers[] = $phone !== ''
+                ? 'Para consultar opciones de entrega o envío, escribinos por WhatsApp al +' . $phone . '.'
+                : 'Las opciones de entrega o envío se coordinan directamente con la tienda.';
+        }
+        if ($answers === []) return null;
+
+        return [
+            'message' => implode(' ', array_values(array_unique($answers))),
+            'raw_tools' => [],
+            'display_results' => [],
+            'needs_clarification' => false,
+            'interpretation' => ['necesidad' => 'Información de la tienda', 'familia' => '', 'uso' => ''],
         ];
     }
 
@@ -629,6 +678,8 @@ final class CatalogAiChatService
     /** @param list<array{role:string,content:string}> $history @param list<array<string,mixed>> $rows @param array<string,mixed> $facts */
     private function composeResponse(array $history, array $interpretation, array $rows, array $facts, string $fallback): string
     {
+        if ($rows === []) return $fallback;
+
         try {
             $response = $this->structuredRequest(
                 'respuesta_catalogo',
