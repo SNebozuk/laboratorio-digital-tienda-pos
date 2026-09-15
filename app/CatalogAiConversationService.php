@@ -16,7 +16,10 @@ final class CatalogAiConversationService
     {
         $query = $this->pdo->prepare('SELECT role, content FROM ai_chat_messages WHERE conversation_token = :token ORDER BY id ASC');
         $query->execute(['token' => $token]);
-        return array_map(static fn (array $row): array => ['role' => $row['role'], 'content' => $row['content']], $query->fetchAll());
+        return array_map(fn (array $row): array => [
+            'role' => $row['role'],
+            'content' => $this->customerText((string) $row['content']),
+        ], $query->fetchAll());
     }
 
     /** @return array<string,mixed> */
@@ -25,7 +28,8 @@ final class CatalogAiConversationService
         $this->pdo->prepare('INSERT OR IGNORE INTO ai_chat_conversations(token, updated_at) VALUES(:token, CURRENT_TIMESTAMP)')->execute(['token' => $token]);
         $this->add($token, 'user', $message, null);
         $reply = $this->chat->reply(array_slice($this->history($token), -16));
-        $this->add($token, 'assistant', (string) $reply['message'], $reply['interpretation'] ?? null);
+        $reply['message'] = $this->customerText((string) $reply['message']);
+        $this->add($token, 'assistant', $reply['message'], $reply['interpretation'] ?? null);
         $this->pdo->prepare('UPDATE ai_chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE token = :token')->execute(['token' => $token]);
         $reply['human_help'] = ($reply['display_results'] ?? []) === [] && ($reply['raw_tools'] ?? []) !== [] && empty($reply['needs_clarification']) ? $this->humanHelp() : null;
         return $reply;
@@ -43,6 +47,13 @@ final class CatalogAiConversationService
             'token' => $token, 'role' => $role, 'content' => $content,
             'interpretation' => is_array($interpretation) ? json_encode($interpretation, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '',
         ]);
+    }
+
+    private function customerText(string $content): string
+    {
+        $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $content = (string) preg_replace('/[^\p{Latin}\p{N}\p{P}\p{Z}\p{S}\r\n]/u', '', $content);
+        return trim((string) preg_replace('/[^\S\r\n]+/u', ' ', $content));
     }
 
     /** @return array<string,string|bool> */

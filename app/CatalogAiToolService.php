@@ -97,7 +97,7 @@ final class CatalogAiToolService
         if (isset($filters['variante_id']) && $row['variante_id'] !== $filters['variante_id']) return false;
         foreach (['texto' => 'identidad', 'marca' => 'detalles', 'categoria' => 'categoria', 'material' => 'detalles', 'talle' => 'talle', 'color' => 'color', 'gramaje' => 'detalles', 'tamano' => 'detalles', 'tipo' => 'detalles', 'uso' => 'detalles', 'atributos' => 'detalles'] as $filter => $field) {
             $value = match ($field) {
-                'identidad' => implode(' ', [$row['producto'], $row['categoria'], $row['variante']]),
+                'identidad' => implode(' ', [$row['producto'], $row['descripcion'], $row['categoria'], $row['variante']]),
                 'detalles' => implode(' ', [$row['producto'], $row['descripcion'], $row['categoria'], $row['variante']]),
                 default => (string) ($row[$field] ?? ''),
             };
@@ -113,6 +113,8 @@ final class CatalogAiToolService
         if ($compactQuery !== '' && str_contains($compactValue, $compactQuery)) return true;
         $words = preg_split('/[^a-z0-9]+/', $value, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         $terms = preg_split('/[^a-z0-9]+/', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $ignored = ['de', 'del', 'para', 'por', 'favor', 'quiero', 'quisiera', 'necesito', 'busco', 'buscar', 'mostrame', 'mostrar', 'dame', 'comprar', 'compra', 'tenes', 'tienen', 'hay', 'un', 'una', 'unos', 'unas', 'el', 'la', 'los', 'las'];
+        $terms = array_values(array_diff($terms, $ignored));
         foreach ($terms as $term) {
             $found = false;
             foreach ($words as $word) {
