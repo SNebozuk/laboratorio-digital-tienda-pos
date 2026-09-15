@@ -48,6 +48,7 @@ if ($checkoutGoogleCustomer === null) {
     $loginLogoText = trim((string) ($design['logo_text'] ?? '')) ?: 'Laboratorio Digital';
     $loginLogoImage = trim((string) ($design['logo_path'] ?? ''));
     $loginBackground = trim((string) ($design['hero_1_path'] ?? ''));
+    $loginPreviewProducts = array_slice($app['products']->publicCatalog(), 0, 3);
     ?>
     <!doctype html>
     <html lang="es"><head>
@@ -58,12 +59,15 @@ if ($checkoutGoogleCustomer === null) {
         <link rel="stylesheet" href="<?= $escapeLogin($assetPath) ?>/light.css?v=<?= $escapeLogin($assetVersion) ?>">
     </head><body class="store-login-page">
         <main class="store-login-background"<?= $loginBackground !== '' ? ' style="background-image:url(' . $escapeLogin($loginBackground) . ')"' : '' ?>>
-            <div class="store-login-store-preview" aria-hidden="true"><header><span>☰ MENÚ</span><strong><?= $escapeLogin($loginLogoText) ?></strong><span>VER TALLES</span></header><section><i></i><i></i><i></i></section></div>
+            <div class="store-login-store-preview" aria-hidden="true">
+                <header><span>☰ MENÚ</span><?php if ($loginLogoImage !== ''): ?><img src="<?= $escapeLogin($loginLogoImage) ?>" alt=""><?php else: ?><strong><?= $escapeLogin($loginLogoText) ?></strong><?php endif ?><span>COTIZADOR · APRENDE · VER TALLES</span></header>
+                <div class="store-login-preview-body"><aside>CATEGORÍAS</aside><section><?php foreach ($loginPreviewProducts as $product): ?><article><?php if (!empty($product['image_path'])): ?><img src="<?= $escapeLogin((string) $product['image_path']) ?>" alt=""><?php endif ?><strong><?= $escapeLogin((string) $product['name']) ?></strong><span>Ver producto</span></article><?php endforeach ?></section></div>
+            </div>
         </main>
         <section class="store-login-card" aria-labelledby="store-login-title">
             <button class="store-login-back" type="button" onclick="history.back()">← ATRÁS</button>
-            <p>ACCEDÉ A TU CUENTA</p><h1 id="store-login-title">LABORATORIO DIGITAL</h1><span>Accedé al catálogo mayorista y mantené tu sesión iniciada.</span>
-            <form class="store-login-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post"><label aria-label="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.7 11.7 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.6 4.1 1.7 5.9L.2 24l6.5-1.7a11.8 11.8 0 0 0 5.5 1.4h.1c6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.3-6.1-3.6-8.4Zm-8.3 18.2h-.1a9.8 9.8 0 0 1-5-1.4l-.4-.2-3.9 1 1-3.8-.3-.4a9.8 9.8 0 1 1 8.6 4.8Zm5.4-7.4c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.2-.3.3-.6.1a8 8 0 0 1-2.5-1.5 9.3 9.3 0 0 1-1.7-2.1c-.2-.3 0-.4.1-.6l.5-.5c.1-.2.2-.3.3-.5s0-.4 0-.5l-1-2.4c-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.1 3 .1.3.2.5c1.7 2.6 4.2 4.5 7.2 5.3.5.1.9.1 1.2.1.4 0 1.4-.6 1.6-1.2s.2-1.1.2-1.2-.2-.2-.5-.4Z"/></svg><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej.: 341 569 9338" required></label><small>Lo pedimos una sola vez para tu cuenta. No te enviaremos publicidad.</small><button class="store-login-google" type="submit"><b aria-hidden="true">G</b>Continuar con Google</button></form>
+            <p>ACCEDÉ A TU CUENTA</p><h1 id="store-login-title">LABORATORIO DIGITAL</h1><span>1. Ingresá tu número real de WhatsApp en el campo de abajo.</span>
+            <form class="store-login-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post"><label aria-label="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.7 11.7 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.6 4.1 1.7 5.9L.2 24l6.5-1.7a11.8 11.8 0 0 0 5.5 1.4h.1c6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.3-6.1-3.6-8.4Zm-8.3 18.2h-.1a9.8 9.8 0 0 1-5-1.4l-.4-.2-3.9 1 1-3.8-.3-.4a9.8 9.8 0 1 1 8.6 4.8Zm5.4-7.4c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.2-.3.3-.6.1a8 8 0 0 1-2.5-1.5 9.3 9.3 0 0 1-1.7-2.1c-.2-.3 0-.4.1-.6l.5-.5c.1-.2.2-.3.3-.5s0-.4 0-.5l-1-2.4c-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.1 3 .1.3.2.5c1.7 2.6 4.2 4.5 7.2 5.3.5.1.9.1 1.2.1.4 0 1.4-.6 1.6-1.2s.2-1.1.2-1.2-.2-.2-.5-.4Z"/></svg><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej.: 341 569 9338" required></label><small>2. Después, presioná «Continuar con Google» para ingresar.</small><button class="store-login-google" type="submit"><b aria-hidden="true">G</b>Continuar con Google</button></form>
         </section>
     </body></html>
     <?php
