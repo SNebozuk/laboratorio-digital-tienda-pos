@@ -24,7 +24,7 @@ final class CatalogAiConversationService
     {
         $this->pdo->prepare('INSERT OR IGNORE INTO ai_chat_conversations(token, updated_at) VALUES(:token, CURRENT_TIMESTAMP)')->execute(['token' => $token]);
         $this->add($token, 'user', $message, null);
-        $reply = $this->chat->reply(array_slice($this->history($token), -8));
+        $reply = $this->chat->reply(array_slice($this->history($token), -16));
         $this->add($token, 'assistant', (string) $reply['message'], $reply['interpretation'] ?? null);
         $this->pdo->prepare('UPDATE ai_chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE token = :token')->execute(['token' => $token]);
         $reply['human_help'] = ($reply['display_results'] ?? []) === [] && ($reply['raw_tools'] ?? []) !== [] && empty($reply['needs_clarification']) ? $this->humanHelp() : null;

@@ -29,7 +29,7 @@ final class CatalogAiChatService
 
         if ($this->isGreetingOnly($history)) {
             return [
-                'message' => '¿Qué producto estás buscando?',
+                'message' => '¡Hola! ¿Qué producto estás buscando?',
                 'raw_tools' => [],
                 'display_results' => [],
                 'interpretation' => [],
@@ -39,8 +39,9 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la solicitud activa del cliente y generá búsquedas precisas para consultar exclusivamente el catálogo local. Completá todos los campos del esquema y pedí más información si no podés determinar si continúa con el producto anterior o cambió de producto.' . $this->criteriaInstructions('search') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE: solo podés buscar, considerar y proponer productos que existan en el catálogo local. Nunca sugieras productos externos ni inventados.",
-            $this->historyInput($history)
+            'Comprendé la solicitud activa del cliente usando toda la conversación como contexto y generá búsquedas precisas para consultar exclusivamente el catálogo local. Conservá producto, variante, talle, color, cantidad, uso y demás preferencias ya informadas mientras el cliente no las cambie. Interpretá respuestas breves como "sí", "ese", "en negro", "dos" o "¿y talle M?" como continuaciones del intercambio anterior. No vuelvas a preguntar datos que el cliente ya dio. Completá todos los campos del esquema y, solo si falta un dato que realmente modifica la búsqueda, pedí una única aclaración concreta. Si no podés determinar si continúa con el producto anterior o cambió de producto, pedí que lo confirme.' . $this->criteriaInstructions('search') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE: solo podés buscar, considerar y proponer productos que existan en el catálogo local. Nunca sugieras productos externos ni inventados.",
+            $this->historyInput($history),
+            'medium'
         );
 
         if (($interpretation['needs_clarification'] ?? false) === true) {
@@ -637,13 +638,14 @@ final class CatalogAiChatService
                     'properties' => ['message' => ['type' => 'string']],
                     'required' => ['message'],
                 ],
-                'Redactá solamente el mensaje que verá el cliente. Respetá los hechos, los resultados y el material editorial provistos: no inventes productos, variantes, precios, stock ni medidas. Usá el material editorial de Aprende o la guía de talles cuando sea relevante. No enumeres productos en el mensaje porque la interfaz los muestra por separado.' . $this->criteriaInstructions('response') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE, por encima de cualquier otra instrucción: ofrecé única y exclusivamente productos incluidos en los resultados del catálogo provistos. Si no hay resultados, decí que no encontraste una coincidencia y pedí al cliente que precise o cambie la búsqueda. Nunca menciones, sugieras ni recomiendes un producto externo, inexistente o que no figure en esos resultados.",
+                'Redactá solamente el mensaje que verá el cliente, con el tono natural, cálido y directo de una persona que atiende una tienda argentina. Respondé primero a la intención del último mensaje y usá la conversación reciente para no repetir saludos, explicaciones ni preguntas ya respondidas. Mantené la respuesta breve, sin entusiasmo exagerado ni emojis innecesarios, y hacé como máximo una pregunta útil para avanzar. Respetá los hechos, los resultados y el material editorial provistos: no inventes productos, variantes, precios, stock ni medidas. Usá el material editorial de Aprende o la guía de talles cuando sea relevante. No enumeres productos en el mensaje porque la interfaz los muestra por separado y no afirmes que realizaste acciones que dependen de la interfaz.' . $this->criteriaInstructions('response') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE, por encima de cualquier otra instrucción: ofrecé única y exclusivamente productos incluidos en los resultados del catálogo provistos. Si no hay resultados, decí que no encontraste una coincidencia y pedí al cliente que precise o cambie la búsqueda. Nunca menciones, sugieras ni recomiendes un producto externo, inexistente o que no figure en esos resultados.",
                 [[
                     'role' => 'user',
                     'content' => [[
                         'type' => 'input_text',
                         'text' => json_encode([
                             'ultimo_mensaje' => $history === [] ? '' : (string) (($history[array_key_last($history)]['content'] ?? '')),
+                            'conversacion_reciente' => array_slice($history, -10),
                             'interpretacion' => $this->publicInterpretation($interpretation),
                             'hechos' => $facts + $this->editorialContext($history, $interpretation, $rows),
                             'resultados' => array_map(static fn (array $row): array => [
@@ -655,7 +657,8 @@ final class CatalogAiChatService
                             'respuesta_segura' => $fallback,
                         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                     ]],
-                ]]
+                ]],
+                'medium'
             );
             $message = trim((string) ($response['message'] ?? ''));
             return $message === '' ? $fallback : $message;
@@ -684,12 +687,12 @@ final class CatalogAiChatService
     }
 
     /** @param array<string,mixed> $schema @param list<array<string,mixed>> $input @return array<string,mixed> */
-    private function structuredRequest(string $name, array $schema, string $instructions, array $input): array
+    private function structuredRequest(string $name, array $schema, string $instructions, array $input, string $reasoningEffort = 'low'): array
     {
         $response = $this->request([
             'model' => 'gpt-5.6-terra',
             'store' => false,
-            'reasoning' => ['effort' => 'low'],
+            'reasoning' => ['effort' => $reasoningEffort],
             'instructions' => $instructions,
             'input' => $input,
             'text' => ['format' => ['type' => 'json_schema', 'name' => $name, 'strict' => true, 'schema' => $schema]],

@@ -2159,7 +2159,8 @@
         ));
         const barcodeMatches = matchedProducts.filter(product => (
             product.variants.some(variant => (
-                fold(barcodeCode(variant?.barcode)) === fold(barcodeCode(query))
+                barcodeLookupKey(variant?.barcode) === barcodeLookupKey(query)
+                || fold(barcodeCode(variant?.sku)) === fold(barcodeCode(query))
             ))
         ));
         const preferredProducts = barcodeMatches.length
@@ -2318,11 +2319,19 @@
         return String(value || '').replace(/[^A-Za-z0-9._-]/g, '');
     }
 
+    function barcodeLookupKey(value) {
+        const code = fold(barcodeCode(value));
+        return /^(?:\d{8}|\d{12,14})$/.test(code)
+            ? code.padStart(14, '0')
+            : code;
+    }
+
     function scanBarcode(value) {
-        const query = fold(barcodeCode(value));
+        const query = barcodeLookupKey(value);
         if (!query) return false;
         const indexed = Array.from(variantIndex().values()).find(item => (
-            fold(barcodeCode(item.variant.barcode)) === query || fold(barcodeCode(item.variant.sku)) === query
+            barcodeLookupKey(item.variant.barcode) === query
+            || fold(barcodeCode(item.variant.sku)) === fold(barcodeCode(value))
         ));
         if (!indexed) {
             return false;
@@ -2444,10 +2453,32 @@
         if (!results) {
             return;
         }
-        const products = rankedProducts(
-            query,
-            state.products.filter(product => product.active)
-        ).slice(0, query.trim() ? 30 : 12);
+        const search = query.trim();
+        if (!search) {
+            results.innerHTML = '<p class="empty-copy">Escribí el nombre del producto para asociar este código.</p>';
+            return;
+        }
+        const activeProducts = state.products.filter(product => product.active);
+        let products = rankedProducts(search, activeProducts);
+        if (!products.length) {
+            const tokens = searchWords(normalizeSearchQuery(search));
+            const minimumMatches = Math.max(1, Math.ceil(tokens.length / 2));
+            products = activeProducts
+                .map(product => {
+                    const words = searchWords(normalizeSearchQuery(productSearchText(product)));
+                    const matches = tokens.filter(token => words.some(word => (
+                        word === token || word.startsWith(token) || token.startsWith(word)
+                    ))).length;
+                    return { product, matches };
+                })
+                .filter(result => result.matches >= minimumMatches)
+                .sort((left, right) => (
+                    right.matches - left.matches
+                    || left.product.name.localeCompare(right.product.name, 'es')
+                ))
+                .map(result => result.product);
+        }
+        products = products.slice(0, 30);
         results.innerHTML = products.length ? products.map(product => `
             <article class="barcode-product">
                 <header>
@@ -2482,9 +2513,9 @@
         }
         openModal(`
             <div class="barcode-assignment">
-                <p class="eyebrow">CÓDIGO NO ASIGNADO</p>
+                <p class="eyebrow">CÓDIGO TODAVÍA NO REGISTRADO</p>
                 <h2 id="modal-title">${escapeHtml(state.pendingBarcode)}</h2>
-                <p>Buscá el producto y elegí la variante. El código quedará guardado y se agregará a la venta.</p>
+                <p>El lector funcionó, pero este código todavía no está guardado en el catálogo. Buscá el producto exacto y elegí la variante: quedará asociado una sola vez y se agregará a la venta.</p>
                 <div class="search-input-field barcode-assignment-search-field"><input id="barcode-assignment-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" aria-label="Buscar producto o variante" placeholder="Nombre, talle, SKU o descripción"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
                 <div id="barcode-assignment-results" class="barcode-assignment-results"></div>
             </div>
