@@ -48,11 +48,26 @@
         } catch (_) { status.textContent = '● IA desconectada'; }
     };
     const addPendingProduct = quantity => {
-        window.dispatchEvent(new CustomEvent('laboratorio:ai-add-to-cart', { detail: { variantId: pendingProduct.id, quantity } }));
-        appendMessage('assistant', `Listo, agregué ${quantity} unidad${quantity === 1 ? '' : 'es'} de ${pendingProduct.name} al carrito. ¿Querés seguir buscando o finalizar la compra?`);
-        messages.insertAdjacentHTML('beforeend', '<button class="vendor-ai-cart-action" type="button" data-vendor-ai-continue>SEGUIR BUSCANDO</button><button class="vendor-ai-cart-action" type="button" data-vendor-ai-finish>FINALIZAR COMPRA</button>');
-        messages.scrollTop = messages.scrollHeight;
-        pendingProduct = null;
+        const product = pendingProduct;
+        window.dispatchEvent(new CustomEvent('laboratorio:ai-add-to-cart', {
+            detail: {
+                variantId: product.id,
+                quantity,
+                onResult: result => {
+                    if (!result?.added) {
+                        const available = Number(result?.available || 0);
+                        appendMessage('assistant', available > 0
+                            ? `No alcanza el stock para ${quantity} unidades de ${product.name}. Hay ${available} disponible${available === 1 ? '' : 's'}. ¿Querés agregar esa cantidad?`
+                            : `No hay stock disponible de ${product.name} en este momento.`);
+                        return;
+                    }
+                    appendMessage('assistant', `Listo, agregué ${quantity} unidad${quantity === 1 ? '' : 'es'} de ${product.name} al carrito. ¿Querés seguir buscando o finalizar la compra?`);
+                    messages.insertAdjacentHTML('beforeend', '<button class="vendor-ai-cart-action" type="button" data-vendor-ai-continue>SEGUIR BUSCANDO</button><button class="vendor-ai-cart-action" type="button" data-vendor-ai-finish>FINALIZAR COMPRA</button>');
+                    messages.scrollTop = messages.scrollHeight;
+                    pendingProduct = null;
+                },
+            },
+        }));
     };
 
     launcher.hidden = true;

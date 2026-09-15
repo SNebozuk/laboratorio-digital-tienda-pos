@@ -729,18 +729,24 @@
         if (quantity > 0 && wasEmpty) checkSurprise();
     }
 
-    function addAiCartItem(variantId, quantity) {
+    async function addAiCartItem(variantId, quantity, onResult) {
         const id = Number(variantId);
         const units = Math.max(1, Math.floor(Number(quantity) || 0));
-        if (!catalogLoaded) {
-            refreshCatalog().then(() => { if (catalogLoaded) addAiCartItem(id, units); });
+        await refreshCatalog();
+        if (cartMaintenanceEnabled || !variantIndex.has(id)) {
+            onResult?.({ added: false, available: 0 });
             return;
         }
-        if (!variantIndex.has(id)) return;
+        const available = visibleAvailable(variantIndex.get(id).variant);
+        if (units > available) {
+            onResult?.({ added: false, available });
+            return;
+        }
         setQuantity(id, cartQuantity(id) + units);
+        onResult?.({ added: true, available });
     }
 
-    window.addEventListener('laboratorio:ai-add-to-cart', event => addAiCartItem(event.detail?.variantId, event.detail?.quantity));
+    window.addEventListener('laboratorio:ai-add-to-cart', event => addAiCartItem(event.detail?.variantId, event.detail?.quantity, event.detail?.onResult));
     window.addEventListener('laboratorio:ai-customer', event => persistCustomer(String(event.detail?.name || ''), String(event.detail?.phone || ''), ''));
     window.addEventListener('laboratorio:ai-checkout', () => showCheckout());
     window.addEventListener('laboratorio:ai-open-cart', () => {
