@@ -238,6 +238,7 @@ try {
         $last = (int) ($_SESSION['ai_public_chat_at'] ?? 0);
         if ($last > 0 && time() - $last < 2) throw new ValidationException('Esperá un instante antes de enviar otro mensaje.');
         $_SESSION['ai_public_chat_at'] = time();
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
         Http::json(['ok' => true, 'reply' => $app['catalog_ai_conversations']->reply($token, $message)]);
     }
     Http::requireCsrf($input);

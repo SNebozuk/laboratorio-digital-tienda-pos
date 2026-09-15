@@ -140,18 +140,22 @@ final class CatalogAiChatService
         }
         $coreTerm = trim((string) ($interpretation['core_product_term'] ?? ''));
         if ($coreTerm !== '') array_unshift($searches, ['texto' => $coreTerm]);
+        $seenSearches = [];
         foreach ($searches as $filters) {
             if (!is_array($filters)) continue;
             $code = trim((string) ($filters['codigo'] ?? ''));
             unset($filters['codigo']);
+            $searchKey = json_encode($filters, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if (isset($seenSearches[$searchKey])) continue;
+            $seenSearches[$searchKey] = true;
             if ($code !== '') {
                 $result = $this->tools->obtenerVariantesPorCodigo($code);
-                $log[] = ['tool' => 'obtenerVariantes', 'arguments' => ['codigo' => $code], 'result' => $result];
+                $log[] = ['tool' => 'obtenerVariantes', 'arguments' => ['codigo' => $code], 'result_count' => count($result)];
                 foreach ($result as $row) $rowsByVariant[(int) $row['variante_id']] = $row;
             }
             if (array_filter($filters, static fn ($value): bool => $value !== null && $value !== '') === []) continue;
             $result = $this->tools->buscarProductos($filters);
-            $log[] = ['tool' => 'buscarProductos', 'arguments' => $filters, 'result' => $result];
+            $log[] = ['tool' => 'buscarProductos', 'arguments' => $filters, 'result_count' => count($result)];
             foreach ($result as $row) $rowsByVariant[(int) $row['variante_id']] = $row;
         }
         return [array_values($rowsByVariant), $log];

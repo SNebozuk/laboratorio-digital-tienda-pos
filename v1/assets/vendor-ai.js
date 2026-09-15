@@ -109,7 +109,7 @@
             const response = await fetch(app.api_url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'ai_public_chat', conversation: id, message: text }) });
             const data = await response.json();
             if (!data.ok) throw new Error(data.error);
-            await refresh();
+            appendMessage('assistant', data.reply?.message || 'No pude responder.');
             renderResults(data.reply?.display_results || []);
             if (data.reply?.human_help) {
                 messages.insertAdjacentHTML('beforeend', `<a class="vendor-ai-human" target="_blank" rel="noopener" href="https://wa.me/5493415699338?text=${encodeURIComponent(data.reply.human_help.message)}">${escape(data.reply.human_help.message)} Consultar a Allessandra</a>`);
