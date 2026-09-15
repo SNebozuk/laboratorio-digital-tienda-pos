@@ -38,7 +38,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Conservá datos previos solo si continúa con el mismo producto; detectá cambios y mantené separados los atributos de cada producto cuando el pedido es múltiple. Para bebé solo se ofrecen bodys y nunca se incluyen al pedir remeras. Si pide solamente remeras, son unisex. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, el tamaño estándar es A4 y no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central, normalizado y en singular. Generá búsquedas precisas y alternativas amplias para cada producto. Si hay código o SKU, conserválo en codigo. Tolerá plurales, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si cambia sustancialmente la recomendación.',
+            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Conservá datos previos solo si continúa con el mismo producto; detectá cambios y mantené separados los atributos de cada producto cuando el pedido es múltiple. Un body es un enterito para bebé y nunca es una remera: al pedir remeras no incluyas bodys y al pedir bodys no incluyas remeras. Si pide solamente remeras, son unisex. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, el tamaño estándar es A4 y no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central, normalizado y en singular. Generá búsquedas precisas y alternativas amplias para cada producto. Si hay código o SKU, conserválo en codigo. Tolerá plurales, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si cambia sustancialmente la recomendación.',
             $this->historyInput($history)
         );
 
@@ -62,6 +62,7 @@ final class CatalogAiChatService
         }
         $rows = array_values($rowsByVariant);
         $rows = $this->applyBusinessRules($rows, $interpretation);
+        $rows = $this->preferExactProductTerm($rows, (string) ($interpretation['core_product_term'] ?? ''));
         $displayRows = array_values(array_filter($rows, static fn (array $row): bool => $row['stock'] === null || (int) $row['stock'] > 0));
         if ($displayRows === [] && $similarRows !== []) {
             $displayRows = $similarRows;
@@ -270,6 +271,7 @@ final class CatalogAiChatService
             $product = $this->fold((string) ($row['producto'] ?? ''));
             $isBody = (bool) preg_match('/\bbody(s)?\b/u', $product);
             if (str_contains($need, 'remera') && $isBody) return false;
+            if (str_contains($need, 'body') && !$isBody) return false;
             if (str_contains($need, 'bebe') && !$isBody) return false;
             if (str_contains($need, 'papel') && str_contains($this->fold((string) ($row['producto'] ?? '') . ' ' . (string) ($row['descripcion'] ?? '')), 'laser')) return false;
             if ($paperGramajes !== [] && str_contains($product, 'papel')) {
@@ -278,6 +280,18 @@ final class CatalogAiChatService
             }
             return true;
         }));
+    }
+
+    /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
+    private function preferExactProductTerm(array $rows, string $term): array
+    {
+        $term = $this->fold(trim($term));
+        if ($term === '') return $rows;
+        $termPattern = preg_quote($term, '/');
+        if (!str_ends_with($term, 's')) $termPattern .= 's?';
+        $pattern = '/(?<![a-z0-9])' . $termPattern . '(?![a-z0-9])/u';
+        $exact = array_values(array_filter($rows, fn (array $row): bool => (bool) preg_match($pattern, $this->fold((string) ($row['producto'] ?? '')))));
+        return $exact === [] ? $rows : $exact;
     }
 
     /** @param list<array<string,mixed>> $rows */
