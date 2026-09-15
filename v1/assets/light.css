@@ -5,6 +5,9 @@
 .icon-button svg,
 .icon-action-button svg { width:var(--icon-glyph-size); height:var(--icon-glyph-size); }
 :root { color-scheme: light; --bg:#f7faf7; --panel:#fff; --panel-2:#eff7f0; --line:#d7e4d9; --line-soft:#e7eee8; --text:#18231b; --muted:#617165; --accent:#168342; --success:#168342; }
+.store-login-background { pointer-events:none; }
+.store-login-card { width:min(320px,calc(100vw - 34px)); gap:9px; padding:18px 20px 20px; }
+.store-login-card h1 { font-size:21px; }
 .store-login-page { min-height:100vh; overflow:hidden; background:#f7f2fb; }
 .store-login-background { position:fixed; inset:-18px; display:grid; place-items:center; background:linear-gradient(135deg,#f5efff,#fff4f8); background-size:cover; background-position:center; filter:blur(10px); transform:scale(1.04); }
 .store-login-background::after { content:""; position:absolute; inset:0; background:rgba(255,255,255,.52); }
