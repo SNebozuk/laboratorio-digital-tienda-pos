@@ -19,6 +19,12 @@ if ($currentHost !== '' && $canonicalHost !== '' && $currentHost !== $canonicalH
 
 $state = bin2hex(random_bytes(24));
 $_SESSION['checkout_google_state'] = $state;
+$phone = preg_replace('/\D+/', '', (string) ($_POST['phone'] ?? ''));
+if (strlen((string) $phone) < 8 || strlen((string) $phone) > 20) {
+    header('Location: ' . $google->storeUrl());
+    exit;
+}
+$_SESSION['checkout_google_phone'] = $phone;
 $cart = json_decode((string) ($_GET['cart'] ?? ''), true);
 if (is_array($cart) && count($cart) <= 100) {
     $_SESSION['checkout_google_cart'] = array_values(array_filter(array_map(static function ($item): ?array {

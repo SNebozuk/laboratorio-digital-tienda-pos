@@ -44,7 +44,30 @@ if ($checkoutGoogleCustomer === null) {
         http_response_code(503);
         exit('El acceso con Google todavía no está configurado.');
     }
-    header('Location: ' . $app['checkout_google']->loginUrl(), true, 302);
+    $escapeLogin = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    $loginLogoText = trim((string) ($design['logo_text'] ?? '')) ?: 'Laboratorio Digital';
+    $loginLogoImage = trim((string) ($design['logo_path'] ?? ''));
+    $loginBackground = trim((string) ($design['hero_1_path'] ?? ''));
+    ?>
+    <!doctype html>
+    <html lang="es"><head>
+        <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Ingresar · <?= $escapeLogin($loginLogoText) ?></title>
+        <link rel="icon" href="<?= $escapeLogin($storePath) ?>/favicon.php" type="image/svg+xml">
+        <link rel="stylesheet" href="<?= $escapeLogin($assetPath) ?>/app.css?v=<?= $escapeLogin($assetVersion) ?>">
+        <link rel="stylesheet" href="<?= $escapeLogin($assetPath) ?>/light.css?v=<?= $escapeLogin($assetVersion) ?>">
+    </head><body class="store-login-page">
+        <main class="store-login-background"<?= $loginBackground !== '' ? ' style="background-image:url(' . $escapeLogin($loginBackground) . ')"' : '' ?>>
+            <div class="store-login-store-preview" aria-hidden="true"><header><span>☰ MENÚ</span><strong><?= $escapeLogin($loginLogoText) ?></strong><span>VER TALLES</span></header><section><i></i><i></i><i></i></section></div>
+        </main>
+        <section class="store-login-card" aria-labelledby="store-login-title">
+            <button class="store-login-back" type="button" onclick="history.back()">← ATRÁS</button>
+            <?php if ($loginLogoImage !== ''): ?><img src="<?= $escapeLogin($loginLogoImage) ?>" alt="<?= $escapeLogin($loginLogoText) ?>"><?php else: ?><strong class="store-login-name"><?= $escapeLogin($loginLogoText) ?></strong><?php endif ?>
+            <p>BIENVENIDA</p><h1 id="store-login-title">Ingresá a Laboratorio Digital</h1><span>Accedé al catálogo mayorista y mantené tu sesión iniciada.</span>
+            <form class="store-login-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post"><label>WHATSAPP<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej.: 341 569 9338" required></label><small>Lo pedimos una sola vez para tu cuenta. No te enviaremos publicidad.</small><button class="store-login-google" type="submit"><b aria-hidden="true">G</b>Continuar con Google</button></form>
+        </section>
+    </body></html>
+    <?php
     exit;
 }
 $checkoutGoogle = [

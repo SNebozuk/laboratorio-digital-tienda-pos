@@ -36,7 +36,7 @@ final class CheckoutGoogleService
         return $this->publicUrl('/');
     }
 
-    /** @return array{id:int,name:string,first_name:string,last_name:string,email:string}|null */
+    /** @return array{id:int,name:string,first_name:string,last_name:string,email:string,phone:string}|null */
     public function customer(): ?array
     {
         $id = (int) ($_SESSION['checkout_google_customer_id'] ?? 0);
@@ -53,7 +53,7 @@ final class CheckoutGoogleService
             }
         }
         if ($id < 1) return null;
-        $query = $this->pdo->prepare('SELECT id, name, first_name, last_name, email FROM checkout_customers WHERE id = :id');
+        $query = $this->pdo->prepare('SELECT id, name, first_name, last_name, email, phone FROM checkout_customers WHERE id = :id');
         $query->execute(['id' => $id]);
         $customer = $query->fetch();
         if (!is_array($customer)) {
@@ -66,6 +66,7 @@ final class CheckoutGoogleService
             'first_name' => (string) $customer['first_name'],
             'last_name' => (string) $customer['last_name'],
             'email' => (string) $customer['email'],
+            'phone' => (string) $customer['phone'],
         ];
     }
 
@@ -81,10 +82,12 @@ final class CheckoutGoogleService
         $firstName = trim((string) ($profile['given_name'] ?? ''));
         $lastName = trim((string) ($profile['family_name'] ?? ''));
         $name = trim((string) ($profile['name'] ?? ''));
+        $phone = preg_replace('/\D+/', '', (string) ($profile['phone'] ?? ''));
+        if (strlen((string) $phone) < 8 || strlen((string) $phone) > 20) throw new \RuntimeException('Ingresá un WhatsApp válido.');
         if ($name === '') $name = trim($firstName . ' ' . $lastName);
         if ($name === '') throw new \RuntimeException('Google no devolvió tu nombre completo.');
 
-        Database::immediate($this->pdo, function (PDO $pdo) use ($googleSub, $email, $firstName, $lastName, $name): void {
+        Database::immediate($this->pdo, function (PDO $pdo) use ($googleSub, $email, $firstName, $lastName, $name, $phone): void {
             $byGoogle = $pdo->prepare('SELECT id FROM checkout_customers WHERE google_sub = :google_sub');
             $byGoogle->execute(['google_sub' => $googleSub]);
             $googleCustomer = $byGoogle->fetch();
@@ -97,23 +100,25 @@ final class CheckoutGoogleService
 
             $id = (int) (($googleCustomer ?: $emailCustomer)['id'] ?? 0);
             if ($id > 0) {
-                $update = $pdo->prepare('UPDATE checkout_customers SET google_sub = :google_sub, first_name = :first_name, last_name = :last_name, name = :name, email = :email, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+                $update = $pdo->prepare('UPDATE checkout_customers SET google_sub = :google_sub, first_name = :first_name, last_name = :last_name, name = :name, email = :email, phone = :phone, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
                 $update->execute([
                     'google_sub' => $googleSub,
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'name' => $name,
                     'email' => $email,
+                    'phone' => $phone,
                     'id' => $id,
                 ]);
             } else {
-                $insert = $pdo->prepare('INSERT INTO checkout_customers(google_sub, first_name, last_name, name, email) VALUES(:google_sub, :first_name, :last_name, :name, :email)');
+                $insert = $pdo->prepare('INSERT INTO checkout_customers(google_sub, first_name, last_name, name, email, phone) VALUES(:google_sub, :first_name, :last_name, :name, :email, :phone)');
                 $insert->execute([
                     'google_sub' => $googleSub,
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'name' => $name,
                     'email' => $email,
+                    'phone' => $phone,
                 ]);
                 $id = (int) $pdo->lastInsertId();
             }
@@ -135,7 +140,7 @@ final class CheckoutGoogleService
     /** @return list<array<string, mixed>> */
     public function customers(): array
     {
-        return $this->pdo->query('SELECT id, name, first_name, last_name, email, google_sub IS NOT NULL AS google_connected, created_at, updated_at FROM checkout_customers ORDER BY updated_at DESC, id DESC')->fetchAll();
+        return $this->pdo->query('SELECT id, name, first_name, last_name, email, phone, google_sub IS NOT NULL AS google_connected, created_at, updated_at FROM checkout_customers ORDER BY updated_at DESC, id DESC')->fetchAll();
     }
 
     private function publicUrl(string $path): string

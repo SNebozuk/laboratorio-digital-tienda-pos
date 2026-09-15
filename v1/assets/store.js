@@ -1572,7 +1572,7 @@
         const saved = savedCustomer();
         const googleCustomer = app.checkout_google?.customer || null;
         const customer = googleCustomer
-            ? { ...saved, name: googleCustomer.name, email: googleCustomer.email }
+            ? { ...saved, name: googleCustomer.name, email: googleCustomer.email, phone: googleCustomer.phone }
             : saved;
         // Crea un paso de historial interno: Atrás cierra el checkout y no
         // abandona la tienda hacia la página anterior del navegador.

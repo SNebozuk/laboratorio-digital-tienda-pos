@@ -4,7 +4,9 @@ declare(strict_types=1);
 $app = require dirname(__DIR__) . '/app/container.php';
 $google = $app['checkout_google'];
 $cart = is_array($_SESSION['checkout_google_cart'] ?? null) ? $_SESSION['checkout_google_cart'] : [];
+$phone = (string) ($_SESSION['checkout_google_phone'] ?? '');
 unset($_SESSION['checkout_google_cart']);
+unset($_SESSION['checkout_google_phone']);
 
 $storeUrl = static function (array $parameters) use ($google, $cart): string {
     if ($cart) $parameters['google_cart'] = json_encode($cart, JSON_UNESCAPED_SLASHES);
@@ -52,6 +54,7 @@ try {
     if (!is_array($profile) || empty($profile['sub']) || empty($profile['email']) || empty($profile['email_verified'])) {
         throw new RuntimeException('Google no confirmó un email válido.');
     }
+    $profile['phone'] = $phone;
     $google->linkProfile($profile);
     header('Location: ' . $storeUrl(['google_checkout' => '1']));
     exit;
