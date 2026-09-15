@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 $app = require dirname(__DIR__, 2) . '/app/container.php';
+\LaboratorioDigital\Http::noCache();
 $user = $app['auth']->user();
 $setupRequired = (int) $app['pdo']->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0;
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
