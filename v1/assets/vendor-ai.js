@@ -86,6 +86,7 @@
         if (!text) return;
         input.value = '';
         appendMessage('user', text);
+        renderResults([]);
         if (checkoutStep === 'name') {
             if (text.trim().split(/\s+/).length < 2) { appendMessage('assistant', 'Necesito nombre y apellido completos para continuar.'); return; }
             checkoutCustomer.name = text;

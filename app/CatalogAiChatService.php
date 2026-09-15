@@ -52,9 +52,6 @@ final class CatalogAiChatService
         }
 
         $explicitRows = $this->explicitCatalogMatches($interpretation, $history);
-        $similarRows = $explicitRows === [] && $this->hasExplicitVariantAttribute($history)
-            ? $this->similarCatalogMatches($interpretation)
-            : [];
         [$rows, $searchLog] = $this->searchCandidates($interpretation);
         $rowsByVariant = [];
         foreach ([...$rows, ...$explicitRows] as $row) {
@@ -64,13 +61,8 @@ final class CatalogAiChatService
         $rows = $this->applyBusinessRules($rows, $interpretation);
         $productTerm = (string) ($interpretation['core_product_term'] ?? '');
         $exactRows = $this->exactRequestedRows($rows, $interpretation);
-        $sizeFallback = false;
         if ($exactRows !== []) {
             $rows = $exactRows;
-        } elseif (($size = $this->requestedSize($interpretation)) !== null && ($sameProductRows = $this->exactRequestedRows($rows, $interpretation, false)) !== []) {
-            $availableRows = array_values(array_filter($sameProductRows, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
-            $rows = $this->closestSizeRows($availableRows === [] ? $sameProductRows : $availableRows, $size);
-            $sizeFallback = $rows !== [];
         } elseif (($suggestedTerm = $this->approximateProductTerm($rows, $productTerm)) !== null) {
             return [
                 'message' => '¿Quisiste decir "' . $suggestedTerm . '"?',
@@ -80,11 +72,10 @@ final class CatalogAiChatService
                     'origen_busqueda' => 'Catálogo',
                 ],
             ];
+        } else {
+            $rows = [];
         }
         $displayRows = array_values(array_filter($rows, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
-        if ($displayRows === [] && $similarRows !== []) {
-            $displayRows = array_values(array_filter($similarRows, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
-        }
         usort($displayRows, static fn (array $a, array $b): int =>
             (($b['stock'] > 0) <=> ($a['stock'] > 0))
             ?: strcmp((string) $a['producto'], (string) $b['producto'])
@@ -96,13 +87,11 @@ final class CatalogAiChatService
         if (count(array_unique(array_filter(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $displayRows)))) > 1) $criteria[] = 'color';
         if (count($displayRows) > 24) $criteria[] = 'material o uso';
         $clarification = $this->productClarificationQuestion($displayRows);
-        $message = $clarification ?? ($sizeFallback
-            ? 'No tengo el talle solicitado; estas son las opciones de talle más cercano.'
-            : ($displayRows === []
+        $message = $clarification ?? ($displayRows === []
             ? 'No tengo una opción disponible para esa búsqueda.'
             : (count($displayRows) > 24
                 ? 'Hay más de 24 opciones disponibles. Para acotar mejor, ¿preferís filtrar por ' . implode(', ', $criteria ?: ['tipo de producto']) . '?'
-                : 'Estas son las opciones disponibles en Laboratorio Digital.')));
+                : 'Estas son las opciones disponibles en Laboratorio Digital.'));
         $continuation = $clarification === null ? $this->continuationSuggestion($displayRows) : '';
 
         return [
@@ -349,37 +338,6 @@ final class CatalogAiChatService
     {
         if (!preg_match('/\\d+/', $gramaje, $match)) return true;
         return (bool) preg_match('/\\b' . preg_quote($match[0], '/') . '\\s*g?\\b/u', $value);
-    }
-
-    /** @param array<string,mixed> $interpretation */
-    private function requestedSize(array $interpretation): ?string
-    {
-        foreach ((array) ($interpretation['product_requests'] ?? []) as $request) {
-            if (!is_array($request)) continue;
-            $size = trim((string) ($request['talle'] ?? ''));
-            if ($size !== '') return $size;
-        }
-        return null;
-    }
-
-    /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
-    private function closestSizeRows(array $rows, string $requestedSize): array
-    {
-        if (!is_numeric($requestedSize)) return [];
-        $distance = null;
-        $closest = [];
-        foreach ($rows as $row) {
-            $size = (string) ($row['talle'] ?? '');
-            if (!is_numeric($size)) continue;
-            $currentDistance = abs((float) $size - (float) $requestedSize);
-            if ($distance === null || $currentDistance < $distance) {
-                $distance = $currentDistance;
-                $closest = [$row];
-            } elseif ($currentDistance === $distance) {
-                $closest[] = $row;
-            }
-        }
-        return $closest;
     }
 
     /** @param list<array<string,mixed>> $rows */
