@@ -62,50 +62,9 @@ final class CatalogAiChatService
         }
         $rows = array_values($rowsByVariant);
         $rows = $this->applyBusinessRules($rows, $interpretation);
-        $sizeGuide = $this->relevantSizeGuide($interpretation, $history, $rows);
-        $evaluation = $this->structuredRequest(
-            'evaluacion_catalogo',
-            $this->evaluationSchema(),
-            'Actuá como Vendedor IA detrás del mostrador. El catálogo suministrado es la única fuente de verdad sobre productos, precio y stock. Clasificá candidatos como APTO, POSIBLE o NO_APTO; seleccioná y mostrá únicamente los APTO. No confundas productos por palabras compartidas: los bodys nunca responden a remeras. Las remeras sin otra especificación son unisex. Para sublimables, modal es estándar; spum o jersey solo se proponen si se piden o no hay modal. Para papel el tamaño estándar es A4 y no hay opciones para impresora láser. La G después de un número de papel indica gramaje: 200G significa 200 gramos. El gramaje pedido es exacto: 180G no es APTO si se pidió 200G. No inventes propiedades ni disponibilidad. Cuando no se pidió otra condición, las variantes reales de esa familia con stock son APTAS. No ofrezcas colores alternativos salvo pedido expreso o falta de stock en negro/blanco. Usá tabla de talles solo si corresponde. La aplicación ya mostró el saludo inicial: no vuelvas a saludar ni a presentarte. Respondé breve, cálido y rioplatense; no repitas nombre, precio, talle ni stock porque aparecen aparte. Solo preguntá si falta un dato decisivo. No expliques la búsqueda ni uses "Encontré", "la búsqueda devolvió" o "estos son los resultados".',
-            [[
-                'role' => 'user',
-                'content' => [[
-                    'type' => 'input_text',
-                    'text' => json_encode([
-                        'conversacion' => $history,
-                        'necesidad_interpretada' => $interpretation,
-                        'candidatos_catalogo' => $this->compactCandidates($rows),
-                        'tabla_de_talles_relevante' => $sizeGuide,
-                        'reglas_de_saludo' => 'El saludo inicial ya está en la conversación. Si el cliente escribe solo un saludo, no respondas con otro saludo ni presentación: preguntá qué producto busca. Si su nombre está disponible de forma confiable en la conversación, podés usarlo una sola vez con buen día, buenas tardes o buenas noches según la hora local argentina indicada.',
-                        'hora_local_argentina' => (new \DateTimeImmutable('now', new \DateTimeZone('America/Argentina/Buenos_Aires')))->format('H:i'),
-                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE),
-                ]],
-            ]]
-        );
-
-        $aptIds = [];
-        foreach (($evaluation['classifications'] ?? []) as $classification) {
-            if (is_array($classification) && ($classification['compatibility'] ?? '') === 'APTO') {
-                $aptIds[(int) ($classification['variant_id'] ?? 0)] = true;
-            }
-        }
-        $selectedIds = array_flip(array_map('intval', is_array($evaluation['selected_variant_ids'] ?? null) ? $evaluation['selected_variant_ids'] : []));
-        $displayRows = array_values(array_filter(
-            $rows,
-            static fn (array $row): bool => isset($selectedIds[(int) $row['variante_id']], $aptIds[(int) $row['variante_id']])
-        ));
-        $usedExplicitFallback = false;
-        if ($displayRows === [] && $explicitRows !== []) {
-            $displayRows = array_values(array_filter(
-                $explicitRows,
-                static fn (array $row): bool => $row['stock'] === null || (int) $row['stock'] > 0
-            ));
-            $usedExplicitFallback = $displayRows !== [];
-        }
-        $usedSimilarFallback = false;
+        $displayRows = array_values(array_filter($rows, static fn (array $row): bool => $row['stock'] === null || (int) $row['stock'] > 0));
         if ($displayRows === [] && $similarRows !== []) {
             $displayRows = $similarRows;
-            $usedSimilarFallback = true;
         }
         usort($displayRows, static fn (array $a, array $b): int =>
             (($b['stock'] > 0) <=> ($a['stock'] > 0))
@@ -113,17 +72,21 @@ final class CatalogAiChatService
             ?: strcmp((string) $a['variante'], (string) $b['variante'])
         );
 
-        $message = $usedExplicitFallback
-                ? 'Sí, hay opciones disponibles que coinciden con lo que pediste.'
-                : ($usedSimilarFallback
-                    ? 'No hay una coincidencia exacta disponible; estas son las opciones más parecidas que sí tenemos.'
-                    : trim((string) ($evaluation['message'] ?? 'No pude preparar una respuesta.')));
+        $criteria = [];
+        if (count(array_unique(array_filter(array_map(static fn (array $row): string => trim((string) ($row['talle'] ?? '')), $displayRows)))) > 1) $criteria[] = 'talle';
+        if (count(array_unique(array_filter(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $displayRows)))) > 1) $criteria[] = 'color';
+        if (count($displayRows) > 24) $criteria[] = 'material o uso';
+        $message = $displayRows === []
+            ? 'No tengo una opción disponible para esa búsqueda.'
+            : (count($displayRows) > 24
+                ? 'Hay más de 24 opciones disponibles. Para acotar mejor, ¿preferís filtrar por ' . implode(', ', $criteria ?: ['tipo de producto']) . '?'
+                : 'Estas son las opciones disponibles en Laboratorio Digital.');
         $continuation = $this->continuationSuggestion($displayRows);
 
         return [
             'message' => trim($message . ($continuation === '' ? '' : ' ' . $continuation)),
             'raw_tools' => $searchLog,
-            'display_results' => array_slice($displayRows, 0, 12),
+            'display_results' => array_slice($displayRows, 0, 24),
             'interpretation' => $this->publicInterpretation($interpretation) + [
                 'origen_busqueda' => 'Catálogo',
             ],

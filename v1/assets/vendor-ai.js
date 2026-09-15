@@ -17,6 +17,8 @@
         return value;
     })();
     let pendingProduct = null;
+    let checkoutStep = null;
+    const checkoutCustomer = {};
     const escape = value => String(value || '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
     const appendMessage = (role, content) => {
         messages.insertAdjacentHTML('beforeend', `<div class="vendor-ai-message ${role === 'user' ? 'is-user' : ''}">${escape(content)}</div>`);
@@ -46,7 +48,7 @@
     const addPendingProduct = quantity => {
         window.dispatchEvent(new CustomEvent('laboratorio:ai-add-to-cart', { detail: { variantId: pendingProduct.id, quantity } }));
         appendMessage('assistant', `Listo, agregué ${quantity} unidad${quantity === 1 ? '' : 'es'} de ${pendingProduct.name} al carrito. ¿Querés seguir buscando o finalizar la compra?`);
-        messages.insertAdjacentHTML('beforeend', '<button class="vendor-ai-cart-action" type="button" data-vendor-ai-cart>VER CARRITO</button>');
+        messages.insertAdjacentHTML('beforeend', '<button class="vendor-ai-cart-action" type="button" data-vendor-ai-continue>SEGUIR BUSCANDO</button><button class="vendor-ai-cart-action" type="button" data-vendor-ai-finish>FINALIZAR COMPRA</button>');
         messages.scrollTop = messages.scrollHeight;
         pendingProduct = null;
     };
@@ -74,6 +76,8 @@
             return;
         }
         if (event.target.closest('[data-vendor-ai-cart]')) window.dispatchEvent(new Event('laboratorio:ai-open-cart'));
+        if (event.target.closest('[data-vendor-ai-continue]')) { appendMessage('assistant', 'Perfecto, ¿qué más necesitás buscar?'); input.focus(); }
+        if (event.target.closest('[data-vendor-ai-finish]')) { checkoutStep = 'name'; appendMessage('assistant', 'Para finalizar, decime tu nombre y apellido.'); input.focus(); }
     });
     form.addEventListener('submit', async event => {
         event.preventDefault();
@@ -81,6 +85,22 @@
         if (!text) return;
         input.value = '';
         appendMessage('user', text);
+        if (checkoutStep === 'name') {
+            if (text.trim().split(/\s+/).length < 2) { appendMessage('assistant', 'Necesito nombre y apellido completos para continuar.'); return; }
+            checkoutCustomer.name = text;
+            checkoutStep = 'phone';
+            appendMessage('assistant', '¿Cuál es tu WhatsApp?');
+            return;
+        }
+        if (checkoutStep === 'phone') {
+            const phone = text.replace(/\D+/g, '');
+            if (phone.length < 8) { appendMessage('assistant', 'Pasame un WhatsApp válido para continuar.'); return; }
+            window.dispatchEvent(new CustomEvent('laboratorio:ai-customer', { detail: { name: checkoutCustomer.name, phone } }));
+            appendMessage('assistant', 'Perfecto. Abrí la confirmación del pedido: al confirmarlo vas a ver los datos para realizar la transferencia. La reserva queda asegurada cuando se acredita.');
+            window.dispatchEvent(new Event('laboratorio:ai-checkout'));
+            checkoutStep = null;
+            return;
+        }
         if (pendingProduct && /^\d+$/.test(text) && Number(text) > 0) { addPendingProduct(Number(text)); return; }
         typing.hidden = false;
         try {
@@ -91,7 +111,6 @@
             const rows = data.reply?.display_results || [];
             if (rows.length) {
                 renderResults(rows);
-                window.dispatchEvent(new CustomEvent('laboratorio:ai-search', { detail: { query: text } }));
             }
             if (data.reply?.human_help) {
                 messages.insertAdjacentHTML('beforeend', `<a class="vendor-ai-human" target="_blank" rel="noopener" href="https://wa.me/5493415699338?text=${encodeURIComponent(data.reply.human_help.message)}">${escape(data.reply.human_help.message)} Consultar a Allessandra</a>`);

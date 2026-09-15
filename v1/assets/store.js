@@ -740,13 +740,9 @@
         setQuantity(id, cartQuantity(id) + units);
     }
 
-    window.addEventListener('laboratorio:ai-search', event => {
-        const query = String(event.detail?.query || '').trim();
-        if (!query) return;
-        elements.search.value = query;
-        elements.search.dispatchEvent(new Event('input', { bubbles: true }));
-    });
     window.addEventListener('laboratorio:ai-add-to-cart', event => addAiCartItem(event.detail?.variantId, event.detail?.quantity));
+    window.addEventListener('laboratorio:ai-customer', event => persistCustomer(String(event.detail?.name || ''), String(event.detail?.phone || ''), ''));
+    window.addEventListener('laboratorio:ai-checkout', () => showCheckout());
     window.addEventListener('laboratorio:ai-open-cart', () => {
         if (isMobileStorefront()) openMobileCart();
         else elements.checkout?.focus({ preventScroll: true });
