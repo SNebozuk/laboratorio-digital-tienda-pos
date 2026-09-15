@@ -49,6 +49,7 @@ final class CheckoutGoogleService
                 if ($id > 0) {
                     $_SESSION['checkout_google_customer_id'] = $id;
                     $this->pdo->prepare('UPDATE checkout_customer_sessions SET last_used_at = CURRENT_TIMESTAMP WHERE token_hash = :token_hash')->execute(['token_hash' => hash('sha256', $token)]);
+                    $this->setPersistentCookie($token);
                 }
             }
         }
@@ -127,13 +128,7 @@ final class CheckoutGoogleService
             $token = bin2hex(random_bytes(32));
             $pdo->prepare('DELETE FROM checkout_customer_sessions WHERE customer_id = :customer_id OR expires_at <= CURRENT_TIMESTAMP')->execute(['customer_id' => $id]);
             $pdo->prepare("INSERT INTO checkout_customer_sessions(customer_id, token_hash, expires_at) VALUES(:customer_id, :token_hash, datetime('now', '+365 days'))")->execute(['customer_id' => $id, 'token_hash' => hash('sha256', $token)]);
-            setcookie(self::SESSION_COOKIE, $token, [
-                'expires' => time() + self::SESSION_LIFETIME,
-                'path' => '/',
-                'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-                'httponly' => true,
-                'samesite' => 'Lax',
-            ]);
+            $this->setPersistentCookie($token);
         });
     }
 
@@ -149,6 +144,27 @@ final class CheckoutGoogleService
         if ($baseUrl === '') return '';
         $storePath = trim((string) ($this->config['public_store_path'] ?? ''), '/');
         return $baseUrl . ($storePath === '' ? '' : '/' . $storePath) . $path;
+    }
+
+    private function setPersistentCookie(string $token): void
+    {
+        $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || strtolower((string) parse_url((string) ($this->config['base_url'] ?? ''), PHP_URL_SCHEME)) === 'https';
+        $options = [
+            'expires' => time() + self::SESSION_LIFETIME,
+            'path' => '/',
+            'secure' => $secure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        $configuredHost = strtolower((string) parse_url((string) ($this->config['base_url'] ?? ''), PHP_URL_HOST));
+        $rootHost = preg_replace('/^www\./', '', $configuredHost) ?: '';
+        $currentHost = preg_replace('/:\d+$/', '', strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''))) ?: '';
+        if ($rootHost !== '' && in_array($currentHost, [$rootHost, 'www.' . $rootHost], true)) {
+            setcookie(self::SESSION_COOKIE, '', [...$options, 'expires' => time() - 3600]);
+            $options['domain'] = '.' . $rootHost;
+        }
+        setcookie(self::SESSION_COOKIE, $token, $options);
     }
 
     private function baseUrl(): string
