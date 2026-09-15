@@ -23,9 +23,6 @@ final class CatalogAiChatService
     /** @param list<array{role:string,content:string}> $history @return array<string,mixed> */
     public function reply(array $history): array
     {
-        $basicReply = $this->basicStoreReply($history);
-        if ($basicReply !== null) return $basicReply;
-
         if (trim((string) ($this->config['openai_api_key'] ?? '')) === '') {
             throw new \RuntimeException('Configurá OPENAI_API_KEY en el servidor para usar el Asesor IA.');
         }
@@ -42,15 +39,49 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la solicitud activa del cliente usando toda la conversación como contexto y generá búsquedas precisas para consultar exclusivamente el catálogo local. Conservá producto, variante, talle, color, cantidad, uso y demás preferencias ya informadas mientras el cliente no las cambie. Interpretá respuestas breves como "sí", "ese", "en negro", "dos" o "¿y talle M?" como continuaciones del intercambio anterior. No vuelvas a preguntar datos que el cliente ya dio. Completá todos los campos del esquema y, solo si falta un dato que realmente modifica la búsqueda, pedí una única aclaración concreta. Si no podés determinar si continúa con el producto anterior o cambió de producto, pedí que lo confirme.' . $this->criteriaInstructions('search') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE: solo podés buscar, considerar y proponer productos que existan en el catálogo local. Nunca sugieras productos externos ni inventados.",
+            'Primero clasificá la intención completa del último mensaje usando toda la conversación: product_search si busca, compara o pide recomendación de productos o materiales; store_information si pregunta explícitamente por información comercial de la tienda; mixed si contiene ambas solicitudes; ambiguous si hay dos interpretaciones realmente posibles; unsupported si está fuera del alcance de una tienda. Una palabra aislada nunca alcanza para clasificar información comercial: distinguí el objeto o uso mencionado de una pregunta explícita sobre horarios, pagos, contacto, retiro o envíos. Asigná high solamente cuando la intención sea inequívoca; con medium o low redactá una única pregunta concreta en question. Después, para product_search o mixed, generá búsquedas precisas para consultar exclusivamente el catálogo local. Conservá producto, variante, talle, color, cantidad, uso y demás preferencias ya informadas mientras el cliente no las cambie. Interpretá respuestas breves como "sí", "ese", "en negro", "dos" o "¿y talle M?" como continuaciones del intercambio anterior. No vuelvas a preguntar datos que el cliente ya dio. Completá todos los campos del esquema y, solo si falta un dato que realmente modifica la búsqueda, pedí una única aclaración concreta. Si no podés determinar si continúa con el producto anterior o cambió de producto, pedí que lo confirme.' . $this->criteriaInstructions('search') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE: solo podés buscar, considerar y proponer productos que existan en el catálogo local. Nunca sugieras productos externos ni inventados.",
             $this->historyInput($history),
             'medium'
         );
 
+        $intentRoute = $this->intentRoute($interpretation);
+        if ($intentRoute === 'clarify') {
+            $fallback = trim((string) ($interpretation['question'] ?? ''));
+            if ($fallback === '') $fallback = '¿Buscás un producto del catálogo o información sobre la tienda?';
+            return [
+                'message' => $fallback,
+                'raw_tools' => [],
+                'display_results' => [],
+                'needs_clarification' => true,
+                'interpretation' => $this->publicInterpretation($interpretation),
+            ];
+        }
+        if ($intentRoute === 'unsupported') {
+            return [
+                'message' => 'Puedo ayudarte a buscar productos del catálogo o responder consultas sobre la tienda.',
+                'raw_tools' => [],
+                'display_results' => [],
+                'interpretation' => $this->publicInterpretation($interpretation),
+            ];
+        }
+
+        $storeMessage = in_array($intentRoute, ['store', 'mixed'], true)
+            ? $this->storeInformationReply(is_array($interpretation['store_topics'] ?? null) ? $interpretation['store_topics'] : [])
+            : '';
+        if ($intentRoute === 'store') {
+            return [
+                'message' => $storeMessage !== '' ? $storeMessage : '¿Qué información de la tienda necesitás?',
+                'raw_tools' => [],
+                'display_results' => [],
+                'needs_clarification' => $storeMessage === '',
+                'interpretation' => $this->publicInterpretation($interpretation),
+            ];
+        }
+
         if (($interpretation['needs_clarification'] ?? false) === true) {
             $fallback = trim((string) ($interpretation['question'] ?? '¿Podés contarme un poco más sobre el uso que le vas a dar?'));
             return [
-                'message' => $this->composeResponse($history, $interpretation, [], ['estado' => 'necesita_aclaracion'], $fallback),
+                'message' => trim($storeMessage . ($storeMessage === '' ? '' : ' ') . $fallback),
                 'raw_tools' => [],
                 'display_results' => [],
                 'interpretation' => $this->publicInterpretation($interpretation),
@@ -132,6 +163,7 @@ final class CatalogAiChatService
             'pregunta_de_aclaracion' => $clarification,
             'cantidad_resultados' => count($displayRows),
         ], $fallbackMessage);
+        if ($storeMessage !== '') $message = trim($storeMessage . ' ' . $message);
 
         return [
             'message' => $message,
@@ -144,50 +176,51 @@ final class CatalogAiChatService
         ];
     }
 
-    /** @param list<array{role:string,content:string}> $history @return array<string,mixed>|null */
-    private function basicStoreReply(array $history): ?array
+    /** @param array<string,mixed> $interpretation */
+    private function intentRoute(array $interpretation): string
     {
-        $message = '';
-        foreach (array_reverse($history) as $item) {
-            if (($item['role'] ?? '') === 'user') {
-                $message = $this->fold((string) ($item['content'] ?? ''));
-                break;
-            }
+        $intent = (string) ($interpretation['intent'] ?? 'ambiguous');
+        if (($interpretation['confidence'] ?? 'low') !== 'high' || $intent === 'ambiguous') return 'clarify';
+        $storeTopics = is_array($interpretation['store_topics'] ?? null) ? $interpretation['store_topics'] : [];
+        $hasStoreTopic = $storeTopics !== [];
+        $hasProductRequest = trim((string) ($interpretation['core_product_term'] ?? '')) !== '';
+        foreach (($interpretation['product_requests'] ?? []) as $request) {
+            if (is_array($request) && trim((string) ($request['product_term'] ?? '')) !== '') $hasProductRequest = true;
         }
-        if ($message === '') return null;
 
+        return match ($intent) {
+            'product_search' => $hasProductRequest && !$hasStoreTopic ? 'catalog' : 'clarify',
+            'store_information' => $hasStoreTopic && !$hasProductRequest ? 'store' : 'clarify',
+            'mixed' => $hasStoreTopic && $hasProductRequest ? 'mixed' : 'clarify',
+            default => 'unsupported',
+        };
+    }
+
+    /** @param list<mixed> $topics */
+    private function storeInformationReply(array $topics): string
+    {
         $settings = $this->settings->values();
         $answers = [];
-        if (preg_match('/\b(horario|horarios|hora|horas|atienden|atencion|abren|abre|abierto|abierta|cierran|cierra)\b/u', $message)) {
-            $hours = trim((string) ($settings['business_hours'] ?? ''));
-            $answers[] = $hours !== '' ? 'Nuestro horario de atención es: ' . $hours . '.' : 'El horario de atención no está publicado en este momento.';
+        foreach (array_unique(array_map('strval', $topics)) as $topic) {
+            if ($topic === 'hours') {
+                $hours = trim((string) ($settings['business_hours'] ?? ''));
+                $answers[] = $hours !== '' ? 'Nuestro horario de atención es: ' . $hours . '.' : 'El horario de atención no está publicado en este momento.';
+            } elseif ($topic === 'payment') {
+                $answers[] = 'En la tienda web, el pago se realiza únicamente por transferencia bancaria. Los datos aparecen después de confirmar el pedido.';
+            } elseif ($topic === 'contact') {
+                $phone = preg_replace('/\D+/', '', (string) ($settings['whatsapp_number'] ?? ''));
+                $answers[] = $phone !== '' ? 'Podés contactarnos por WhatsApp al +' . $phone . '.' : 'El número de WhatsApp no está publicado en este momento.';
+            } elseif ($topic === 'pickup') {
+                $address = trim((string) ($settings['pickup_address'] ?? ''));
+                $answers[] = $address !== '' ? 'El retiro es en ' . $address . '.' : 'La dirección de retiro no está publicada en este momento.';
+            } elseif ($topic === 'shipping') {
+                $phone = preg_replace('/\D+/', '', (string) ($settings['whatsapp_number'] ?? ''));
+                $answers[] = $phone !== ''
+                    ? 'Para consultar opciones de entrega o envío, escribinos por WhatsApp al +' . $phone . '.'
+                    : 'Las opciones de entrega o envío se coordinan directamente con la tienda.';
+            }
         }
-        if (preg_match('/\b(formas?|medios?)\s+de\s+pago\b|\b(como|donde)\s+(puedo\s+)?pagar\b|\b(pagar|pago|pagos|transferencia|efectivo|tarjeta|mercado\s*pago)\b/u', $message)) {
-            $answers[] = 'En la tienda web, el pago se realiza únicamente por transferencia bancaria. Los datos aparecen después de confirmar el pedido.';
-        }
-        if (preg_match('/\b(whatsapp|telefono|contacto|contactar|comunicar)\b/u', $message)) {
-            $phone = preg_replace('/\D+/', '', (string) ($settings['whatsapp_number'] ?? ''));
-            $answers[] = $phone !== '' ? 'Podés contactarnos por WhatsApp al +' . $phone . '.' : 'El número de WhatsApp no está publicado en este momento.';
-        }
-        if (preg_match('/\b(direccion|ubicacion|donde\s+estan|donde\s+queda|retirar|retiro|local)\b/u', $message)) {
-            $address = trim((string) ($settings['pickup_address'] ?? ''));
-            $answers[] = $address !== '' ? 'El retiro es en ' . $address . '.' : 'La dirección de retiro no está publicada en este momento.';
-        }
-        if (preg_match('/\b(envio|envios|entrega|entregas|despacho|despachos)\b/u', $message)) {
-            $phone = preg_replace('/\D+/', '', (string) ($settings['whatsapp_number'] ?? ''));
-            $answers[] = $phone !== ''
-                ? 'Para consultar opciones de entrega o envío, escribinos por WhatsApp al +' . $phone . '.'
-                : 'Las opciones de entrega o envío se coordinan directamente con la tienda.';
-        }
-        if ($answers === []) return null;
-
-        return [
-            'message' => implode(' ', array_values(array_unique($answers))),
-            'raw_tools' => [],
-            'display_results' => [],
-            'needs_clarification' => false,
-            'interpretation' => ['necesidad' => 'Información de la tienda', 'familia' => '', 'uso' => ''],
-        ];
+        return implode(' ', array_values(array_unique($answers)));
     }
 
     /** @param list<array{role:string,content:string}> $history @return list<array<string,mixed>> */
@@ -598,7 +631,7 @@ final class CatalogAiChatService
             elseif (str_contains($name, 'mujer') || str_contains($name, 'dama')) $labels['mujer'] = 'de mujer';
         }
         if (count($labels) >= 2) return 'Encontré opciones ' . implode(', ', array_values($labels)) . ' que coinciden. ¿Cuál buscás?';
-        return 'Encontré varias opciones que coinciden. ¿Cuál buscás? Podés elegir una en la tabla.';
+        return 'Encontré varias opciones que coinciden. Podés agregar al carrito la que necesites usando los controles de cantidad.';
     }
 
     /** @param list<array<string,mixed>> $rows */
@@ -630,9 +663,9 @@ final class CatalogAiChatService
         if ($rows === []) return 'Si querés, puedo buscar otro producto del catálogo.';
         $sizes = array_filter(array_unique(array_map(static fn (array $row): string => trim((string) ($row['talle'] ?? '')), $rows)));
         $colors = array_filter(array_unique(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $rows)));
-        if ($sizes !== [] && $colors !== []) return '¿Querés agregar alguna al carrito? Elegí una opción y decime cuántas unidades necesitás.';
-        if ($sizes !== []) return '¿Querés agregar alguna al carrito? Elegí una opción y decime cuántas unidades necesitás.';
-        return '¿Querés agregar alguna al carrito? Elegí una opción y decime cuántas unidades necesitás.';
+        if ($sizes !== [] && $colors !== []) return 'Podés agregar la opción que necesites al carrito usando los controles de cantidad.';
+        if ($sizes !== []) return 'Podés agregar la opción que necesites al carrito usando los controles de cantidad.';
+        return 'Podés agregar la opción que necesites al carrito usando los controles de cantidad.';
     }
 
     /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
@@ -662,6 +695,8 @@ final class CatalogAiChatService
     private function publicInterpretation(array $interpretation): array
     {
         return [
+            'intencion' => (string) ($interpretation['intent'] ?? ''),
+            'confianza' => (string) ($interpretation['confidence'] ?? ''),
             'necesidad' => (string) ($interpretation['need'] ?? ''),
             'familia' => (string) ($interpretation['product_family'] ?? ''),
             'uso' => (string) ($interpretation['use'] ?? ''),
@@ -773,6 +808,9 @@ final class CatalogAiChatService
             'type' => 'object',
             'additionalProperties' => false,
             'properties' => [
+                'intent' => ['type' => 'string', 'enum' => ['product_search', 'store_information', 'mixed', 'ambiguous', 'unsupported']],
+                'confidence' => ['type' => 'string', 'enum' => ['high', 'medium', 'low']],
+                'store_topics' => ['type' => 'array', 'items' => ['type' => 'string', 'enum' => ['hours', 'payment', 'contact', 'pickup', 'shipping']]],
                 'need' => ['type' => 'string'],
                 'product_family' => ['type' => 'string'],
                 'core_product_term' => ['type' => 'string'],
@@ -785,7 +823,7 @@ final class CatalogAiChatService
                 'question' => ['type' => ['string', 'null']],
                 'searches' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => false, 'properties' => $filterProperties, 'required' => array_keys($filterProperties)]],
             ],
-            'required' => ['need', 'product_family', 'core_product_term', 'mode', 'product_requests', 'use', 'relevant_factors', 'incompatibilities', 'needs_clarification', 'question', 'searches'],
+            'required' => ['intent', 'confidence', 'store_topics', 'need', 'product_family', 'core_product_term', 'mode', 'product_requests', 'use', 'relevant_factors', 'incompatibilities', 'needs_clarification', 'question', 'searches'],
         ];
     }
 

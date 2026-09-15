@@ -19,6 +19,8 @@
     })();
     let pendingProduct = null;
     let singleResultProduct = null;
+    let resultRows = [];
+    const resultQuantities = new Map();
     let checkoutStep = null;
     const checkoutCustomer = {};
     const escape = value => String(value || '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
@@ -32,6 +34,7 @@
         messages.scrollTop = messages.scrollHeight;
     };
     const renderResults = rows => {
+        resultRows = rows;
         singleResultProduct = rows.length === 1
             ? { id: rows[0].variante_id, name: `${rows[0].producto} ${rows[0].variante || ''}`.trim() }
             : null;
@@ -39,9 +42,11 @@
         results.innerHTML = `<table><thead><tr><th></th><th>Producto</th><th>Variante</th><th></th></tr></thead><tbody>${rows.map(row => {
             const image = row.imagen ? `<img src="${escape(row.imagen)}" alt="">` : '';
             const price = row.precio === null ? 'Precio a consultar' : `$ ${Number(row.precio).toLocaleString('es-AR')}`;
-            const product = escape(JSON.stringify({ id: row.variante_id, name: `${row.producto} ${row.variante || ''}`.trim() }));
+            const variantId = Number(row.variante_id);
+            const quantity = Number(resultQuantities.get(variantId) || 0);
+            const stock = Number(row.stock || 0);
             const measures = row.medidas ? `<button type="button" data-vendor-ai-measures="${escape(row.medidas)}" data-vendor-ai-measures-name="${escape(`${row.producto} ${row.variante || ''}`.trim())}">MEDIDAS</button>` : '';
-            return `<tr><td>${image}</td><td><strong>${escape(row.producto)}</strong></td><td>${escape(row.variante || 'Única')}<br><small>${escape(price)}</small></td><td><button type="button" data-vendor-ai-product='${product}'>ELEGIR</button>${measures}</td></tr>`;
+            return `<tr><td>${image}</td><td><strong>${escape(row.producto)}</strong></td><td>${escape(row.variante || 'Única')}<br><small>${escape(price)}</small></td><td><div class="vendor-ai-quantity"><button type="button" data-vendor-ai-quantity="-1" data-variant-id="${variantId}" aria-label="Quitar una unidad" ${quantity < 1 ? 'disabled' : ''}>−</button><span data-vendor-ai-count="${variantId}">${quantity}</span><button type="button" data-vendor-ai-quantity="1" data-variant-id="${variantId}" aria-label="Agregar una unidad" ${stock < 1 || quantity >= stock ? 'disabled' : ''}>+</button></div>${measures}</td></tr>`;
         }).join('')}</tbody></table>`;
     };
     const refresh = async () => {
@@ -79,6 +84,15 @@
     const cartCommand = (action, detail = {}) => new Promise(resolve => {
         window.dispatchEvent(new CustomEvent('laboratorio:ai-cart-command', { detail: { action, ...detail, onResult: resolve } }));
     });
+    const addProductUnit = variantId => new Promise(resolve => {
+        window.dispatchEvent(new CustomEvent('laboratorio:ai-add-to-cart', { detail: { variantId, quantity: 1, onResult: resolve } }));
+    });
+    const renderSyncedResults = async rows => {
+        const summary = await cartCommand('summary');
+        resultQuantities.clear();
+        if (summary?.ok) summary.items.forEach(item => resultQuantities.set(Number(item.variantId), Number(item.quantity)));
+        renderResults(rows);
+    };
     const cartDescription = items => items.length
         ? items.map(item => `${item.quantity} × ${item.name}`).join(', ')
         : '';
@@ -170,11 +184,24 @@
             appendMessage('assistant', `${measures.dataset.vendorAiMeasuresName}: ${measures.dataset.vendorAiMeasures}`);
             return;
         }
-        const product = event.target.closest('[data-vendor-ai-product]');
-        if (product) {
-            pendingProduct = JSON.parse(product.dataset.vendorAiProduct);
-            appendMessage('assistant', `¿Cuántas unidades de ${pendingProduct.name} querés agregar al carrito?`);
-            input.focus();
+        const quantityButton = event.target.closest('[data-vendor-ai-quantity]');
+        if (quantityButton) {
+            const variantId = Number(quantityButton.dataset.variantId);
+            const change = Number(quantityButton.dataset.vendorAiQuantity);
+            const row = resultRows.find(item => Number(item.variante_id) === variantId);
+            if (!row) return;
+            quantityButton.disabled = true;
+            if (change > 0) {
+                addProductUnit(variantId).then(result => {
+                    if (result?.added) resultQuantities.set(variantId, Number(resultQuantities.get(variantId) || 0) + 1);
+                    renderResults(resultRows);
+                });
+            } else {
+                cartCommand('change', { variantId, quantity: -1 }).then(result => {
+                    if (result?.ok) resultQuantities.set(variantId, Number(result.item.quantity));
+                    renderResults(resultRows);
+                });
+            }
             return;
         }
         if (event.target.closest('[data-vendor-ai-cart]')) window.dispatchEvent(new Event('laboratorio:ai-open-cart'));
@@ -222,7 +249,7 @@
             const data = await response.json();
             if (!data.ok) throw new Error(data.error);
             appendMessage('assistant', data.reply?.message || 'No pude responder.');
-            renderResults(data.reply?.display_results || []);
+            await renderSyncedResults(data.reply?.display_results || []);
             if (data.reply?.human_help) {
                 messages.insertAdjacentHTML('beforeend', `<a class="vendor-ai-human" target="_blank" rel="noopener" href="https://wa.me/5493415699338?text=${encodeURIComponent(data.reply.human_help.message)}">${escape(data.reply.human_help.message)} Consultar a Allessandra</a>`);
                 messages.scrollTop = messages.scrollHeight;
