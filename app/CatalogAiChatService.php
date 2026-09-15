@@ -38,7 +38,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Conservá datos previos solo si continúa con el mismo producto; detectá cambios y mantené separados los atributos de cada producto cuando el pedido es múltiple. Un body es un enterito para bebé y nunca es una remera: al pedir remeras no incluyas bodys y al pedir bodys no incluyas remeras. Si pide solamente remeras, son unisex. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, el tamaño estándar es A4 y no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central, normalizado y en singular. Generá búsquedas precisas y alternativas amplias para cada producto. Si hay código o SKU, conserválo en codigo. Tolerá plurales, acentos, errores leves, abreviaciones y marcas. Solo pedí una aclaración si cambia sustancialmente la recomendación.',
+            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Conservá datos previos solo si continúa con el mismo producto; detectá cambios y mantené separados los atributos de cada producto cuando el pedido es múltiple. Un body es un enterito para bebé y nunca es una remera: al pedir remeras no incluyas bodys y al pedir bodys no incluyas remeras. Si pide solamente remeras, son unisex. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, el tamaño estándar es A4 y no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central en singular, pero conservá cómo lo escribió el cliente: no corrijas posibles errores de tipeo. Generá búsquedas precisas y alternativas amplias para cada producto. Si hay código o SKU, conserválo en codigo. Tolerá plurales y acentos como coincidencias exactas. Ante una palabra que podría tener un error leve, no la corrijas ni pidas aclaración todavía: buscala para que el catálogo pueda confirmar el nombre y consultarle al cliente. Solo pedí una aclaración si cambia sustancialmente la recomendación.',
             $this->historyInput($history)
         );
 
@@ -62,7 +62,20 @@ final class CatalogAiChatService
         }
         $rows = array_values($rowsByVariant);
         $rows = $this->applyBusinessRules($rows, $interpretation);
-        $rows = $this->preferExactProductTerm($rows, (string) ($interpretation['core_product_term'] ?? ''));
+        $productTerm = (string) ($interpretation['core_product_term'] ?? '');
+        $exactRows = $this->exactProductTermRows($rows, $productTerm);
+        if ($exactRows !== []) {
+            $rows = $exactRows;
+        } elseif (($suggestedTerm = $this->approximateProductTerm($rows, $productTerm)) !== null) {
+            return [
+                'message' => '¿Quisiste decir "' . $suggestedTerm . '"?',
+                'raw_tools' => [],
+                'display_results' => [],
+                'interpretation' => $this->publicInterpretation($interpretation) + [
+                    'origen_busqueda' => 'Catálogo',
+                ],
+            ];
+        }
         $displayRows = array_values(array_filter($rows, static fn (array $row): bool => $row['stock'] === null || (int) $row['stock'] > 0));
         if ($displayRows === [] && $similarRows !== []) {
             $displayRows = $similarRows;
@@ -283,15 +296,40 @@ final class CatalogAiChatService
     }
 
     /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
-    private function preferExactProductTerm(array $rows, string $term): array
+    private function exactProductTermRows(array $rows, string $term): array
     {
         $term = $this->fold(trim($term));
-        if ($term === '') return $rows;
-        $termPattern = preg_quote($term, '/');
-        if (!str_ends_with($term, 's')) $termPattern .= 's?';
+        if ($term === '') return [];
+        $words = preg_split('/\\s+/', $term, -1, PREG_SPLIT_NO_EMPTY);
+        if ($words === false || $words === []) return [];
+        $termPattern = implode('\\s+', array_map(function (string $word): string {
+            $word = preg_quote($this->singular($word), '/');
+            return $word . '(?:s|es)?';
+        }, $words));
         $pattern = '/(?<![a-z0-9])' . $termPattern . '(?![a-z0-9])/u';
-        $exact = array_values(array_filter($rows, fn (array $row): bool => (bool) preg_match($pattern, $this->fold((string) ($row['producto'] ?? '')))));
-        return $exact === [] ? $rows : $exact;
+        return array_values(array_filter($rows, fn (array $row): bool => (bool) preg_match($pattern, $this->fold((string) ($row['producto'] ?? '')))));
+    }
+
+    /** @param list<array<string,mixed>> $rows */
+    private function approximateProductTerm(array $rows, string $term): ?string
+    {
+        $term = $this->singular($this->fold(trim($term)));
+        if (strlen($term) < 4 || str_contains($term, ' ')) return null;
+
+        foreach ($rows as $row) {
+            $product = $this->fold((string) ($row['producto'] ?? ''));
+            $words = preg_split('/[^a-z0-9]+/u', $product, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            foreach ($words as $word) {
+                $candidate = $this->singular($word);
+                if (strlen($candidate) >= 4 && levenshtein($term, $candidate) <= 1) return $word;
+            }
+        }
+        return null;
+    }
+
+    private function singular(string $value): string
+    {
+        return strlen($value) > 4 ? (string) preg_replace('/s$/', '', $value) : $value;
     }
 
     /** @param list<array<string,mixed>> $rows */

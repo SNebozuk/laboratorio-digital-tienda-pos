@@ -273,7 +273,7 @@ header('Referrer-Policy: same-origin');
             <span class="vendor-ai-status" id="vendor-ai-status">● Verificando IA</span>
             <div class="vendor-ai-controls"><button class="icon-button" type="button" data-vendor-ai-minimize aria-label="Minimizar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><button class="icon-button" type="button" data-vendor-ai-close aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
         </header>
-        <div class="vendor-ai-body"><div class="vendor-ai-messages" id="vendor-ai-messages"></div><div class="vendor-ai-typing" id="vendor-ai-typing" hidden><i></i>Ya te digo, lo busco en el catálogo.</div><form id="vendor-ai-form"><textarea id="vendor-ai-input" rows="1" placeholder="Escribí tu consulta…"></textarea><button class="vendor-ai-send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3-6-8-2Z"/></svg></button></form></div>
+        <div class="vendor-ai-body"><div class="vendor-ai-messages" id="vendor-ai-messages"></div><div class="vendor-ai-typing" id="vendor-ai-typing" hidden><span class="vendor-ai-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>Buscando en el catálogo…</div><form id="vendor-ai-form"><textarea id="vendor-ai-input" rows="1" placeholder="Escribí tu consulta…"></textarea><button class="vendor-ai-send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3-6-8-2Z"/></svg></button></form></div>
     </section>
     <button class="vendor-ai-launcher" id="vendor-ai-launcher" type="button" aria-label="Abrir Vendedor IA" hidden>IA</button>
 
