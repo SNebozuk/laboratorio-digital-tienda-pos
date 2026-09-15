@@ -70,6 +70,23 @@
     const ORDER_COMPLETE_STORAGE_KEY = 'laboratorio-digital:completed-order:v1';
     const CART_HISTORY_KEY = 'laboratorio-digital:mobile-cart-open';
     const PRODUCT_VIEW_STORAGE_KEY = 'laboratorio-digital:product-view:v2';
+    const transferredGoogleCart = initialUrl.searchParams.get('google_cart');
+    if (transferredGoogleCart) {
+        try {
+            const items = JSON.parse(transferredGoogleCart);
+            if (Array.isArray(items) && items.length <= 100) {
+                localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({
+                    version: 1,
+                    updated_at: new Date().toISOString(),
+                    items: items.filter(item => Number(item?.variant_id) > 0 && Number(item?.quantity) > 0),
+                }));
+            }
+        } catch {
+            // Si el dato de retorno no es válido, se conserva el carrito local existente.
+        }
+        initialUrl.searchParams.delete('google_cart');
+        window.history.replaceState(window.history.state, '', initialUrl.href);
+    }
     const PRODUCT_VIEWS = new Set(['list', 'catalog', 'minimal']);
     let alwaysUseProductView = false;
     let productView = (() => {
@@ -711,7 +728,7 @@
         persistCart();
         renderCatalog();
         renderCart();
-        if (quantity > previousQuantity && isMobileStorefront()) openMobileCart();
+        if (quantity > previousQuantity) openMobileCart();
         if (quantity > 0 && Number(requestedQuantity) > 0) playCartPop();
         if (quantity > 0 && Number(requestedQuantity) > 0) {
             const units = Array.from(state.cart.values()).reduce((sum, value) => sum + Number(value), 0);
@@ -1566,7 +1583,7 @@
             </div>
             <div class="order-total"><span>Subtotal<br><small>${discountSummaryMarkup(discount)}<br>Total</small></span><strong>${money(total)}</strong></div>
             <form id="checkout-form" novalidate>
-                ${app.checkout_google?.enabled && !googleCustomer ? `<a class="checkout-google-button" href="${escapeHtml(app.checkout_google.login_url)}"><span aria-hidden="true">G</span>Continuar con Google</a>` : ''}
+                ${app.checkout_google?.enabled && !googleCustomer ? `<a class="checkout-google-button" href="${escapeHtml(`${app.checkout_google.login_url}?cart=${encodeURIComponent(JSON.stringify(Array.from(state.cart, ([variantId, quantity]) => ({ variant_id: Number(variantId), quantity: Number(quantity) }))))}`)}"><span aria-hidden="true">G</span>Continuar con Google</a>` : ''}
                 ${googleCustomer ? `<p class="checkout-google-connected">Continuás con Google: <strong>${escapeHtml(googleCustomer.email)}</strong></p>` : ''}
                 <label>
                     Nombre y Apellido

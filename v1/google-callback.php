@@ -3,9 +3,16 @@ declare(strict_types=1);
 
 $app = require dirname(__DIR__) . '/app/container.php';
 $google = $app['checkout_google'];
+$cart = is_array($_SESSION['checkout_google_cart'] ?? null) ? $_SESSION['checkout_google_cart'] : [];
+unset($_SESSION['checkout_google_cart']);
 
-$fail = static function (string $message) use ($google): never {
-    header('Location: ' . $google->storeUrl() . '?google_error=' . rawurlencode($message));
+$storeUrl = static function (array $parameters) use ($google, $cart): string {
+    if ($cart) $parameters['google_cart'] = json_encode($cart, JSON_UNESCAPED_SLASHES);
+    return $google->storeUrl() . '?' . http_build_query($parameters);
+};
+
+$fail = static function (string $message) use ($storeUrl): never {
+    header('Location: ' . $storeUrl(['google_error' => $message]));
     exit;
 };
 
@@ -46,7 +53,7 @@ try {
         throw new RuntimeException('Google no confirmó un email válido.');
     }
     $google->linkProfile($profile);
-    header('Location: ' . $google->storeUrl() . '?google_checkout=1');
+    header('Location: ' . $storeUrl(['google_checkout' => '1']));
     exit;
 } catch (Throwable) {
     $fail('No pudimos ingresar con Google. Intentá nuevamente.');
