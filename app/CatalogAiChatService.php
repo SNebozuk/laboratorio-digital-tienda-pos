@@ -340,7 +340,7 @@ final class CatalogAiChatService
     {
         try {
             $response = $this->request([
-                'model' => 'gpt-5.6-terra',
+                'model' => 'gpt-5.6-sol',
                 'store' => false,
                 'reasoning' => ['effort' => 'low'],
                 'tools' => [['type' => 'web_search_preview']],
@@ -776,7 +776,7 @@ final class CatalogAiChatService
     private function structuredRequest(string $name, array $schema, string $instructions, array $input, string $reasoningEffort = 'low'): array
     {
         $response = $this->request([
-            'model' => 'gpt-5.6-terra',
+            'model' => 'gpt-5.6-sol',
             'store' => false,
             'reasoning' => ['effort' => $reasoningEffort],
             'instructions' => $instructions,
