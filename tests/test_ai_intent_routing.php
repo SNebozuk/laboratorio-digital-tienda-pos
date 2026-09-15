@@ -28,4 +28,31 @@ foreach ($cases as [$interpretation, $expected]) {
     }
 }
 
+$exactRows = new ReflectionMethod(CatalogAiChatService::class, 'exactRequestedRows');
+$paperRows = [[
+    'producto' => 'MATELINA TEXTURADO A4 230G LINO NATURAL',
+    'variante' => 'Única',
+    'categoria' => 'PAPELES',
+    'descripcion' => '',
+    'variante_id' => 1,
+    'talle' => null,
+]];
+$paperRequest = [
+    'mode' => 'new',
+    'core_product_term' => 'papel mate texturado',
+    'product_requests' => [[
+        'product_term' => 'papel mate texturado',
+        'talle' => null,
+        'color' => null,
+        'material' => null,
+        'gramaje' => null,
+        'tamano' => null,
+        'tipo_papel' => null,
+    ]],
+];
+if (count($exactRows->invoke($service, $paperRows, $paperRequest, [['role' => 'user', 'content' => 'Busco papel mate texturado']])) !== 1) {
+    fwrite(STDERR, "Expected the textured matte paper request to match the Matelina catalog row.\n");
+    exit(1);
+}
+
 echo "AI intent routing tests passed.\n";

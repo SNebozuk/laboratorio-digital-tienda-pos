@@ -39,7 +39,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Primero clasificá la intención completa del último mensaje usando toda la conversación: product_search si busca, compara o pide recomendación de productos o materiales; store_information si pregunta explícitamente por información comercial de la tienda; mixed si contiene ambas solicitudes; ambiguous si hay dos interpretaciones realmente posibles; unsupported si está fuera del alcance de una tienda. Una palabra aislada nunca alcanza para clasificar información comercial: distinguí el objeto o uso mencionado de una pregunta explícita sobre horarios, pagos, contacto, retiro o envíos. Asigná high solamente cuando la intención sea inequívoca; con medium o low redactá una única pregunta concreta en question. Después, para product_search o mixed, generá búsquedas precisas para consultar exclusivamente el catálogo local. Conservá producto, variante, talle, color, cantidad, uso y demás preferencias ya informadas mientras el cliente no las cambie. Interpretá respuestas breves como "sí", "ese", "en negro", "dos" o "¿y talle M?" como continuaciones del intercambio anterior. No vuelvas a preguntar datos que el cliente ya dio. Completá todos los campos del esquema y, solo si falta un dato que realmente modifica la búsqueda, pedí una única aclaración concreta. Si no podés determinar si continúa con el producto anterior o cambió de producto, pedí que lo confirme.' . $this->criteriaInstructions('search') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE: solo podés buscar, considerar y proponer productos que existan en el catálogo local. Nunca sugieras productos externos ni inventados.",
+            'Primero clasificá la intención completa del último mensaje usando toda la conversación: product_search si busca, compara o pide recomendación de productos o materiales; store_information si pregunta explícitamente por información comercial de la tienda; mixed si contiene ambas solicitudes; ambiguous si hay dos interpretaciones realmente posibles; unsupported si está fuera del alcance de una tienda. Una palabra aislada nunca alcanza para clasificar información comercial: distinguí el objeto o uso mencionado de una pregunta explícita sobre horarios, pagos, contacto, retiro o envíos. Asigná high solamente cuando la intención sea inequívoca; con medium o low redactá una única pregunta concreta en question. Después, para product_search o mixed, generá búsquedas precisas para consultar exclusivamente el catálogo local. Conservá producto, variante, talle, color, cantidad, uso y demás preferencias ya informadas mientras el cliente no las cambie. Interpretá respuestas breves como "sí", "ese", "en negro", "dos" o "¿y talle M?" como continuaciones del intercambio anterior. No vuelvas a preguntar datos que el cliente ya dio. La ausencia de atributos opcionales como gramaje, tamaño, color, talle o acabado específico nunca debe bloquear una búsqueda: dejalos en null, buscá todas las opciones compatibles y permití que el cliente elija en los resultados. Pedí aclaración solamente cuando no puedas determinar qué familia de producto o necesidad debe buscarse. Si no podés determinar si continúa con el producto anterior o cambió de producto, pedí que lo confirme.' . $this->criteriaInstructions('search') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE: solo podés buscar, considerar y proponer productos que existan en el catálogo local. Nunca sugieras productos externos ni inventados.",
             $this->historyInput($history),
             'medium'
         );
@@ -118,9 +118,9 @@ final class CatalogAiChatService
             $alternativePool = $requestedSize === null ? [] : $this->tools->buscarProductos(['texto' => $productTerm], 200);
             $alternativePool = $this->exactRequestedRows($alternativePool, $interpretation, $history, false, false);
             $alternativePool = array_values(array_filter($alternativePool, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
-            $rows = $requestedSize === null ? [] : $this->nearestNumericSizes($alternativePool, $requestedSize, $this->requestedGarmentLine($interpretation, $history));
-            $missingSizeAlternatives = $rows !== [];
-            if (!$missingSizeAlternatives && ($suggestedTerm = $this->approximateProductTerm($candidateRows, $productTerm)) !== null) {
+            $rows = $requestedSize === null ? $candidateRows : $this->nearestNumericSizes($alternativePool, $requestedSize, $this->requestedGarmentLine($interpretation, $history));
+            $missingSizeAlternatives = $requestedSize !== null && $rows !== [];
+            if ($rows === [] && ($suggestedTerm = $this->approximateProductTerm($candidateRows, $productTerm)) !== null) {
                 $fallback = '¿Quisiste decir "' . $suggestedTerm . '"?';
                 return [
                     'message' => $this->composeResponse($history, $interpretation, [], ['estado' => 'posible_error', 'termino_sugerido' => $suggestedTerm], $fallback),
@@ -422,9 +422,9 @@ final class CatalogAiChatService
             if (!$includeGarmentLine) $productRequestTerm = (string) preg_replace('/\b(niño|niña|nino|nina|infantil|mujer|dama|unisex|adulto|adulta)\b/iu', '', $productRequestTerm);
             foreach ($rows as $row) {
                 $identity = $this->fold((string) ($row['producto'] ?? '') . ' ' . (string) ($row['variante'] ?? ''));
-                $details = $identity . ' ' . $this->fold((string) ($row['descripcion'] ?? ''));
+                $details = $identity . ' ' . $this->fold((string) ($row['categoria'] ?? '') . ' ' . (string) ($row['descripcion'] ?? ''));
                 if ($includeGarmentLine && isset($explicit['linea_remera']) && str_contains($identity, 'remera') && $this->garmentLine($identity) !== $explicit['linea_remera']) continue;
-                if (!$this->exactTextMatch($identity, $productRequestTerm)) continue;
+                if (!$this->exactTextMatch($details, $productRequestTerm)) continue;
                 if (!$this->exactTextMatch($identity, (string) ($request['material'] ?? ''))) continue;
                 if (!$this->exactTextMatch($identity, (string) ($request['color'] ?? ''))) continue;
                 if ($includeSize && ($size = trim((string) ($request['talle'] ?? ''))) !== '' && $this->fold((string) ($row['talle'] ?? '')) !== $this->fold($size)) continue;
@@ -601,12 +601,22 @@ final class CatalogAiChatService
     {
         $term = $this->fold(trim($term));
         if ($term === '') return true;
+        $value = $this->fold($value);
+        $valueWords = preg_split('/[^a-z0-9]+/', $value, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         $words = preg_split('/\\s+/', $term, -1, PREG_SPLIT_NO_EMPTY);
         if ($words === false || $words === []) return true;
         $words = array_values(array_diff($words, ['de', 'del', 'para']));
         foreach ($words as $word) {
             $pattern = '/(?<![a-z0-9])' . preg_quote($this->singular($word), '/') . '(?:s|es)?(?![a-z0-9])/u';
-            if (!preg_match($pattern, $value)) return false;
+            if (preg_match($pattern, $value)) continue;
+            $matched = false;
+            foreach ($valueWords as $valueWord) {
+                $shortest = min(strlen($valueWord), strlen($word));
+                $prefixMatch = $shortest >= 4 && (str_starts_with($valueWord, $word) || str_starts_with($word, $valueWord));
+                $fuzzyMatch = $shortest >= 4 && levenshtein($this->singular($valueWord), $this->singular($word)) <= 1;
+                if ($prefixMatch || $fuzzyMatch) { $matched = true; break; }
+            }
+            if (!$matched) return false;
         }
         return true;
     }
@@ -744,7 +754,8 @@ final class CatalogAiChatService
                         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                     ]],
                 ]],
-                'medium'
+                'medium',
+                'gpt-5.6-terra'
             );
             $message = trim((string) ($response['message'] ?? ''));
             return $message === '' ? $fallback : $message;
@@ -773,10 +784,10 @@ final class CatalogAiChatService
     }
 
     /** @param array<string,mixed> $schema @param list<array<string,mixed>> $input @return array<string,mixed> */
-    private function structuredRequest(string $name, array $schema, string $instructions, array $input, string $reasoningEffort = 'low'): array
+    private function structuredRequest(string $name, array $schema, string $instructions, array $input, string $reasoningEffort = 'low', string $model = 'gpt-5.6-sol'): array
     {
         $response = $this->request([
-            'model' => 'gpt-5.6-sol',
+            'model' => $model,
             'store' => false,
             'reasoning' => ['effort' => $reasoningEffort],
             'instructions' => $instructions,
