@@ -13,7 +13,7 @@ final class CatalogAiToolService
     }
 
     /** @param array<string, mixed> $filters @return list<array<string, mixed>> */
-    public function buscarProductos(array $filters = []): array
+    public function buscarProductos(array $filters = [], int $limit = 50): array
     {
         $filters = $this->filters($filters);
         $codeProductIds = isset($filters['texto']) ? array_flip($this->products->publicCodeMatches((string) $filters['texto'])) : [];
@@ -25,7 +25,7 @@ final class CatalogAiToolService
             }
         }
         usort($matches, static fn (array $a, array $b): int => ($b['stock'] > 0 <=> $a['stock'] > 0) ?: strcmp($a['producto'], $b['producto']));
-        return array_slice($matches, 0, 50);
+        return array_slice($matches, 0, max(1, min(200, $limit)));
     }
 
     /** @return list<array<string, mixed>> */
@@ -77,6 +77,7 @@ final class CatalogAiToolService
     {
         $variantName = trim((string) $variant['name']);
         preg_match('/\btalle\s*([[:alnum:].-]+)/iu', $variantName, $size);
+        if (!isset($size[1]) && preg_match('/\b(\d+(?:\.\d+)?)\b/u', $variantName, $numericSize)) $size[1] = $numericSize[1];
         $parts = preg_split('/\s+-\s+/', (string) $product['name']);
         $color = count($parts) > 1 ? trim((string) end($parts)) : null;
         return ['producto_id' => (int) $product['id'], 'producto' => $product['name'], 'descripcion' => $product['description'] ?? '', 'categoria' => $product['category']['name'] ?? null, 'variante_id' => (int) $variant['id'], 'variante' => $variantName, 'atributos' => ['nombre' => $variantName], 'talle' => $size[1] ?? null, 'color' => $color, 'precio' => $variant['price_cents'] === null ? null : (int) $variant['price_cents'] / 100, 'stock' => $variant['available_stock'] === null ? null : (int) $variant['available_stock'], 'imagen' => $product['image_path'] ?? null, 'visible' => ($product['active'] ?? true) && ($variant['active'] ?? true)];

@@ -35,7 +35,8 @@
             const image = row.imagen ? `<img src="${escape(row.imagen)}" alt="">` : '';
             const price = row.precio === null ? 'Precio a consultar' : `$ ${Number(row.precio).toLocaleString('es-AR')}`;
             const product = escape(JSON.stringify({ id: row.variante_id, name: `${row.producto} ${row.variante || ''}`.trim() }));
-            return `<tr><td>${image}</td><td><strong>${escape(row.producto)}</strong></td><td>${escape(row.variante || 'Única')}<br><small>${escape(price)}</small></td><td><button type="button" data-vendor-ai-product='${product}'>ELEGIR</button></td></tr>`;
+            const measures = row.medidas ? `<button type="button" data-vendor-ai-measures="${escape(row.medidas)}" data-vendor-ai-measures-name="${escape(`${row.producto} ${row.variante || ''}`.trim())}">MEDIDAS</button>` : '';
+            return `<tr><td>${image}</td><td><strong>${escape(row.producto)}</strong></td><td>${escape(row.variante || 'Única')}<br><small>${escape(price)}</small></td><td><button type="button" data-vendor-ai-product='${product}'>ELEGIR</button>${measures}</td></tr>`;
         }).join('')}</tbody></table>`;
     };
     const refresh = async () => {
@@ -69,6 +70,11 @@
         messages.scrollTop += event.deltaY;
     }, { passive: false });
     chat.addEventListener('click', event => {
+        const measures = event.target.closest('[data-vendor-ai-measures]');
+        if (measures) {
+            appendMessage('assistant', `${measures.dataset.vendorAiMeasuresName}: ${measures.dataset.vendorAiMeasures}`);
+            return;
+        }
         const product = event.target.closest('[data-vendor-ai-product]');
         if (product) {
             pendingProduct = JSON.parse(product.dataset.vendorAiProduct);

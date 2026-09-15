@@ -38,7 +38,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Conservá datos previos solo si continúa con el mismo producto; detectá cambios y mantené separados los atributos de cada producto cuando el pedido es múltiple. Un body es un enterito para bebé y nunca es una remera: al pedir remeras no incluyas bodys y al pedir bodys no incluyas remeras. Si pide solamente remeras, son unisex. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, A4 es el tamaño estándar: guardalo en tamano cuando no se indique otro. Para cada papel identificá siempre tamano, gramaje y tipo_papel; no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central en singular, pero conservá cómo lo escribió el cliente: no corrijas posibles errores de tipeo. Generá búsquedas precisas y alternativas amplias para cada producto. Si hay código o SKU, conserválo en codigo. Tolerá plurales y acentos como coincidencias exactas. Ante una palabra que podría tener un error leve, no la corrijas ni pidas aclaración todavía: buscala para que el catálogo pueda confirmar el nombre y consultarle al cliente. Si hay varias líneas de producto que coinciden, no pidas aclaración antes de buscar: devolvé los resultados para que el cliente pueda elegir. Solo pedí una aclaración si cambia sustancialmente la recomendación.',
+            'Comprendé la solicitud activa del cliente antes de consultar el catálogo. Conservá atributos previos únicamente cuando el mensaje continúa con el mismo producto. Si pregunta por otro producto, descartá los atributos anteriores y marcá mode como changed. En product_requests incluí solo los productos solicitados en el mensaje actual; usá multiple exclusivamente si el cliente pide varios productos en ese mismo mensaje. Un body es un enterito para bebé y nunca es una remera: al pedir remeras no incluyas bodys y al pedir bodys no incluyas remeras. Si pide remeras sin ningún atributo, asumí unisex; cuando especifica talle, color u otro dato, mantené remera como término genérico para no descartar la única línea que coincida exactamente. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, A4 es el tamaño estándar: guardalo en tamano cuando no se indique otro. Para cada papel identificá siempre tamano, gramaje y tipo_papel; no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central en singular, pero conservá cómo lo escribió el cliente: no corrijas posibles errores de tipeo. Normalizá género, singular/plural y errores leves en atributos conocidos como colores. Generá búsquedas precisas para cada producto. Si hay código o SKU, conserválo en codigo. Si hay varias líneas de producto que coinciden, no pidas aclaración antes de buscar: devolvé los resultados para que el cliente pueda elegir. Si no podés determinar si continúa con el producto anterior o cambió de producto, pedí más información.',
             $this->historyInput($history)
         );
 
@@ -60,22 +60,45 @@ final class CatalogAiChatService
         $rows = array_values($rowsByVariant);
         $rows = $this->applyBusinessRules($rows, $interpretation);
         $productTerm = (string) ($interpretation['core_product_term'] ?? '');
-        $exactRows = $this->exactRequestedRows($rows, $interpretation);
+        $exactRows = $this->exactRequestedRows($rows, $interpretation, $history);
+        $stockAlternatives = false;
+        $missingSizeAlternatives = false;
+        $exactOutOfStock = false;
         if ($exactRows !== []) {
             $rows = $exactRows;
-        } elseif (($suggestedTerm = $this->approximateProductTerm($rows, $productTerm)) !== null) {
-            return [
-                'message' => '¿Quisiste decir "' . $suggestedTerm . '"?',
-                'raw_tools' => [],
-                'display_results' => [],
-                'interpretation' => $this->publicInterpretation($interpretation) + [
-                    'origen_busqueda' => 'Catálogo',
-                ],
-            ];
+            $visibleExactRows = array_values(array_filter($exactRows, static fn (array $row): bool => ($row['visible'] ?? true)));
+            $availableExactRows = array_values(array_filter($visibleExactRows, static fn (array $row): bool => $row['stock'] === null || (int) $row['stock'] > 0));
+            if ($visibleExactRows !== [] && $availableExactRows === []) {
+                $exactOutOfStock = true;
+                $alternativePool = $this->tools->buscarProductos(['texto' => $productTerm], 200);
+                $alternativePool = $this->applyBusinessRules($alternativePool, $interpretation);
+                $alternativePool = $this->exactRequestedRows($alternativePool, $interpretation, $history, false);
+                $alternativePool = array_values(array_filter($alternativePool, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
+                $rows = $this->nearestAvailableSizes($visibleExactRows, $alternativePool);
+                $stockAlternatives = $rows !== [];
+            }
         } else {
-            $rows = [];
+            $candidateRows = $rows;
+            $requestedSize = $this->requestedSize($interpretation, $history);
+            $alternativePool = $requestedSize === null ? [] : $this->tools->buscarProductos(['texto' => $productTerm], 200);
+            $alternativePool = $this->applyBusinessRules($alternativePool, $interpretation);
+            $alternativePool = $this->exactRequestedRows($alternativePool, $interpretation, $history, false);
+            $alternativePool = array_values(array_filter($alternativePool, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
+            $rows = $requestedSize === null ? [] : $this->nearestNumericSizes($alternativePool, $requestedSize);
+            $missingSizeAlternatives = $rows !== [];
+            if (!$missingSizeAlternatives && ($suggestedTerm = $this->approximateProductTerm($candidateRows, $productTerm)) !== null) {
+                return [
+                    'message' => '¿Quisiste decir "' . $suggestedTerm . '"?',
+                    'raw_tools' => [],
+                    'display_results' => [],
+                    'interpretation' => $this->publicInterpretation($interpretation) + [
+                        'origen_busqueda' => 'Catálogo',
+                    ],
+                ];
+            }
         }
         $displayRows = array_values(array_filter($rows, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
+        $displayRows = $this->withSizeMeasurements($displayRows);
         usort($displayRows, static fn (array $a, array $b): int =>
             (($b['stock'] > 0) <=> ($a['stock'] > 0))
             ?: strcmp((string) $a['producto'], (string) $b['producto'])
@@ -87,17 +110,24 @@ final class CatalogAiChatService
         if (count(array_unique(array_filter(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $displayRows)))) > 1) $criteria[] = 'color';
         if (count($displayRows) > 24) $criteria[] = 'material o uso';
         $clarification = $this->productClarificationQuestion($displayRows);
-        $message = $clarification ?? ($displayRows === []
-            ? 'No tengo una opción disponible para esa búsqueda.'
+        $message = $stockAlternatives
+            ? 'No tengo stock del talle solicitado. Te muestro los talles disponibles más cercanos, uno inferior y otro siguiente cuando existen. También podés consultar las medidas de cada opción.'
+            : ($missingSizeAlternatives
+                ? 'Ese talle no figura en estas opciones. Te muestro el talle inferior y el superior más cercanos que existen y tienen stock. También podés consultar sus medidas.'
+            : ($exactOutOfStock
+                ? 'La opción exacta existe, pero no tiene stock y no encontré talles cercanos disponibles.'
+                : ($clarification ?? ($displayRows === []
+            ? 'No encontré una coincidencia exacta con esos datos. ¿Podés confirmar el producto y la variante que buscás?'
             : (count($displayRows) > 24
                 ? 'Hay más de 24 opciones disponibles. Para acotar mejor, ¿preferís filtrar por ' . implode(', ', $criteria ?: ['tipo de producto']) . '?'
-                : 'Estas son las opciones disponibles en Laboratorio Digital.'));
-        $continuation = $clarification === null ? $this->continuationSuggestion($displayRows) : '';
+                : 'Estas son las opciones disponibles en Laboratorio Digital.')))));
+        $continuation = $clarification === null && !$stockAlternatives && !$missingSizeAlternatives ? $this->continuationSuggestion($displayRows) : '';
 
         return [
             'message' => trim($message . ($continuation === '' ? '' : ' ' . $continuation)),
             'raw_tools' => $searchLog,
             'display_results' => array_slice($displayRows, 0, 24),
+            'needs_clarification' => $displayRows === [] && !$exactOutOfStock,
             'interpretation' => $this->publicInterpretation($interpretation) + [
                 'origen_busqueda' => 'Catálogo',
             ],
@@ -164,25 +194,36 @@ final class CatalogAiChatService
     /** @param array<string,mixed> $interpretation @param list<array{role:string,content:string}> $history @return list<array<string,mixed>> */
     private function explicitCatalogMatches(array $interpretation, array $history): array
     {
-        $lastMessage = '';
-        foreach (array_reverse($history) as $message) {
-            if (($message['role'] ?? '') === 'user') {
-                $lastMessage = (string) ($message['content'] ?? '');
-                break;
-            }
-        }
+        $attributes = $this->explicitAttributes($history);
         $filters = ['texto' => trim((string) ($interpretation['core_product_term'] ?? ''))];
-        if (preg_match('/\btalle\s*([[:alnum:].-]+)/iu', $lastMessage, $size)) {
-            $filters['talle'] = $size[1];
+        if (isset($attributes['talle'])) $filters['talle'] = $attributes['talle'];
+        if (isset($attributes['color'])) $filters['color'] = $attributes['color'];
+        return $filters['texto'] === '' ? [] : $this->tools->buscarProductos($filters);
+    }
+
+    /** @param list<array{role:string,content:string}> $history @return array<string,string> */
+    private function explicitAttributes(array $history): array
+    {
+        $text = '';
+        foreach (array_reverse($history) as $message) {
+            if (($message['role'] ?? '') === 'user') { $text = $this->fold((string) ($message['content'] ?? '')); break; }
         }
-        $colors = ['negro', 'negra', 'blanco', 'blanca', 'rojo', 'roja', 'azul', 'verde', 'gris', 'rosa', 'amarillo', 'amarilla', 'violeta', 'naranja', 'beige', 'marron', 'marrón'];
-        foreach ($colors as $color) {
-            if (preg_match('/\b' . preg_quote($color, '/') . '\b/iu', $lastMessage)) {
-                $filters['color'] = $color;
-                break;
+        $attributes = [];
+        if (preg_match('/\btalle\s*([[:alnum:].-]+)/u', $text, $size)) $attributes['talle'] = $size[1];
+        $colors = [
+            'negro' => ['negro', 'negra', 'negros', 'negras'], 'blanco' => ['blanco', 'blanca', 'blancos', 'blancas'],
+            'rojo' => ['rojo', 'roja', 'rojos', 'rojas'], 'azul' => ['azul', 'azules'], 'verde' => ['verde', 'verdes'],
+            'gris' => ['gris', 'grises'], 'rosa' => ['rosa', 'rosas'], 'amarillo' => ['amarillo', 'amarilla', 'amarillos', 'amarillas'],
+            'violeta' => ['violeta', 'violetas'], 'naranja' => ['naranja', 'naranjas'], 'beige' => ['beige', 'beiges'], 'marron' => ['marron', 'marrones'],
+        ];
+        $words = preg_split('/[^a-z0-9]+/', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        foreach ($words as $word) foreach ($colors as $canonical => $aliases) foreach ($aliases as $alias) {
+            if ($word === $alias || (strlen($word) >= 4 && levenshtein($this->singular($word), $this->singular($alias)) === 1)) {
+                $attributes['color'] = $canonical;
+                break 3;
             }
         }
-        return $filters['texto'] === '' ? [] : $this->tools->buscarProductos($filters);
+        return $attributes;
     }
 
     /** @param list<array{role:string,content:string}> $history */
@@ -299,13 +340,17 @@ final class CatalogAiChatService
     }
 
     /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
-    private function exactRequestedRows(array $rows, array $interpretation, bool $includeSize = true): array
+    private function exactRequestedRows(array $rows, array $interpretation, array $history, bool $includeSize = true): array
     {
         $requests = array_values(array_filter((array) ($interpretation['product_requests'] ?? []), static fn (mixed $request): bool => is_array($request) && trim((string) ($request['product_term'] ?? '')) !== ''));
         if ($requests === []) $requests = [['product_term' => (string) ($interpretation['core_product_term'] ?? '')]];
+        if (($interpretation['mode'] ?? '') !== 'multiple' && count($requests) > 1) $requests = [end($requests)];
+        $explicit = $this->explicitAttributes($history);
 
         $exact = [];
         foreach ($requests as $request) {
+            if (isset($explicit['talle'])) $request['talle'] = $explicit['talle'];
+            if (isset($explicit['color'])) $request['color'] = $explicit['color'];
             foreach ($rows as $row) {
                 $identity = $this->fold((string) ($row['producto'] ?? '') . ' ' . (string) ($row['variante'] ?? ''));
                 $details = $identity . ' ' . $this->fold((string) ($row['descripcion'] ?? ''));
@@ -323,6 +368,129 @@ final class CatalogAiChatService
             }
         }
         return array_values($exact);
+    }
+
+    /** @param list<array<string,mixed>> $requestedRows @param list<array<string,mixed>> $availableRows @return list<array<string,mixed>> */
+    private function nearestAvailableSizes(array $requestedRows, array $availableRows): array
+    {
+        $selected = [];
+        foreach ($requestedRows as $requestedRow) {
+            $requestedRank = $this->sizeRank($requestedRow);
+            if ($requestedRank === null) continue;
+            $lowerRank = null;
+            $upperRank = null;
+            foreach ($availableRows as $row) {
+                if (!$this->sameSizeLine($requestedRow, $row)) continue;
+                $rank = $this->sizeRank($row);
+                if ($rank === null || $rank === $requestedRank) continue;
+                if ($rank < $requestedRank && ($lowerRank === null || $rank > $lowerRank)) $lowerRank = $rank;
+                if ($rank > $requestedRank && ($upperRank === null || $rank < $upperRank)) $upperRank = $rank;
+            }
+            foreach ($availableRows as $row) {
+                if (!$this->sameSizeLine($requestedRow, $row)) continue;
+                $rank = $this->sizeRank($row);
+                if ($rank !== null && ($rank === $lowerRank || $rank === $upperRank)) $selected[(int) $row['variante_id']] = $row;
+            }
+        }
+        return array_values($selected);
+    }
+
+    /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
+    private function nearestNumericSizes(array $rows, string $requestedSize): array
+    {
+        if (!is_numeric($requestedSize)) return [];
+        $requested = (float) $requestedSize;
+        $lower = null;
+        $upper = null;
+        foreach ($rows as $row) {
+            $size = (string) ($row['talle'] ?? '');
+            if (!is_numeric($size)) continue;
+            $numeric = (float) $size;
+            if ($numeric < $requested && ($lower === null || $numeric > $lower)) $lower = $numeric;
+            if ($numeric > $requested && ($upper === null || $numeric < $upper)) $upper = $numeric;
+        }
+        return array_values(array_filter($rows, static function (array $row) use ($lower, $upper): bool {
+            $size = (string) ($row['talle'] ?? '');
+            if (!is_numeric($size)) return false;
+            $numeric = (float) $size;
+            return $numeric === $lower || $numeric === $upper;
+        }));
+    }
+
+    /** @param array<string,mixed> $interpretation @param list<array{role:string,content:string}> $history */
+    private function requestedSize(array $interpretation, array $history): ?string
+    {
+        $explicit = $this->explicitAttributes($history);
+        if (isset($explicit['talle'])) return $explicit['talle'];
+        $requests = array_values(array_filter((array) ($interpretation['product_requests'] ?? []), 'is_array'));
+        if ($requests === []) return null;
+        $request = end($requests);
+        $size = trim((string) ($request['talle'] ?? ''));
+        return $size === '' ? null : $size;
+    }
+
+    /** @param array<string,mixed> $requested @param array<string,mixed> $candidate */
+    private function sameSizeLine(array $requested, array $candidate): bool
+    {
+        $requestedName = $this->fold((string) ($requested['producto'] ?? ''));
+        $candidateName = $this->fold((string) ($candidate['producto'] ?? ''));
+        if (str_contains($requestedName, 'remera') && str_contains($candidateName, 'remera')) return true;
+        return (int) ($requested['producto_id'] ?? 0) === (int) ($candidate['producto_id'] ?? -1);
+    }
+
+    /** @param array<string,mixed> $row */
+    private function sizeRank(array $row): ?float
+    {
+        $size = trim((string) ($row['talle'] ?? ''));
+        if (!is_numeric($size)) return null;
+        $name = $this->fold((string) ($row['producto'] ?? ''));
+        if (!str_contains($name, 'remera')) return (float) $size;
+        if (preg_match('/\b(nino|nina|infantil)\b/u', $name)) {
+            $children = ['4', '6', '8', '10', '12', '14', '16'];
+            $rank = array_search($size, $children, true);
+            return $rank === false ? null : (float) $rank;
+        }
+        return 6.0 + (float) $size;
+    }
+
+    /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
+    private function withSizeMeasurements(array $rows): array
+    {
+        $guide = $this->settings->sizeGuide();
+        foreach ($rows as &$row) {
+            $best = null;
+            $bestScore = -1;
+            $product = $this->fold((string) ($row['producto'] ?? ''));
+            foreach ($guide['rows'] as $measure) {
+                if ($this->fold((string) ($measure['size'] ?? '')) !== $this->fold((string) ($row['talle'] ?? ''))) continue;
+                $group = $this->fold((string) ($measure['group'] ?? ''));
+                if (!$this->measurementGroupMatches($product, $group)) continue;
+                $tokens = preg_split('/[^a-z0-9.]+/', $group, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                $score = count(array_filter($tokens, static fn (string $token): bool => strlen($token) >= 4 && str_contains($product, $token)));
+                if ($score > $bestScore) { $best = $measure; $bestScore = $score; }
+            }
+            if ($best !== null) {
+                $row['medidas'] = trim('Ancho ' . (string) ($best['width'] ?? '') . ' · Largo ' . (string) ($best['length'] ?? '') . ((string) ($best['note'] ?? '') !== '' ? ' · ' . (string) $best['note'] : ''));
+            }
+        }
+        unset($row);
+        return $rows;
+    }
+
+    private function measurementGroupMatches(string $product, string $group): bool
+    {
+        foreach (['remera', 'body', 'buzo', 'campera'] as $type) {
+            if (str_contains($product, $type) && !str_contains($group, $type)) return false;
+        }
+        foreach ([['nino', 'nino'], ['infantil', 'nino'], ['mujer', 'mujer'], ['dama', 'mujer']] as [$productTerm, $groupTerm]) {
+            if (str_contains($product, $productTerm) && !str_contains($group, $groupTerm)) return false;
+        }
+        if (!str_contains($product, 'nino') && !str_contains($product, 'infantil') && !str_contains($product, 'mujer') && !str_contains($product, 'dama') && str_contains($product, 'remera') && !str_contains($group, 'unisex')) return false;
+        if (str_contains($product, 'modal') && !str_contains($group, 'modal')) return false;
+        if (str_contains($product, 'algodon') && !str_contains($group, 'algodon')) return false;
+        if ((str_contains($group, '24.1') || str_contains($group, '20.1')) && str_contains($product, '24.1') && !str_contains($group, '24.1')) return false;
+        if ((str_contains($group, '24.1') || str_contains($group, '20.1')) && str_contains($product, '20.1') && !str_contains($group, '20.1')) return false;
+        return true;
     }
 
     private function exactTextMatch(string $value, string $term): bool
