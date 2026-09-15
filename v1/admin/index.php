@@ -504,6 +504,9 @@ header('Referrer-Policy: same-origin');
                             <p>Historial e interpretaciones del chat público.</p>
                         </div>
                         <span class="ai-search-service-status is-checking" id="ai-search-service-status" role="status">🟡 Verificando IA…</span>
+                        <?php if ($user['role'] === 'admin'): ?>
+                            <button class="primary-button fit-button" type="button" data-view="ai-criteria">CRITERIOS DE BÚSQUEDA Y RESPUESTA</button>
+                        <?php endif ?>
                         <a class="primary-button fit-button" href="<?= $escape($storeUrl) ?>?chat_ia=1&amp;nueva=1" target="_blank" rel="noopener">ABRIR CHAT IA</a>
                     </div>
 
@@ -511,6 +514,31 @@ header('Referrer-Policy: same-origin');
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>
+                    <section class="admin-view ai-criteria-view" id="view-ai-criteria">
+                        <form id="ai-criteria-form">
+                            <div class="view-heading ai-criteria-heading">
+                                <div>
+                                    <p class="eyebrow">ASESOR IA</p>
+                                    <h1 class="admin-page-title">CRITERIOS DE BÚSQUEDA Y RESPUESTA</h1>
+                                    <p>Editá cómo interpreta las consultas y cómo responde a los clientes.</p>
+                                </div>
+                                <button class="primary-button fit-button" type="submit">GUARDAR CRITERIOS</button>
+                            </div>
+                            <div class="ai-criteria-tabs" role="tablist" aria-label="Tipos de criterios">
+                                <button class="ai-criteria-tab is-active" type="button" role="tab" aria-selected="true" data-ai-criteria-tab="search">BÚSQUEDA</button>
+                                <button class="ai-criteria-tab" type="button" role="tab" aria-selected="false" data-ai-criteria-tab="response">RESPUESTA</button>
+                            </div>
+                            <section class="settings-card ai-criteria-panel" data-ai-criteria-panel="search">
+                                <div class="ai-criteria-panel-heading"><p>Cada fila es una instrucción que el asesor aplica al interpretar y buscar.</p><button class="secondary-button fit-button" type="button" data-add-ai-criterion="search">AGREGAR CRITERIO</button></div>
+                                <div class="ai-criteria-rows" id="ai-search-criteria-rows"></div>
+                            </section>
+                            <section class="settings-card ai-criteria-panel" data-ai-criteria-panel="response" hidden>
+                                <div class="ai-criteria-panel-heading"><p>Cada fila es una instrucción para redactar la respuesta al cliente.</p><button class="secondary-button fit-button" type="button" data-add-ai-criterion="response">AGREGAR CRITERIO</button></div>
+                                <div class="ai-criteria-rows" id="ai-response-criteria-rows"></div>
+                            </section>
+                        </form>
+                    </section>
+
                     <section class="admin-view" id="view-users">
                         <div class="view-heading">
                             <div>

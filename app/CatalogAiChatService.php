@@ -38,13 +38,14 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la solicitud activa del cliente antes de consultar el catálogo. Conservá atributos previos únicamente cuando el mensaje continúa con el mismo producto. Si pregunta por otro producto, descartá los atributos anteriores y marcá mode como changed. En product_requests incluí solo los productos solicitados en el mensaje actual; usá multiple exclusivamente si el cliente pide varios productos en ese mismo mensaje. Un body es un enterito para bebé y nunca es una remera: al pedir remeras no incluyas bodys y al pedir bodys no incluyas remeras. Remeras de niño y remeras infantiles significan lo mismo. Las remeras de niño, mujer y unisex son líneas independientes y sus talles no son comparables. La única excepción es que, si no hay talle 16 de niño o infantil, se puede ofrecer talle 1 de adulto o unisex; nunca hagas el reemplazo inverso. Si pide remeras sin indicar línea ni atributos, asumí unisex; cuando especifica talle, color u otro dato, mantené remera como término genérico hasta verificar el catálogo. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, A4 es el tamaño estándar: guardalo en tamano cuando no se indique otro. Para cada papel identificá siempre tamano, gramaje y tipo_papel; no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central en singular, pero conservá cómo lo escribió el cliente: no corrijas posibles errores de tipeo. Normalizá género, singular/plural y errores leves en atributos conocidos como colores. Generá búsquedas precisas para cada producto. Si hay código o SKU, conserválo en codigo. Si hay varias líneas de producto que coinciden, no pidas aclaración antes de buscar: devolvé los resultados para que el cliente pueda elegir. Si no podés determinar si continúa con el producto anterior o cambió de producto, pedí más información.',
+            'Comprendé la solicitud activa del cliente y generá búsquedas precisas para consultar exclusivamente el catálogo local. Completá todos los campos del esquema y pedí más información si no podés determinar si continúa con el producto anterior o cambió de producto.' . $this->criteriaInstructions('search'),
             $this->historyInput($history)
         );
 
         if (($interpretation['needs_clarification'] ?? false) === true) {
+            $fallback = trim((string) ($interpretation['question'] ?? '¿Podés contarme un poco más sobre el uso que le vas a dar?'));
             return [
-                'message' => trim((string) ($interpretation['question'] ?? '¿Podés contarme un poco más sobre el uso que le vas a dar?')),
+                'message' => $this->composeResponse($history, $interpretation, [], ['estado' => 'necesita_aclaracion'], $fallback),
                 'raw_tools' => [],
                 'display_results' => [],
                 'interpretation' => $this->publicInterpretation($interpretation),
@@ -58,7 +59,6 @@ final class CatalogAiChatService
             $rowsByVariant[(int) $row['variante_id']] = $row;
         }
         $rows = array_values($rowsByVariant);
-        $rows = $this->applyBusinessRules($rows, $interpretation);
         $productTerm = (string) ($interpretation['core_product_term'] ?? '');
         $exactRows = $this->exactRequestedRows($rows, $interpretation, $history);
         $stockAlternatives = false;
@@ -71,7 +71,6 @@ final class CatalogAiChatService
             if ($visibleExactRows !== [] && $availableExactRows === []) {
                 $exactOutOfStock = true;
                 $alternativePool = $this->tools->buscarProductos(['texto' => $productTerm], 200);
-                $alternativePool = $this->applyBusinessRules($alternativePool, $interpretation);
                 $alternativePool = $this->exactRequestedRows($alternativePool, $interpretation, $history, false, false);
                 $alternativePool = array_values(array_filter($alternativePool, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
                 $rows = $this->nearestAvailableSizes($visibleExactRows, $alternativePool);
@@ -81,14 +80,14 @@ final class CatalogAiChatService
             $candidateRows = $rows;
             $requestedSize = $this->requestedSize($interpretation, $history);
             $alternativePool = $requestedSize === null ? [] : $this->tools->buscarProductos(['texto' => $productTerm], 200);
-            $alternativePool = $this->applyBusinessRules($alternativePool, $interpretation);
             $alternativePool = $this->exactRequestedRows($alternativePool, $interpretation, $history, false, false);
             $alternativePool = array_values(array_filter($alternativePool, static fn (array $row): bool => ($row['visible'] ?? true) && ($row['stock'] === null || (int) $row['stock'] > 0)));
             $rows = $requestedSize === null ? [] : $this->nearestNumericSizes($alternativePool, $requestedSize, $this->requestedGarmentLine($interpretation, $history));
             $missingSizeAlternatives = $rows !== [];
             if (!$missingSizeAlternatives && ($suggestedTerm = $this->approximateProductTerm($candidateRows, $productTerm)) !== null) {
+                $fallback = '¿Quisiste decir "' . $suggestedTerm . '"?';
                 return [
-                    'message' => '¿Quisiste decir "' . $suggestedTerm . '"?',
+                    'message' => $this->composeResponse($history, $interpretation, [], ['estado' => 'posible_error', 'termino_sugerido' => $suggestedTerm], $fallback),
                     'raw_tools' => [],
                     'display_results' => [],
                     'interpretation' => $this->publicInterpretation($interpretation) + [
@@ -110,7 +109,7 @@ final class CatalogAiChatService
         if (count(array_unique(array_filter(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $displayRows)))) > 1) $criteria[] = 'color';
         if (count($displayRows) > 24) $criteria[] = 'material o uso';
         $clarification = $this->productClarificationQuestion($displayRows);
-        $message = $stockAlternatives
+        $fallbackMessage = $stockAlternatives
             ? 'No tengo stock del talle solicitado. Te muestro los talles disponibles más cercanos, uno inferior y otro siguiente cuando existen. También podés consultar las medidas de cada opción.'
             : ($missingSizeAlternatives
                 ? 'Ese talle no figura en estas opciones. Te muestro el talle inferior y el superior más cercanos que existen y tienen stock. También podés consultar sus medidas.'
@@ -122,9 +121,15 @@ final class CatalogAiChatService
                 ? 'Hay más de 24 opciones disponibles. Para acotar mejor, ¿preferís filtrar por ' . implode(', ', $criteria ?: ['tipo de producto']) . '?'
                 : 'Estas son las opciones disponibles en Laboratorio Digital.')))));
         $continuation = $clarification === null && !$stockAlternatives && !$missingSizeAlternatives ? $this->continuationSuggestion($displayRows) : '';
+        $fallbackMessage = trim($fallbackMessage . ($continuation === '' ? '' : ' ' . $continuation));
+        $message = $this->composeResponse($history, $interpretation, array_slice($displayRows, 0, 24), [
+            'estado' => $stockAlternatives ? 'alternativas_por_falta_de_stock' : ($missingSizeAlternatives ? 'alternativas_por_talle_inexistente' : ($exactOutOfStock ? 'sin_stock_sin_alternativas' : ($displayRows === [] ? 'sin_coincidencias' : 'resultados'))),
+            'pregunta_de_aclaracion' => $clarification,
+            'cantidad_resultados' => count($displayRows),
+        ], $fallbackMessage);
 
         return [
-            'message' => trim($message . ($continuation === '' ? '' : ' ' . $continuation)),
+            'message' => $message,
             'raw_tools' => $searchLog,
             'display_results' => array_slice($displayRows, 0, 24),
             'needs_clarification' => $displayRows === [] && !$exactOutOfStock,
@@ -164,7 +169,6 @@ final class CatalogAiChatService
                     $filters[$field] = trim((string) $request[$field]);
                 }
             }
-            if (str_contains($this->fold((string) $request['product_term']), 'papel') && empty($filters['tamano'])) $filters['tamano'] = 'a4';
             if (($request['tipo_papel'] ?? null) !== null && trim((string) $request['tipo_papel']) !== '') $filters['tipo'] = trim((string) $request['tipo_papel']);
             array_unshift($searches, $filters);
         }
@@ -314,34 +318,6 @@ final class CatalogAiChatService
         return false;
     }
 
-    /** @param list<array<string,mixed>> $rows @param array<string,mixed> $interpretation @return list<array<string,mixed>> */
-    private function applyBusinessRules(array $rows, array $interpretation): array
-    {
-        $need = $this->fold(implode(' ', [
-            (string) ($interpretation['need'] ?? ''),
-            (string) ($interpretation['product_family'] ?? ''),
-            (string) ($interpretation['core_product_term'] ?? ''),
-        ]));
-        $paperGramajes = [];
-        foreach ((array) ($interpretation['product_requests'] ?? []) as $request) {
-            if (!is_array($request) || !str_contains($this->fold((string) ($request['product_term'] ?? '')), 'papel')) continue;
-            if (preg_match('/\d+/', (string) ($request['gramaje'] ?? ''), $match)) $paperGramajes[] = $match[0];
-        }
-        return array_values(array_filter($rows, function (array $row) use ($need, $paperGramajes): bool {
-            $product = $this->fold((string) ($row['producto'] ?? ''));
-            $isBody = (bool) preg_match('/\bbody(s)?\b/u', $product);
-            if (str_contains($need, 'remera') && $isBody) return false;
-            if (str_contains($need, 'body') && !$isBody) return false;
-            if (str_contains($need, 'bebe') && !$isBody) return false;
-            if (str_contains($need, 'papel') && str_contains($this->fold((string) ($row['producto'] ?? '') . ' ' . (string) ($row['descripcion'] ?? '')), 'laser')) return false;
-            if ($paperGramajes !== [] && str_contains($product, 'papel')) {
-                $details = $this->fold((string) ($row['producto'] ?? '') . ' ' . (string) ($row['descripcion'] ?? ''));
-                if (!array_filter($paperGramajes, static fn (string $gramaje): bool => (bool) preg_match('/\b' . preg_quote($gramaje, '/') . '\s*g\b/u', $details))) return false;
-            }
-            return true;
-        }));
-    }
-
     /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
     private function exactRequestedRows(array $rows, array $interpretation, array $history, bool $includeSize = true, bool $includeGarmentLine = true): array
     {
@@ -369,8 +345,7 @@ final class CatalogAiChatService
                 if (!$this->exactTextMatch($identity, (string) ($request['color'] ?? ''))) continue;
                 if ($includeSize && ($size = trim((string) ($request['talle'] ?? ''))) !== '' && $this->fold((string) ($row['talle'] ?? '')) !== $this->fold($size)) continue;
                 if (str_contains($this->fold((string) $request['product_term']), 'papel')) {
-                    $tamano = trim((string) ($request['tamano'] ?? '')) ?: 'a4';
-                    if (!$this->exactTextMatch($details, $tamano)) continue;
+                    if (!$this->exactTextMatch($details, (string) ($request['tamano'] ?? ''))) continue;
                     if (!$this->exactTextMatch($details, (string) ($request['tipo_papel'] ?? ''))) continue;
                     if (!$this->exactGramajeMatch($details, (string) ($request['gramaje'] ?? ''))) continue;
                 }
@@ -416,9 +391,8 @@ final class CatalogAiChatService
             $size = (string) ($row['talle'] ?? '');
             if (!is_numeric($size)) continue;
             $line = $this->garmentLine($this->fold((string) ($row['producto'] ?? '')));
-            $isContinuation = $requestedLine === 'nino' && $requestedSize === '16' && $line === 'unisex' && $size === '1';
-            if ($requestedLine !== null && $line !== $requestedLine && !$isContinuation) continue;
-            $numeric = $isContinuation ? 17.0 : (float) $size;
+            if ($requestedLine !== null && $line !== $requestedLine) continue;
+            $numeric = (float) $size;
             if ($numeric < $requested && ($lower === null || $numeric > $lower)) $lower = $numeric;
             if ($numeric > $requested && ($upper === null || $numeric < $upper)) $upper = $numeric;
         }
@@ -426,9 +400,8 @@ final class CatalogAiChatService
             $size = (string) ($row['talle'] ?? '');
             if (!is_numeric($size)) return false;
             $line = $this->garmentLine($this->fold((string) ($row['producto'] ?? '')));
-            $isContinuation = $requestedLine === 'nino' && $requestedSize === '16' && $line === 'unisex' && $size === '1';
-            if ($requestedLine !== null && $line !== $requestedLine && !$isContinuation) return false;
-            $numeric = $isContinuation ? 17.0 : (float) $size;
+            if ($requestedLine !== null && $line !== $requestedLine) return false;
+            $numeric = (float) $size;
             return $numeric === $lower || $numeric === $upper;
         }));
     }
@@ -461,11 +434,7 @@ final class CatalogAiChatService
         if (str_contains($requestedName, 'remera') && str_contains($candidateName, 'remera')) {
             $requestedLine = $this->garmentLine($requestedName);
             $candidateLine = $this->garmentLine($candidateName);
-            if ($requestedLine === $candidateLine) return true;
-            return $requestedLine === 'nino'
-                && (string) ($requested['talle'] ?? '') === '16'
-                && $candidateLine === 'unisex'
-                && (string) ($candidate['talle'] ?? '') === '1';
+            return $requestedLine === $candidateLine;
         }
         return (int) ($requested['producto_id'] ?? 0) === (int) ($candidate['producto_id'] ?? -1);
     }
@@ -501,10 +470,6 @@ final class CatalogAiChatService
     /** @param array<string,mixed> $requested @param array<string,mixed> $candidate */
     private function relativeSizeRank(array $requested, array $candidate): ?float
     {
-        if ($this->garmentLine($this->fold((string) ($requested['producto'] ?? ''))) === 'nino'
-            && (string) ($requested['talle'] ?? '') === '16'
-            && $this->garmentLine($this->fold((string) ($candidate['producto'] ?? ''))) === 'unisex'
-            && (string) ($candidate['talle'] ?? '') === '1') return 17.0;
         return $this->sizeRank($candidate);
     }
 
@@ -650,6 +615,52 @@ final class CatalogAiChatService
             'familia' => (string) ($interpretation['product_family'] ?? ''),
             'uso' => (string) ($interpretation['use'] ?? ''),
         ];
+    }
+
+    private function criteriaInstructions(string $type): string
+    {
+        $criteria = $this->settings->aiCriteria()[$type] ?? [];
+        if ($criteria === []) return '';
+        return "\n\nCriterios configurados desde el administrador:\n- " . implode("\n- ", $criteria);
+    }
+
+    /** @param list<array{role:string,content:string}> $history @param list<array<string,mixed>> $rows @param array<string,mixed> $facts */
+    private function composeResponse(array $history, array $interpretation, array $rows, array $facts, string $fallback): string
+    {
+        try {
+            $response = $this->structuredRequest(
+                'respuesta_catalogo',
+                [
+                    'type' => 'object',
+                    'additionalProperties' => false,
+                    'properties' => ['message' => ['type' => 'string']],
+                    'required' => ['message'],
+                ],
+                'Redactá solamente el mensaje que verá el cliente. Respetá los hechos y los resultados provistos: no inventes productos, variantes, precios, stock ni medidas. No enumeres productos en el mensaje porque la interfaz los muestra por separado.' . $this->criteriaInstructions('response'),
+                [[
+                    'role' => 'user',
+                    'content' => [[
+                        'type' => 'input_text',
+                        'text' => json_encode([
+                            'ultimo_mensaje' => $history === [] ? '' : (string) (($history[array_key_last($history)]['content'] ?? '')),
+                            'interpretacion' => $this->publicInterpretation($interpretation),
+                            'hechos' => $facts,
+                            'resultados' => array_map(static fn (array $row): array => [
+                                'producto' => (string) ($row['producto'] ?? ''),
+                                'variante' => (string) ($row['variante'] ?? ''),
+                                'stock' => $row['stock'] ?? null,
+                                'medidas' => $row['medidas'] ?? null,
+                            ], $rows),
+                            'respuesta_segura' => $fallback,
+                        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    ]],
+                ]]
+            );
+            $message = trim((string) ($response['message'] ?? ''));
+            return $message === '' ? $fallback : $message;
+        } catch (\Throwable) {
+            return $fallback;
+        }
     }
 
     /** @param array<string,mixed> $schema @param list<array<string,mixed>> $input @return array<string,mixed> */

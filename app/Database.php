@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 43;
+    private const CURRENT_MIGRATION_VERSION = 44;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -88,6 +88,7 @@ final class Database
                 self::migratePersistentSessions($pdo);
                 self::migrateAiChatConversations($pdo);
                 self::migrateCheckoutCustomers($pdo);
+                self::migrateAiCriteria($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -146,6 +147,7 @@ final class Database
         self::migratePersistentSessions($pdo);
         self::migrateAiChatConversations($pdo);
         self::migrateCheckoutCustomers($pdo);
+        self::migrateAiCriteria($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
@@ -214,6 +216,48 @@ final class Database
                 WHERE customer_email IS NOT NULL
                   AND trim(customer_email) <> ''
                   AND trim(customer_name) <> ''");
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateAiCriteria(PDO $pdo, string $seedPath): void
+    {
+        $version = 44;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        self::immediate($pdo, static function (PDO $pdo) use ($version, $seedPath): void {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS ai_criteria (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                criterion_type TEXT NOT NULL CHECK (criterion_type IN ('search', 'response')),
+                content TEXT NOT NULL,
+                sort_order INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )");
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_ai_criteria_type_order ON ai_criteria(criterion_type, sort_order, id)');
+
+            if ((int) $pdo->query('SELECT COUNT(*) FROM ai_criteria')->fetchColumn() === 0) {
+                $legacy = $pdo->prepare("SELECT key, value FROM settings WHERE key IN ('ai_search_criteria_json', 'ai_response_criteria_json')");
+                $legacy->execute();
+                $insert = $pdo->prepare('INSERT INTO ai_criteria(criterion_type, content, sort_order) VALUES(:type, :content, :sort_order)');
+                foreach ($legacy->fetchAll() as $row) {
+                    $type = $row['key'] === 'ai_search_criteria_json' ? 'search' : 'response';
+                    $values = json_decode((string) $row['value'], true);
+                    if (!is_array($values)) continue;
+                    foreach (array_values($values) as $index => $content) {
+                        $content = is_scalar($content) ? trim((string) $content) : '';
+                        if ($content !== '') $insert->execute(['type' => $type, 'content' => $content, 'sort_order' => $index]);
+                    }
+                }
+                if ((int) $pdo->query('SELECT COUNT(*) FROM ai_criteria')->fetchColumn() === 0) {
+                    $seed = file_get_contents($seedPath);
+                    if ($seed === false) throw new \RuntimeException('No se pudieron cargar los criterios iniciales del Asesor IA.');
+                    $pdo->exec($seed);
+                }
+            }
+
+            $pdo->exec("DELETE FROM settings WHERE key IN ('ai_search_criteria_json', 'ai_response_criteria_json')");
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

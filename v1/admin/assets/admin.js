@@ -68,6 +68,10 @@
         aiStatusTimer: 0,
         aiDialogOpen: false,
         aiDialogPlaceholder: null,
+        aiCriteria: { search: [], response: [] },
+        aiCriteriaLoaded: false,
+        aiCriteriaDirty: false,
+        aiCriteriaTab: 'search',
     };
 
     const money = cents => new Intl.NumberFormat('es-AR', {
@@ -230,6 +234,8 @@
         aiSearchTalkButton: document.getElementById('ai-search-talk-button'),
         aiSearchMicLevel: document.getElementById('ai-search-mic-level'),
         aiConversationHistoryList: document.getElementById('ai-conversation-history-list'),
+        aiSearchCriteriaRows: document.getElementById('ai-search-criteria-rows'),
+        aiResponseCriteriaRows: document.getElementById('ai-response-criteria-rows'),
     };
     let aiMicStream = null;
     let aiMicAudioContext = null;
@@ -457,7 +463,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -491,6 +497,7 @@
             window.clearInterval(state.aiStatusTimer);
             state.aiStatusTimer = 0;
         }
+        if (view === 'ai-criteria') loadAiCriteria();
         if (view === 'supplier-order') {
             loadSupplierOrder();
         }
@@ -1068,6 +1075,55 @@
                 return `<article><strong>${escapeHtml(row.last_message || 'Sin mensaje')}</strong><small>${escapeHtml(Object.values(interpretation).filter(value => typeof value === 'string').join(' · ') || 'Sin interpretación')}</small></article>`;
             }).join('') : '<p class="empty-copy">Todavía no hay conversaciones.</p>';
         } catch (_) { elements.aiConversationHistoryList.innerHTML = '<p class="empty-copy">No pude cargar las conversaciones.</p>'; }
+    }
+
+    function renderAiCriteria() {
+        const renderRows = (type, container) => {
+            if (!container) return;
+            const rows = Array.isArray(state.aiCriteria[type]) ? state.aiCriteria[type] : [];
+            container.innerHTML = rows.length ? rows.map((criterion, index) => `<div class="ai-criterion-row"><span>${index + 1}</span><textarea rows="2" maxlength="1000" data-ai-criterion-type="${type}" data-ai-criterion-index="${index}" aria-label="Criterio ${index + 1}">${escapeHtml(criterion)}</textarea><button class="icon-action-button" type="button" data-remove-ai-criterion="${type}" data-ai-criterion-index="${index}" aria-label="Eliminar criterio" title="Eliminar criterio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"></path></svg></button></div>`).join('') : '<p class="empty-copy">No hay criterios. Podés agregar uno nuevo.</p>';
+        };
+        renderRows('search', elements.aiSearchCriteriaRows);
+        renderRows('response', elements.aiResponseCriteriaRows);
+        document.querySelectorAll('[data-ai-criteria-tab]').forEach(button => {
+            const active = button.dataset.aiCriteriaTab === state.aiCriteriaTab;
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-selected', String(active));
+        });
+        document.querySelectorAll('[data-ai-criteria-panel]').forEach(panel => {
+            panel.hidden = panel.dataset.aiCriteriaPanel !== state.aiCriteriaTab;
+        });
+    }
+
+    async function loadAiCriteria() {
+        if (state.aiCriteriaLoaded || app.user?.role !== 'admin') return;
+        try {
+            const data = await apiGet('ai_criteria');
+            state.aiCriteria = {
+                search: Array.isArray(data.criteria?.search) ? data.criteria.search : [],
+                response: Array.isArray(data.criteria?.response) ? data.criteria.response : [],
+            };
+            state.aiCriteriaLoaded = true;
+            state.aiCriteriaDirty = false;
+            renderAiCriteria();
+        } catch (error) { toast(error.message); }
+    }
+
+    async function saveAiCriteria(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'GUARDANDO…';
+        try {
+            const data = await apiPost({ action: 'ai_criteria_update', criteria: state.aiCriteria });
+            state.aiCriteria = data.criteria;
+            state.aiCriteriaDirty = false;
+            renderAiCriteria();
+            toast('Criterios del Asesor IA guardados.');
+        } catch (error) { toast(error.message); }
+        finally {
+            button.disabled = false;
+            button.textContent = 'GUARDAR CRITERIOS';
+        }
     }
 
     function renderAiCatalogCards(rows) {
@@ -5662,6 +5718,10 @@
             event.preventDefault();
             saveSettings(event.target);
         }
+        if (event.target.id === 'ai-criteria-form') {
+            event.preventDefault();
+            saveAiCriteria(event.target);
+        }
         if (event.target.id === 'ses-test-form') {
             event.preventDefault();
             sendSesTest(event.target);
@@ -6047,6 +6107,31 @@
             );
             state.sizeGuideDirty = true;
             renderSizeGuideRows();
+            return;
+        }
+        const aiCriteriaTab = event.target.closest('[data-ai-criteria-tab]');
+        if (aiCriteriaTab) {
+            state.aiCriteriaTab = aiCriteriaTab.dataset.aiCriteriaTab;
+            renderAiCriteria();
+            return;
+        }
+        const addAiCriterion = event.target.closest('[data-add-ai-criterion]');
+        if (addAiCriterion) {
+            const type = addAiCriterion.dataset.addAiCriterion;
+            if (!Array.isArray(state.aiCriteria[type])) return;
+            state.aiCriteria[type].push('');
+            state.aiCriteriaDirty = true;
+            renderAiCriteria();
+            window.requestAnimationFrame(() => document.querySelector(`[data-ai-criterion-type="${type}"][data-ai-criterion-index="${state.aiCriteria[type].length - 1}"]`)?.focus());
+            return;
+        }
+        const removeAiCriterion = event.target.closest('[data-remove-ai-criterion]');
+        if (removeAiCriterion) {
+            const type = removeAiCriterion.dataset.removeAiCriterion;
+            if (!Array.isArray(state.aiCriteria[type])) return;
+            state.aiCriteria[type].splice(Number(removeAiCriterion.dataset.aiCriterionIndex), 1);
+            state.aiCriteriaDirty = true;
+            renderAiCriteria();
             return;
         }
         const view = event.target.closest('[data-view]');
@@ -6772,6 +6857,15 @@
     document.addEventListener('input', event => {
         const target = event.target;
         if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
+        if (target.matches('[data-ai-criterion-type]')) {
+            const type = target.dataset.aiCriterionType;
+            const index = Number(target.dataset.aiCriterionIndex);
+            if (Array.isArray(state.aiCriteria[type]) && state.aiCriteria[type][index] !== undefined) {
+                state.aiCriteria[type][index] = target.value;
+                state.aiCriteriaDirty = true;
+            }
+            return;
+        }
         if (target === elements.supplierOrderCategoriesSearch) {
             filterSupplierOrderCategories();
             return;

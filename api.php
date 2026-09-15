@@ -91,6 +91,10 @@ try {
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'conversations' => $app['catalog_ai_conversations']->recent()]);
 
+            case 'ai_criteria':
+                $app['auth']->requireAdmin();
+                Http::json(['ok' => true, 'criteria' => $app['settings']->aiCriteria()]);
+
             case 'admin_categories':
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'categories' => $app['categories']->tree()]);
@@ -260,6 +264,10 @@ try {
             $app['auth']->requireUser();
             $history = is_array($input['history'] ?? null) ? array_slice($input['history'], -12) : [];
             Http::json(['ok' => true, 'reply' => $app['catalog_ai_chat']->reply($history)]);
+
+        case 'ai_criteria_update':
+            $app['auth']->requireAdmin();
+            Http::json(['ok' => true, 'criteria' => $app['settings']->updateAiCriteria(is_array($input['criteria'] ?? null) ? $input['criteria'] : [])]);
 
         case 'setup_admin':
             $app['auth']->createInitialAdmin(

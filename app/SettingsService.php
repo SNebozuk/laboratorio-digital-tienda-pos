@@ -95,6 +95,49 @@ final class SettingsService
         return $values;
     }
 
+    /** @return array{search:list<string>,response:list<string>} */
+    public function aiCriteria(): array
+    {
+        $criteria = ['search' => [], 'response' => []];
+        foreach ($this->pdo->query('SELECT criterion_type, content FROM ai_criteria ORDER BY criterion_type, sort_order, id')->fetchAll() as $row) {
+            $type = (string) $row['criterion_type'];
+            if (isset($criteria[$type])) $criteria[$type][] = (string) $row['content'];
+        }
+        return $criteria;
+    }
+
+    /** @param array<string,mixed> $data @return array{search:list<string>,response:list<string>} */
+    public function updateAiCriteria(array $data): array
+    {
+        $criteria = [];
+        foreach (['search', 'response'] as $type) {
+            if (!is_array($data[$type] ?? null)) {
+                throw new ValidationException('Los criterios enviados no son válidos.');
+            }
+            $rows = [];
+            foreach ($data[$type] as $value) {
+                if (!is_scalar($value)) continue;
+                $value = trim((string) $value);
+                if ($value === '') continue;
+                if (mb_strlen($value) > 1000) throw new ValidationException('Cada criterio puede tener hasta 1000 caracteres.');
+                $rows[] = $value;
+            }
+            if (count($rows) > 100) throw new ValidationException('Cada pestaña puede contener hasta 100 criterios.');
+            $criteria[$type] = $rows;
+        }
+
+        Database::immediate($this->pdo, function (PDO $pdo) use ($criteria): void {
+            $pdo->exec('DELETE FROM ai_criteria');
+            $save = $pdo->prepare('INSERT INTO ai_criteria(criterion_type, content, sort_order) VALUES(:type, :content, :sort_order)');
+            foreach ($criteria as $type => $rows) {
+                foreach ($rows as $index => $content) {
+                    $save->execute(['type' => $type, 'content' => $content, 'sort_order' => $index]);
+                }
+            }
+        });
+        return $criteria;
+    }
+
     public function claimDailySurprise(bool $enabled, int $probability): bool
     {
         if (!$enabled || $probability <= 0) return false;

@@ -331,6 +331,17 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS ai_criteria (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    criterion_type TEXT NOT NULL CHECK (criterion_type IN ('search', 'response')),
+    content TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_criteria_type_order
+    ON ai_criteria(criterion_type, sort_order, id);
+
 CREATE TABLE IF NOT EXISTS mail_queue (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     order_id INTEGER REFERENCES orders(id) ON DELETE SET NULL,

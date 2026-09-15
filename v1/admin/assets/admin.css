@@ -4286,3 +4286,18 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .ai-search-interpretation dd { margin:0; color:#30394a; font-weight:700; text-align:right; }
 @media (max-width:900px) { .ai-search-layout { grid-template-columns:1fr; }.ai-search-interpretation { max-width:none; }.ai-search-interpretation dl { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:620px) { .ai-search-heading .secondary-button { width:100%; }.ai-search-products { grid-template-columns:1fr; }.ai-search-composer-actions { flex-wrap:wrap; }.ai-search-voice-toggle { width:100%; margin-bottom:4px; }.ai-search-interpretation dl { grid-template-columns:1fr; } }
+
+.ai-criteria-heading { align-items:center; }
+.ai-criteria-tabs { display:flex; gap:8px; margin:0 0 14px; border-bottom:1px solid #dfe3ea; }
+.ai-criteria-tab { min-height:42px; padding:0 18px; border:0; border-bottom:3px solid transparent; background:transparent; color:#747d90; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+.ai-criteria-tab.is-active { border-bottom-color:#5b4fc7; color:#5b4fc7; }
+.ai-criteria-panel { padding:18px; }
+.ai-criteria-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+.ai-criteria-panel-heading p { margin:0; color:#6d7689; font-size:12px; }
+.ai-criteria-rows { display:grid; gap:10px; }
+.ai-criterion-row { display:grid; grid-template-columns:28px minmax(0,1fr) 32px; align-items:start; gap:10px; }
+.ai-criterion-row > span { padding-top:13px; color:#8991a1; font-size:11px; font-weight:800; text-align:center; }
+.ai-criterion-row textarea { width:100%; min-height:58px; padding:10px 12px; border:1px solid #dfe3ea; border-radius:10px; resize:vertical; background:#fff; color:#30394a; font:inherit; font-size:13px; line-height:1.4; }
+.ai-criterion-row textarea:focus { border-color:#5b4fc7; outline:0; box-shadow:0 0 0 3px rgba(91,79,199,.1); }
+.ai-criterion-row .icon-action-button { margin-top:7px; color:#a34b4b; }
+@media (max-width:620px) { .ai-criteria-heading { align-items:stretch; }.ai-criteria-heading .primary-button,.ai-criteria-panel-heading .secondary-button { width:100%; }.ai-criteria-panel-heading { align-items:stretch; flex-direction:column; }.ai-criteria-tab { flex:1; padding:0 8px; }.ai-criterion-row { grid-template-columns:22px minmax(0,1fr) 32px; gap:6px; } }
