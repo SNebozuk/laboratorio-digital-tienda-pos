@@ -9,6 +9,7 @@ final class CheckoutGoogleService
 {
     private const SESSION_COOKIE = 'laboratorio_google_customer';
     private const SESSION_LIFETIME = 31536000;
+    private const TRUSTED_STORE_ROOTS = ['laboratorio-digital.com.ar', 'artjet.com.ar'];
     /** @param array<string, mixed> $config */
     public function __construct(private readonly PDO $pdo, private readonly array $config)
     {
@@ -157,12 +158,11 @@ final class CheckoutGoogleService
             'httponly' => true,
             'samesite' => 'Lax',
         ];
-        $configuredHost = strtolower((string) parse_url((string) ($this->config['base_url'] ?? ''), PHP_URL_HOST));
-        $rootHost = preg_replace('/^www\./', '', $configuredHost) ?: '';
         $currentHost = preg_replace('/:\d+$/', '', strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''))) ?: '';
-        if ($rootHost !== '' && in_array($currentHost, [$rootHost, 'www.' . $rootHost], true)) {
+        $currentRoot = preg_replace('/^www\./', '', $currentHost) ?: '';
+        if ($currentRoot !== '' && in_array($currentRoot, $this->trustedStoreRoots(), true)) {
             setcookie(self::SESSION_COOKIE, '', [...$options, 'expires' => time() - 3600]);
-            $options['domain'] = '.' . $rootHost;
+            $options['domain'] = '.' . $currentRoot;
         }
         setcookie(self::SESSION_COOKIE, $token, $options);
     }
@@ -170,12 +170,19 @@ final class CheckoutGoogleService
     private function baseUrl(): string
     {
         $configured = rtrim(trim((string) ($this->config['base_url'] ?? '')), '/');
-        $configuredHost = strtolower((string) (parse_url($configured, PHP_URL_HOST) ?? ''));
-        $currentHost = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
-        $allowedHosts = array_filter([$configuredHost, $configuredHost === '' ? '' : 'www.' . $configuredHost]);
-        if ($currentHost !== '' && in_array($currentHost, $allowedHosts, true)) {
+        $currentHost = preg_replace('/:\d+$/', '', strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''))) ?: '';
+        $currentRoot = preg_replace('/^www\./', '', $currentHost) ?: '';
+        if ($currentRoot !== '' && in_array($currentRoot, $this->trustedStoreRoots(), true)) {
             return 'https://' . $currentHost;
         }
         return $configured;
+    }
+
+    /** @return list<string> */
+    private function trustedStoreRoots(): array
+    {
+        $configuredHost = strtolower((string) parse_url((string) ($this->config['base_url'] ?? ''), PHP_URL_HOST));
+        $configuredRoot = preg_replace('/^www\./', '', $configuredHost) ?: '';
+        return array_values(array_unique(array_filter([$configuredRoot, ...self::TRUSTED_STORE_ROOTS])));
     }
 }
