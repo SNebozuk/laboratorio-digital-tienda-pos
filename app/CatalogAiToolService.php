@@ -15,7 +15,7 @@ final class CatalogAiToolService
         $filters = $this->filters($filters);
         $codeProductIds = isset($filters['texto']) ? array_flip($this->products->publicCodeMatches((string) $filters['texto'])) : [];
         $matches = [];
-        foreach ($this->products->publicCatalog() as $product) {
+        foreach ($this->products->adminCatalog() as $product) {
             foreach ($product['variants'] as $variant) {
                 $row = $this->row($product, $variant);
                 if (isset($codeProductIds[(int) $product['id']]) || $this->matches($row, $filters)) $matches[] = $row;
@@ -29,7 +29,7 @@ final class CatalogAiToolService
     public function obtenerVariantes(int $productId): array
     {
         if ($productId < 1) return [];
-        foreach ($this->products->publicCatalog() as $product) {
+        foreach ($this->products->adminCatalog() as $product) {
             if ((int) $product['id'] !== $productId) continue;
             return array_map(fn (array $variant): array => $this->row($product, $variant), $product['variants']);
         }
@@ -49,7 +49,7 @@ final class CatalogAiToolService
     /** @return array<string, int>|null */
     public function consultarStock(int $variantId): ?array
     {
-        foreach ($this->products->publicCatalog() as $product) foreach ($product['variants'] as $variant) {
+        foreach ($this->products->adminCatalog() as $product) foreach ($product['variants'] as $variant) {
             if ((int) $variant['id'] === $variantId) return ['variante_id' => $variantId, 'stock' => (int) ($variant['available_stock'] ?? 0)];
         }
         return null;
@@ -76,13 +76,13 @@ final class CatalogAiToolService
         preg_match('/\btalle\s*([[:alnum:].-]+)/iu', $variantName, $size);
         $parts = preg_split('/\s+-\s+/', (string) $product['name']);
         $color = count($parts) > 1 ? trim((string) end($parts)) : null;
-        return ['producto_id' => (int) $product['id'], 'producto' => $product['name'], 'descripcion' => $product['description'] ?? '', 'categoria' => $product['category']['name'] ?? null, 'variante_id' => (int) $variant['id'], 'variante' => $variantName, 'atributos' => ['nombre' => $variantName], 'talle' => $size[1] ?? null, 'color' => $color, 'precio' => $variant['price_cents'] === null ? null : (int) $variant['price_cents'] / 100, 'stock' => $variant['available_stock'] === null ? null : (int) $variant['available_stock'], 'imagen' => $product['image_path'] ?? null];
+        return ['producto_id' => (int) $product['id'], 'producto' => $product['name'], 'descripcion' => $product['description'] ?? '', 'categoria' => $product['category']['name'] ?? null, 'variante_id' => (int) $variant['id'], 'variante' => $variantName, 'atributos' => ['nombre' => $variantName], 'talle' => $size[1] ?? null, 'color' => $color, 'precio' => $variant['price_cents'] === null ? null : (int) $variant['price_cents'] / 100, 'stock' => $variant['available_stock'] === null ? null : (int) $variant['available_stock'], 'imagen' => $product['image_path'] ?? null, 'visible' => ($product['active'] ?? true) && ($variant['active'] ?? true)];
     }
 
     /** @param array<string, mixed> $filters @return array<string, string|int> */
     private function filters(array $filters): array
     {
-        $allowed = ['texto', 'marca', 'categoria', 'material', 'talle', 'color', 'gramaje', 'tipo', 'uso', 'atributos', 'variante_id']; $out = [];
+        $allowed = ['texto', 'marca', 'categoria', 'material', 'talle', 'color', 'gramaje', 'tamano', 'tipo', 'uso', 'atributos', 'variante_id']; $out = [];
         foreach ($allowed as $key) if (isset($filters[$key]) && is_scalar($filters[$key])) $out[$key] = $key === 'variante_id' ? (int) $filters[$key] : (function_exists('mb_strtolower') ? mb_strtolower(trim((string) $filters[$key])) : strtolower(trim((string) $filters[$key])));
         return $out;
     }
@@ -91,7 +91,7 @@ final class CatalogAiToolService
     private function matches(array $row, array $filters): bool
     {
         if (isset($filters['variante_id']) && $row['variante_id'] !== $filters['variante_id']) return false;
-        foreach (['texto' => 'identidad', 'marca' => 'detalles', 'categoria' => 'categoria', 'material' => 'detalles', 'talle' => 'talle', 'color' => 'color', 'gramaje' => 'detalles', 'tipo' => 'identidad', 'uso' => 'detalles', 'atributos' => 'detalles'] as $filter => $field) {
+        foreach (['texto' => 'identidad', 'marca' => 'detalles', 'categoria' => 'categoria', 'material' => 'detalles', 'talle' => 'talle', 'color' => 'color', 'gramaje' => 'detalles', 'tamano' => 'detalles', 'tipo' => 'detalles', 'uso' => 'detalles', 'atributos' => 'detalles'] as $filter => $field) {
             $value = match ($field) {
                 'identidad' => implode(' ', [$row['producto'], $row['categoria'], $row['variante']]),
                 'detalles' => implode(' ', [$row['producto'], $row['descripcion'], $row['categoria'], $row['variante']]),
@@ -125,6 +125,6 @@ final class CatalogAiToolService
         }
         return $terms !== [];
     }
-    private function sourceVariant(int $id): ?array { foreach ($this->products->publicCatalog() as $p) foreach ($p['variants'] as $v) if ((int) $v['id'] === $id) return $this->row($p, $v); return null; }
+    private function sourceVariant(int $id): ?array { foreach ($this->products->adminCatalog() as $p) foreach ($p['variants'] as $v) if ((int) $v['id'] === $id) return $this->row($p, $v); return null; }
     private function fold(string $value): string { $value = function_exists('mb_strtolower') ? mb_strtolower($value) : strtolower($value); return preg_replace('/[áàä]/u','a',preg_replace('/[éèë]/u','e',preg_replace('/[íìï]/u','i',preg_replace('/[óòö]/u','o',preg_replace('/[úùü]/u','u',$value))))); }
 }
