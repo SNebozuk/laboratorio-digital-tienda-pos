@@ -6,8 +6,14 @@
 .icon-action-button svg { width:var(--icon-glyph-size); height:var(--icon-glyph-size); }
 :root { color-scheme: light; --bg:#f7faf7; --panel:#fff; --panel-2:#eff7f0; --line:#d7e4d9; --line-soft:#e7eee8; --text:#18231b; --muted:#617165; --accent:#168342; --success:#168342; }
 .store-login-background { pointer-events:none; }
-.store-login-card { width:min(320px,calc(100vw - 34px)); gap:9px; padding:18px 20px 20px; }
-.store-login-card h1 { font-size:21px; }
+.store-login-card { width:min(300px,calc(100vw - 34px)) !important; gap:8px !important; padding:16px 18px 18px !important; }
+.store-login-card h1 { font-size:20px !important; }
+.store-login-form { display:grid; width:100%; gap:8px; }
+.store-login-form label { position:relative; display:block; }
+.store-login-form label svg { position:absolute; z-index:1; top:50%; left:12px; width:20px; height:20px; fill:#25d366; transform:translateY(-50%); pointer-events:none; }
+.store-login-form label input { width:100%; min-height:42px; padding:10px 12px 10px 42px; }
+.store-login-form > small { display:block; margin:0; text-align:center; }
+.store-login-google { min-height:44px !important; border-color:#dadce0 !important; background:#fff !important; box-shadow:0 2px 8px rgba(60,64,67,.16); color:#3c4043 !important; }.store-login-google b { background:conic-gradient(from 45deg,#4285f4 0 25%,#34a853 0 50%,#fbbc05 0 75%,#ea4335 0) !important; color:#fff !important; font-family:Arial,sans-serif; }.store-login-google:hover { background:#f8f9fa !important; box-shadow:0 3px 10px rgba(60,64,67,.24); }
 .store-login-page { min-height:100vh; overflow:hidden; background:#f7f2fb; }
 .store-login-background { position:fixed; inset:-18px; display:grid; place-items:center; background:linear-gradient(135deg,#f5efff,#fff4f8); background-size:cover; background-position:center; filter:blur(10px); transform:scale(1.04); }
 .store-login-background::after { content:""; position:absolute; inset:0; background:rgba(255,255,255,.52); }
