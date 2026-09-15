@@ -83,6 +83,7 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18M7 15h4"></path></svg></button>
                     <div class="admin-nav-products">
                         <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 7l3 4 2-1v10h8V10l2 1 3-4-4-3-5 3z"></path></svg></button>
+                        <?php if ($user['role'] === 'admin'): ?><button class="admin-nav-button admin-nav-icon-button" type="button" data-view="customers" aria-label="Clientes" title="Clientes"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.6-4 3-6 7-6s6.4 2 7 6"></path></svg></button><?php endif ?>
                     </div>
                 </nav>
                 <?php if ($user['role'] === 'admin'): ?>
@@ -225,6 +226,7 @@ header('Referrer-Policy: same-origin');
                             <option value="design">Diseño</option>
                             <option value="quote">Cotizador</option>
                             <option value="whatsapp">WhatsApp</option>
+                            <option value="customers">Clientes</option>
                             <option value="users">Usuarios</option>
                             <option value="settings">Configuración</option>
                             <option value="maintenance">Mantenimiento</option>
@@ -551,6 +553,11 @@ header('Referrer-Policy: same-origin');
                             </button>
                         </div>
                         <div id="user-list" class="user-list"></div>
+                    </section>
+
+                    <section class="admin-view" id="view-customers">
+                        <div class="view-heading"><div><p class="eyebrow">CUENTAS DE LA TIENDA</p><h1 class="admin-page-title">CLIENTES</h1><p>Clientes que iniciaron sesión con Google.</p></div></div>
+                        <div id="customer-list" class="user-list"></div>
                     </section>
 
                     <section class="admin-view" id="view-settings">

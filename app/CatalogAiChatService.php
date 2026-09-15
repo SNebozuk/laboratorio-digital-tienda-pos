@@ -8,7 +8,8 @@ final class CatalogAiChatService
     public function __construct(
         private readonly array $config,
         private readonly CatalogAiToolService $tools,
-        private readonly SettingsService $settings
+        private readonly SettingsService $settings,
+        private readonly TutorialService $tutorials
     )
     {
     }
@@ -295,7 +296,7 @@ final class CatalogAiChatService
         $guide = $this->settings->sizeGuide();
         $names = $this->fold(implode(' ', array_map(static fn (array $row): string => (string) ($row['producto'] ?? ''), $rows)));
         $relevantRows = array_values(array_filter($guide['rows'], function (array $row) use ($names): bool {
-            if ($names === '') return false;
+            if ($names === '') return true;
             $terms = preg_split('/[^a-z0-9]+/', $this->fold((string) $row['group']), -1, PREG_SPLIT_NO_EMPTY) ?: [];
             return (bool) array_filter($terms, static fn (string $term): bool => strlen($term) >= 5 && str_contains($names, $term));
         }));
@@ -636,7 +637,7 @@ final class CatalogAiChatService
                     'properties' => ['message' => ['type' => 'string']],
                     'required' => ['message'],
                 ],
-                'Redactá solamente el mensaje que verá el cliente. Respetá los hechos y los resultados provistos: no inventes productos, variantes, precios, stock ni medidas. No enumeres productos en el mensaje porque la interfaz los muestra por separado.' . $this->criteriaInstructions('response'),
+                'Redactá solamente el mensaje que verá el cliente. Respetá los hechos, los resultados y el material editorial provistos: no inventes productos, variantes, precios, stock ni medidas. Usá el material editorial de Aprende o la guía de talles cuando sea relevante. No enumeres productos en el mensaje porque la interfaz los muestra por separado.' . $this->criteriaInstructions('response'),
                 [[
                     'role' => 'user',
                     'content' => [[
@@ -644,7 +645,7 @@ final class CatalogAiChatService
                         'text' => json_encode([
                             'ultimo_mensaje' => $history === [] ? '' : (string) (($history[array_key_last($history)]['content'] ?? '')),
                             'interpretacion' => $this->publicInterpretation($interpretation),
-                            'hechos' => $facts,
+                            'hechos' => $facts + $this->editorialContext($history, $interpretation, $rows),
                             'resultados' => array_map(static fn (array $row): array => [
                                 'producto' => (string) ($row['producto'] ?? ''),
                                 'variante' => (string) ($row['variante'] ?? ''),
@@ -661,6 +662,25 @@ final class CatalogAiChatService
         } catch (\Throwable) {
             return $fallback;
         }
+    }
+
+    /** @param list<array{role:string,content:string}> $history @param array<string,mixed> $interpretation @param list<array<string,mixed>> $rows @return array<string,mixed> */
+    private function editorialContext(array $history, array $interpretation, array $rows): array
+    {
+        $context = [];
+        $sizeGuide = $this->relevantSizeGuide($interpretation, $history, $rows);
+        if ($sizeGuide !== null) $context['guia_de_talles'] = $sizeGuide;
+
+        $tutorials = array_map(static function (array $tutorial): array {
+            $content = (string) $tutorial['content'];
+            return [
+                'titulo' => (string) $tutorial['title'],
+                'contenido' => function_exists('mb_substr') ? mb_substr($content, 0, 3000, 'UTF-8') : substr($content, 0, 3000),
+            ];
+        }, array_slice($this->tutorials->publicList(), 0, 12));
+        if ($tutorials !== []) $context['tutoriales_aprende'] = $tutorials;
+
+        return $context;
     }
 
     /** @param array<string,mixed> $schema @param list<array<string,mixed>> $input @return array<string,mixed> */

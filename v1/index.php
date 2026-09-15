@@ -39,12 +39,20 @@ $quoteUrl = $storePath . '/cotizador.php';
 $quoteEnabled = ($app['settings']->quote()['enabled'] ?? '1') === '1';
 $apiUrl = $storePath . '/api.php';
 $checkoutGoogleCustomer = $app['checkout_google']->customer();
+if ($checkoutGoogleCustomer === null) {
+    if (!$app['checkout_google']->enabled()) {
+        http_response_code(503);
+        exit('El acceso con Google todavía no está configurado.');
+    }
+    header('Location: ' . $app['checkout_google']->loginUrl(), true, 302);
+    exit;
+}
 $checkoutGoogle = [
     'enabled' => $app['checkout_google']->enabled(),
     'customer' => $checkoutGoogleCustomer,
     'login_url' => $app['checkout_google']->loginUrl(),
-    'return_to_checkout' => $checkoutGoogleCustomer !== null && ($_GET['google_checkout'] ?? '') === '1',
-    'error' => trim((string) ($_GET['google_error'] ?? '')),
+    'return_to_checkout' => false,
+    'error' => '',
 ];
 $whatsappNumber = preg_replace('/\D+/', '', (string) ($publicSettings['whatsapp_number'] ?? '5493415699338')) ?: '5493415699338';
 $pickupAddress = trim((string) ($publicSettings['pickup_address'] ?? ''));

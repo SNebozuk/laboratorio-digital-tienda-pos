@@ -7,6 +7,8 @@ use PDO;
 
 final class CheckoutGoogleService
 {
+    private const SESSION_COOKIE = 'laboratorio_google_customer';
+    private const SESSION_LIFETIME = 31536000;
     /** @param array<string, mixed> $config */
     public function __construct(private readonly PDO $pdo, private readonly array $config)
     {
@@ -38,6 +40,18 @@ final class CheckoutGoogleService
     public function customer(): ?array
     {
         $id = (int) ($_SESSION['checkout_google_customer_id'] ?? 0);
+        if ($id < 1) {
+            $token = trim((string) ($_COOKIE[self::SESSION_COOKIE] ?? ''));
+            if ($token !== '' && preg_match('/^[a-f0-9]{64}$/', $token)) {
+                $query = $this->pdo->prepare('SELECT customer_id FROM checkout_customer_sessions WHERE token_hash = :token_hash AND expires_at > CURRENT_TIMESTAMP');
+                $query->execute(['token_hash' => hash('sha256', $token)]);
+                $id = (int) $query->fetchColumn();
+                if ($id > 0) {
+                    $_SESSION['checkout_google_customer_id'] = $id;
+                    $this->pdo->prepare('UPDATE checkout_customer_sessions SET last_used_at = CURRENT_TIMESTAMP WHERE token_hash = :token_hash')->execute(['token_hash' => hash('sha256', $token)]);
+                }
+            }
+        }
         if ($id < 1) return null;
         $query = $this->pdo->prepare('SELECT id, name, first_name, last_name, email FROM checkout_customers WHERE id = :id');
         $query->execute(['id' => $id]);
@@ -105,7 +119,23 @@ final class CheckoutGoogleService
             }
             session_regenerate_id(true);
             $_SESSION['checkout_google_customer_id'] = $id;
+            $token = bin2hex(random_bytes(32));
+            $pdo->prepare('DELETE FROM checkout_customer_sessions WHERE customer_id = :customer_id OR expires_at <= CURRENT_TIMESTAMP')->execute(['customer_id' => $id]);
+            $pdo->prepare("INSERT INTO checkout_customer_sessions(customer_id, token_hash, expires_at) VALUES(:customer_id, :token_hash, datetime('now', '+365 days'))")->execute(['customer_id' => $id, 'token_hash' => hash('sha256', $token)]);
+            setcookie(self::SESSION_COOKIE, $token, [
+                'expires' => time() + self::SESSION_LIFETIME,
+                'path' => '/',
+                'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
         });
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function customers(): array
+    {
+        return $this->pdo->query('SELECT id, name, first_name, last_name, email, google_sub IS NOT NULL AS google_connected, created_at, updated_at FROM checkout_customers ORDER BY updated_at DESC, id DESC')->fetchAll();
     }
 
     private function publicUrl(string $path): string

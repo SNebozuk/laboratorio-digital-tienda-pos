@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 44;
+    private const CURRENT_MIGRATION_VERSION = 45;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -89,6 +89,7 @@ final class Database
                 self::migrateAiChatConversations($pdo);
                 self::migrateCheckoutCustomers($pdo);
                 self::migrateAiCriteria($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
+                self::migrateCheckoutCustomerSessions($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -148,6 +149,7 @@ final class Database
         self::migrateAiChatConversations($pdo);
         self::migrateCheckoutCustomers($pdo);
         self::migrateAiCriteria($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
+        self::migrateCheckoutCustomerSessions($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
@@ -258,6 +260,26 @@ final class Database
             }
 
             $pdo->exec("DELETE FROM settings WHERE key IN ('ai_search_criteria_json', 'ai_response_criteria_json')");
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateCheckoutCustomerSessions(PDO $pdo): void
+    {
+        $version = 45;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $pdo->exec('CREATE TABLE IF NOT EXISTS checkout_customer_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL REFERENCES checkout_customers(id) ON DELETE CASCADE,
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_used_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_checkout_customer_sessions_customer ON checkout_customer_sessions(customer_id, expires_at)');
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

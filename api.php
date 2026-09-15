@@ -188,6 +188,10 @@ try {
                     'users' => $app['auth']->users(),
                 ]);
 
+            case 'customers':
+                $app['auth']->requireAdmin();
+                Http::json(['ok' => true, 'customers' => $app['checkout_google']->customers()]);
+
             case 'payment_proof':
                 $app['auth']->requireUser();
                 $file = $app['proofs']->protectedFile((int) ($_GET['id'] ?? 0));

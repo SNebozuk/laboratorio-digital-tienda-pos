@@ -29,6 +29,7 @@
         sizeGuide: { intro: '', rows: [] },
         sizeGuideDirty: false,
         users: [],
+        customers: [],
         invitations: [],
         pendingInvitationCount: 0,
         openOrderCount: 0,
@@ -204,6 +205,7 @@
         showArchivedOrders: document.getElementById('show-archived-orders'),
         bulkOrderAction: document.getElementById('bulk-order-action'),
         userList: document.getElementById('user-list'),
+        customerList: document.getElementById('customer-list'),
         sizeGuideIntro: document.getElementById('size-guide-intro'),
         sizeGuideRows: document.getElementById('size-guide-rows'),
         mobileView: document.getElementById('mobile-view'),
@@ -463,7 +465,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'customers', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -531,6 +533,7 @@
         if (view === 'users') {
             loadUsers();
         }
+        if (view === 'customers') loadCustomers();
         if (view === 'categories') {
             loadCategories();
         }
@@ -4550,6 +4553,25 @@
                 </button>
             </article>
         `).join('') || '<p class="empty-copy">No hay usuarios.</p>';
+    }
+
+    async function loadCustomers() {
+        if (!elements.customerList || app.user?.role !== 'admin') return;
+        elements.customerList.innerHTML = '<p class="empty-copy">Cargando clientes…</p>';
+        try {
+            const data = await apiGet('customers');
+            state.customers = data.customers || [];
+            elements.customerList.innerHTML = state.customers.map(customer => `
+                <article class="user-card">
+                    <div><strong>${escapeHtml(customer.name)}</strong><br><small>${escapeHtml(customer.email)}</small></div>
+                    <span class="status-pill">GOOGLE</span>
+                    <small>Registrado: ${escapeHtml(argentinaDateLabel(customer.created_at))}</small>
+                    <small>Actualizado: ${escapeHtml(argentinaDateLabel(customer.updated_at))}</small>
+                </article>
+            `).join('') || '<p class="empty-copy">Todavía no hay clientes registrados.</p>';
+        } catch (error) {
+            toast(error.message);
+        }
     }
 
     function showUserForm(user = null) {

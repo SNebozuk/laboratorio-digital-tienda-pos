@@ -51,13 +51,13 @@ require_once __DIR__ . '/SettingsService.php';
 $app['auth'] = new Auth($app['pdo']);
 $app['products'] = new ProductService($app['pdo']);
 $app['settings'] = new SettingsService($app['pdo']);
+$app['tutorials'] = new TutorialService($app['pdo']);
 $app['catalog_ai_tools'] = new CatalogAiToolService($app['products']);
-$app['catalog_ai_chat'] = new CatalogAiChatService($app['config'], $app['catalog_ai_tools'], $app['settings']);
+$app['catalog_ai_chat'] = new CatalogAiChatService($app['config'], $app['catalog_ai_tools'], $app['settings'], $app['tutorials']);
 $app['catalog_ai_audio'] = new CatalogAiAudioService($app['config']);
 $app['catalog_ai_conversations'] = new CatalogAiConversationService($app['pdo'], $app['catalog_ai_chat'], $app['settings']);
 $app['categories'] = new CategoryService($app['pdo']);
 $app['checkout_google'] = new CheckoutGoogleService($app['pdo'], $app['config']);
-$app['tutorials'] = new TutorialService($app['pdo']);
 $app['deliveries'] = new DeliveryService($app['pdo']);
 $app['invitations'] = new InvitationService($app['pdo']);
 $app['product_images'] = new ProductImageService(

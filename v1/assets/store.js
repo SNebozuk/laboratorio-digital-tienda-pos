@@ -94,9 +94,9 @@
         try {
             const saved = window.localStorage.getItem(PRODUCT_VIEW_STORAGE_KEY);
             alwaysUseProductView = PRODUCT_VIEWS.has(saved);
-            return alwaysUseProductView ? saved : 'list';
+            return alwaysUseProductView ? saved : 'catalog';
         } catch (_) {
-            return 'list';
+            return 'catalog';
         }
     })();
     const returnedFromQuote = initialUrl.searchParams.has('volver-del-cotizador');
@@ -1594,8 +1594,6 @@
             </div>
             <div class="order-total"><span>Subtotal<br><small>${discountSummaryMarkup(discount)}<br>Total</small></span><strong>${money(total)}</strong></div>
             <form id="checkout-form" novalidate>
-                ${app.checkout_google?.enabled && !googleCustomer ? `<a class="checkout-google-button" href="${escapeHtml(`${app.checkout_google.login_url}?cart=${encodeURIComponent(JSON.stringify(Array.from(state.cart, ([variantId, quantity]) => ({ variant_id: Number(variantId), quantity: Number(quantity) }))))}`)}"><span aria-hidden="true">G</span>Continuar con Google</a>` : ''}
-                ${googleCustomer ? `<p class="checkout-google-connected">Continuás con Google: <strong>${escapeHtml(googleCustomer.email)}</strong></p>` : ''}
                 <label>
                     Nombre y Apellido
                     <input name="name" required autocomplete="name" value="${escapeHtml(customer.name || '')}" aria-describedby="checkout-name-help">
@@ -2351,8 +2349,6 @@
     renderCart();
     if (linkedTutorials) {
         window.setTimeout(showTutorials, 0);
-    } else if (!returnedFromQuote && !alwaysUseProductView) {
-        window.setTimeout(showProductViewChooser, 350);
     }
     // La lista completa es la vista inicial, por lo que el catálogo se carga
     // al entrar. Las imágenes conservan loading="lazy".
