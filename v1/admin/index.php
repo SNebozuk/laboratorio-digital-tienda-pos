@@ -508,7 +508,12 @@ header('Referrer-Policy: same-origin');
                         </div>
                         <span class="ai-search-service-status is-checking" id="ai-search-service-status" role="status">🟡 Verificando IA…</span>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <button class="primary-button fit-button" type="button" data-view="ai-criteria">CRITERIOS DE BÚSQUEDA Y RESPUESTA</button>
+                            <label class="ai-vendor-toggle">
+                                <span>Vendedor IA</span>
+                                <input id="ai-vendor-enabled" type="checkbox" aria-label="Activar o desactivar Vendedor IA">
+                                <i aria-hidden="true"></i>
+                            </label>
+                            <button class="primary-button fit-button ai-criteria-button" type="button" data-view="ai-criteria">CRITERIOS</button>
                         <?php endif ?>
                         <a class="primary-button fit-button" href="<?= $escape($storeUrl) ?>?chat_ia=1&amp;nueva=1" target="_blank" rel="noopener">ABRIR CHAT IA</a>
                     </div>

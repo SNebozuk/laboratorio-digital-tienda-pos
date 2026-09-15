@@ -9,7 +9,6 @@
     const status = document.getElementById('vendor-ai-status');
     const results = document.getElementById('vendor-ai-results');
     const testing = new URLSearchParams(window.location.search).get('chat_ia') === '1';
-    if (!testing) { chat.hidden = true; launcher.hidden = true; return; }
 
     const id = (() => {
         const key = 'ld_vendor_ai_conversation';
@@ -164,9 +163,9 @@
         return false;
     };
 
-    launcher.hidden = true;
-    chat.dataset.state = 'open';
-    window.requestAnimationFrame(() => input.focus());
+    launcher.hidden = testing;
+    chat.dataset.state = testing ? 'open' : 'minimized';
+    if (testing) window.requestAnimationFrame(() => input.focus());
     launcher.addEventListener('click', () => { chat.dataset.state = 'open'; launcher.hidden = true; input.focus(); });
     document.querySelector('[data-vendor-ai-minimize]').addEventListener('click', () => { chat.dataset.state = 'minimized'; launcher.hidden = false; });
     document.querySelector('[data-vendor-ai-close]').addEventListener('click', () => { chat.dataset.state = 'closed'; launcher.hidden = false; });

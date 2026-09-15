@@ -240,6 +240,10 @@ try {
         Http::json(['ok' => true, 'request' => $app['invitations']->request((string) ($input['email'] ?? ''))], 201);
     }
     if ($action === 'ai_public_chat') {
+        $settings = $app['settings']->values();
+        if (($settings['vendor_ai_enabled'] ?? '1') !== '1') {
+            throw new ValidationException('El Vendedor IA está desactivado.');
+        }
         $token = (string) ($input['conversation'] ?? '');
         $message = trim((string) ($input['message'] ?? ''));
         if (!preg_match('/^[a-f0-9-]{36}$/i', $token) || $message === '' || mb_strlen($message) > 800) throw new ValidationException('Mensaje inválido.');
@@ -272,6 +276,15 @@ try {
         case 'ai_criteria_update':
             $app['auth']->requireAdmin();
             Http::json(['ok' => true, 'criteria' => $app['settings']->updateAiCriteria(is_array($input['criteria'] ?? null) ? $input['criteria'] : [])]);
+
+        case 'ai_vendor_enabled_update':
+            $app['auth']->requireAdmin();
+            Http::json([
+                'ok' => true,
+                'enabled' => $app['settings']->updateVendorAiEnabled(
+                    in_array((string) ($input['enabled'] ?? '0'), ['1', 'true', 'on'], true)
+                ),
+            ]);
 
         case 'setup_admin':
             $app['auth']->createInitialAdmin(

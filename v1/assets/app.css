@@ -1380,7 +1380,7 @@ body.product-detail-mode .catalog-column {
 
 .home-tutorials { margin-top:36px; }
 .tutorial-carousel { position:relative; display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; }
-.tutorial-grid { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(240px,calc((100% - 32px) / 3)); gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+.tutorial-grid { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(240px,calc((100% - 32px) / 3)); gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; touch-action:pan-x; -webkit-overflow-scrolling:touch; }
 .tutorial-grid::-webkit-scrollbar { display:none; }
 .tutorial-carousel-arrow { display:grid; width:52px; height:52px; padding:0; place-items:center; border:1px solid var(--line); border-radius:50%; background:var(--panel); color:var(--accent); font:inherit; font-size:32px; font-weight:800; line-height:1; cursor:pointer; }
 .tutorial-carousel-arrow:hover { border-color:var(--accent); }

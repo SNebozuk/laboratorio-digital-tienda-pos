@@ -233,6 +233,7 @@
         aiSearchProducts: document.getElementById('ai-search-products'),
         aiSearchInterpretation: document.getElementById('ai-search-interpretation'),
         aiSearchServiceStatus: document.getElementById('ai-search-service-status'),
+        aiVendorEnabled: document.getElementById('ai-vendor-enabled'),
         aiSearchVoiceEnabled: document.getElementById('ai-search-voice-enabled'),
         aiSearchTalkButton: document.getElementById('ai-search-talk-button'),
         aiSearchMicLevel: document.getElementById('ai-search-mic-level'),
@@ -496,6 +497,7 @@
         }
         if (view === 'ai-search') {
             loadAiConversationHistory();
+            loadAiVendorEnabled();
             startAiStatusChecks();
         } else if (state.aiStatusTimer) {
             window.clearInterval(state.aiStatusTimer);
@@ -1080,6 +1082,30 @@
                 return `<article><strong>${escapeHtml(row.last_message || 'Sin mensaje')}</strong><small>${escapeHtml(Object.values(interpretation).filter(value => typeof value === 'string').join(' · ') || 'Sin interpretación')}</small></article>`;
             }).join('') : '<p class="empty-copy">Todavía no hay conversaciones.</p>';
         } catch (_) { elements.aiConversationHistoryList.innerHTML = '<p class="empty-copy">No pude cargar las conversaciones.</p>'; }
+    }
+
+    async function loadAiVendorEnabled() {
+        if (!elements.aiVendorEnabled || app.user?.role !== 'admin') return;
+        try {
+            if (!state.settings) state.settings = (await apiGet('settings')).settings;
+            elements.aiVendorEnabled.checked = ['1', 'true', 'on'].includes(String(state.settings.vendor_ai_enabled ?? '1'));
+        } catch (error) { toast(error.message); }
+    }
+
+    async function saveAiVendorEnabled() {
+        if (!elements.aiVendorEnabled || app.user?.role !== 'admin') return;
+        const enabled = elements.aiVendorEnabled.checked;
+        elements.aiVendorEnabled.disabled = true;
+        try {
+            const data = await apiPost({ action: 'ai_vendor_enabled_update', enabled: enabled ? '1' : '0' });
+            if (state.settings) state.settings.vendor_ai_enabled = data.enabled;
+            toast(enabled ? 'Vendedor IA activado en la tienda.' : 'Vendedor IA desactivado en la tienda.');
+        } catch (error) {
+            elements.aiVendorEnabled.checked = !enabled;
+            toast(error.message);
+        } finally {
+            elements.aiVendorEnabled.disabled = false;
+        }
     }
 
     function renderAiCriteria() {
@@ -7258,6 +7284,7 @@
         elements.mobileDashboard.hidden = !willOpen;
         elements.mobileDashboardToggle.setAttribute('aria-expanded', String(willOpen));
     });
+    elements.aiVendorEnabled?.addEventListener('change', saveAiVendorEnabled);
     document.addEventListener('keydown', event => {
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !document.querySelector('.admin-icon-sidebar')) return;
         const shortcutViews = {

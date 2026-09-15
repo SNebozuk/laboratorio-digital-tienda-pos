@@ -2281,11 +2281,10 @@
     document.getElementById('contact-button')?.addEventListener('click', showStoreContact);
     let returningFromMobileCart = false;
 
-    function closeMobileCart({ returnToCatalog = false } = {}) {
+    function closeMobileCart({ restoreFocus = false } = {}) {
         elements.orderPanel.classList.remove('mobile-open');
         document.body.classList.remove('cart-open');
-        if (returnToCatalog) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (restoreFocus) {
             elements.mobileCart.focus({ preventScroll: true });
         }
     }
@@ -2305,17 +2304,17 @@
     function leaveMobileCartForCatalog() {
         if (window.history.state?.[CART_HISTORY_KEY]) {
             returningFromMobileCart = true;
-            closeMobileCart({ returnToCatalog: true });
+            closeMobileCart({ restoreFocus: true });
             window.history.back();
             return;
         }
-        closeMobileCart({ returnToCatalog: true });
+        closeMobileCart({ restoreFocus: true });
     }
 
     window.addEventListener('popstate', () => {
         const closedCart = returningFromMobileCart || elements.orderPanel.classList.contains('mobile-open');
         returningFromMobileCart = false;
-        closeMobileCart({ returnToCatalog: closedCart });
+        closeMobileCart({ restoreFocus: closedCart });
         if (elements.modal.classList.contains('open')) {
             closeModal();
             return;
