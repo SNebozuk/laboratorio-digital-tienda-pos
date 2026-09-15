@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 42;
+    private const CURRENT_MIGRATION_VERSION = 43;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -87,6 +87,7 @@ final class Database
                 self::migrateRestoreSupplierOrderDrafts($pdo);
                 self::migratePersistentSessions($pdo);
                 self::migrateAiChatConversations($pdo);
+                self::migrateCheckoutCustomers($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -144,6 +145,7 @@ final class Database
         self::migrateRestoreSupplierOrderDrafts($pdo);
         self::migratePersistentSessions($pdo);
         self::migrateAiChatConversations($pdo);
+        self::migrateCheckoutCustomers($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
@@ -185,6 +187,33 @@ final class Database
             $pdo->exec('CREATE TABLE IF NOT EXISTS ai_chat_conversations (token TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)');
             $pdo->exec("CREATE TABLE IF NOT EXISTS ai_chat_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, conversation_token TEXT NOT NULL REFERENCES ai_chat_conversations(token) ON DELETE CASCADE, role TEXT NOT NULL CHECK(role IN ('user', 'assistant')), content TEXT NOT NULL, interpretation_json TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
             $pdo->exec('CREATE INDEX IF NOT EXISTS idx_ai_chat_messages_conversation ON ai_chat_messages(conversation_token, id)');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateCheckoutCustomers(PDO $pdo): void
+    {
+        $version = 43;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $pdo->exec('CREATE TABLE IF NOT EXISTS checkout_customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                google_sub TEXT UNIQUE,
+                first_name TEXT NOT NULL DEFAULT \'\',
+                last_name TEXT NOT NULL DEFAULT \'\',
+                name TEXT NOT NULL,
+                email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )');
+            $pdo->exec("INSERT OR IGNORE INTO checkout_customers(name, email)
+                SELECT trim(customer_name), lower(trim(customer_email))
+                FROM orders
+                WHERE customer_email IS NOT NULL
+                  AND trim(customer_email) <> ''
+                  AND trim(customer_name) <> ''");
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

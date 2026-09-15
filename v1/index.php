@@ -38,6 +38,14 @@ $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $quoteUrl = $storePath . '/cotizador.php';
 $quoteEnabled = ($app['settings']->quote()['enabled'] ?? '1') === '1';
 $apiUrl = $storePath . '/api.php';
+$checkoutGoogleCustomer = $app['checkout_google']->customer();
+$checkoutGoogle = [
+    'enabled' => $app['checkout_google']->enabled(),
+    'customer' => $checkoutGoogleCustomer,
+    'login_url' => $app['checkout_google']->loginUrl(),
+    'return_to_checkout' => $checkoutGoogleCustomer !== null && ($_GET['google_checkout'] ?? '') === '1',
+    'error' => trim((string) ($_GET['google_error'] ?? '')),
+];
 $whatsappNumber = preg_replace('/\D+/', '', (string) ($publicSettings['whatsapp_number'] ?? '5493415699338')) ?: '5493415699338';
 $pickupAddress = trim((string) ($publicSettings['pickup_address'] ?? ''));
 $businessHours = trim((string) ($publicSettings['business_hours'] ?? ''));
@@ -288,6 +296,7 @@ header('Referrer-Policy: same-origin');
             'api_url' => $apiUrl,
             'asset_url' => $assetPath,
             'csrf_token' => $app['csrf_token'],
+            'checkout_google' => $checkoutGoogle,
             'products' => $catalog,
             'categories' => $categoryTree,
             'whatsapp_number' => $publicSettings['whatsapp_number'] ?? '5493415699338',

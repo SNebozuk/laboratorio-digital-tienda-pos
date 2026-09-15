@@ -1539,7 +1539,11 @@
         const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
         const discount = cartDiscount(subtotal, items.reduce((sum, item) => sum + item.quantity, 0));
         const total = subtotal - discount.cents;
-        const customer = savedCustomer();
+        const saved = savedCustomer();
+        const googleCustomer = app.checkout_google?.customer || null;
+        const customer = googleCustomer
+            ? { ...saved, name: googleCustomer.name, email: googleCustomer.email }
+            : saved;
         // Crea un paso de historial interno: Atrás cierra el checkout y no
         // abandona la tienda hacia la página anterior del navegador.
         window.history.pushState({ catalogCheckout: true }, '', window.location.href);
@@ -1548,6 +1552,8 @@
             <h2 id="modal-title">TUS DATOS</h2>
             ${checkoutSteps(1)}
             <p class="checkout-lead">Solo necesitamos estos datos para identificar tu pedido.</p>
+            ${app.checkout_google?.enabled && !googleCustomer ? `<a class="checkout-google-button" href="${escapeHtml(app.checkout_google.login_url)}"><span aria-hidden="true">G</span>Continuar con Google</a>` : ''}
+            ${googleCustomer ? `<p class="checkout-google-connected">Continuás con Google: <strong>${escapeHtml(googleCustomer.email)}</strong></p>` : ''}
             <div class="checkout-lines">
                 ${items.map(item => `
                     <div class="checkout-line">
@@ -2313,7 +2319,15 @@
     // La lista completa es la vista inicial, por lo que el catálogo se carga
     // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();
-    loadCatalogWhenIdle();
+    loadCatalogWhenIdle().then(() => {
+        if (app.checkout_google?.return_to_checkout && cartItems().length) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('google_checkout');
+            window.history.replaceState({}, '', url);
+            showCheckout();
+        }
+        if (app.checkout_google?.error) toast(app.checkout_google.error);
+    });
     try {
         const completedOrder = JSON.parse(
             sessionStorage.getItem(ORDER_COMPLETE_STORAGE_KEY) || 'null'

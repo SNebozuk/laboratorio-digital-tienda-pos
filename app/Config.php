@@ -84,6 +84,16 @@ final class Config
                 'session_name',
                 getenv('APP_SESSION_NAME') ?: 'laboratorio_digital_session'
             ),
+            'google_client_id' => self::string(
+                $local,
+                'google_client_id',
+                getenv('APP_GOOGLE_CLIENT_ID') ?: ''
+            ),
+            'google_client_secret' => self::string(
+                $local,
+                'google_client_secret',
+                getenv('APP_GOOGLE_CLIENT_SECRET') ?: ''
+            ),
             'setup_token' => self::string(
                 $local,
                 'setup_token',

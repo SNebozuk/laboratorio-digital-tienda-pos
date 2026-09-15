@@ -1943,6 +1943,25 @@ body {
     margin: -8px 0 16px;
 }
 
+.checkout-google-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    margin: 0 0 14px;
+    min-height: 46px;
+    border: 1px solid #d4d9df;
+    border-radius: 10px;
+    background: #fff;
+    color: #253029;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.checkout-google-button span { color: #4285f4; font-size: 19px; font-weight: 900; }
+.checkout-google-connected { margin: -4px 0 14px; color: #526157; font-size: 13px; }
+
 .checkout-footnote {
     color: var(--muted);
     font-size: 11px;

@@ -23,6 +23,10 @@ return [
     'maintenance_token_hash' => 'CAMBIAR-POR-UN-HASH-SHA256',
 
     'session_name' => 'laboratorio_digital_session',
+    // OAuth de Google para completar el checkout. Cargar solo en config.local.php
+    // o como APP_GOOGLE_CLIENT_ID / APP_GOOGLE_CLIENT_SECRET en el servidor.
+    'google_client_id' => '',
+    'google_client_secret' => '',
     'debug' => false,
     // Mantener en false hasta cargar banco, retiro, correo y stock final.
     'orders_enabled' => false,

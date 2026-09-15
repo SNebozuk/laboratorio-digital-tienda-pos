@@ -30,6 +30,17 @@ CREATE TABLE IF NOT EXISTS persistent_sessions (
 CREATE INDEX IF NOT EXISTS idx_persistent_sessions_user
     ON persistent_sessions(user_id, expires_at);
 
+CREATE TABLE IF NOT EXISTS checkout_customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    google_sub TEXT UNIQUE,
+    first_name TEXT NOT NULL DEFAULT '',
+    last_name TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL,
+    email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS ai_chat_conversations (
     token TEXT PRIMARY KEY,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
