@@ -699,6 +699,7 @@
         }
         const max = Number(indexed.variant.available_stock);
         const quantity = Math.max(0, Math.min(max, Number(requestedQuantity) || 0));
+        const previousQuantity = cartQuantity(variantId);
         const wasEmpty = state.cart.size === 0;
         const unitsBefore = Array.from(state.cart.values()).reduce((sum, value) => sum + Number(value), 0);
         if (quantity > 0) {
@@ -710,6 +711,7 @@
         persistCart();
         renderCatalog();
         renderCart();
+        if (quantity > previousQuantity && isMobileStorefront()) openMobileCart();
         if (quantity > 0 && Number(requestedQuantity) > 0) playCartPop();
         if (quantity > 0 && Number(requestedQuantity) > 0) {
             const units = Array.from(state.cart.values()).reduce((sum, value) => sum + Number(value), 0);
@@ -1552,8 +1554,6 @@
             <h2 id="modal-title">TUS DATOS</h2>
             ${checkoutSteps(1)}
             <p class="checkout-lead">Solo necesitamos estos datos para identificar tu pedido.</p>
-            ${app.checkout_google?.enabled && !googleCustomer ? `<a class="checkout-google-button" href="${escapeHtml(app.checkout_google.login_url)}"><span aria-hidden="true">G</span>Continuar con Google</a>` : ''}
-            ${googleCustomer ? `<p class="checkout-google-connected">Continuás con Google: <strong>${escapeHtml(googleCustomer.email)}</strong></p>` : ''}
             <div class="checkout-lines">
                 ${items.map(item => `
                     <div class="checkout-line">
@@ -1566,6 +1566,8 @@
             </div>
             <div class="order-total"><span>Subtotal<br><small>${discountSummaryMarkup(discount)}<br>Total</small></span><strong>${money(total)}</strong></div>
             <form id="checkout-form" novalidate>
+                ${app.checkout_google?.enabled && !googleCustomer ? `<a class="checkout-google-button" href="${escapeHtml(app.checkout_google.login_url)}"><span aria-hidden="true">G</span>Continuar con Google</a>` : ''}
+                ${googleCustomer ? `<p class="checkout-google-connected">Continuás con Google: <strong>${escapeHtml(googleCustomer.email)}</strong></p>` : ''}
                 <label>
                     Nombre y Apellido
                     <input name="name" required autocomplete="name" value="${escapeHtml(customer.name || '')}" aria-describedby="checkout-name-help">

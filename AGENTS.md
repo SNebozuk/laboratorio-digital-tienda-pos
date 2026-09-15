@@ -5,6 +5,7 @@
 - El código actual es la fuente de verdad. Ante cualquier diferencia con conversaciones, documentos o recuerdos anteriores, prevalece el código.
 - Antes de hacer cualquier acción, explicar al usuario qué se va a realizar. Luego leer este archivo al comenzar una tarea.
 - Trabajar solamente sobre lo solicitado.
+- Cuando el usuario pida una reforma, corrección o agregado, modificar exclusivamente eso, sin alterar nada más. Esta regla aplica a todos los prompts.
 - No volver sobre funcionalidades ya confirmadas y funcionando salvo pedido explícito.
 - No recuperar comportamientos ni requisitos antiguos.
 - No implementar ideas provenientes del historial.

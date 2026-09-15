@@ -18,6 +18,7 @@
         return value;
     })();
     let pendingProduct = null;
+    let singleResultProduct = null;
     let checkoutStep = null;
     const checkoutCustomer = {};
     const escape = value => String(value || '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
@@ -30,6 +31,9 @@
         messages.scrollTop = messages.scrollHeight;
     };
     const renderResults = rows => {
+        singleResultProduct = rows.length === 1
+            ? { id: rows[0].variante_id, name: `${rows[0].producto} ${rows[0].variante || ''}`.trim() }
+            : null;
         if (!rows.length) { results.innerHTML = '<span>Sin resultados para esta búsqueda.</span>'; return; }
         results.innerHTML = `<table><thead><tr><th></th><th>Producto</th><th>Variante</th><th></th></tr></thead><tbody>${rows.map(row => {
             const image = row.imagen ? `<img src="${escape(row.imagen)}" alt="">` : '';
@@ -107,7 +111,6 @@
         if (!text) return;
         input.value = '';
         appendMessage('user', text);
-        renderResults([]);
         if (checkoutStep === 'name') {
             if (text.trim().split(/\s+/).length < 2) { appendMessage('assistant', 'Necesito nombre y apellido completos para continuar.'); return; }
             checkoutCustomer.name = text;
@@ -125,6 +128,17 @@
             return;
         }
         if (pendingProduct && /^\d+$/.test(text) && Number(text) > 0) { addPendingProduct(Number(text)); return; }
+        if (!pendingProduct && singleResultProduct && /\b(agreg[\p{L}]*|sumar|poner)\b[\s\S]*\bcarrito\b/iu.test(text)) {
+            pendingProduct = singleResultProduct;
+            const quantity = text.match(/\b(\d+)\b/);
+            if (quantity && Number(quantity[1]) > 0) addPendingProduct(Number(quantity[1]));
+            else {
+                appendMessage('assistant', `¿Cuántas unidades de ${pendingProduct.name} querés agregar al carrito?`);
+                input.focus();
+            }
+            return;
+        }
+        renderResults([]);
         typing.hidden = false;
         try {
             const response = await fetch(app.api_url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'ai_public_chat', conversation: id, message: text }) });

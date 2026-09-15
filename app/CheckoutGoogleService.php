@@ -118,6 +118,13 @@ final class CheckoutGoogleService
 
     private function baseUrl(): string
     {
-        return rtrim(trim((string) ($this->config['base_url'] ?? '')), '/');
+        $configured = rtrim(trim((string) ($this->config['base_url'] ?? '')), '/');
+        $configuredHost = strtolower((string) (parse_url($configured, PHP_URL_HOST) ?? ''));
+        $currentHost = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+        $allowedHosts = array_filter([$configuredHost, $configuredHost === '' ? '' : 'www.' . $configuredHost]);
+        if ($currentHost !== '' && in_array($currentHost, $allowedHosts, true)) {
+            return 'https://' . $currentHost;
+        }
+        return $configured;
     }
 }
