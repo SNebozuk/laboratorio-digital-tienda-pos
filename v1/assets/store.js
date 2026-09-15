@@ -1461,6 +1461,16 @@
         document.body.style.overflow = '';
     }
 
+    function showTutorials() {
+        openModal(`<section class="tutorial-library" aria-labelledby="modal-title">
+            <p class="eyebrow">APRENDE</p><h2 id="modal-title">TUTORIALES</h2>
+            ${tutorials.length ? `<div class="tutorial-library-grid">${tutorials.map(tutorial => `<button class="tutorial-card" type="button" data-open-tutorial="${Number(tutorial.id)}">
+                ${safeImage(tutorial.image_path) ? `<img src="${escapeHtml(safeImage(tutorial.image_path))}" alt="" loading="lazy">` : '<span class="tutorial-placeholder">APRENDE</span>'}
+                <strong>${escapeHtml(tutorial.title)}</strong><small>LEER TUTORIAL →</small>
+            </button>`).join('')}</div>` : '<p>Todavía no hay tutoriales disponibles.</p>'}
+        </section>`);
+    }
+
     function showStoreContact() {
         const contact = app.contact || {};
         const phone = String(contact.whatsapp_number || app.whatsapp_number || '').replace(/\D+/g, '');
@@ -1891,6 +1901,10 @@
     }
 
     document.addEventListener('click', event => {
+        if (event.target.closest('[data-open-tutorials]')) {
+            showTutorials();
+            return;
+        }
         const carouselArrow = event.target.closest('[data-tutorial-carousel-direction]');
         if (carouselArrow) {
             const carousel = carouselArrow.parentElement?.querySelector('[data-tutorial-carousel]');
