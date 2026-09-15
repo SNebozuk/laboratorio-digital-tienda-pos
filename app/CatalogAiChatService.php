@@ -23,7 +23,7 @@ final class CatalogAiChatService
     public function reply(array $history): array
     {
         if (trim((string) ($this->config['openai_api_key'] ?? '')) === '') {
-            throw new \RuntimeException('Configurá OPENAI_API_KEY en el servidor para usar el Vendedor IA.');
+            throw new \RuntimeException('Configurá OPENAI_API_KEY en el servidor para usar el Asesor IA.');
         }
 
         if ($this->isGreetingOnly($history)) {

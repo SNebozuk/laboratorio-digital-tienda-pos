@@ -264,14 +264,14 @@ header('Referrer-Policy: same-origin');
         </svg>
     </a>
 
-    <section class="vendor-ai" id="vendor-ai" aria-label="Vendedor IA" data-state="minimized">
+    <section class="vendor-ai" id="vendor-ai" aria-label="Asesor IA" data-state="minimized">
         <header class="vendor-ai-head" data-vendor-ai-drag>
             <span class="vendor-ai-status" id="vendor-ai-status">● Verificando IA</span>
             <div class="vendor-ai-controls"><button class="icon-button" type="button" data-vendor-ai-minimize aria-label="Minimizar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><button class="icon-button" type="button" data-vendor-ai-close aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
         </header>
         <div class="vendor-ai-body"><div class="vendor-ai-conversation"><div class="vendor-ai-messages" id="vendor-ai-messages"></div><div class="vendor-ai-typing" id="vendor-ai-typing" hidden><span class="vendor-ai-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>Buscando en el catálogo…</div><form id="vendor-ai-form"><textarea id="vendor-ai-input" rows="1" placeholder="Escribí tu consulta…"></textarea><button class="vendor-ai-send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3-6-8-2Z"/></svg></button></form></div><aside class="vendor-ai-results" aria-live="polite"><strong>Resultados del catálogo</strong><div id="vendor-ai-results"><span>Los resultados aparecerán acá.</span></div></aside></div>
     </section>
-    <button class="vendor-ai-launcher" id="vendor-ai-launcher" type="button" aria-label="Abrir Vendedor IA" hidden>IA</button>
+    <button class="vendor-ai-launcher" id="vendor-ai-launcher" type="button" aria-label="Abrir Asesor IA" hidden>IA</button>
 
     <div class="modal" id="modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>

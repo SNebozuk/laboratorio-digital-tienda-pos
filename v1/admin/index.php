@@ -186,7 +186,7 @@ header('Referrer-Policy: same-origin');
                 <?php endif ?>
                 <div class="admin-user">
                     <div class="admin-user-icon-actions">
-                        <button class="icon-button admin-nav-button" type="button" data-view="ai-search" aria-label="Vendedor IA" title="Vendedor IA"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m14.5 14.5 4.5 4.5M18 4v3M16.5 5.5h3"></path></svg></button>
+                        <button class="icon-button admin-nav-button" type="button" data-view="ai-search" aria-label="Asesor IA" title="Asesor IA"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m14.5 14.5 4.5 4.5M18 4v3M16.5 5.5h3"></path></svg></button>
                         <button class="icon-button admin-nav-button" type="button" data-view="statistics" aria-label="Estadísticas (F6)" title="Estadísticas · F6"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M3 20h18"></path></svg></button>
                         <?php if ($user['role'] === 'admin'): ?>
                             <button class="icon-button admin-nav-button" type="button" data-view="supplier-order" aria-label="Pedidos" title="Pedidos"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l2-8H7M9 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>
@@ -210,7 +210,7 @@ header('Referrer-Policy: same-origin');
                     <select id="mobile-view">
                         <option value="orders">Lista de Ventas</option>
                         <option value="deliveries">Entrega de Pedidos</option>
-                        <option value="ai-search">Vendedor IA</option>
+                        <option value="ai-search">Asesor IA</option>
                         <option value="statistics">Estadísticas</option>
                         <option value="products">Productos</option>
                         <?php if ($user['role'] === 'admin'): ?>
@@ -500,7 +500,7 @@ header('Referrer-Policy: same-origin');
                 <section class="admin-view ai-search-view" id="view-ai-search">
                     <div class="view-heading ai-search-heading">
                         <div>
-                            <h1 class="admin-page-title">VENDEDOR IA</h1>
+                            <h1 class="admin-page-title">ASESOR IA</h1>
                             <p>Historial e interpretaciones del chat público.</p>
                         </div>
                         <span class="ai-search-service-status is-checking" id="ai-search-service-status" role="status">🟡 Verificando IA…</span>

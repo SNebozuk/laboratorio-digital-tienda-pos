@@ -26,7 +26,7 @@
         messages.scrollTop = messages.scrollHeight;
     };
     const render = history => {
-        messages.innerHTML = history.length ? history.map(item => `<div class="vendor-ai-message ${item.role === 'user' ? 'is-user' : ''}">${escape(item.content)}</div>`).join('') : '<div class="vendor-ai-message">¡Hola! Soy el Vendedor IA. ¿En qué te ayudo?</div>';
+        messages.innerHTML = history.length ? history.map(item => `<div class="vendor-ai-message ${item.role === 'user' ? 'is-user' : ''}">${escape(item.content)}</div>`).join('') : '<div class="vendor-ai-message">¡Hola! Soy el Asesor IA. ¿En qué te ayudo?</div>';
         messages.scrollTop = messages.scrollHeight;
     };
     const renderResults = rows => {
