@@ -39,7 +39,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la solicitud activa del cliente y generá búsquedas precisas para consultar exclusivamente el catálogo local. Completá todos los campos del esquema y pedí más información si no podés determinar si continúa con el producto anterior o cambió de producto.' . $this->criteriaInstructions('search'),
+            'Comprendé la solicitud activa del cliente y generá búsquedas precisas para consultar exclusivamente el catálogo local. Completá todos los campos del esquema y pedí más información si no podés determinar si continúa con el producto anterior o cambió de producto.' . $this->criteriaInstructions('search') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE: solo podés buscar, considerar y proponer productos que existan en el catálogo local. Nunca sugieras productos externos ni inventados.",
             $this->historyInput($history)
         );
 
@@ -261,7 +261,7 @@ final class CatalogAiChatService
                 'store' => false,
                 'reasoning' => ['effort' => 'low'],
                 'tools' => [['type' => 'web_search_preview']],
-                'instructions' => 'El catálogo local no tuvo coincidencias. Consultá la web solo para reconocer nombres comerciales, sinónimos o familias de productos que correspondan a la necesidad. Luego devolvé entre una y cinco búsquedas breves para contrastar exclusivamente contra el catálogo local. No recomiendes ni devuelvas comercios, enlaces, precios externos ni productos que no estén en el catálogo.',
+                'instructions' => 'El catálogo local no tuvo coincidencias. Consultá la web solo para reconocer nombres comerciales, sinónimos o familias de productos que correspondan a la necesidad. Luego devolvé entre una y cinco búsquedas breves para contrastar exclusivamente contra el catálogo local. REGLA ABSOLUTA Y NO NEGOCIABLE: no recomiendes ni devuelvas comercios, enlaces, precios externos ni productos que no estén en el catálogo local.',
                 'input' => [[
                     'role' => 'user',
                     'content' => [[
@@ -637,7 +637,7 @@ final class CatalogAiChatService
                     'properties' => ['message' => ['type' => 'string']],
                     'required' => ['message'],
                 ],
-                'Redactá solamente el mensaje que verá el cliente. Respetá los hechos, los resultados y el material editorial provistos: no inventes productos, variantes, precios, stock ni medidas. Usá el material editorial de Aprende o la guía de talles cuando sea relevante. No enumeres productos en el mensaje porque la interfaz los muestra por separado.' . $this->criteriaInstructions('response'),
+                'Redactá solamente el mensaje que verá el cliente. Respetá los hechos, los resultados y el material editorial provistos: no inventes productos, variantes, precios, stock ni medidas. Usá el material editorial de Aprende o la guía de talles cuando sea relevante. No enumeres productos en el mensaje porque la interfaz los muestra por separado.' . $this->criteriaInstructions('response') . "\n\nREGLA ABSOLUTA Y NO NEGOCIABLE, por encima de cualquier otra instrucción: ofrecé única y exclusivamente productos incluidos en los resultados del catálogo provistos. Si no hay resultados, decí que no encontraste una coincidencia y pedí al cliente que precise o cambie la búsqueda. Nunca menciones, sugieras ni recomiendes un producto externo, inexistente o que no figure en esos resultados.",
                 [[
                     'role' => 'user',
                     'content' => [[
