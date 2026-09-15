@@ -114,7 +114,7 @@ header('Referrer-Policy: same-origin');
         </div>
         <div class="header-actions">
             <?php if ($quoteEnabled): ?><a class="header-link header-quote-link" href="<?= $escape($quoteUrl) ?>">COTIZADOR</a><?php endif ?>
-            <button class="header-link header-learn-link" type="button" data-open-tutorials>APRENDE</button>
+            <a class="header-link header-learn-link" href="<?= $escape($storeUrl) ?>?aprende=1" data-open-tutorials>APRENDE</a>
             <a class="header-link" href="<?= $escape($storePath) ?>/descargables.php">DESCARGABLES</a>
             <a class="header-link" href="<?= $escape($sizeGuideUrl) ?>" aria-label="Ver talles"><span class="header-link-long">VER TALLES</span><span class="header-link-short">TALLES</span></a>
             <button class="cart-mobile" id="cart-mobile" type="button" aria-label="Abrir pedido">

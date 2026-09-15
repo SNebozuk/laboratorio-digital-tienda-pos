@@ -37,6 +37,7 @@
         ? app.featured_product_ids.map(Number).filter(Number.isFinite)
         : [];
     const initialUrl = new URL(window.location.href);
+    const linkedTutorials = initialUrl.searchParams.has('aprende');
     const linkedProductId = (() => {
         const value = Number(initialUrl.searchParams.get('producto'));
         return Number.isFinite(value) && value > 0 ? value : null;
@@ -2348,7 +2349,11 @@
     renderCategories();
     renderCatalog();
     renderCart();
-    if (!returnedFromQuote && !alwaysUseProductView) window.setTimeout(showProductViewChooser, 350);
+    if (linkedTutorials) {
+        window.setTimeout(showTutorials, 0);
+    } else if (!returnedFromQuote && !alwaysUseProductView) {
+        window.setTimeout(showProductViewChooser, 350);
+    }
     // La lista completa es la vista inicial, por lo que el catálogo se carga
     // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();
