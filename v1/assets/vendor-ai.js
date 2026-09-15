@@ -7,6 +7,7 @@
     const form = document.getElementById('vendor-ai-form');
     const typing = document.getElementById('vendor-ai-typing');
     const status = document.getElementById('vendor-ai-status');
+    const results = document.getElementById('vendor-ai-results');
     const testing = new URLSearchParams(window.location.search).get('chat_ia') === '1';
     if (!testing) { chat.hidden = true; launcher.hidden = true; return; }
 
@@ -29,13 +30,13 @@
         messages.scrollTop = messages.scrollHeight;
     };
     const renderResults = rows => {
-        rows.forEach(row => {
+        if (!rows.length) { results.innerHTML = '<span>Sin resultados para esta búsqueda.</span>'; return; }
+        results.innerHTML = `<table><thead><tr><th></th><th>Producto</th><th>Variante</th><th></th></tr></thead><tbody>${rows.map(row => {
             const image = row.imagen ? `<img src="${escape(row.imagen)}" alt="">` : '';
             const price = row.precio === null ? 'Precio a consultar' : `$ ${Number(row.precio).toLocaleString('es-AR')}`;
             const product = escape(JSON.stringify({ id: row.variante_id, name: `${row.producto} ${row.variante || ''}`.trim() }));
-            messages.insertAdjacentHTML('beforeend', `<article class="vendor-ai-result">${image}<div><strong>${escape(row.producto)}</strong><small>${escape(row.variante || 'Única')} · ${escape(price)}</small><button type="button" data-vendor-ai-product='${product}'>ELEGIR</button></div></article>`);
-        });
-        messages.scrollTop = messages.scrollHeight;
+            return `<tr><td>${image}</td><td><strong>${escape(row.producto)}</strong></td><td>${escape(row.variante || 'Única')}<br><small>${escape(price)}</small></td><td><button type="button" data-vendor-ai-product='${product}'>ELEGIR</button></td></tr>`;
+        }).join('')}</tbody></table>`;
     };
     const refresh = async () => {
         try {
@@ -67,7 +68,7 @@
         event.preventDefault();
         messages.scrollTop += event.deltaY;
     }, { passive: false });
-    messages.addEventListener('click', event => {
+    chat.addEventListener('click', event => {
         const product = event.target.closest('[data-vendor-ai-product]');
         if (product) {
             pendingProduct = JSON.parse(product.dataset.vendorAiProduct);
@@ -108,10 +109,7 @@
             const data = await response.json();
             if (!data.ok) throw new Error(data.error);
             await refresh();
-            const rows = data.reply?.display_results || [];
-            if (rows.length) {
-                renderResults(rows);
-            }
+            renderResults(data.reply?.display_results || []);
             if (data.reply?.human_help) {
                 messages.insertAdjacentHTML('beforeend', `<a class="vendor-ai-human" target="_blank" rel="noopener" href="https://wa.me/5493415699338?text=${encodeURIComponent(data.reply.human_help.message)}">${escape(data.reply.human_help.message)} Consultar a Allessandra</a>`);
                 messages.scrollTop = messages.scrollHeight;

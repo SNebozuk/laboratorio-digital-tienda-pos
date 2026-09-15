@@ -38,7 +38,7 @@ final class CatalogAiChatService
         $interpretation = $this->structuredRequest(
             'interpretacion_catalogo',
             $this->interpretationSchema(),
-            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Conservá datos previos solo si continúa con el mismo producto; detectá cambios y mantené separados los atributos de cada producto cuando el pedido es múltiple. Un body es un enterito para bebé y nunca es una remera: al pedir remeras no incluyas bodys y al pedir bodys no incluyas remeras. Si pide solamente remeras, son unisex. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, A4 es el tamaño estándar: guardalo en tamano cuando no se indique otro. Para cada papel identificá siempre tamano, gramaje y tipo_papel; no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central en singular, pero conservá cómo lo escribió el cliente: no corrijas posibles errores de tipeo. Generá búsquedas precisas y alternativas amplias para cada producto. Si hay código o SKU, conserválo en codigo. Tolerá plurales y acentos como coincidencias exactas. Ante una palabra que podría tener un error leve, no la corrijas ni pidas aclaración todavía: buscala para que el catálogo pueda confirmar el nombre y consultarle al cliente. Solo pedí una aclaración si cambia sustancialmente la recomendación.',
+            'Comprendé la necesidad del cliente antes de consultar cualquier catálogo. Conservá datos previos solo si continúa con el mismo producto; detectá cambios y mantené separados los atributos de cada producto cuando el pedido es múltiple. Un body es un enterito para bebé y nunca es una remera: al pedir remeras no incluyas bodys y al pedir bodys no incluyas remeras. Si pide solamente remeras, son unisex. Para remeras sublimables, modal es la alternativa estándar; spum o jersey son secundarias y solo se consideran si se piden o no hay modal. En papel, A4 es el tamaño estándar: guardalo en tamano cuando no se indique otro. Para cada papel identificá siempre tamano, gramaje y tipo_papel; no hay papeles para impresoras láser. La letra G después de un número de papel indica gramaje: 200G es 200 gramos. Guardá ese dato en gramaje y buscá con el gramaje exacto; nunca lo confundas con la cantidad de hojas ni lo sustituyas por otro. En core_product_term escribí el sustantivo comercial central en singular, pero conservá cómo lo escribió el cliente: no corrijas posibles errores de tipeo. Generá búsquedas precisas y alternativas amplias para cada producto. Si hay código o SKU, conserválo en codigo. Tolerá plurales y acentos como coincidencias exactas. Ante una palabra que podría tener un error leve, no la corrijas ni pidas aclaración todavía: buscala para que el catálogo pueda confirmar el nombre y consultarle al cliente. Si hay varias líneas de producto que coinciden, no pidas aclaración antes de buscar: devolvé los resultados para que el cliente pueda elegir. Solo pedí una aclaración si cambia sustancialmente la recomendación.',
             $this->historyInput($history)
         );
 
@@ -95,14 +95,15 @@ final class CatalogAiChatService
         if (count(array_unique(array_filter(array_map(static fn (array $row): string => trim((string) ($row['talle'] ?? '')), $displayRows)))) > 1) $criteria[] = 'talle';
         if (count(array_unique(array_filter(array_map(static fn (array $row): string => trim((string) ($row['color'] ?? '')), $displayRows)))) > 1) $criteria[] = 'color';
         if (count($displayRows) > 24) $criteria[] = 'material o uso';
-        $message = $sizeFallback
+        $clarification = $this->productClarificationQuestion($displayRows);
+        $message = $clarification ?? ($sizeFallback
             ? 'No tengo el talle solicitado; estas son las opciones de talle más cercano.'
             : ($displayRows === []
             ? 'No tengo una opción disponible para esa búsqueda.'
             : (count($displayRows) > 24
                 ? 'Hay más de 24 opciones disponibles. Para acotar mejor, ¿preferís filtrar por ' . implode(', ', $criteria ?: ['tipo de producto']) . '?'
-                : 'Estas son las opciones disponibles en Laboratorio Digital.'));
-        $continuation = $this->continuationSuggestion($displayRows);
+                : 'Estas son las opciones disponibles en Laboratorio Digital.')));
+        $continuation = $clarification === null ? $this->continuationSuggestion($displayRows) : '';
 
         return [
             'message' => trim($message . ($continuation === '' ? '' : ' ' . $continuation)),
@@ -317,6 +318,7 @@ final class CatalogAiChatService
                 $details = $identity . ' ' . $this->fold((string) ($row['descripcion'] ?? ''));
                 if (!$this->exactTextMatch($identity, (string) $request['product_term'])) continue;
                 if (!$this->exactTextMatch($identity, (string) ($request['material'] ?? ''))) continue;
+                if (!$this->exactTextMatch($identity, (string) ($request['color'] ?? ''))) continue;
                 if ($includeSize && ($size = trim((string) ($request['talle'] ?? ''))) !== '' && $this->fold((string) ($row['talle'] ?? '')) !== $this->fold($size)) continue;
                 if (str_contains($this->fold((string) $request['product_term']), 'papel')) {
                     $tamano = trim((string) ($request['tamano'] ?? '')) ?: 'a4';
@@ -378,6 +380,23 @@ final class CatalogAiChatService
             }
         }
         return $closest;
+    }
+
+    /** @param list<array<string,mixed>> $rows */
+    private function productClarificationQuestion(array $rows): ?string
+    {
+        $products = array_values(array_unique(array_filter(array_map(static fn (array $row): string => trim((string) ($row['producto'] ?? '')), $rows))));
+        if (count($products) < 2) return null;
+
+        $labels = [];
+        foreach ($products as $product) {
+            $name = $this->fold($product);
+            if (str_contains($name, 'unisex')) $labels['unisex'] = 'unisex';
+            elseif (preg_match('/\\b(nino|nina|infantil)\\b/u', $name)) $labels['niño'] = 'de niño';
+            elseif (str_contains($name, 'mujer') || str_contains($name, 'dama')) $labels['mujer'] = 'de mujer';
+        }
+        if (count($labels) >= 2) return 'Encontré opciones ' . implode(', ', array_values($labels)) . ' que coinciden. ¿Cuál buscás?';
+        return 'Encontré varias opciones que coinciden. ¿Cuál buscás? Podés elegir una en la tabla.';
     }
 
     /** @param list<array<string,mixed>> $rows */
