@@ -208,7 +208,8 @@
         customerList: document.getElementById('customer-list'),
         sizeGuideIntro: document.getElementById('size-guide-intro'),
         sizeGuideRows: document.getElementById('size-guide-rows'),
-        mobileView: document.getElementById('mobile-view'),
+        mobileDashboard: document.getElementById('admin-mobile-dashboard'),
+        mobileDashboardToggle: document.getElementById('admin-mobile-dashboard-toggle'),
         invitationList: document.getElementById('invitation-list'),
         invitationsBadge: document.getElementById('invitations-badge'),
         ordersBadge: document.getElementById('orders-badge'),
@@ -433,7 +434,7 @@
                 window.clearInterval(state.aiStatusTimer);
                 state.aiStatusTimer = 0;
             }
-            if (elements.mobileView) elements.mobileView.value = state.view;
+            if (elements.mobileDashboard) elements.mobileDashboard.hidden = true;
         }
         elements.modal.classList.remove('open');
         elements.modal.setAttribute('aria-hidden', 'true');
@@ -483,8 +484,9 @@
             button.classList.toggle('active', highlightNavigation && button.dataset.view === view);
         });
         document.querySelector('.admin-shell')?.classList.toggle('admin-design-mode', view === 'design');
-        if (elements.mobileView) {
-            elements.mobileView.value = view;
+        if (elements.mobileDashboard) {
+            elements.mobileDashboard.hidden = true;
+            elements.mobileDashboardToggle?.setAttribute('aria-expanded', 'false');
         }
         if (view === 'orders') {
             loadOrders().then(markOrdersSeen);
@@ -7219,7 +7221,12 @@
         renderDesignPreview();
         toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
     });
-    elements.mobileView?.addEventListener('change', event => showView(event.target.value));
+    elements.mobileDashboardToggle?.addEventListener('click', () => {
+        if (!elements.mobileDashboard) return;
+        const willOpen = elements.mobileDashboard.hidden;
+        elements.mobileDashboard.hidden = !willOpen;
+        elements.mobileDashboardToggle.setAttribute('aria-expanded', String(willOpen));
+    });
     document.addEventListener('keydown', event => {
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !document.querySelector('.admin-icon-sidebar')) return;
         const shortcutViews = {

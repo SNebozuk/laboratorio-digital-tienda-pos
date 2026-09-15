@@ -209,30 +209,30 @@ header('Referrer-Policy: same-origin');
             <main class="admin-main">
                 <header class="admin-mobile-header">
                     <strong>LABORATORIO DIGITAL</strong>
-                    <select id="mobile-view">
-                        <option value="orders">Lista de Ventas</option>
-                        <option value="deliveries">Entrega de Pedidos</option>
-                        <option value="ai-search">Asesor IA</option>
-                        <option value="statistics">Estadísticas</option>
-                        <option value="products">Productos</option>
+                    <button class="admin-mobile-dashboard-toggle" id="admin-mobile-dashboard-toggle" type="button" aria-expanded="false" aria-controls="admin-mobile-dashboard">PANEL</button>
+                    <nav class="admin-mobile-dashboard" id="admin-mobile-dashboard" aria-label="Secciones de administración" hidden>
+                        <strong>SECCIONES</strong>
+                        <button type="button" data-view="orders">Lista de Ventas</button>
+                        <button type="button" data-view="deliveries">Entrega de Pedidos</button>
+                        <button type="button" data-view="products">Productos</button>
+                        <button type="button" data-view="pos">Punto de Venta</button>
+                        <button type="button" data-view="ai-search">Asesor IA</button>
+                        <button type="button" data-view="statistics">Estadísticas</button>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <option value="supplier-order">Pedidos</option>
+                            <button type="button" data-view="supplier-order">Pedidos</button>
+                            <button type="button" data-view="tutorials">Aprende</button>
+                            <button type="button" data-view="categories">Categorías</button>
+                            <button type="button" data-view="size-guide">Tabla de Talles</button>
+                            <button type="button" data-view="contact">Contacto</button>
+                            <button type="button" data-view="design">Diseño</button>
+                            <button type="button" data-view="quote">Cotizador</button>
+                            <button type="button" data-view="whatsapp">WhatsApp</button>
+                            <button type="button" data-view="customers">Clientes</button>
+                            <button type="button" data-view="users">Usuarios</button>
+                            <button type="button" data-view="settings">Configuración</button>
+                            <button type="button" data-view="maintenance">Mantenimiento</button>
                         <?php endif ?>
-                        <option value="pos">Punto de Venta</option>
-                        <?php if ($user['role'] === 'admin'): ?>
-                            <option value="tutorials">Aprende</option>
-                            <option value="categories">Categorías</option>
-                            <option value="size-guide">Tabla de Talles</option>
-                            <option value="contact">Contacto</option>
-                            <option value="design">Diseño</option>
-                            <option value="quote">Cotizador</option>
-                            <option value="whatsapp">WhatsApp</option>
-                            <option value="customers">Clientes</option>
-                            <option value="users">Usuarios</option>
-                            <option value="settings">Configuración</option>
-                            <option value="maintenance">Mantenimiento</option>
-                        <?php endif ?>
-                    </select>
+                    </nav>
                 </header>
 
                 <section class="admin-view" id="view-products">

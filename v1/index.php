@@ -121,6 +121,9 @@ header('Referrer-Policy: same-origin');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="<?= $escape((string) ($design['color_background'] ?? '#f7faf7')) ?>">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title><?= $escape($seoTitle) ?></title>
     <meta name="description" content="<?= $escape($seoDescription) ?>">
     <link rel="canonical" href="<?= $escape($canonicalUrl) ?>">
@@ -129,6 +132,8 @@ header('Referrer-Policy: same-origin');
     <meta property="og:description" content="<?= $escape($seoDescription) ?>">
     <meta property="og:url" content="<?= $escape($canonicalUrl) ?>">
     <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="<?= $escape($assetPath) ?>/favicon.png">
+    <link rel="manifest" href="<?= $escape($storePath) ?>/manifest.php">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
 </head>
@@ -286,6 +291,22 @@ header('Referrer-Policy: same-origin');
     </main>
     <div id="mobile-klaus-host" class="mobile-klaus-host" aria-live="polite"></div>
 
+    <section class="pwa-install-prompt" id="pwa-install-prompt" aria-labelledby="pwa-install-title" hidden>
+        <div class="pwa-install-prompt-card" role="dialog" aria-modal="true" aria-describedby="pwa-install-description">
+            <img src="<?= $escape($assetPath) ?>/favicon.png" alt="" aria-hidden="true">
+            <div>
+                <p class="pwa-install-kicker">ACCESO RÁPIDO</p>
+                <h2 id="pwa-install-title">Instalá Laboratorio Digital</h2>
+                <p id="pwa-install-description">Agregala a la pantalla de inicio para abrir el catálogo como una app, con acceso más rápido y sin buscarla cada vez.</p>
+                <p class="pwa-install-ios-help" id="pwa-install-ios-help" hidden>En Safari, tocá Compartir y elegí <strong>“Agregar a pantalla de inicio”</strong>.</p>
+                <div class="pwa-install-actions">
+                    <button class="pwa-install-later" id="pwa-install-later" type="button">Ahora no</button>
+                    <button class="primary-button" id="pwa-install-confirm" type="button">INSTALAR APP</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer class="store-footer" id="contacto">
         <button class="footer-contact-button" id="contact-button" type="button">
             <span>CONTACTO</span>
@@ -361,6 +382,7 @@ header('Referrer-Policy: same-origin');
     <script src="<?= $escape($assetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/search-normalizer.js?v=<?= $escape($searchNormalizerJsVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>
+    <script src="<?= $escape($assetPath) ?>/pwa-install.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/vendor-ai.js?v=<?= $escape($vendorAiJsVersion) ?>" defer></script>
 </body>
 </html>
