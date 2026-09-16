@@ -612,7 +612,9 @@ final class CatalogAiChatService
             $matched = false;
             foreach ($valueWords as $valueWord) {
                 $shortest = min(strlen($valueWord), strlen($word));
-                $prefixMatch = $shortest >= 4 && (str_starts_with($valueWord, $word) || str_starts_with($word, $valueWord));
+                $prefixMatch = $shortest >= 4
+                    && abs(strlen($valueWord) - strlen($word)) <= 2
+                    && (str_starts_with($valueWord, $word) || str_starts_with($word, $valueWord));
                 $fuzzyMatch = $shortest >= 4 && levenshtein($this->singular($valueWord), $this->singular($word)) <= 1;
                 if ($prefixMatch || $fuzzyMatch) { $matched = true; break; }
             }

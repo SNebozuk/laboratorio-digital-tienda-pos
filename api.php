@@ -241,7 +241,8 @@ try {
     }
     if ($action === 'ai_public_chat') {
         $settings = $app['settings']->values();
-        if (($settings['vendor_ai_enabled'] ?? '1') !== '1') {
+        $chatUser = $app['auth']->user();
+        if (($settings['vendor_ai_enabled'] ?? '1') !== '1' && $chatUser === null) {
             throw new ValidationException('El Vendedor IA está desactivado.');
         }
         $token = (string) ($input['conversation'] ?? '');

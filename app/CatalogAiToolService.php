@@ -119,7 +119,9 @@ final class CatalogAiToolService
             $found = false;
             foreach ($words as $word) {
                 $shortest = min(strlen($word), strlen($term));
-                $prefixMatch = $shortest >= 4 && (str_starts_with($word, $term) || str_starts_with($term, $word));
+                $prefixMatch = $shortest >= 4
+                    && abs(strlen($word) - strlen($term)) <= 2
+                    && (str_starts_with($word, $term) || str_starts_with($term, $word));
                 $rootLength = strspn($word ^ $term, "\0");
                 $rootMatch = $shortest >= 5 && $rootLength >= 5 && $rootLength >= (int) ceil($shortest * 0.7);
                 $singularWord = strlen($word) > 4 ? preg_replace('/s$/', '', $word) : $word;

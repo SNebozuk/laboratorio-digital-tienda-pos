@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 $app = require dirname(__DIR__) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
-if ($app['auth']->user() === null) {
+$storeUser = $app['auth']->user();
+if ($storeUser === null) {
     $visitorId = (string) ($_COOKIE['laboratorio_store_visitor'] ?? '');
     if (!preg_match('/^[a-f0-9]{64}$/', $visitorId)) {
         $visitorId = bin2hex(random_bytes(32));
@@ -86,6 +87,8 @@ $businessHours = trim((string) ($publicSettings['business_hours'] ?? ''));
 $mapUrl = $pickupAddress === '' ? '' : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($pickupAddress);
 $cartMaintenanceEnabled = in_array((string) ($publicSettings['cart_maintenance_enabled'] ?? '0'), ['1', 'true', 'on'], true);
 $vendorAiEnabled = in_array((string) ($publicSettings['vendor_ai_enabled'] ?? '1'), ['1', 'true', 'on'], true);
+$vendorAiTestMode = isset($_GET['chat_ia']) && $_GET['chat_ia'] === '1' && $storeUser !== null;
+$showVendorAi = $vendorAiEnabled || $vendorAiTestMode;
 $featuredProductIds = $app['settings']->featuredProductIds();
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 $logoIsText = ($design['logo_mode'] ?? 'image') === 'text' && trim((string) ($design['logo_text'] ?? '')) !== '';
@@ -329,7 +332,7 @@ header('Referrer-Policy: same-origin');
         </svg>
     </a>
 
-    <?php if ($vendorAiEnabled): ?>
+    <?php if ($showVendorAi): ?>
     <section class="vendor-ai" id="vendor-ai" aria-label="Asesor IA" data-state="minimized">
         <header class="vendor-ai-head" data-vendor-ai-drag>
             <span class="vendor-ai-status" id="vendor-ai-status">● Verificando IA</span>
@@ -386,6 +389,6 @@ header('Referrer-Policy: same-origin');
     <script src="<?= $escape($assetPath) ?>/search-normalizer.js?v=<?= $escape($searchNormalizerJsVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/pwa-install.js?v=<?= $escape($assetVersion) ?>" defer></script>
-    <?php if ($vendorAiEnabled): ?><script src="<?= $escape($assetPath) ?>/vendor-ai.js?v=<?= $escape($vendorAiJsVersion) ?>" defer></script><?php endif ?>
+    <?php if ($showVendorAi): ?><script src="<?= $escape($assetPath) ?>/vendor-ai.js?v=<?= $escape($vendorAiJsVersion) ?>" defer></script><?php endif ?>
 </body>
 </html>
