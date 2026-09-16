@@ -518,7 +518,7 @@ header('Referrer-Policy: same-origin');
                         <a class="primary-button fit-button" href="<?= $escape($storeUrl) ?>?chat_ia=1&amp;nueva=1" target="_blank" rel="noopener">PROBAR</a>
                     </div>
 
-                    <section class="settings-card ai-conversation-history" id="ai-conversation-history"><p class="eyebrow">INTERPRETACIONES RECIENTES</p><div id="ai-conversation-history-list"><p class="empty-copy">Cargando conversaciones…</p></div></section>
+                    <section class="settings-card ai-conversation-history" id="ai-conversation-history"><p class="eyebrow">HISTORIAL DE CLIENTES</p><div id="ai-conversation-history-list"><p class="empty-copy">Cargando conversaciones…</p></div></section>
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>

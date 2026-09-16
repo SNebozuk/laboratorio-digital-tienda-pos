@@ -1076,12 +1076,20 @@
         try {
             const data = await apiGet('ai_conversations');
             const rows = Array.isArray(data.conversations) ? data.conversations : [];
-            elements.aiConversationHistoryList.innerHTML = rows.length ? rows.map(row => {
-                let interpretation = {};
-                try { interpretation = JSON.parse(row.interpretation_json || '{}'); } catch (_) { }
-                return `<article><strong>${escapeHtml(row.last_message || 'Sin mensaje')}</strong><small>${escapeHtml(Object.values(interpretation).filter(value => typeof value === 'string').join(' · ') || 'Sin interpretación')}</small></article>`;
-            }).join('') : '<p class="empty-copy">Todavía no hay conversaciones.</p>';
+            elements.aiConversationHistoryList.innerHTML = rows.length ? `<div class="customer-history-table-wrap"><table class="customer-history-table"><thead><tr><th>Fecha</th><th>Hora</th><th>Nombre y apellido</th></tr></thead><tbody>${rows.map(row => {
+                const date = argentinaDateParts(row.updated_at);
+                return `<tr><td>${escapeHtml(date.date)}</td><td>${escapeHtml(date.time)}</td><td><button class="customer-history-link" type="button" data-ai-conversation-detail="${escapeHtml(row.token)}">${escapeHtml(row.customer_name)}</button></td></tr>`;
+            }).join('')}</tbody></table></div>` : '<p class="empty-copy">Todavía no hay conversaciones.</p>';
         } catch (_) { elements.aiConversationHistoryList.innerHTML = '<p class="empty-copy">No pude cargar las conversaciones.</p>'; }
+    }
+
+    async function showAiConversation(token) {
+        try {
+            const data = await apiGet(`ai_conversation&conversation=${encodeURIComponent(token)}`);
+            const conversation = data.conversation || {};
+            const transcript = Array.isArray(conversation.history) ? conversation.history : [];
+            openModal(`<section class="customer-history"><header><p class="eyebrow">CONVERSACIÓN CON CLIENTE</p><h2 id="modal-title">${escapeHtml(conversation.customer_name || 'SIN IDENTIFICAR')}</h2><small>${escapeHtml(argentinaDateLabel(conversation.updated_at || ''))}</small></header><div class="ai-search-messages">${transcript.map(item => `<div class="ai-search-message ai-search-message-${item.role === 'user' ? 'client' : 'assistant'}"><small>${item.role === 'user' ? 'CLIENTE' : 'ASESOR IA'}</small><p>${escapeHtml(item.content || '')}</p></div>`).join('')}</div><div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>CERRAR</button></div></section>`);
+        } catch (error) { toast(error.message); }
     }
 
     async function loadAiVendorEnabled() {
@@ -5888,6 +5896,11 @@
     });
 
     document.addEventListener('click', async event => {
+        const aiConversationDetail = event.target.closest('[data-ai-conversation-detail]');
+        if (aiConversationDetail) {
+            showAiConversation(aiConversationDetail.dataset.aiConversationDetail);
+            return;
+        }
         if (event.target.closest('#supplier-order-categories-trigger')) {
             setSupplierOrderCategoriesOpen(!state.supplierOrderCategoriesOpen, true);
             return;

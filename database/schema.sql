@@ -56,9 +56,13 @@ CREATE INDEX IF NOT EXISTS idx_checkout_customer_sessions_customer
 
 CREATE TABLE IF NOT EXISTS ai_chat_conversations (
     token TEXT PRIMARY KEY,
+    customer_id INTEGER REFERENCES checkout_customers(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_ai_chat_conversations_customer
+    ON ai_chat_conversations(customer_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS ai_chat_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

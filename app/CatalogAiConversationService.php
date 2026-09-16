@@ -23,9 +23,14 @@ final class CatalogAiConversationService
     }
 
     /** @return array<string,mixed> */
-    public function reply(string $token, string $message): array
+    public function reply(string $token, string $message, ?int $customerId = null): array
     {
-        $this->pdo->prepare('INSERT OR IGNORE INTO ai_chat_conversations(token, updated_at) VALUES(:token, CURRENT_TIMESTAMP)')->execute(['token' => $token]);
+        $this->pdo->prepare('INSERT OR IGNORE INTO ai_chat_conversations(token, customer_id, updated_at) VALUES(:token, :customer_id, CURRENT_TIMESTAMP)')
+            ->execute(['token' => $token, 'customer_id' => $customerId]);
+        if ($customerId !== null) {
+            $this->pdo->prepare('UPDATE ai_chat_conversations SET customer_id = :customer_id WHERE token = :token AND customer_id IS NULL')
+                ->execute(['token' => $token, 'customer_id' => $customerId]);
+        }
         $this->add($token, 'user', $message, null);
         $reply = $this->chat->reply(array_slice($this->history($token), -16));
         $reply['message'] = $this->customerText((string) $reply['message']);
@@ -38,7 +43,17 @@ final class CatalogAiConversationService
     /** @return list<array<string,mixed>> */
     public function recent(): array
     {
-        return $this->pdo->query("SELECT c.token, c.updated_at, (SELECT content FROM ai_chat_messages m WHERE m.conversation_token = c.token AND m.role = 'user' ORDER BY m.id DESC LIMIT 1) AS last_message, (SELECT interpretation_json FROM ai_chat_messages m WHERE m.conversation_token = c.token AND m.interpretation_json <> '' ORDER BY m.id DESC LIMIT 1) AS interpretation_json FROM ai_chat_conversations c ORDER BY c.updated_at DESC LIMIT 100")->fetchAll();
+        return $this->pdo->query("SELECT c.token, c.updated_at, COALESCE(NULLIF(trim(customer.name), ''), 'SIN IDENTIFICAR') AS customer_name FROM ai_chat_conversations c LEFT JOIN checkout_customers customer ON customer.id = c.customer_id ORDER BY c.updated_at DESC LIMIT 100")->fetchAll();
+    }
+
+    /** @return array{customer_name:string,updated_at:string,history:list<array{role:string,content:string}>} */
+    public function conversation(string $token): array
+    {
+        $query = $this->pdo->prepare("SELECT COALESCE(NULLIF(trim(customer.name), ''), 'SIN IDENTIFICAR') AS customer_name, c.updated_at FROM ai_chat_conversations c LEFT JOIN checkout_customers customer ON customer.id = c.customer_id WHERE c.token = :token");
+        $query->execute(['token' => $token]);
+        $conversation = $query->fetch();
+        if (!is_array($conversation)) throw new \RuntimeException('No se encontró la conversación.');
+        return ['customer_name' => (string) $conversation['customer_name'], 'updated_at' => (string) $conversation['updated_at'], 'history' => $this->history($token)];
     }
 
     private function add(string $token, string $role, string $content, mixed $interpretation): void

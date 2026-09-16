@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 48;
+    private const CURRENT_MIGRATION_VERSION = 49;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -93,6 +93,7 @@ final class Database
                 self::migrateCheckoutCustomerPhones($pdo);
                 self::migrateCheckoutCustomerNamesUppercase($pdo);
                 self::migrateAiCriteriaRefresh($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
+                self::migrateAiConversationCustomers($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -156,6 +157,7 @@ final class Database
         self::migrateCheckoutCustomerPhones($pdo);
         self::migrateCheckoutCustomerNamesUppercase($pdo);
         self::migrateAiCriteriaRefresh($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
+        self::migrateAiConversationCustomers($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
@@ -339,6 +341,22 @@ final class Database
             if ($seed === false) throw new \RuntimeException('No se pudieron actualizar los criterios del Asesor IA.');
             $pdo->exec('DELETE FROM ai_criteria');
             $pdo->exec($seed);
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateAiConversationCustomers(PDO $pdo): void
+    {
+        $version = 49;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $pdo->exec('DELETE FROM ai_chat_conversations');
+            $columns = $pdo->query('PRAGMA table_info(ai_chat_conversations)')->fetchAll();
+            $hasCustomer = (bool) array_filter($columns, static fn (array $column): bool => $column['name'] === 'customer_id');
+            if (!$hasCustomer) $pdo->exec('ALTER TABLE ai_chat_conversations ADD COLUMN customer_id INTEGER REFERENCES checkout_customers(id) ON DELETE SET NULL');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_ai_chat_conversations_customer ON ai_chat_conversations(customer_id, updated_at)');
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

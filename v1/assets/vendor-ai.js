@@ -70,7 +70,7 @@
                             : `No hay stock disponible de ${product.name} en este momento.`);
                         return;
                     }
-                    const customer = app.checkout_google?.customer || {};
+                    const customer = app.checkout_customer?.customer || {};
                     const details = customer.name && customer.phone ? ` Al finalizar usaremos los datos de ${customer.name} y su WhatsApp ${customer.phone}. Podés cambiarlos en el checkout.` : '';
                     appendMessage('assistant', `Listo, agregué ${quantity} unidad${quantity === 1 ? '' : 'es'} de ${product.name} al carrito. ¿Querés seguir buscando o finalizar la compra?${details}`);
                     messages.insertAdjacentHTML('beforeend', '<button class="vendor-ai-cart-action" type="button" data-vendor-ai-continue>SEGUIR BUSCANDO</button><button class="vendor-ai-cart-action" type="button" data-vendor-ai-finish>FINALIZAR COMPRA</button>');

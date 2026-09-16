@@ -91,6 +91,12 @@ try {
                 $app['auth']->requireUser();
                 Http::json(['ok' => true, 'conversations' => $app['catalog_ai_conversations']->recent()]);
 
+            case 'ai_conversation':
+                $app['auth']->requireUser();
+                $token = (string) ($_GET['conversation'] ?? '');
+                if (!preg_match('/^[a-f0-9-]{36}$/i', $token)) throw new ValidationException('Conversación inválida.');
+                Http::json(['ok' => true, 'conversation' => $app['catalog_ai_conversations']->conversation($token)]);
+
             case 'ai_criteria':
                 $app['auth']->requireAdmin();
                 Http::json(['ok' => true, 'criteria' => $app['settings']->aiCriteria()]);
@@ -251,8 +257,9 @@ try {
         $last = (int) ($_SESSION['ai_public_chat_at'] ?? 0);
         if ($last > 0 && time() - $last < 2) throw new ValidationException('Esperá un instante antes de enviar otro mensaje.');
         $_SESSION['ai_public_chat_at'] = time();
+        $customer = $app['checkout_google']->customer();
         if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
-        Http::json(['ok' => true, 'reply' => $app['catalog_ai_conversations']->reply($token, $message)]);
+        Http::json(['ok' => true, 'reply' => $app['catalog_ai_conversations']->reply($token, $message, $customer['id'] ?? null)]);
     }
     Http::requireCsrf($input);
 
