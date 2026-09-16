@@ -80,6 +80,8 @@ final class CheckoutGoogleService
             || strlen($phone) < 8 || strlen($phone) > 20) {
             throw new \RuntimeException('Ingresá nombre, apellido y un WhatsApp válidos.');
         }
+        $firstName = self::upper($firstName);
+        $lastName = self::upper($lastName);
 
         Database::immediate($this->pdo, function (PDO $pdo) use ($firstName, $lastName, $phone): void {
             $name = trim($firstName . ' ' . $lastName);
@@ -114,6 +116,8 @@ final class CheckoutGoogleService
             || strlen($phone) < 8 || strlen($phone) > 20) {
             throw new \RuntimeException('Ingresá nombre, apellido y un WhatsApp válidos.');
         }
+        $firstName = self::upper($firstName);
+        $lastName = self::upper($lastName);
         $this->pdo->prepare('UPDATE checkout_customers SET first_name = :first_name, last_name = :last_name, name = :name, phone = :phone, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
             ->execute([
                 'first_name' => $firstName,
@@ -202,6 +206,11 @@ final class CheckoutGoogleService
         if ($baseUrl === '') return '';
         $storePath = trim((string) ($this->config['public_store_path'] ?? ''), '/');
         return $baseUrl . ($storePath === '' ? '' : '/' . $storePath) . $path;
+    }
+
+    private static function upper(string $value): string
+    {
+        return function_exists('mb_strtoupper') ? mb_strtoupper($value, 'UTF-8') : strtoupper($value);
     }
 
     private function setPersistentCookie(string $token): void

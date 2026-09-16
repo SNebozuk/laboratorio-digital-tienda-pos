@@ -136,7 +136,6 @@ final class SettingsService
                 if (mb_strlen($value) > 1000) throw new ValidationException('Cada criterio puede tener hasta 1000 caracteres.');
                 $rows[] = $value;
             }
-            if (count($rows) > 100) throw new ValidationException('Cada pestaña puede contener hasta 100 criterios.');
             $criteria[$type] = $rows;
         }
 

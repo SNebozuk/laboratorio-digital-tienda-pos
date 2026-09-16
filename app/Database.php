@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 46;
+    private const CURRENT_MIGRATION_VERSION = 48;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -91,6 +91,8 @@ final class Database
                 self::migrateAiCriteria($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
                 self::migrateCheckoutCustomerSessions($pdo);
                 self::migrateCheckoutCustomerPhones($pdo);
+                self::migrateCheckoutCustomerNamesUppercase($pdo);
+                self::migrateAiCriteriaRefresh($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -152,6 +154,8 @@ final class Database
         self::migrateAiCriteria($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
         self::migrateCheckoutCustomerSessions($pdo);
         self::migrateCheckoutCustomerPhones($pdo);
+        self::migrateCheckoutCustomerNamesUppercase($pdo);
+        self::migrateAiCriteriaRefresh($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
@@ -296,6 +300,45 @@ final class Database
             $columns = $pdo->query('PRAGMA table_info(checkout_customers)')->fetchAll();
             $hasPhone = (bool) array_filter($columns, static fn (array $column): bool => $column['name'] === 'phone');
             if (!$hasPhone) $pdo->exec("ALTER TABLE checkout_customers ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateCheckoutCustomerNamesUppercase(PDO $pdo): void
+    {
+        $version = 47;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $customers = $pdo->query('SELECT id, first_name, last_name, name FROM checkout_customers')->fetchAll();
+            $update = $pdo->prepare('UPDATE checkout_customers SET first_name = :first_name, last_name = :last_name, name = :name WHERE id = :id');
+            foreach ($customers as $customer) {
+                $upper = static fn (string $value): string => function_exists('mb_strtoupper')
+                    ? mb_strtoupper($value, 'UTF-8')
+                    : strtoupper($value);
+                $update->execute([
+                    'id' => $customer['id'],
+                    'first_name' => $upper((string) $customer['first_name']),
+                    'last_name' => $upper((string) $customer['last_name']),
+                    'name' => $upper((string) $customer['name']),
+                ]);
+            }
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateAiCriteriaRefresh(PDO $pdo, string $seedPath): void
+    {
+        $version = 48;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version, $seedPath): void {
+            $seed = file_get_contents($seedPath);
+            if ($seed === false) throw new \RuntimeException('No se pudieron actualizar los criterios del Asesor IA.');
+            $pdo->exec('DELETE FROM ai_criteria');
+            $pdo->exec($seed);
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }
