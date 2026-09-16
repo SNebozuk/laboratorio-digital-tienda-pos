@@ -329,8 +329,16 @@ try {
         case 'create_order':
             $requestKey = trim((string) ($input['request_key'] ?? ''));
             $cached = $requestKey !== '' ? ($_SESSION['web_order_requests'][$requestKey] ?? null) : null;
+            $customerInput = is_array($input['customer'] ?? null) ? $input['customer'] : [];
+            if (!is_array($cached) && (string) ($input['channel'] ?? 'web') === 'web') {
+                $app['checkout_google']->updateLocalCustomer(
+                    (string) ($customerInput['first_name'] ?? ''),
+                    (string) ($customerInput['last_name'] ?? ''),
+                    (string) ($customerInput['phone'] ?? '')
+                );
+            }
             $order = is_array($cached) ? $cached : $app['orders']->createWebOrder(
-                is_array($input['customer'] ?? null) ? $input['customer'] : [],
+                $customerInput,
                 is_array($input['items'] ?? null) ? $input['items'] : [],
                 (string) ($input['channel'] ?? 'web'),
                 (string) ($input['payment_method'] ?? 'bank_transfer'),

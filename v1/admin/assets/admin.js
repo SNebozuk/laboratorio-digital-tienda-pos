@@ -4622,8 +4622,8 @@
             state.customers = data.customers || [];
             elements.customerList.innerHTML = state.customers.map(customer => `
                 <article class="user-card">
-                    <div><strong>${escapeHtml(customer.name)}</strong><br><small>${escapeHtml(customer.email)} · ${escapeHtml(customer.phone || 'Sin WhatsApp')}</small></div>
-                    <span class="status-pill">GOOGLE</span>
+                    <div><strong>${escapeHtml(customer.name)}</strong><br><small>${escapeHtml(customer.email || 'Sin email')} · ${escapeHtml(customer.phone || 'Sin WhatsApp')}</small></div>
+                    <span class="status-pill">CLIENTE</span>
                     <small>Registrado: ${escapeHtml(argentinaDateLabel(customer.created_at))}</small>
                     <small>Actualizado: ${escapeHtml(argentinaDateLabel(customer.updated_at))}</small>
                 </article>

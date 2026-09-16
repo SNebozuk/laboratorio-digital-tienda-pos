@@ -11,7 +11,7 @@
 .store-login-form { display:grid; width:100%; gap:8px; }
 .store-login-form label { position:relative; display:block; }
 .store-login-form label svg { position:absolute; z-index:1; top:50%; left:12px; width:20px; height:20px; fill:#25d366; transform:translateY(-50%); pointer-events:none; }
-.store-login-form label input { width:100%; min-height:42px; padding:10px 12px 10px 42px; border:0; background:#eee8f3; box-shadow:inset 4px 4px 9px #c9c3ce,inset -4px -4px 9px #fff; }
+.store-login-form label input { width:100%; min-height:42px; padding:10px 12px; border:0; background:#eee8f3; box-shadow:inset 4px 4px 9px #c9c3ce,inset -4px -4px 9px #fff; }
 .store-login-form > small { display:block; margin:0; text-align:center; }
 .store-login-google { min-height:44px !important; border:0 !important; background:#eee8f3 !important; box-shadow:6px 6px 13px #c9c3ce,-6px -6px 13px #fff; color:#3c4043 !important; }.store-login-google b { background:conic-gradient(from 45deg,#4285f4 0 25%,#34a853 0 50%,#fbbc05 0 75%,#ea4335 0) !important; color:#fff !important; font-family:Arial,sans-serif; }.store-login-google:hover { background:#f2ecf7 !important; box-shadow:4px 4px 9px #c9c3ce,-4px -4px 9px #fff; }.store-login-google:active { box-shadow:inset 3px 3px 7px #c9c3ce,inset -3px -3px 7px #fff; }
 .store-login-page { min-height:100vh; overflow:hidden; background:#f7f2fb; }

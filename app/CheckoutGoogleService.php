@@ -17,9 +17,7 @@ final class CheckoutGoogleService
 
     public function enabled(): bool
     {
-        return trim((string) ($this->config['google_client_id'] ?? '')) !== ''
-            && trim((string) ($this->config['google_client_secret'] ?? '')) !== ''
-            && $this->baseUrl() !== '';
+        return $this->baseUrl() !== '';
     }
 
     public function callbackUrl(): string
@@ -29,7 +27,7 @@ final class CheckoutGoogleService
 
     public function loginUrl(): string
     {
-        return $this->publicUrl('/google-login.php');
+        return $this->publicUrl('/customer-login.php');
     }
 
     public function storeUrl(): string
@@ -67,9 +65,63 @@ final class CheckoutGoogleService
             'name' => (string) $customer['name'],
             'first_name' => (string) $customer['first_name'],
             'last_name' => (string) $customer['last_name'],
-            'email' => (string) $customer['email'],
+            'email' => str_ends_with((string) $customer['email'], '@local.invalid') ? '' : (string) $customer['email'],
             'phone' => (string) $customer['phone'],
         ];
+    }
+
+    public function createLocalCustomer(string $firstName, string $lastName, string $phone): void
+    {
+        $firstName = trim($firstName);
+        $lastName = trim($lastName);
+        $phone = preg_replace('/\D+/', '', $phone) ?: '';
+        if (!preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $firstName)
+            || !preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $lastName)
+            || strlen($phone) < 8 || strlen($phone) > 20) {
+            throw new \RuntimeException('Ingresá nombre, apellido y un WhatsApp válidos.');
+        }
+
+        Database::immediate($this->pdo, function (PDO $pdo) use ($firstName, $lastName, $phone): void {
+            $name = trim($firstName . ' ' . $lastName);
+            $email = bin2hex(random_bytes(16)) . '@local.invalid';
+            $insert = $pdo->prepare('INSERT INTO checkout_customers(first_name, last_name, name, email, phone) VALUES(:first_name, :last_name, :name, :email, :phone)');
+            $insert->execute([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+            ]);
+            $id = (int) $pdo->lastInsertId();
+            session_regenerate_id(true);
+            $_SESSION['checkout_google_customer_id'] = $id;
+            $token = bin2hex(random_bytes(32));
+            $pdo->prepare("INSERT INTO checkout_customer_sessions(customer_id, token_hash, expires_at) VALUES(:customer_id, :token_hash, datetime('now', '+365 days'))")
+                ->execute(['customer_id' => $id, 'token_hash' => hash('sha256', $token)]);
+            $this->setPersistentCookie($token);
+        });
+    }
+
+    public function updateLocalCustomer(string $firstName, string $lastName, string $phone): void
+    {
+        $customer = $this->customer();
+        $firstName = trim($firstName);
+        $lastName = trim($lastName);
+        $phone = preg_replace('/\D+/', '', $phone) ?: '';
+        if ($customer === null
+            || !preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $firstName)
+            || !preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $lastName)
+            || strlen($phone) < 8 || strlen($phone) > 20) {
+            throw new \RuntimeException('Ingresá nombre, apellido y un WhatsApp válidos.');
+        }
+        $this->pdo->prepare('UPDATE checkout_customers SET first_name = :first_name, last_name = :last_name, name = :name, phone = :phone, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
+            ->execute([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'name' => trim($firstName . ' ' . $lastName),
+                'phone' => $phone,
+                'id' => $customer['id'],
+            ]);
     }
 
     /** @param array<string, mixed> $profile */
@@ -136,7 +188,12 @@ final class CheckoutGoogleService
     /** @return list<array<string, mixed>> */
     public function customers(): array
     {
-        return $this->pdo->query('SELECT id, name, first_name, last_name, email, phone, google_sub IS NOT NULL AS google_connected, created_at, updated_at FROM checkout_customers ORDER BY updated_at DESC, id DESC')->fetchAll();
+        $customers = $this->pdo->query('SELECT id, name, first_name, last_name, email, phone, created_at, updated_at FROM checkout_customers ORDER BY updated_at DESC, id DESC')->fetchAll();
+        foreach ($customers as &$customer) {
+            if (str_ends_with((string) $customer['email'], '@local.invalid')) $customer['email'] = '';
+        }
+        unset($customer);
+        return $customers;
     }
 
     private function publicUrl(string $path): string

@@ -1662,9 +1662,9 @@
         const discount = cartDiscount(subtotal, items.reduce((sum, item) => sum + item.quantity, 0));
         const total = subtotal - discount.cents;
         const saved = savedCustomer();
-        const googleCustomer = app.checkout_google?.customer || null;
-        const customer = googleCustomer
-            ? { ...saved, name: googleCustomer.name, email: googleCustomer.email, phone: googleCustomer.phone }
+        const accountCustomer = app.checkout_customer?.customer || null;
+        const customer = accountCustomer
+            ? { ...saved, first_name: accountCustomer.first_name, last_name: accountCustomer.last_name, name: accountCustomer.name, email: accountCustomer.email, phone: accountCustomer.phone }
             : saved;
         // Crea un paso de historial interno: Atrás cierra el checkout y no
         // abandona la tienda hacia la página anterior del navegador.
@@ -1687,10 +1687,13 @@
             <div class="order-total"><span>Subtotal<br><small>${discountSummaryMarkup(discount)}<br>Total</small></span><strong>${money(total)}</strong></div>
             <form id="checkout-form" novalidate>
                 <label>
-                    Nombre y Apellido
-                    <input name="name" required autocomplete="name" value="${escapeHtml(customer.name || '')}" aria-describedby="checkout-name-help">
+                    Nombre
+                    <input name="first_name" required autocomplete="given-name" value="${escapeHtml(customer.first_name || '')}">
                 </label>
-                <small id="checkout-name-help" class="field-help">Por favor escribilo completo, tal como querés que figure en tu pedido.</small>
+                <label>
+                    Apellido
+                    <input name="last_name" required autocomplete="family-name" value="${escapeHtml(customer.last_name || '')}">
+                </label>
                 <label>
                     WhatsApp
                     <input
@@ -1805,7 +1808,9 @@
         const button = form.querySelector('button[type="submit"]');
         const errorBox = form.querySelector('#checkout-error');
         const formData = new FormData(form);
-        const customerName = String(formData.get('name') || '').trim();
+        const customerFirstName = String(formData.get('first_name') || '').trim();
+        const customerLastName = String(formData.get('last_name') || '').trim();
+        const customerName = `${customerFirstName} ${customerLastName}`.trim();
         const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
         const customerEmail = String(formData.get('email') || '').trim();
         // La tienda opera con transferencia como único medio de pago web.
@@ -1816,7 +1821,7 @@
                 ? 'Por favor, escribí tu nombre y apellido completos, tal como querés que figuren en el pedido.'
                 : 'Por favor, revisá tu WhatsApp para que podamos responderte sin errores.';
             form.querySelector(!hasValidCustomerFullName(customerName)
-                ? '[name="name"]'
+                ? '[name="first_name"]'
                 : '[name="phone"]')?.focus();
             return;
         }
@@ -1837,7 +1842,9 @@
                 channel: 'web',
                 payment_method: paymentMethod,
                 customer: {
-                    name: formData.get('name'),
+                    name: customerName,
+                    first_name: customerFirstName,
+                    last_name: customerLastName,
                     email: customerEmail,
                     phone: formData.get('phone'),
                 },
@@ -2452,13 +2459,13 @@
     // al entrar. Las imágenes conservan loading="lazy".
     const loadCatalogWhenIdle = () => refreshCatalog();
     loadCatalogWhenIdle().then(() => {
-        if (app.checkout_google?.return_to_checkout && cartItems().length) {
+        if (app.checkout_customer?.return_to_checkout && cartItems().length) {
             const url = new URL(window.location.href);
             url.searchParams.delete('google_checkout');
             window.history.replaceState({}, '', url);
             showCheckout();
         }
-        if (app.checkout_google?.error) toast(app.checkout_google.error);
+        if (app.checkout_customer?.error) toast(app.checkout_customer.error);
     });
     try {
         const completedOrder = JSON.parse(

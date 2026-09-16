@@ -562,7 +562,7 @@ header('Referrer-Policy: same-origin');
                     </section>
 
                     <section class="admin-view" id="view-customers">
-                        <div class="view-heading"><div><p class="eyebrow">CUENTAS DE LA TIENDA</p><h1 class="admin-page-title">CLIENTES</h1><p>Clientes que iniciaron sesión con Google.</p></div></div>
+                        <div class="view-heading"><div><p class="eyebrow">CUENTAS DE LA TIENDA</p><h1 class="admin-page-title">CLIENTES</h1><p>Clientes que ingresaron a la tienda.</p></div></div>
                         <div id="customer-list" class="user-list"></div>
                     </section>
 
