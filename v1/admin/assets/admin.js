@@ -2439,8 +2439,7 @@
 
     function captureGlobalBarcode(event) {
         if (
-            state.view !== 'pos'
-            || elements.modal?.classList.contains('open')
+            !document.querySelector('.pos-page')
             || event.isComposing
             || event.ctrlKey
             || event.altKey
@@ -7027,6 +7026,7 @@
         closePosSuggestions();
     });
     elements.posSearch?.addEventListener('keydown', event => {
+        if (event.defaultPrevented) return;
         if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && !event.isComposing) {
             if (scanOrQueueBarcode(event.target.value)) {
                 event.preventDefault();
@@ -7152,7 +7152,7 @@
             window.history.back();
         }
     });
-    document.addEventListener('keydown', captureGlobalBarcode);
+    document.addEventListener('keydown', captureGlobalBarcode, true);
     document.addEventListener('click', event => {
         const periodButton = event.target.closest('[data-klaus-period]');
         if (periodButton) {
