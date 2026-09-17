@@ -4176,6 +4176,15 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .pos-main-total,
 .pos-embedded .pos-main-total { min-width: 0; padding-left: 0; border-left: 0; }
 
+@media (min-width:981px) {
+    .pos-page-workspace { height:calc(100vh - 70px); min-height:0; overflow:hidden; box-sizing:border-box; }
+    .pos-page-products { display:flex; flex-direction:column; min-height:0; }
+    .pos-page-cart { position:static; align-self:stretch; min-height:0; overflow-y:auto; }
+    .pos-page-products .pos-customer-checkout { margin-top:auto; }
+    .pos-page-products > #complete-sale-button { flex:0 0 auto; margin-top:12px; }
+    .pos-embedded .pos-page-workspace { height:100vh; }
+}
+
 /* Buscadores: el criterio queda dentro del campo y la lupa a la derecha. */
 .search-input-field { position: relative; min-width: 0; }
 .search-input-field > input { width: 100%; padding-right: 50px !important; }

@@ -2381,7 +2381,7 @@
             Number(indexed.variant.id),
             posQuantity(indexed.variant.id) + 1
         );
-        elements.posSearch.value = '';
+        if (elements.posSearch) elements.posSearch.value = '';
         state.posQuery = '';
         state.posProductId = null;
         closePosSuggestions();
@@ -2572,7 +2572,7 @@
             const indexed = variantIndex().get(Number(variantId));
             closeModal();
             state.pendingBarcode = '';
-            elements.posSearch.value = '';
+            if (elements.posSearch) elements.posSearch.value = '';
             state.posQuery = '';
             if (indexed && Number(indexed.variant.available_stock) > 0) {
                 setPosQuantity(variantId, posQuantity(variantId) + 1);
@@ -3993,7 +3993,7 @@
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
                         <span>${statusDisplay}</span>
-                        <button class="order-list-copy ${order.delivery_reopened_at ? 'order-list-copy-reopened' : ''}" type="button" data-copy-order-delivery="${Number(order.id)}" ${inDeliveries ? 'disabled' : ''} aria-label="Copiar ${escapeHtml(order.public_number)} a Entregas" title="${order.delivery_reopened_at ? 'Volvió desde EDP: mover otra vez a Entregas' : 'Copiar a Entregas'}">${orderActionIconMarkup(order.delivery_reopened_at ? 'reopen' : 'delivery')}</button>
+                        <button class="order-list-copy ${order.delivery_reopened_at ? 'order-list-copy-reopened' : ''}" type="button" data-copy-order-delivery="${Number(order.id)}" ${inDeliveries ? 'disabled' : ''} aria-label="Mover ${escapeHtml(order.public_number)} a Entregas" title="${order.delivery_reopened_at ? 'Volvió desde EDP: mover otra vez a Entregas' : 'Mover venta'}">${orderActionIconMarkup(order.delivery_reopened_at ? 'reopen' : 'delivery')}</button>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">${orderActionIconMarkup('print')}</button>
                         ${String(order.customer_phone || '').replace(/\D+/g, '').length >= 8 ? `<button class="order-list-whatsapp" type="button" data-whatsapp-order="${Number(order.id)}" aria-label="Abrir WhatsApp de ${escapeHtml(order.customer_name)}" title="Abrir WhatsApp">${whatsappLogoMarkup()}</button>` : '<span class="order-list-whatsapp-placeholder" aria-hidden="true"></span>'}
                         ${order.status !== 'cancelled' && !order.archived_at

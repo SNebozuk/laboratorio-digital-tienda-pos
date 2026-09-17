@@ -41,9 +41,7 @@ final class ProductImageService
 
         return [
             'image_path' => $this->publicRoot()
-                . rawurlencode($relativeDirectory . '/')
-                . '/'
-                . $filename,
+                . rawurlencode($relativeDirectory . '/' . $filename),
             'size_bytes' => $file['size_bytes'],
             'mime_type' => $file['mime_type'],
         ];
@@ -75,7 +73,7 @@ final class ProductImageService
             $destination = $directory . '/' . $filename;
             if (!rename($temporary, $destination)) throw new \RuntimeException('No se pudo guardar la foto importada.');
             @chmod($destination, 0644);
-            return ['image_path' => $this->publicRoot() . rawurlencode($relativeDirectory . '/') . '/' . $filename, 'size_bytes' => strlen($bytes), 'mime_type' => $mime];
+            return ['image_path' => $this->publicRoot() . rawurlencode($relativeDirectory . '/' . $filename), 'size_bytes' => strlen($bytes), 'mime_type' => $mime];
         } finally {
             if (is_file($temporary)) @unlink($temporary);
         }

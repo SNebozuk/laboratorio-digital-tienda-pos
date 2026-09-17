@@ -57,6 +57,11 @@ header('Referrer-Policy: same-origin');
                 <section class="pos-sale-details">
                     <div class="pos-main-total"><span>TOTAL</span><strong id="pos-total">$ 0</strong></div>
                 </section>
+                <div class="pos-customer-checkout">
+                    <input id="pos-customer" value="" placeholder="Nombre y apellido (opcional)" autocomplete="name" aria-label="Nombre y apellido del cliente, opcional">
+                    <input id="pos-customer-phone" value="" inputmode="tel" placeholder="WhatsApp" autocomplete="tel" aria-label="WhatsApp del cliente">
+                </div>
+                <button class="primary-button" id="complete-sale-button" type="button" disabled>FINALIZAR VENTA</button>
             </div>
             <aside class="pos-cart pos-page-cart">
                 <div class="pos-cart-heading">
@@ -64,11 +69,6 @@ header('Referrer-Policy: same-origin');
                     <button class="pos-clear-cart" id="pos-clear-cart" type="button" disabled>VACIAR CARRITO</button>
                 </div>
                 <div id="pos-cart-lines" class="cart-lines"></div>
-                <div class="pos-customer-checkout">
-                    <input id="pos-customer" value="" placeholder="Nombre y apellido (opcional)" autocomplete="name" aria-label="Nombre y apellido del cliente, opcional">
-                    <input id="pos-customer-phone" value="" inputmode="tel" placeholder="WhatsApp" autocomplete="tel" aria-label="WhatsApp del cliente">
-                </div>
-                <button class="primary-button" id="complete-sale-button" type="button" disabled>FINALIZAR VENTA</button>
             </aside>
         </section>
     </main>
