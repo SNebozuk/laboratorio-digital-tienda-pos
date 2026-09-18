@@ -2213,7 +2213,10 @@
                     return '';
                 }
                 const hasVariants = variants.length > 1;
-                const expanded = Number(state.posProductId) === Number(product.id);
+                const exactVariantMatch = variants.some(variant => (
+                    fold(`${product.name} ${variantDisplayName(product, variant)}`) === fold(query)
+                ));
+                const expanded = Number(state.posProductId) === Number(product.id) || exactVariantMatch;
                 const single = variants[0];
                 const singleQuantity = single ? posQuantity(single.id) : 0;
                 const singleRemaining = single ? Math.max(0, Number(single.available_stock) - singleQuantity) : 0;
@@ -7327,7 +7330,7 @@
     });
     elements.aiVendorEnabled?.addEventListener('change', saveAiVendorEnabled);
     document.addEventListener('keydown', event => {
-        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !document.querySelector('.admin-icon-sidebar')) return;
+        if (event.altKey || event.ctrlKey || event.metaKey || !document.querySelector('.admin-icon-sidebar')) return;
         const shortcutViews = {
             F1: 'orders',
             F2: 'deliveries',
@@ -7339,7 +7342,7 @@
         if (!view || !document.querySelector(`[data-view="${view}"]`)) return;
         event.preventDefault();
         showView(view);
-    });
+    }, true);
     document.getElementById('admin-sidebar-toggle')?.addEventListener('click', () => {
         setAdminSidebarCollapsed(!document.querySelector('.admin-shell')?.classList.contains('admin-sidebar-collapsed'));
     });
