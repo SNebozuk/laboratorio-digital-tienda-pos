@@ -12,7 +12,6 @@ $adminAssetPath = $storePath . '/admin/assets';
 $assetVersion = static fn (string $path): string => substr(hash_file('sha256', $path) ?: '1', 0, 12);
 $appCssVersion = $assetVersion(dirname(__DIR__) . '/assets/app.css');
 $adminCssVersion = $assetVersion(__DIR__ . '/assets/admin.css');
-$adminPwaJsVersion = $assetVersion(__DIR__ . '/assets/pwa-install.js');
 $klausJsVersion = $assetVersion(dirname(__DIR__) . '/assets/klaus.js');
 $adminJsVersion = $assetVersion(__DIR__ . '/assets/admin.js');
 $apiUrl = $storePath . '/api.php';
@@ -29,9 +28,8 @@ header('Referrer-Policy: same-origin');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#f6f7fb">
     <title>Laboratorio Digital · Administración</title>
-    <link rel="manifest" href="<?= $escape($storePath) ?>/admin/manifest.php">
     <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($appCssVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($adminCssVersion) ?>">
@@ -200,9 +198,6 @@ header('Referrer-Policy: same-origin');
                         <?php endif ?>
                         <button class="icon-button admin-store-link admin-sidebar-store-button" id="admin-store-button" type="button" aria-label="Ver tienda" title="Ver tienda">
                             <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V8l7-4 7 4v12M9 20v-5h6v5M8 10h.01M16 10h.01"></path></svg>
-                        </button>
-                        <button class="icon-button admin-pwa-install-button" id="admin-pwa-install-button" type="button" aria-label="Instalar administración" title="Instalar administración" hidden>
-                            <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path></svg>
                         </button>
                         <button class="icon-button admin-logout-icon" id="logout-button" type="button" aria-label="Salir" title="Salir">
                             <svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M13 4h6v16h-6"></path></svg>
@@ -703,7 +698,6 @@ header('Referrer-Policy: same-origin');
     ?></script>
     <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($klausJsVersion) ?>" defer></script><?php endif ?>
     <script src="<?= $escape($storeAssetPath) ?>/search-normalizer.js?v=<?= $escape($assetVersion(dirname(__DIR__) . '/assets/search-normalizer.js')) ?>" defer></script>
-    <script src="<?= $escape($adminAssetPath) ?>/pwa-install.js?v=<?= $escape($adminPwaJsVersion) ?>" defer></script>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($adminJsVersion) ?>" defer></script>
 </body>
 </html>

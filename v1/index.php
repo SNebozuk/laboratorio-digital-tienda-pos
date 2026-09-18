@@ -128,9 +128,6 @@ header('Referrer-Policy: same-origin');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="<?= $escape((string) ($design['color_background'] ?? '#f7faf7')) ?>">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title><?= $escape($seoTitle) ?></title>
     <meta name="description" content="<?= $escape($seoDescription) ?>">
     <link rel="canonical" href="<?= $escape($canonicalUrl) ?>">
@@ -140,7 +137,6 @@ header('Referrer-Policy: same-origin');
     <meta property="og:url" content="<?= $escape($canonicalUrl) ?>">
     <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="apple-touch-icon" href="<?= $escape($assetPath) ?>/favicon.png">
-    <link rel="manifest" href="<?= $escape($storePath) ?>/manifest.php">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
 </head>
