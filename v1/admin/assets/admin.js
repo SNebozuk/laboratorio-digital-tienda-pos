@@ -656,9 +656,11 @@
             const data = await apiGet('admin_products');
             state.products = data.products;
             state.featuredProductIds = new Set((data.featured_product_ids || []).map(Number));
-            const categoryData = await apiGet('admin_categories');
-            state.categories = categoryData.categories;
-            renderCategories();
+            if (elements.categoryTree) {
+                const categoryData = await apiGet('admin_categories');
+                state.categories = categoryData.categories;
+                renderCategories();
+            }
             const adjusted = restoreOrReconcilePosCart();
             renderProducts();
             renderPos();
@@ -2401,6 +2403,20 @@
         return scanBarcode(barcode);
     }
 
+    function forwardBarcodeToEmbeddedPos(barcode) {
+        const frame = state.view === 'pos'
+            ? document.querySelector('.admin-pos-frame')
+            : null;
+        if (!(frame instanceof HTMLIFrameElement) || !frame.contentWindow) {
+            return false;
+        }
+        frame.contentWindow.postMessage(
+            { type: 'laboratorio-pos-barcode', barcode },
+            window.location.origin
+        );
+        return true;
+    }
+
     function resetBarcodeCapture() {
         window.clearTimeout(state.barcodeTimer);
         state.barcodeTimer = 0;
@@ -2433,13 +2449,14 @@
         }
         restoreInputAfterBarcodeScan();
         resetBarcodeCapture();
+        if (forwardBarcodeToEmbeddedPos(barcode)) return true;
         if (!scanOrQueueBarcode(barcode)) offerBarcodeAssignment(barcode);
         return true;
     }
 
     function captureGlobalBarcode(event) {
         if (
-            !document.querySelector('.pos-page')
+            !(document.querySelector('.pos-page') || state.view === 'pos')
             || event.isComposing
             || event.ctrlKey
             || event.altKey
@@ -7050,6 +7067,17 @@
                 }
             }
         }
+    });
+    window.addEventListener('message', event => {
+        if (
+            event.origin !== window.location.origin
+            || event.data?.type !== 'laboratorio-pos-barcode'
+            || !document.querySelector('.pos-page')
+        ) {
+            return;
+        }
+        const barcode = barcodeCode(event.data.barcode);
+        if (barcode && !scanOrQueueBarcode(barcode)) offerBarcodeAssignment(barcode);
     });
     document.addEventListener('keydown', event => {
         const isPos = state.view === 'pos' || Boolean(document.querySelector('.pos-page'));
