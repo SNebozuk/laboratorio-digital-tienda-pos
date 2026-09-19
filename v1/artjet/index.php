@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 $app = require dirname(__DIR__, 2) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
-$products = $app['products']->publicCatalog();
+$products = array_values(array_filter(
+    $app['products']->publicCatalog(),
+    static fn (array $product): bool => preg_match('/\bART-?JET\b/i', (string) $product['name']) === 1
+));
 $artjetImages = $app['artjet']->imagePaths();
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 $money = static fn (int $cents): string => '$' . number_format($cents / 100, 0, ',', '.');
