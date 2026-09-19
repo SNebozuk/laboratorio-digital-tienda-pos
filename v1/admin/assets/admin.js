@@ -3127,7 +3127,21 @@
         `);
     }
 
-    async function copyOrdersToDelivery(orderIds, slot, skipDeliveryMatchWarning = false) {
+    function showDeliveryTransferDialog(orderIds, slot) {
+        const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
+        openModal(`
+            <p class="eyebrow">TRANSFERENCIA</p>
+            <h2 id="modal-title">Transferencia</h2>
+            <label>IMPORTE TRANSFERIDO<input id="delivery-transfer-amount" type="number" min="0" step="0.01" inputmode="decimal" value="0" aria-label="Importe transferido"></label>
+            <p class="empty-copy">Este importe se sumará al valor que ya figure en Transferencias en la fila ${Number(slot)}.</p>
+            <div class="modal-actions"><button class="primary-button" type="button" data-confirm-delivery-transfer="${Number(slot)}" data-delivery-order-ids="${ids.join(',')}">CONTINUAR</button><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
+        `);
+        const input = document.getElementById('delivery-transfer-amount');
+        input?.focus();
+        input?.select();
+    }
+
+    async function copyOrdersToDelivery(orderIds, slot, skipDeliveryMatchWarning = false, transferCents = null) {
         const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
         try {
             if (!ids.length) return;
@@ -3144,9 +3158,13 @@
                 showDeliveryMatchWarning(ids, slot, matchGroups);
                 return;
             }
+            if (transferCents === null) {
+                showDeliveryTransferDialog(ids, slot);
+                return;
+            }
             await apiPost(ids.length === 1
-                ? { action: 'delivery_copy_order', order_id: ids[0], slot_number: slot }
-                : { action: 'delivery_copy_orders', order_ids: ids, slot_number: slot });
+                ? { action: 'delivery_copy_order', order_id: ids[0], slot_number: slot, transfer_cents: transferCents }
+                : { action: 'delivery_copy_orders', order_ids: ids, slot_number: slot, transfer_cents: transferCents });
             // Si la ubicación fue elegida desde una ventana de validación, la
             // decisión ya se aplicó correctamente: no dejamos el modal abierto.
             closeModal();
@@ -6525,6 +6543,19 @@
             copyOrdersToDelivery(ids, Number(confirmDeliveryMatchSlot.dataset.confirmDeliveryMatchSlot), true);
             return;
         }
+        const confirmDeliveryTransfer = event.target.closest('[data-confirm-delivery-transfer]');
+        if (confirmDeliveryTransfer) {
+            const input = document.getElementById('delivery-transfer-amount');
+            const amount = Number(input?.value);
+            if (!Number.isFinite(amount) || amount < 0) {
+                toast('Ingresá un importe de transferencia válido.');
+                input?.focus();
+                return;
+            }
+            const ids = String(confirmDeliveryTransfer.dataset.deliveryOrderIds || '').split(',').map(Number).filter(Number.isFinite);
+            copyOrdersToDelivery(ids, Number(confirmDeliveryTransfer.dataset.confirmDeliveryTransfer), true, Math.round(amount * 100));
+            return;
+        }
         const markDeliveryPacked = event.target.closest('[data-mark-delivery-packed]');
         if (markDeliveryPacked) {
             const row = markDeliveryPacked.closest('[data-delivery-row]');
@@ -7093,17 +7124,7 @@
         if (event.key === 'Enter') {
             event.preventDefault();
             if (!scanOrQueueBarcode(event.target.value)) {
-                const value = barcodeCode(event.target.value);
-                const looksLikeCode = /^[A-Za-z0-9._\-]{3,80}$/.test(value)
-                    && (
-                        /\d/.test(value)
-                        || value === value.toUpperCase()
-                    );
-                if (looksLikeCode) {
-                    offerBarcodeAssignment(value);
-                } else {
-                    toast('Elegí el producto en la lista de resultados.');
-                }
+                toast('Elegí el producto en la lista de resultados.');
             }
         }
     });

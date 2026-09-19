@@ -93,18 +93,19 @@ final class DeliveryService
     }
 
     /** @return array<string, mixed> */
-    public function copyOrder(int $orderId, int $slot, int $actorUserId): array
+    public function copyOrder(int $orderId, int $slot, int $actorUserId, int $transferCents = 0): array
     {
-        return $this->copyOrders([$orderId], $slot, $actorUserId);
+        return $this->copyOrders([$orderId], $slot, $actorUserId, $transferCents);
     }
 
     /** @param list<int> $orderIds @return array<string, mixed> */
-    public function copyOrders(array $orderIds, int $slot, int $actorUserId): array
+    public function copyOrders(array $orderIds, int $slot, int $actorUserId, int $transferCents = 0): array
     {
         $this->assertSlot($slot);
+        if ($transferCents < 0) throw new ValidationException('Ingresá un importe de transferencia válido.');
         $ids = array_values(array_unique(array_filter(array_map('intval', $orderIds), static fn (int $id): bool => $id > 0)));
         if ($ids === []) throw new ValidationException('Elegí al menos una venta para pasar a Entregas.');
-        return Database::immediate($this->pdo, function (PDO $pdo) use ($ids, $slot, $actorUserId): array {
+        return Database::immediate($this->pdo, function (PDO $pdo) use ($ids, $slot, $actorUserId, $transferCents): array {
             $orderQuery = $pdo->prepare('SELECT id, public_number, customer_name, total_cents, status, archived_at, delivery_slot_number, delivery_reopened_at FROM orders WHERE id = :id');
             $orders = [];
             foreach ($ids as $orderId) {
@@ -124,12 +125,13 @@ final class DeliveryService
                 ? $this->setMarker((string) ($existing['customer_name'] ?? ''), 'AGREGAR')
                 : trim((string) $orders[0]['customer_name']) . ' · ARMAR';
             $total = array_sum(array_map(static fn (array $order): int => (int) $order['total_cents'], $orders));
+            $transfers = $this->addTransfer((string) ($existing['transfers'] ?? ''), $transferCents);
             if ($existing) {
-                $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, customer_name = :customer, order_total_cents = order_total_cents + :total, revision = revision + 1, updated_by = :user, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
-                    ->execute(['orders' => $orderNumbers, 'customer' => $customer, 'total' => $total, 'user' => $actorUserId, 'slot' => $slot]);
+                $pdo->prepare('UPDATE delivery_slots SET order_numbers = :orders, customer_name = :customer, transfers = :transfers, order_total_cents = order_total_cents + :total, revision = revision + 1, updated_by = :user, updated_at = CURRENT_TIMESTAMP WHERE slot_number = :slot')
+                    ->execute(['orders' => $orderNumbers, 'customer' => $customer, 'transfers' => $transfers, 'total' => $total, 'user' => $actorUserId, 'slot' => $slot]);
             } else {
-                $pdo->prepare('INSERT INTO delivery_slots(slot_number, order_numbers, customer_name, order_total_cents, revision, updated_by) VALUES(:slot, :orders, :customer, :total, 1, :user)')
-                    ->execute(['slot' => $slot, 'orders' => $orderNumbers, 'customer' => $customer, 'total' => $total, 'user' => $actorUserId]);
+                $pdo->prepare('INSERT INTO delivery_slots(slot_number, order_numbers, customer_name, transfers, order_total_cents, revision, updated_by) VALUES(:slot, :orders, :customer, :transfers, :total, 1, :user)')
+                    ->execute(['slot' => $slot, 'orders' => $orderNumbers, 'customer' => $customer, 'transfers' => $transfers, 'total' => $total, 'user' => $actorUserId]);
             }
             $updated = $pdo->prepare('UPDATE orders SET delivery_slot_number = :slot, delivery_copied_at = CURRENT_TIMESTAMP, delivery_reopened_at = NULL, archived_at = CURRENT_TIMESTAMP, archived_by = :user, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND (delivery_slot_number IS NULL OR delivery_reopened_at IS NOT NULL)');
             foreach ($ids as $orderId) {
@@ -224,6 +226,22 @@ final class DeliveryService
         // La ubicación es una referencia libre de depósito. No forzamos formatos
         // como A1/B2 para que cada persona pueda usar su propia organización.
         return $this->clean($value);
+    }
+    private function addTransfer(string $existing, int $additionalCents): string
+    {
+        $existingCents = 0;
+        foreach (explode('+', $existing) as $part) {
+            $normalized = str_replace(['$', '.', ' '], '', trim($part));
+            $normalized = str_replace(',', '.', $normalized);
+            if ($normalized !== '' && is_numeric($normalized)) {
+                $existingCents += (int) round((float) $normalized * 100);
+            }
+        }
+        $totalCents = $existingCents + $additionalCents;
+        if ($totalCents === 0 && trim($existing) === '' && $additionalCents === 0) return '';
+        $pesos = intdiv($totalCents, 100);
+        $cents = $totalCents % 100;
+        return $cents === 0 ? (string) $pesos : $pesos . ',' . str_pad((string) $cents, 2, '0', STR_PAD_LEFT);
     }
     /** @return array<string, mixed>|false */
     private function findSlot(PDO $pdo, int $slot): array|false { $q = $pdo->prepare('SELECT * FROM delivery_slots WHERE slot_number = :slot'); $q->execute(['slot' => $slot]); return $q->fetch(); }

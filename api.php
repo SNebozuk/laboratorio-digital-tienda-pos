@@ -673,12 +673,12 @@ try {
 
         case 'delivery_copy_order':
             $user = $app['auth']->requireUser();
-            Http::json(['ok' => true, 'result' => $app['deliveries']->copyOrder((int) ($input['order_id'] ?? 0), (int) ($input['slot_number'] ?? 0), (int) $user['id'])]);
+            Http::json(['ok' => true, 'result' => $app['deliveries']->copyOrder((int) ($input['order_id'] ?? 0), (int) ($input['slot_number'] ?? 0), (int) $user['id'], (int) ($input['transfer_cents'] ?? 0))]);
 
         case 'delivery_copy_orders':
             $user = $app['auth']->requireUser();
             $orderIds = is_array($input['order_ids'] ?? null) ? $input['order_ids'] : [];
-            Http::json(['ok' => true, 'result' => $app['deliveries']->copyOrders($orderIds, (int) ($input['slot_number'] ?? 0), (int) $user['id'])]);
+            Http::json(['ok' => true, 'result' => $app['deliveries']->copyOrders($orderIds, (int) ($input['slot_number'] ?? 0), (int) $user['id'], (int) ($input['transfer_cents'] ?? 0))]);
 
         case 'delivery_slot_delete':
             $app['auth']->requireUser();
