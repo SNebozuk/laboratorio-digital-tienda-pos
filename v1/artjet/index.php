@@ -44,6 +44,14 @@ foreach ($products as $product) {
 }
 $featured ??= $products[0] ?? null;
 $displayName = static fn (string $name): string => trim((string) preg_replace('/\s+ART-?JET\b/iu', '', $name));
+$formatFor = static function (string $name): string {
+    preg_match_all('/\b(?:A3\+|A3|A4|A6|10\s*[X×]\s*15|\d+\s*CC|\d+\s*G|\d+\s*MICRONES?)\b/iu', $name, $matches);
+    $parts = array_values(array_unique(array_map(
+        static fn (string $part): string => preg_replace('/\s+/', ' ', $part) ?? $part,
+        $matches[0] ?? []
+    )));
+    return implode(' · ', $parts);
+};
 ?>
 <!doctype html>
 <html lang="es"><head>
@@ -51,11 +59,12 @@ $displayName = static fn (string $name): string => trim((string) preg_replace('/
     <meta name="robots" content="noindex, nofollow">
     <title>Artjet · Materiales para crear</title>
     <link rel="stylesheet" href="assets/artjet.css?v=4">
+    <link rel="stylesheet" href="assets/artjet-cards.css?v=1">
 </head><body>
 <header class="artjet-header">
     <a href="#inicio" class="artjet-logo" aria-label="Artjet">ART<span>JET</span></a>
     <nav><a href="#papeles">PAPELES</a><a href="#tintas">TINTAS</a><a href="#catalogo">CATÁLOGO</a></nav>
-    <a class="artjet-header-action" href="#catalogo">EXPLORAR <span>↘</span></a>
+    <div class="artjet-header-actions"><a href="/">TIENDA</a><a href="/cotizador.php">COTIZADOR</a><a class="artjet-header-action" href="#catalogo">EXPLORAR <span>↘</span></a></div>
 </header>
 <main id="inicio">
 <?php if ($featured === null): ?>
@@ -94,10 +103,26 @@ $displayName = static fn (string $name): string => trim((string) preg_replace('/
                         $price = $firstVariant['price_cents'] ?? null;
                         $isA4 = preg_match('/\bA4\b/i', (string) $product['name']) === 1;
                         $image = $artjetImages[(int) $product['id']] ?? $product['image_path'];
+                        $format = $formatFor((string) $product['name']);
                     ?>
-                        <article class="artjet-card">
-                            <div class="artjet-card-image<?= $isA4 ? ' is-a4' : '' ?>"><?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt="<?= $escape((string) $product['name']) ?>"><?php else: ?><span>SIN IMAGEN</span><?php endif; ?><b><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></b></div>
-                            <div class="artjet-card-copy"><p><?= $escape($upper($category)) ?></p><h3><?= $escape($displayName((string) $product['name'])) ?></h3><div><strong><?= $price !== null ? $escape($money((int) $price)) : 'Consultar' ?></strong><span class="<?= $hasStock ? 'is-available' : '' ?>"><?= $hasStock ? 'Disponible' : 'Sin stock' ?></span></div><?php if (!empty($product['description'])): ?><small><?= $escape((string) $product['description']) ?></small><?php endif; ?></div>
+                        <article class="artjet-card" data-artjet-card>
+                            <div class="artjet-card-inner">
+                                <button class="artjet-card-face artjet-card-front" type="button" data-artjet-flip aria-expanded="false" aria-label="Ver información de <?= $escape((string) $product['name']) ?>">
+                                    <span class="artjet-card-image<?= $isA4 ? ' is-a4' : '' ?>"><?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt="<?= $escape((string) $product['name']) ?>"><?php else: ?><span>SIN IMAGEN</span><?php endif; ?><b><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></b></span>
+                                </button>
+                                <div class="artjet-card-face artjet-card-back" inert>
+                                    <button class="artjet-card-close" type="button" data-artjet-flip aria-label="Volver a la foto">↙</button>
+                                    <div class="artjet-card-back-heading">
+                                        <?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt=""><?php endif; ?>
+                                        <p><?= $escape($upper($category)) ?></p>
+                                    </div>
+                                    <h3><?= $escape($displayName((string) $product['name'])) ?></h3>
+                                    <?php if ($format !== ''): ?><p class="artjet-card-format"><?= $escape($upper($format)) ?></p><?php endif; ?>
+                                    <?php if (!empty($product['description'])): ?><p class="artjet-card-description"><?= nl2br($escape((string) $product['description'])) ?></p><?php endif; ?>
+                                    <div class="artjet-card-meta"><strong><?= $price !== null ? $escape($money((int) $price)) : 'Consultar' ?></strong><span class="<?= $hasStock ? 'is-available' : '' ?>"><?= $hasStock ? 'Disponible' : 'Sin stock' ?></span></div>
+                                    <a class="artjet-card-action" href="/?producto=<?= (int) $product['id'] ?>">VER PRODUCTO ↗</a>
+                                </div>
+                            </div>
                         </article>
                     <?php endforeach; ?>
                 </div>
@@ -108,4 +133,5 @@ $displayName = static fn (string $name): string => trim((string) preg_replace('/
 <?php endif; ?>
 </main>
 <footer><strong>ART<span>JET</span></strong><span>Una experiencia de Laboratorio Digital.</span><a href="#inicio">VOLVER ARRIBA ↑</a></footer>
+<script src="assets/artjet.js?v=1" defer></script>
 </body></html>

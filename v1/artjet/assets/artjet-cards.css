@@ -1,0 +1,265 @@
+/* Tarjetas reversibles y accesos propios de la tienda Artjet. */
+.artjet-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-left: auto;
+}
+
+.artjet-header-actions > a {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .17em;
+    text-decoration: none;
+}
+
+.artjet-header-actions .artjet-header-action {
+    margin-left: 0;
+}
+
+.artjet-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.artjet-card {
+    display: block;
+    min-height: clamp(520px, 53vw, 760px);
+    background: transparent;
+    perspective: 1400px;
+}
+
+.artjet-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    transform-style: preserve-3d;
+    transition: transform .42s cubic-bezier(.2, .7, .2, 1);
+}
+
+.artjet-card.is-flipped .artjet-card-inner {
+    transform: rotateY(180deg);
+}
+
+.artjet-card-face {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: 0;
+    background: var(--paper);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.artjet-card-front {
+    display: block;
+    margin: 0;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+}
+
+.artjet-card-front:focus-visible,
+.artjet-card-close:focus-visible,
+.artjet-card-action:focus-visible {
+    outline: 3px solid var(--magenta);
+    outline-offset: -3px;
+}
+
+.artjet-card-front .artjet-card-image {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    padding: clamp(24px, 5vw, 76px);
+}
+
+.artjet-card:hover .artjet-card-image img {
+    transform: none;
+}
+
+.artjet-card-front:hover .artjet-card-image img {
+    transform: translateY(-5px);
+}
+
+.artjet-card-back {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(24px, 4vw, 58px);
+    background: #fff;
+    transform: rotateY(180deg);
+}
+
+.artjet-card-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    background: #fff;
+    color: var(--ink);
+    font: 800 17px Arial, sans-serif;
+    cursor: pointer;
+}
+
+.artjet-card-back-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-right: 48px;
+}
+
+.artjet-card-back-heading img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    filter: drop-shadow(0 7px 6px rgba(0, 0, 0, .16));
+}
+
+.artjet-card-back-heading p {
+    margin: 0;
+    color: #777;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .17em;
+}
+
+.artjet-card-back h3 {
+    margin: clamp(22px, 3vw, 38px) 0 14px;
+    font-size: clamp(30px, 4vw, 58px);
+    line-height: .9;
+    letter-spacing: -.065em;
+}
+
+.artjet-card-format {
+    margin: 0 0 20px;
+    color: var(--magenta);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .14em;
+}
+
+.artjet-card-description {
+    max-width: 62ch;
+    margin: 0;
+    overflow: auto;
+    color: #444;
+    font-size: clamp(13px, 1.25vw, 16px);
+    line-height: 1.55;
+}
+
+.artjet-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: auto;
+    padding: 22px 0 18px;
+    border-top: 1px solid var(--line);
+}
+
+.artjet-card-meta strong {
+    font-size: 21px;
+}
+
+.artjet-card-meta span {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.artjet-card-meta .is-available {
+    color: #16824f;
+}
+
+.artjet-card-action {
+    display: flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border: 1px solid var(--ink);
+    border-radius: 10px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .15em;
+    text-decoration: none;
+}
+
+@media (max-width: 720px) {
+    .artjet-header-actions {
+        gap: 14px;
+    }
+
+    .artjet-header-actions .artjet-header-action {
+        display: none;
+    }
+
+    .artjet-header-actions > a {
+        font-size: 8px;
+    }
+
+    .artjet-product-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .artjet-card {
+        min-height: 620px;
+    }
+
+    .artjet-card-back {
+        padding: 24px;
+    }
+
+    .artjet-card-back h3 {
+        font-size: 34px;
+    }
+
+    .artjet-card-description {
+        font-size: 13px;
+    }
+
+    .artjet-card-front .artjet-card-image {
+        padding: 28px;
+    }
+
+    .artjet-card-image.is-a4 img {
+        height: 92%;
+        max-width: 86%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .artjet-card-inner {
+        transition: none;
+    }
+
+    .artjet-card.is-flipped .artjet-card-inner {
+        transform: none;
+    }
+
+    .artjet-card.is-flipped .artjet-card-front {
+        visibility: hidden;
+    }
+
+    .artjet-card-back {
+        visibility: hidden;
+        transform: none;
+    }
+
+    .artjet-card.is-flipped .artjet-card-back {
+        visibility: visible;
+    }
+
+    .artjet-card-image img {
+        transition: none !important;
+    }
+}
