@@ -10,45 +10,102 @@ $products = array_values(array_filter(
 $artjetImages = $app['artjet']->imagePaths();
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 $money = static fn (int $cents): string => '$' . number_format($cents / 100, 0, ',', '.');
-$featured = $products[0] ?? null;
+$upper = static fn (string $value): string => function_exists('mb_strtoupper')
+    ? mb_strtoupper($value)
+    : strtoupper(strtr($value, ['á' => 'Á', 'é' => 'É', 'í' => 'Í', 'ó' => 'Ó', 'ú' => 'Ú', 'ñ' => 'Ñ']));
+$categoryFor = static function (string $name): string {
+    $name = strtoupper($name);
+    return match (true) {
+        str_starts_with($name, 'TINTA') => 'Tintas',
+        str_contains($name, 'FILMILO') => 'Filmilo',
+        str_contains($name, 'HOLOFAN') => 'Holofan',
+        str_contains($name, 'MATELINA') => 'Matelina',
+        str_contains($name, 'SUBLIMACION'), str_contains($name, 'SUBLISTICK') => 'Sublimación',
+        str_contains($name, 'DURALITE'), str_contains($name, 'TATUFAN'), str_contains($name, 'WINKY') => 'Especialidades',
+        default => 'Fotográficos',
+    };
+};
+$categoryOrder = ['Fotográficos', 'Matelina', 'Filmilo', 'Holofan', 'Sublimación', 'Especialidades', 'Tintas'];
+$categorySlugs = [
+    'Fotográficos' => 'fotograficos', 'Matelina' => 'matelina', 'Filmilo' => 'filmilo',
+    'Holofan' => 'holofan', 'Sublimación' => 'sublimacion', 'Especialidades' => 'especialidades', 'Tintas' => 'tintas',
+];
+$grouped = array_fill_keys($categoryOrder, []);
+foreach ($products as $product) {
+    $grouped[$categoryFor((string) $product['name'])][] = $product;
+}
+$grouped = array_filter($grouped);
+$featured = null;
+foreach ($products as $product) {
+    if (str_contains(strtoupper((string) $product['name']), 'PAPEL FOTOGRAFICO A4 200G')) {
+        $featured = $product;
+        break;
+    }
+}
+$featured ??= $products[0] ?? null;
+$displayName = static fn (string $name): string => trim((string) preg_replace('/\s+ART-?JET\b/iu', '', $name));
 ?>
 <!doctype html>
 <html lang="es"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Artjet · Materiales que dejan huella</title>
-    <link rel="stylesheet" href="assets/artjet.css?v=3">
+    <title>Artjet · Materiales para crear</title>
+    <link rel="stylesheet" href="assets/artjet.css?v=4">
 </head><body>
-<header class="artjet-header"><a href="#inicio" class="artjet-logo">ART<span>JET</span></a><nav><a href="#catalogo">CATÁLOGO</a><a href="#material">MATERIAL</a></nav><span class="artjet-preview-label">TIENDA ONLINE</span></header>
+<header class="artjet-header">
+    <a href="#inicio" class="artjet-logo" aria-label="Artjet">ART<span>JET</span></a>
+    <nav><a href="#papeles">PAPELES</a><a href="#tintas">TINTAS</a><a href="#catalogo">CATÁLOGO</a></nav>
+    <a class="artjet-header-action" href="#catalogo">EXPLORAR <span>↘</span></a>
+</header>
 <main id="inicio">
 <?php if ($featured === null): ?>
     <section class="artjet-empty"><p>ARTJET / LABORATORIO DIGITAL</p><h1>El catálogo<br>está por llegar.</h1><span>Los productos se publicarán desde Laboratorio Digital.</span></section>
-<?php else: ?>
+<?php else:
+    $featuredImage = $artjetImages[(int) $featured['id']] ?? $featured['image_path'];
+?>
     <section class="artjet-hero">
-        <div class="artjet-hero-copy"><p>FORMATOS PARA CREAR</p><h1>Materiales<br><em>con impacto.</em></h1><span>Una selección completa de Laboratorio Digital, presentada con la identidad visual de Artjet.</span><a href="#catalogo">VER CATÁLOGO <b>↓</b></a></div>
-        <div class="artjet-hero-image"><i></i><?php $featuredImage = $artjetImages[(int) $featured['id']] ?? $featured['image_path']; if (!empty($featuredImage)): ?><img src="<?= $escape((string) $featuredImage) ?>" alt="<?= $escape((string) $featured['name']) ?>"><?php endif; ?></div>
+        <div class="artjet-hero-copy"><p>PAPELES · TINTAS · SUPERFICIES</p><h1>Creá.<br><em>Imprimí.</em><br>Dejá huella.</h1><span>Materiales Art‑Jet para transformar una idea en algo que se puede tocar.</span><a href="#categorias">DESCUBRIR COLECCIONES <b>↓</b></a></div>
+        <div class="artjet-hero-visual"><div class="artjet-hero-word">MATERIAL</div><i></i><?php if (!empty($featuredImage)): ?><img src="<?= $escape((string) $featuredImage) ?>" alt="<?= $escape((string) $featured['name']) ?>"><?php endif; ?><span>FORMATO A4<br>ESCALA VISUAL 1:2</span></div>
     </section>
-    <section class="artjet-marquee" aria-label="Catálogo"><span>FORMATOS</span><b>✳</b><span>COLOR</span><b>✳</b><span>CALIDAD</span><b>✳</b><span>ARTJET</span></section>
+    <section class="artjet-marquee" aria-label="Identidad Artjet"><span>ALTA DEFINICIÓN</span><b>✳</b><span>COLOR QUE IMPACTA</span><b>✳</b><span>SUPERFICIES QUE INSPIRAN</span><b>✳</b><span>ARTJET</span></section>
+
+    <section class="artjet-intro" id="categorias">
+        <p>COLECCIONES</p><h2>Un material para<br>cada <em>idea.</em></h2><span><?= count($products) ?> productos Art‑Jet disponibles con precio y stock de Laboratorio Digital.</span>
+    </section>
+    <section class="artjet-editorial-categories">
+        <a class="artjet-editorial-card artjet-editorial-paper" id="papeles" href="#fotograficos"><img src="/uploads/artjet/editorial/artjet-papeles.jpg" alt="Aplicaciones realizadas con papeles Art-Jet"><span>01 / PAPELES</span><h3>Imágenes que<br>se vuelven objeto.</h3><b>VER PAPELES ↘</b></a>
+        <a class="artjet-editorial-card artjet-editorial-ink" id="tintas" href="#tintas-productos"><img src="/uploads/artjet/editorial/artjet-tintas.jpg" alt="Tintas Art-Jet"><span>02 / TINTAS</span><h3>Color preciso.<br>Impacto real.</h3><b>VER TINTAS ↘</b></a>
+    </section>
+    <nav class="artjet-category-nav" aria-label="Categorías Artjet">
+        <?php foreach ($grouped as $category => $items): ?><a href="#<?= $escape($category === 'Tintas' ? 'tintas-productos' : $categorySlugs[$category]) ?>"><span><?= str_pad((string) count($items), 2, '0', STR_PAD_LEFT) ?></span><?= $escape($upper($category)) ?></a><?php endforeach; ?>
+    </nav>
+
     <section class="artjet-catalog" id="catalogo">
-        <div class="artjet-catalog-heading"><p>CATÁLOGO COMPLETO</p><h2>Todo Laboratorio Digital.<br><em>Una nueva mirada.</em></h2><span><?= count($products) ?> productos disponibles</span></div>
-        <div class="artjet-product-grid">
-            <?php foreach ($products as $index => $product):
-                $variants = $product['variants'];
-                $firstVariant = $variants[0] ?? null;
-                $hasStock = array_filter($variants, static fn (array $variant): bool => $variant['available_stock'] === null || (int) $variant['available_stock'] > 0) !== [];
-                $price = $firstVariant['price_cents'] ?? null;
-                $isA4 = preg_match('/\bA4\b/i', (string) $product['name']) === 1;
-                $image = $artjetImages[(int) $product['id']] ?? $product['image_path'];
-            ?>
-                <article class="artjet-card">
-                    <div class="artjet-card-image<?= $isA4 ? ' is-a4' : '' ?>"><?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt="<?= $escape((string) $product['name']) ?>"><?php else: ?><span>SIN IMAGEN</span><?php endif; ?></div>
-                    <div class="artjet-card-copy"><p><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?> / <?= $escape((string) $product['category']['name']) ?></p><h3><?= $escape((string) $product['name']) ?></h3><div><strong><?= $price !== null ? $escape($money((int) $price)) : 'Consultar' ?></strong><span class="<?= $hasStock ? 'is-available' : '' ?>"><?= $hasStock ? 'Disponible' : 'Sin stock' ?></span></div><?php if (!empty($product['description'])): ?><small><?= $escape((string) $product['description']) ?></small><?php endif; ?></div>
-                </article>
-            <?php endforeach; ?>
-        </div>
+        <?php foreach ($grouped as $category => $items):
+            $slug = $category === 'Tintas' ? 'tintas-productos' : $categorySlugs[$category];
+        ?>
+            <section class="artjet-collection" id="<?= $escape($slug) ?>">
+                <header><p>COLECCIÓN / <?= $escape($upper($category)) ?></p><h2><?= $escape($category) ?><sup><?= str_pad((string) count($items), 2, '0', STR_PAD_LEFT) ?></sup></h2></header>
+                <div class="artjet-product-grid">
+                    <?php foreach ($items as $index => $product):
+                        $variants = $product['variants'];
+                        $firstVariant = $variants[0] ?? null;
+                        $hasStock = array_filter($variants, static fn (array $variant): bool => $variant['available_stock'] === null || (int) $variant['available_stock'] > 0) !== [];
+                        $price = $firstVariant['price_cents'] ?? null;
+                        $isA4 = preg_match('/\bA4\b/i', (string) $product['name']) === 1;
+                        $image = $artjetImages[(int) $product['id']] ?? $product['image_path'];
+                    ?>
+                        <article class="artjet-card">
+                            <div class="artjet-card-image<?= $isA4 ? ' is-a4' : '' ?>"><?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt="<?= $escape((string) $product['name']) ?>"><?php else: ?><span>SIN IMAGEN</span><?php endif; ?><b><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></b></div>
+                            <div class="artjet-card-copy"><p><?= $escape($upper($category)) ?></p><h3><?= $escape($displayName((string) $product['name'])) ?></h3><div><strong><?= $price !== null ? $escape($money((int) $price)) : 'Consultar' ?></strong><span class="<?= $hasStock ? 'is-available' : '' ?>"><?= $hasStock ? 'Disponible' : 'Sin stock' ?></span></div><?php if (!empty($product['description'])): ?><small><?= $escape((string) $product['description']) ?></small><?php endif; ?></div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endforeach; ?>
     </section>
-    <section class="artjet-details" id="material"><div><p>INFORMACIÓN ACTUALIZADA</p><h2>Precio y stock<br>siempre <em>reales.</em></h2></div><ul><li>Productos, variantes y descripciones de Laboratorio Digital</li><li>Imágenes alojadas en nuestro propio servidor</li><li>Disponibilidad actualizada desde el mismo catálogo</li></ul></section>
+    <section class="artjet-manifesto"><p>ARTJET / LABORATORIO DIGITAL</p><h2>Inspirar momentos.<br>Crear valor.<br><em>Dejar huella.</em></h2><span>Catálogo, precios, stock e imágenes servidos desde nuestra propia infraestructura.</span></section>
 <?php endif; ?>
 </main>
-<footer><strong>ART<span>JET</span></strong><span>Catálogo, precio, stock e imágenes de Laboratorio Digital.</span></footer>
+<footer><strong>ART<span>JET</span></strong><span>Una experiencia de Laboratorio Digital.</span><a href="#inicio">VOLVER ARRIBA ↑</a></footer>
 </body></html>
