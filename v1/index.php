@@ -40,7 +40,6 @@ $assetVersion = substr(hash('sha256',
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
 ), 0, 12);
 $searchNormalizerJsVersion = substr(hash_file('sha256', __DIR__ . '/assets/search-normalizer.js') ?: '1', 0, 12);
-$vendorAiJsVersion = substr(hash_file('sha256', __DIR__ . '/assets/vendor-ai.js') ?: '1', 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
 $quoteUrl = $storePath . '/cotizador.php';
@@ -96,9 +95,6 @@ $pickupAddress = trim((string) ($publicSettings['pickup_address'] ?? ''));
 $businessHours = trim((string) ($publicSettings['business_hours'] ?? ''));
 $mapUrl = $pickupAddress === '' ? '' : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($pickupAddress);
 $cartMaintenanceEnabled = in_array((string) ($publicSettings['cart_maintenance_enabled'] ?? '0'), ['1', 'true', 'on'], true);
-$vendorAiEnabled = in_array((string) ($publicSettings['vendor_ai_enabled'] ?? '1'), ['1', 'true', 'on'], true);
-$vendorAiTestMode = isset($_GET['chat_ia']) && $_GET['chat_ia'] === '1' && $storeUser !== null;
-$showVendorAi = $vendorAiEnabled || $vendorAiTestMode;
 $featuredProductIds = $app['settings']->featuredProductIds();
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 $logoIsText = ($design['logo_mode'] ?? 'image') === 'text' && trim((string) ($design['logo_text'] ?? '')) !== '';
@@ -322,16 +318,6 @@ header('Referrer-Policy: same-origin');
         </svg>
     </a>
 
-    <?php if ($showVendorAi): ?>
-    <section class="vendor-ai" id="vendor-ai" aria-label="Asesor IA" data-state="minimized">
-        <header class="vendor-ai-head" data-vendor-ai-drag>
-            <span class="vendor-ai-status" id="vendor-ai-status">● Verificando IA</span>
-            <div class="vendor-ai-controls"><button class="icon-button" type="button" data-vendor-ai-minimize aria-label="Minimizar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><button class="icon-button" type="button" data-vendor-ai-close aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-        </header>
-        <div class="vendor-ai-body"><div class="vendor-ai-conversation"><div class="vendor-ai-messages" id="vendor-ai-messages"></div><div class="vendor-ai-typing" id="vendor-ai-typing" hidden><span class="vendor-ai-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>Buscando en el catálogo…</div><form id="vendor-ai-form"><textarea id="vendor-ai-input" rows="1" placeholder="Escribí tu consulta…"></textarea><button class="vendor-ai-send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3-6-8-2Z"/></svg></button></form></div><aside class="vendor-ai-results" aria-live="polite"><strong>Resultados del catálogo</strong><div id="vendor-ai-results"><span>Los resultados aparecerán acá.</span></div></aside></div>
-    </section>
-    <button class="vendor-ai-launcher" id="vendor-ai-launcher" type="button" aria-label="Abrir Asesor IA" hidden>IA</button>
-    <?php endif ?>
 
     <div class="modal" id="modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
@@ -378,6 +364,5 @@ header('Referrer-Policy: same-origin');
     <script src="<?= $escape($assetPath) ?>/pulga.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/search-normalizer.js?v=<?= $escape($searchNormalizerJsVersion) ?>" defer></script>
     <script src="<?= $escape($assetPath) ?>/store.js?v=<?= $escape($assetVersion) ?>" defer></script>
-    <?php if ($showVendorAi): ?><script src="<?= $escape($assetPath) ?>/vendor-ai.js?v=<?= $escape($vendorAiJsVersion) ?>" defer></script><?php endif ?>
 </body>
 </html>

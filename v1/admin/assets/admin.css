@@ -4134,32 +4134,6 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     box-shadow: inset 0 0 0 1px #b5beca;
 }
 
-.artjet-admin-heading { align-items:flex-end; }
-.artjet-sync-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:18px 0; }
-.artjet-sync-summary article { padding:16px; border-radius:12px; background:#fff; box-shadow:0 8px 22px rgba(35,45,75,.06); }
-.artjet-sync-summary strong { display:block; color:#3d356f; font-size:25px; }
-.artjet-sync-summary span { color:#667087; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
-.artjet-sync-toolbar { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-.artjet-sync-toolbar .search-input-field { flex:1; }
-.artjet-sync-toolbar select { min-height:42px; border:1px solid #c8cdd3; border-radius:10px; background:#fff; padding:0 12px; font:inherit; }
-.artjet-sync-table-wrap { overflow:auto; border-radius:12px; background:#fff; box-shadow:0 8px 22px rgba(35,45,75,.06); }
-.artjet-sync-table { width:100%; min-width:1250px; border-collapse:collapse; font-size:12px; }
-.artjet-sync-table th,.artjet-sync-table td { padding:12px 10px; border-bottom:1px solid #eceef2; text-align:left; vertical-align:middle; }
-.artjet-sync-table th { color:#667087; font-size:10px; letter-spacing:.04em; }
-.artjet-sync-table tbody tr { cursor:pointer; }
-.artjet-sync-table tbody tr:hover { background:#f7f6ff; }
-.artjet-sync-thumb { width:42px; height:42px; object-fit:contain; }
-.artjet-sync-status { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font-weight:750; }
-.artjet-sync-link { display:block; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.artjet-editor { display:grid; gap:14px; }
-.artjet-editor-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-.artjet-editor label { display:grid; gap:6px; color:#596275; font-size:11px; font-weight:800; letter-spacing:.03em; }
-.artjet-editor :is(input,select,textarea) { width:100%; border:1px solid #c8cdd3; border-radius:9px; background:#fff; padding:10px; font:inherit; }
-.artjet-editor textarea { resize:vertical; }
-.artjet-editor-controls { display:grid; gap:8px; padding:12px; border-radius:10px; background:#f3f1ff; }
-.artjet-editor-controls label { display:flex; align-items:center; gap:8px; }
-.artjet-editor-controls input { width:16px; height:16px; }
-@media(max-width:800px){.artjet-sync-summary{grid-template-columns:repeat(2,1fr)}.artjet-sync-toolbar,.artjet-editor-grid{grid-template-columns:1fr;display:grid}.artjet-admin-heading{align-items:flex-start}}
 
 /* La cabecera de Ventas conservaba relleno propio y desplazaba su título. */
 #view-orders .view-heading {

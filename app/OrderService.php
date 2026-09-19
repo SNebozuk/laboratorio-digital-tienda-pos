@@ -976,6 +976,16 @@ final class OrderService
             $query->execute(['value' => $visitPeriods[$period]]);
             $visits[$period] = (int) $query->fetchColumn();
         }
+        $artjetVisits = [
+            'daily' => $this->pdo->prepare('SELECT COUNT(*) FROM artjet_visits WHERE visit_day = :value'),
+            'weekly' => $this->pdo->prepare('SELECT COUNT(DISTINCT visitor_hash) FROM artjet_visits WHERE visit_day >= :value'),
+            'monthly' => $this->pdo->prepare("SELECT COUNT(DISTINCT visitor_hash) FROM artjet_visits WHERE substr(visit_day, 1, 7) = :value"),
+            'yearly' => $this->pdo->prepare("SELECT COUNT(DISTINCT visitor_hash) FROM artjet_visits WHERE substr(visit_day, 1, 4) = :value"),
+        ];
+        foreach ($artjetVisits as $period => $query) {
+            $query->execute(['value' => $visitPeriods[$period]]);
+            $artjetVisits[$period] = (int) $query->fetchColumn();
+        }
 
         $klausInteractions = [];
         $klausPeriods = [
@@ -990,7 +1000,7 @@ final class OrderService
             "SELECT COUNT(DISTINCT visitor_hash) FROM klaus_interactions WHERE interaction_day >= date('now', 'localtime', 'start of month', '-2 months')"
         )->fetchColumn();
 
-        return ['archived' => $archived, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries, 'visits' => $visits, 'klaus_interactions' => $klausInteractions, 'klaus_interactions_total' => $klausInteractionTotal];
+        return ['archived' => $archived, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries, 'visits' => $visits, 'artjet_visits' => $artjetVisits, 'klaus_interactions' => $klausInteractions, 'klaus_interactions_total' => $klausInteractionTotal];
     }
 
     /** @return array<string, mixed> */

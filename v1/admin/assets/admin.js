@@ -73,10 +73,6 @@
         aiCriteriaLoaded: false,
         aiCriteriaDirty: false,
         aiCriteriaTab: 'search',
-        artjetProducts: [],
-        artjetLoaded: false,
-        artjetQuery: '',
-        artjetFilter: 'all',
     };
 
     const money = cents => new Intl.NumberFormat('es-AR', {
@@ -244,11 +240,6 @@
         aiConversationHistoryList: document.getElementById('ai-conversation-history-list'),
         aiSearchCriteriaRows: document.getElementById('ai-search-criteria-rows'),
         aiResponseCriteriaRows: document.getElementById('ai-response-criteria-rows'),
-        artjetSyncList: document.getElementById('artjet-sync-list'),
-        artjetSyncSummary: document.getElementById('artjet-sync-summary'),
-        artjetSyncSearch: document.getElementById('artjet-sync-search'),
-        artjetSyncFilter: document.getElementById('artjet-sync-filter'),
-        artjetImportSample: document.getElementById('artjet-import-sample'),
     };
     let aiMicStream = null;
     let aiMicAudioContext = null;
@@ -476,7 +467,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'artjet-store', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'customers', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'customers', 'users', 'settings', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -504,7 +495,6 @@
         if (view === 'products') {
             loadProducts();
         }
-        if (view === 'artjet-store') loadArtjetProducts();
         if (view === 'ai-search') {
             loadAiConversationHistory();
             loadAiVendorEnabled();
@@ -554,98 +544,6 @@
         if (view === 'size-guide') {
             loadSizeGuide();
         }
-    }
-
-    const artjetStatus = status => ({
-        confirmed: ['🟢', 'Coincidencia confirmada'],
-        review: ['🟡', 'Revisar coincidencia'],
-        unmatched: ['🔴', 'Sin coincidencia'],
-        unsearched: ['⚪', 'Sin buscar'],
-    })[status] || ['⚪', 'Sin buscar'];
-
-    async function loadArtjetProducts(force = false) {
-        if (state.artjetLoaded && !force) {
-            renderArtjetProducts();
-            return;
-        }
-        if (elements.artjetSyncList) elements.artjetSyncList.innerHTML = '<tr><td colspan="10">Cargando productos Art‑Jet…</td></tr>';
-        try {
-            const data = await apiGet('admin_artjet');
-            state.artjetProducts = Array.isArray(data.products) ? data.products : [];
-            state.artjetLoaded = true;
-            renderArtjetProducts();
-        } catch (error) {
-            if (elements.artjetSyncList) elements.artjetSyncList.innerHTML = `<tr><td colspan="10">${escapeHtml(error.message)}</td></tr>`;
-        }
-    }
-
-    function renderArtjetProducts() {
-        if (!elements.artjetSyncList) return;
-        const query = fold(state.artjetQuery);
-        const filtered = state.artjetProducts.filter(product => {
-            const variants = product.variants.map(variant => `${variant.sku} ${variant.name}`).join(' ');
-            const matchesQuery = !query || fold(`${product.ld_name} ${product.store_title} ${variants}`).includes(query);
-            const matchesFilter = state.artjetFilter === 'all'
-                || product.artjet_category === state.artjetFilter
-                || product.match_status === state.artjetFilter;
-            return matchesQuery && matchesFilter;
-        });
-        const counts = state.artjetProducts.reduce((result, product) => {
-            result[product.match_status] = (result[product.match_status] || 0) + 1;
-            return result;
-        }, {});
-        if (elements.artjetSyncSummary) {
-            elements.artjetSyncSummary.innerHTML = [
-                ['Detectados', state.artjetProducts.length],
-                ['Confirmados', counts.confirmed || 0],
-                ['Para revisar', counts.review || 0],
-                ['Sin coincidencia', counts.unmatched || 0],
-            ].map(([label, count]) => `<article><strong>${count}</strong><span>${label}</span></article>`).join('');
-        }
-        elements.artjetSyncList.innerHTML = filtered.length ? filtered.map(product => {
-            const status = artjetStatus(product.match_status);
-            const firstVariant = product.variants[0] || {};
-            const image = safeImage(product.primary_image_path || product.ld_image_path);
-            return `<tr data-edit-artjet-product="${Number(product.product_id)}" tabindex="0">
-                <td><strong>${escapeHtml(firstVariant.sku || '—')}</strong></td>
-                <td>${escapeHtml(product.ld_name)}</td>
-                <td>${escapeHtml(product.ld_category)}</td>
-                <td>${escapeHtml(product.source_match || product.store_title || '—')}</td>
-                <td>${escapeHtml([product.artjet_category, product.artjet_subcategory].filter(Boolean).join(' · '))}</td>
-                <td>${product.source_url ? `<a class="artjet-sync-link" href="${escapeHtml(product.source_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Sitio oficial</a>` : '—'}</td>
-                <td>${image ? `<img class="artjet-sync-thumb" src="${escapeHtml(image)}" alt="">` : '—'}</td>
-                <td>${product.store_description ? 'Cargada' : 'Pendiente'}</td>
-                <td><span class="artjet-sync-status">${status[0]} ${status[1]}</span></td>
-                <td>${product.last_synced_at ? escapeHtml(argentinaDateLabel(product.last_synced_at)) : 'Nunca'}</td>
-            </tr>`;
-        }).join('') : '<tr><td colspan="10">No hay productos para este filtro.</td></tr>';
-    }
-
-    function showArtjetEditor(product) {
-        const productOptions = state.artjetProducts.map(item => `<option value="${Number(item.product_id)}" ${Number(item.product_id) === Number(product.product_id) ? 'selected' : ''}>${escapeHtml(item.ld_name)}</option>`).join('');
-        openModal(`<form id="artjet-product-form" class="artjet-editor">
-            <input type="hidden" name="current_product_id" value="${Number(product.product_id)}">
-            <header><p class="eyebrow">ASOCIACIÓN MANUAL</p><h2>${escapeHtml(product.ld_name)}</h2></header>
-            <label>PRODUCTO LD ASOCIADO<select name="product_id">${productOptions}</select></label>
-            <div class="artjet-editor-grid">
-                <label>URL ART-JET<input name="source_url" type="url" value="${escapeHtml(product.source_url)}" placeholder="https://www.eshop.art-jet.com.ar/..."></label>
-                <label>ESTADO<select name="match_status"><option value="confirmed">Coincidencia confirmada</option><option value="review">Revisar coincidencia</option><option value="unmatched">Sin coincidencia</option><option value="unsearched">Sin buscar</option></select></label>
-                <label>TÍTULO PARA TIENDA ARTJET<input name="store_title" value="${escapeHtml(product.store_title)}"></label>
-                <label>CATEGORÍA<input name="artjet_category" value="${escapeHtml(product.artjet_category)}"></label>
-                <label>SUBCATEGORÍA<input name="artjet_subcategory" value="${escapeHtml(product.artjet_subcategory)}"></label>
-                <label>IMAGEN PRINCIPAL LOCAL<input name="primary_image_path" value="${escapeHtml(product.primary_image_path)}" placeholder="/v1/uploads/artjet/..."></label>
-            </div>
-            <label>DESCRIPCIÓN<textarea name="store_description" rows="5">${escapeHtml(product.store_description)}</textarea></label>
-            <label>IMÁGENES ADICIONALES LOCALES <small>Una ruta por línea</small><textarea name="additional_images" rows="3">${escapeHtml(product.additional_images.join('\n'))}</textarea></label>
-            <label>INFORMACIÓN TÉCNICA<textarea name="technical_info" rows="4">${escapeHtml(product.technical_info)}</textarea></label>
-            <div class="artjet-editor-controls">
-                <label><input name="sync_description" type="checkbox" ${product.sync_description ? 'checked' : ''}> Sincronizar descripción</label>
-                <label><input name="sync_images" type="checkbox" ${product.sync_images ? 'checked' : ''}> Sincronizar imágenes</label>
-                <label><input name="publish_store" type="checkbox" ${product.publish_store ? 'checked' : ''}> Publicar en tienda Artjet</label>
-            </div>
-            <div class="modal-actions"><button class="primary-button" type="submit">GUARDAR</button><a class="secondary-button" href="/artjet/?preview_product=${Number(product.product_id)}" target="_blank" rel="noopener">VISTA PREVIA</a><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
-        </form>`);
-        document.querySelector('#artjet-product-form [name="match_status"]').value = product.match_status;
     }
 
     function invitationDate(value) {
@@ -4482,6 +4380,12 @@
             ['MES', Number(statistics.visits?.monthly || 0)],
             ['AÑO', Number(statistics.visits?.yearly || 0)],
         ];
+        const artjetVisits = [
+            ['HOY', Number(statistics.artjet_visits?.daily || 0)],
+            ['SEMANA', Number(statistics.artjet_visits?.weekly || 0)],
+            ['MES', Number(statistics.artjet_visits?.monthly || 0)],
+            ['AÑO', Number(statistics.artjet_visits?.yearly || 0)],
+        ];
         const discounts = [
             ['🐾', 'Premio de Klaus', Number(statistics.discounts?.klaus || 0), 'klaus', statistics.beneficiaries?.klaus || []],
             ['↗', 'Barra de avance', Number(statistics.discounts?.quantity || 0), 'quantity', statistics.beneficiaries?.quantity || []],
@@ -4514,6 +4418,11 @@
                     <div><span class="statistics-icon">◉</span><p class="eyebrow">VISITAS ÚNICAS · TIENDA ONLINE</p></div>
                     <p>Personas distintas que visitaron el catálogo. No incluye sesiones de administración.</p>
                     <div class="statistics-visits">${visits.map(([label, count]) => `<span><small>${label}</small><strong>${count}</strong></span>`).join('')}</div>
+                </section>
+                <section class="statistics-card statistics-visits-card">
+                    <div><span class="statistics-icon">A</span><p class="eyebrow">VISITAS ÚNICAS · WWW.ARTJET.COM.AR</p></div>
+                    <p>Personas distintas que ingresaron al catálogo desde el dominio Artjet.</p>
+                    <div class="statistics-visits">${artjetVisits.map(([label, count]) => `<span><small>${label}</small><strong>${count}</strong></span>`).join('')}</div>
                 </section>
                 <section class="statistics-card statistics-klaus-card">
                     <div><span class="statistics-icon">🐾</span><p class="eyebrow">INTERACCIONES CON KLAUS</p></div>
@@ -7610,77 +7519,6 @@
     document.addEventListener('focusin', event => {
         if (event.target.closest('[data-bulk-product-action]')) {
             productActionsMenuPauseUntil = Date.now() + 30000;
-        }
-    });
-
-    elements.artjetSyncSearch?.addEventListener('input', event => {
-        state.artjetQuery = event.target.value;
-        renderArtjetProducts();
-    });
-    elements.artjetSyncFilter?.addEventListener('change', event => {
-        state.artjetFilter = event.target.value;
-        renderArtjetProducts();
-    });
-    elements.artjetImportSample?.addEventListener('click', async () => {
-        const button = elements.artjetImportSample;
-        button.disabled = true;
-        try {
-            await apiPost({ action: 'artjet_import_verified_sample' });
-            state.artjetLoaded = false;
-            await loadArtjetProducts(true);
-            toast('Producto de prueba importado con información e imagen local.');
-        } catch (error) {
-            toast(error.message);
-        } finally {
-            button.disabled = false;
-        }
-    });
-    elements.artjetSyncList?.addEventListener('click', event => {
-        const row = event.target.closest('[data-edit-artjet-product]');
-        if (!row) return;
-        const product = state.artjetProducts.find(item => Number(item.product_id) === Number(row.dataset.editArtjetProduct));
-        if (product) showArtjetEditor(product);
-    });
-    elements.artjetSyncList?.addEventListener('keydown', event => {
-        if (!['Enter', ' '].includes(event.key)) return;
-        const row = event.target.closest('[data-edit-artjet-product]');
-        if (!row) return;
-        event.preventDefault();
-        const product = state.artjetProducts.find(item => Number(item.product_id) === Number(row.dataset.editArtjetProduct));
-        if (product) showArtjetEditor(product);
-    });
-    document.addEventListener('submit', async event => {
-        if (event.target.id !== 'artjet-product-form') return;
-        event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
-        const button = form.querySelector('button[type="submit"]');
-        button.disabled = true;
-        try {
-            await apiPost({
-                action: 'artjet_product_update',
-                product: {
-                    product_id: Number(formData.get('product_id')),
-                    source_url: formData.get('source_url'),
-                    store_title: formData.get('store_title'),
-                    store_description: formData.get('store_description'),
-                    artjet_category: formData.get('artjet_category'),
-                    artjet_subcategory: formData.get('artjet_subcategory'),
-                    primary_image_path: formData.get('primary_image_path'),
-                    additional_images: String(formData.get('additional_images') || '').split(/\r?\n/).map(value => value.trim()).filter(Boolean),
-                    technical_info: formData.get('technical_info'),
-                    match_status: formData.get('match_status'),
-                    sync_description: formData.has('sync_description'),
-                    sync_images: formData.has('sync_images'),
-                    publish_store: formData.has('publish_store'),
-                },
-            });
-            closeModal();
-            await loadArtjetProducts(true);
-            toast('Asociación Art‑Jet guardada.');
-        } catch (error) {
-            toast(error.message);
-            button.disabled = false;
         }
     });
 

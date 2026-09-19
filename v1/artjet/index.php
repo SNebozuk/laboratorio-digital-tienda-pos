@@ -3,6 +3,21 @@ declare(strict_types=1);
 
 $app = require dirname(__DIR__, 2) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
+$host = strtolower((string) preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
+if ($host === 'www.artjet.com.ar') {
+    $visitorId = (string) ($_COOKIE['artjet_store_visitor'] ?? '');
+    if (!preg_match('/^[a-f0-9]{64}$/', $visitorId)) {
+        $visitorId = bin2hex(random_bytes(32));
+        setcookie('artjet_store_visitor', $visitorId, [
+            'expires' => time() + 60 * 60 * 24 * 400,
+            'path' => '/',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+    }
+    $app['store_visits']->recordArtjet($visitorId);
+}
 $products = array_values(array_filter(
     $app['products']->publicCatalog(),
     static fn (array $product): bool => preg_match('/\bART-?JET\b/i', (string) $product['name']) === 1
@@ -60,6 +75,7 @@ $formatFor = static function (string $name): string {
     <title>Artjet · Materiales para crear</title>
     <link rel="stylesheet" href="assets/artjet.css?v=4">
     <link rel="stylesheet" href="assets/artjet-cards.css?v=1">
+    <link rel="stylesheet" href="assets/artjet-chat.css?v=1">
 </head><body>
 <header class="artjet-header">
     <a href="#inicio" class="artjet-logo" aria-label="Artjet">ART<span>JET</span></a>
@@ -133,5 +149,13 @@ $formatFor = static function (string $name): string {
 <?php endif; ?>
 </main>
 <footer><strong>ART<span>JET</span></strong><span>Una experiencia de Laboratorio Digital.</span><a href="#inicio">VOLVER ARRIBA ↑</a></footer>
-<script src="assets/artjet.js?v=1" defer></script>
+<a class="artjet-whatsapp" href="https://wa.me/5493415699338?text=Hola%2C%20les%20hablo%20desde%20el%20sitio%20de%20Artjet" target="_blank" rel="noopener" aria-label="Hablar por WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5l1.4-4.4a8.4 8.4 0 1 1 15.6-4.4Z"/><path d="M8.2 7.7c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.8 1.9c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.7 1.3 1.7 2.3 3 2.9.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.9.9c.3.1.4.3.4.5 0 .3-.2 1.5-.9 2.1-.6.6-1.5.9-2.5.7-1.1-.2-2.5-.7-4.2-2.2-2-1.8-3.3-4-3.5-5.5-.2-.9.1-1.6.5-2Z"/></svg></a>
+<button class="artjet-chat-launcher" id="artjet-chat-launcher" type="button" aria-label="Abrir atención con IA">IA</button>
+<section class="artjet-chat" id="artjet-chat" hidden aria-label="Atención Artjet">
+    <header><div><strong>ARTJET</strong><span>Atención online</span></div><button type="button" id="artjet-chat-close" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+    <div class="artjet-chat-messages" id="artjet-chat-messages" aria-live="polite"><p>Hola, ¿en qué te puedo ayudar?</p></div>
+    <div class="artjet-chat-typing" id="artjet-chat-typing" hidden>Escribiendo…</div>
+    <form id="artjet-chat-form"><textarea id="artjet-chat-input" rows="1" maxlength="800" placeholder="Escribí tu consulta…" aria-label="Consulta"></textarea><button type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3-6-8-2Z"/></svg></button></form>
+</section>
+<script src="assets/artjet.js?v=2" defer></script>
 </body></html>

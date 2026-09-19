@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 50;
+    private const CURRENT_MIGRATION_VERSION = 51;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -95,6 +95,7 @@ final class Database
                 self::migrateAiCriteriaRefresh($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
                 self::migrateAiConversationCustomers($pdo);
                 self::migrateArtjetProductSync($pdo);
+                self::migrateArtjetVisits($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -160,8 +161,27 @@ final class Database
         self::migrateAiCriteriaRefresh($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
         self::migrateAiConversationCustomers($pdo);
         self::migrateArtjetProductSync($pdo);
+        self::migrateArtjetVisits($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    private static function migrateArtjetVisits(PDO $pdo): void
+    {
+        $version = 51;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS artjet_visits (
+                visitor_hash TEXT NOT NULL,
+                visit_day TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (visitor_hash, visit_day)
+            )");
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_artjet_visits_day ON artjet_visits(visit_day)');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
     }
 
     private static function migrateArtjetProductSync(PDO $pdo): void

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use LaboratorioDigital\Auth;
 use LaboratorioDigital\ArtjetService;
+use LaboratorioDigital\ArtjetAiChatService;
 use LaboratorioDigital\BackupService;
 use LaboratorioDigital\CategoryService;
 use LaboratorioDigital\CheckoutGoogleService;
@@ -29,6 +30,7 @@ $app = require __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/Http.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/ArtjetService.php';
+require_once __DIR__ . '/ArtjetAiChatService.php';
 require_once __DIR__ . '/BackupService.php';
 require_once __DIR__ . '/CategoryService.php';
 require_once __DIR__ . '/CheckoutGoogleService.php';
@@ -67,6 +69,7 @@ $app['product_images'] = new ProductImageService(
     $app['config']
 );
 $app['artjet'] = new ArtjetService($app['pdo'], $app['product_images'], $app['root']);
+$app['artjet_ai_chat'] = new ArtjetAiChatService($app['config'], $app['products'], $app['artjet'], $app['settings']);
 $app['stock'] = new StockService($app['pdo']);
 $app['store_visits'] = new StoreVisitService($app['pdo']);
 $app['supplier_orders'] = new SupplierOrderService($app['pdo']);

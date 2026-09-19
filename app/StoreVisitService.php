@@ -26,6 +26,19 @@ final class StoreVisitService
         ]);
     }
 
+    public function recordArtjet(string $visitorId): void
+    {
+        $day = (new DateTimeImmutable('now', new DateTimeZone('America/Argentina/Buenos_Aires')))
+            ->format('Y-m-d');
+        $insert = $this->pdo->prepare(
+            'INSERT OR IGNORE INTO artjet_visits(visitor_hash, visit_day) VALUES(:visitor_hash, :visit_day)'
+        );
+        $insert->execute([
+            'visitor_hash' => hash('sha256', $visitorId),
+            'visit_day' => $day,
+        ]);
+    }
+
     public function recordKlausInteraction(string $visitorId): void
     {
         $day = (new DateTimeImmutable('now', new DateTimeZone('America/Argentina/Buenos_Aires')))

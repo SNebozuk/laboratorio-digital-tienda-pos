@@ -222,6 +222,15 @@ CREATE TABLE IF NOT EXISTS store_visits (
 
 CREATE INDEX IF NOT EXISTS idx_store_visits_day ON store_visits(visit_day);
 
+CREATE TABLE IF NOT EXISTS artjet_visits (
+    visitor_hash TEXT NOT NULL,
+    visit_day TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (visitor_hash, visit_day)
+);
+
+CREATE INDEX IF NOT EXISTS idx_artjet_visits_day ON artjet_visits(visit_day);
+
 CREATE TABLE IF NOT EXISTS klaus_interactions (
     visitor_hash TEXT NOT NULL,
     interaction_day TEXT NOT NULL,

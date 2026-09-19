@@ -65,10 +65,6 @@ try {
                     'featured_product_ids' => $app['settings']->featuredProductIds(),
                 ]);
 
-            case 'admin_artjet':
-                $app['auth']->requireUser();
-                Http::json(['ok' => true, 'products' => $app['artjet']->adminList()]);
-
             case 'ai_catalog_tool':
                 $app['auth']->requireUser();
                 $tool = (string) ($_GET['tool'] ?? 'buscarProductos');
@@ -266,18 +262,20 @@ try {
         if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
         Http::json(['ok' => true, 'reply' => $app['catalog_ai_conversations']->reply($token, $message, $customer['id'] ?? null)]);
     }
+    if ($action === 'artjet_ai_chat') {
+        $history = is_array($input['history'] ?? null) ? array_slice($input['history'], -12) : [];
+        $message = trim((string) ($input['message'] ?? ''));
+        if ($message === '' || mb_strlen($message) > 800) throw new ValidationException('Mensaje inválido.');
+        $last = (int) ($_SESSION['artjet_ai_chat_at'] ?? 0);
+        if ($last > 0 && time() - $last < 2) throw new ValidationException('Esperá un instante antes de enviar otro mensaje.');
+        $_SESSION['artjet_ai_chat_at'] = time();
+        $history[] = ['role' => 'user', 'content' => $message];
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+        Http::json(['ok' => true, 'reply' => $app['artjet_ai_chat']->reply($history)]);
+    }
     Http::requireCsrf($input);
 
     switch ($action) {
-        case 'artjet_import_verified_sample':
-            $app['auth']->requireAdmin();
-            Http::json(['ok' => true, 'imported' => $app['artjet']->importVerifiedSample()]);
-
-        case 'artjet_product_update':
-            $app['auth']->requireAdmin();
-            $app['artjet']->save(is_array($input['product'] ?? null) ? $input['product'] : []);
-            Http::json(['ok' => true]);
-
         case 'artjet_product_image_update':
             $app['auth']->requireAdmin();
             $app['artjet']->setProductImage(
