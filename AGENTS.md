@@ -51,6 +51,8 @@ Antes del commit, incluir exclusivamente los archivos de la tarea actual. El ár
 
 Laboratorio Digital es un catálogo mayorista con pedidos web, administración interna, punto de venta y una planilla de preparación de entregas.
 
+- **Artjet** (sin guion) identifica la nueva tienda/sección propia. **Art-Jet** (con guion) identifica la marca de productos; no intercambiar ambos nombres.
+
 - Tienda pública de producción: `https://laboratoriodigital.com.ar/`
 - Administración: `https://laboratoriodigital.com.ar/v1/admin/`
 - Punto de venta: `https://laboratoriodigital.com.ar/v1/admin/pos.php`

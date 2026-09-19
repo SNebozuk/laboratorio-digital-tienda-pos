@@ -84,6 +84,7 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18M7 15h4"></path></svg></button>
                     <div class="admin-nav-products">
                         <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 7l3 4 2-1v10h8V10l2 1 3-4-4-3-5 3z"></path></svg></button>
+                        <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="artjet-store" aria-label="Tienda Artjet" title="Tienda Artjet"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 19 8 5h3l4.5 14M5.5 13h8M19 5v10.5a3.5 3.5 0 0 1-3.5 3.5"></path></svg></button>
                         <?php if ($user['role'] === 'admin'): ?><button class="admin-nav-button admin-nav-icon-button" type="button" data-view="customers" aria-label="Clientes" title="Clientes"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.6-4 3-6 7-6s6.4 2 7 6"></path></svg></button><?php endif ?>
                     </div>
                 </nav>
@@ -215,6 +216,7 @@ header('Referrer-Policy: same-origin');
                         <button type="button" data-view="orders">Lista de Ventas</button>
                         <button type="button" data-view="deliveries">Entrega de Pedidos</button>
                         <button type="button" data-view="products">Productos</button>
+                        <button type="button" data-view="artjet-store">Tienda Artjet</button>
                         <button type="button" data-view="pos">Punto de Venta</button>
                         <button type="button" data-view="ai-search">Asesor IA</button>
                         <button type="button" data-view="statistics">Estadísticas</button>
@@ -249,6 +251,23 @@ header('Referrer-Policy: same-origin');
                         <button class="small-button" id="copy-product-search-link" type="button" disabled>COPIAR ENLACE DE BÚSQUEDA</button>
                     </div>
                     <div id="admin-product-list"></div>
+                </section>
+
+                <section class="admin-view" id="view-artjet-store">
+                    <div class="view-heading artjet-admin-heading">
+                        <div>
+                            <p class="eyebrow">CATÁLOGO VINCULADO</p>
+                            <h1 class="admin-page-title">ARTJET — SINCRONIZACIÓN DE PRODUCTOS</h1>
+                            <p>Laboratorio Digital conserva precio, stock y variantes. Art‑Jet aporta contenido e identidad visual.</p>
+                        </div>
+                        <a class="secondary-button fit-button" href="../artjet/" target="_blank" rel="noopener">VISTA PREVIA</a>
+                    </div>
+                    <div class="artjet-sync-summary" id="artjet-sync-summary"></div>
+                    <div class="artjet-sync-toolbar">
+                        <div class="search-input-field"><input id="artjet-sync-search" type="search" placeholder="Código o producto" aria-label="Buscar productos Artjet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg></div>
+                        <select id="artjet-sync-filter" aria-label="Filtrar sincronización Artjet"><option value="all">Todos</option><option value="Tintas">Tintas</option><option value="Papeles">Papeles</option><option value="confirmed">Coincidencia confirmada</option><option value="review">Revisar</option><option value="unmatched">Sin coincidencia</option></select>
+                    </div>
+                    <div class="artjet-sync-table-wrap"><table class="artjet-sync-table"><thead><tr><th>CÓDIGO LD</th><th>PRODUCTO LABORATORIO DIGITAL</th><th>CATEGORÍA LD</th><th>COINCIDENCIA ART-JET</th><th>CATEGORÍA ART-JET</th><th>URL FUENTE</th><th>IMAGEN</th><th>DESCRIPCIÓN</th><th>ESTADO</th><th>ÚLTIMA SINCRONIZACIÓN</th></tr></thead><tbody id="artjet-sync-list"></tbody></table></div>
                 </section>
 
                 <?php if ($user['role'] === 'admin'): ?>

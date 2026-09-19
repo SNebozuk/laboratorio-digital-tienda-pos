@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 49;
+    private const CURRENT_MIGRATION_VERSION = 50;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -94,6 +94,7 @@ final class Database
                 self::migrateCheckoutCustomerNamesUppercase($pdo);
                 self::migrateAiCriteriaRefresh($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
                 self::migrateAiConversationCustomers($pdo);
+                self::migrateArtjetProductSync($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -158,8 +159,38 @@ final class Database
         self::migrateCheckoutCustomerNamesUppercase($pdo);
         self::migrateAiCriteriaRefresh($pdo, dirname($schemaPath) . '/ai_criteria_seed.sql');
         self::migrateAiConversationCustomers($pdo);
+        self::migrateArtjetProductSync($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    private static function migrateArtjetProductSync(PDO $pdo): void
+    {
+        $version = 50;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS artjet_product_sync (
+                product_id INTEGER PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+                source_url TEXT NOT NULL DEFAULT '',
+                store_title TEXT NOT NULL DEFAULT '',
+                store_description TEXT NOT NULL DEFAULT '',
+                artjet_category TEXT NOT NULL DEFAULT '',
+                artjet_subcategory TEXT NOT NULL DEFAULT '',
+                primary_image_path TEXT NOT NULL DEFAULT '',
+                additional_images_json TEXT NOT NULL DEFAULT '[]',
+                technical_info TEXT NOT NULL DEFAULT '',
+                match_status TEXT NOT NULL DEFAULT 'review' CHECK (match_status IN ('confirmed', 'review', 'unmatched', 'unsearched')),
+                sync_description INTEGER NOT NULL DEFAULT 0 CHECK (sync_description IN (0, 1)),
+                sync_images INTEGER NOT NULL DEFAULT 0 CHECK (sync_images IN (0, 1)),
+                publish_store INTEGER NOT NULL DEFAULT 0 CHECK (publish_store IN (0, 1)),
+                last_synced_at TEXT,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )"
+        );
+        $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
     }
 
     private static function migratePersistentSessions(PDO $pdo): void

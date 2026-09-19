@@ -64,6 +64,10 @@ try {
                     'featured_product_ids' => $app['settings']->featuredProductIds(),
                 ]);
 
+            case 'admin_artjet':
+                $app['auth']->requireUser();
+                Http::json(['ok' => true, 'products' => $app['artjet']->adminList()]);
+
             case 'ai_catalog_tool':
                 $app['auth']->requireUser();
                 $tool = (string) ($_GET['tool'] ?? 'buscarProductos');
@@ -264,6 +268,11 @@ try {
     Http::requireCsrf($input);
 
     switch ($action) {
+        case 'artjet_product_update':
+            $app['auth']->requireAdmin();
+            $app['artjet']->save(is_array($input['product'] ?? null) ? $input['product'] : []);
+            Http::json(['ok' => true]);
+
         case 'ai_catalog_transcribe':
             $app['auth']->requireUser();
             Http::json(['ok' => true, 'text' => $app['catalog_ai_audio']->transcribe($_FILES['audio'] ?? [])]);

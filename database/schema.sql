@@ -129,6 +129,24 @@ CREATE INDEX IF NOT EXISTS idx_variants_product
 CREATE INDEX IF NOT EXISTS idx_variants_barcode
     ON product_variants(barcode);
 
+CREATE TABLE IF NOT EXISTS artjet_product_sync (
+    product_id INTEGER PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+    source_url TEXT NOT NULL DEFAULT '',
+    store_title TEXT NOT NULL DEFAULT '',
+    store_description TEXT NOT NULL DEFAULT '',
+    artjet_category TEXT NOT NULL DEFAULT '',
+    artjet_subcategory TEXT NOT NULL DEFAULT '',
+    primary_image_path TEXT NOT NULL DEFAULT '',
+    additional_images_json TEXT NOT NULL DEFAULT '[]',
+    technical_info TEXT NOT NULL DEFAULT '',
+    match_status TEXT NOT NULL DEFAULT 'review' CHECK (match_status IN ('confirmed', 'review', 'unmatched', 'unsearched')),
+    sync_description INTEGER NOT NULL DEFAULT 0 CHECK (sync_description IN (0, 1)),
+    sync_images INTEGER NOT NULL DEFAULT 0 CHECK (sync_images IN (0, 1)),
+    publish_store INTEGER NOT NULL DEFAULT 0 CHECK (publish_store IN (0, 1)),
+    last_synced_at TEXT,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS supplier_order_drafts (
     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     payload_json TEXT NOT NULL DEFAULT '{}',
