@@ -66,7 +66,7 @@ $app['product_images'] = new ProductImageService(
     $app['root'],
     $app['config']
 );
-$app['artjet'] = new ArtjetService($app['pdo'], $app['product_images']);
+$app['artjet'] = new ArtjetService($app['pdo'], $app['product_images'], $app['root']);
 $app['stock'] = new StockService($app['pdo']);
 $app['store_visits'] = new StoreVisitService($app['pdo']);
 $app['supplier_orders'] = new SupplierOrderService($app['pdo']);

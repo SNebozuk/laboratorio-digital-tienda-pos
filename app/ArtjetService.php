@@ -9,7 +9,8 @@ final class ArtjetService
 {
     public function __construct(
         private readonly PDO $pdo,
-        private readonly ProductImageService $images
+        private readonly ProductImageService $images,
+        private readonly string $root
     )
     {
     }
@@ -100,11 +101,16 @@ final class ArtjetService
         foreach ($rows as $row) {
             $images[(int) $row['product_id']] = (string) $row['primary_image_path'];
         }
-        $defaults = ['200A420' => '/uploads/artjet/papel-fotografico-a4-200g-artjet.png'];
-        $variants = $this->pdo->query('SELECT product_id, sku FROM product_variants WHERE sku IN ("200A420")')->fetchAll();
+        $variants = $this->pdo->query('SELECT product_id, sku FROM product_variants WHERE sku <> ""')->fetchAll();
         foreach ($variants as $variant) {
             $productId = (int) $variant['product_id'];
-            $images[$productId] ??= $defaults[(string) $variant['sku']];
+            foreach (['webp', 'jpg', 'png'] as $extension) {
+                $path = '/uploads/artjet/products/' . rawurlencode((string) $variant['sku']) . '.' . $extension;
+                if (is_file($this->root . '/v1' . $path)) {
+                    $images[$productId] = $path;
+                    break;
+                }
+            }
         }
         return $images;
     }
