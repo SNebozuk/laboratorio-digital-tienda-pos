@@ -94,10 +94,9 @@ final class ArtjetService
     public function importVerifiedSample(): array
     {
         $statement = $this->pdo->prepare(
-            'SELECT p.id, s.primary_image_path
+            'SELECT p.id
              FROM products p
              JOIN product_variants v ON v.product_id = p.id
-             LEFT JOIN artjet_product_sync s ON s.product_id = p.id
              WHERE p.deleted_at IS NULL AND p.active = 1
                AND v.sku = :sku AND v.barcode = :barcode
              LIMIT 1'
@@ -109,12 +108,7 @@ final class ArtjetService
             throw new ValidationException('No encontramos el producto Art-Jet de prueba con su SKU y código de barras exactos.');
         }
 
-        $existingImage = trim((string) ($matched['primary_image_path'] ?? ''));
-        $image = $existingImage !== ''
-            ? ['image_path' => $existingImage]
-            : $this->images->receiveTiendaNubeImage(
-                'https://acdn-us.mitiendanube.com/stores/001/796/172/products/papel-fotografico-brillante-foil-adhesivo-nuevo-115g-a4-100h-c5538cf89d455f326317852506822652-640-0.webp'
-            );
+        $image = ['image_path' => '/uploads/artjet/papel-fotografico-adhesivo-115g-cutout.png'];
         $description = 'Papel fotográfico brillante autoadhesivo de alta resolución, con pegamento potente. No amarillea con el tiempo y resiste agua y salpicaduras (no sumergible). Ideal para stickers con calidad fotográfica, candy bar, etiquetas de producto y packaging. Recomendado para superficies 100% lisas y no porosas.';
         $technical = "Formato: A4\nGramaje: 115 g\nPresentación: 100 hojas\nTerminación: brillante autoadhesiva\nUso recomendado: stickers, etiquetas, candy bar y packaging\nResistencia: agua y salpicaduras (no sumergible)";
 
