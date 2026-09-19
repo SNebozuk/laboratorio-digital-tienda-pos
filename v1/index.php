@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+$host = strtolower((string) preg_replace('/:\\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
+$requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
+if (in_array($host, ['artjet.com.ar', 'www.artjet.com.ar'], true) && in_array($requestPath, ['/', '/index.php'], true)) {
+    header('Location: /artjet/', true, 302);
+    exit;
+}
+
 $app = require dirname(__DIR__) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
 $storeUser = $app['auth']->user();
