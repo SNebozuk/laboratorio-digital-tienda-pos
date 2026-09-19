@@ -16,8 +16,6 @@ $storeAliasHosts = [
     'laboratoriodigital.com.ar',
     'laboratorio-digital.com.ar',
     'www.laboratorio-digital.com.ar',
-    'artjet.com.ar',
-    'www.artjet.com.ar',
 ];
 if (PHP_SAPI !== 'cli' && $currentHost !== '' && $currentHost !== $canonicalStoreHost && in_array($currentHost, $storeAliasHosts, true)) {
     $requestUri = (string) ($_SERVER['REQUEST_URI'] ?? '/');

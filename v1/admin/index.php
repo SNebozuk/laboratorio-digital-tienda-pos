@@ -260,7 +260,7 @@ header('Referrer-Policy: same-origin');
                             <h1 class="admin-page-title">ARTJET — SINCRONIZACIÓN DE PRODUCTOS</h1>
                             <p>Laboratorio Digital conserva precio, stock y variantes. Art‑Jet aporta contenido e identidad visual.</p>
                         </div>
-                        <div class="artjet-admin-actions"><button class="secondary-button fit-button" id="artjet-import-sample" type="button">IMPORTAR PRODUCTO DE PRUEBA</button><a class="secondary-button fit-button" href="../artjet/" target="_blank" rel="noopener">VISTA PREVIA</a></div>
+                        <div class="artjet-admin-actions"><button class="secondary-button fit-button" id="artjet-import-sample" type="button">IMPORTAR PRODUCTO DE PRUEBA</button><a class="secondary-button fit-button" href="/artjet/" target="_blank" rel="noopener">VISTA PREVIA</a></div>
                     </div>
                     <div class="artjet-sync-summary" id="artjet-sync-summary"></div>
                     <div class="artjet-sync-toolbar">

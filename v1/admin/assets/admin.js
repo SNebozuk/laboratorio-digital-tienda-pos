@@ -643,7 +643,7 @@
                 <label><input name="sync_images" type="checkbox" ${product.sync_images ? 'checked' : ''}> Sincronizar imágenes</label>
                 <label><input name="publish_store" type="checkbox" ${product.publish_store ? 'checked' : ''}> Publicar en tienda Artjet</label>
             </div>
-            <div class="modal-actions"><button class="primary-button" type="submit">GUARDAR</button><a class="secondary-button" href="../artjet/?preview_product=${Number(product.product_id)}" target="_blank" rel="noopener">VISTA PREVIA</a><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
+            <div class="modal-actions"><button class="primary-button" type="submit">GUARDAR</button><a class="secondary-button" href="/artjet/?preview_product=${Number(product.product_id)}" target="_blank" rel="noopener">VISTA PREVIA</a><button class="secondary-button" type="button" data-close-modal>VOLVER</button></div>
         </form>`);
         document.querySelector('#artjet-product-form [name="match_status"]').value = product.match_status;
     }
