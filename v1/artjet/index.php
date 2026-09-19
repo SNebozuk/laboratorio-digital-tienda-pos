@@ -79,7 +79,7 @@ $formatFor = static function (string $name): string {
 </head><body>
 <header class="artjet-header">
     <a href="#inicio" class="artjet-logo" aria-label="Artjet">ART<span>JET</span></a>
-    <nav><a href="#papeles">PAPELES</a><a href="#tintas">TINTAS</a><a href="#catalogo">CATÁLOGO</a></nav>
+    <nav><a href="#fotograficos">PAPELES</a><a href="#tintas-productos">TINTAS</a><a href="#catalogo">CATÁLOGO</a></nav>
     <div class="artjet-header-actions"><a href="/">TIENDA</a><a href="/cotizador.php">COTIZADOR</a><a class="artjet-header-action" href="#catalogo">EXPLORAR <span>↘</span></a></div>
 </header>
 <main id="inicio">
@@ -124,7 +124,7 @@ $formatFor = static function (string $name): string {
                         <article class="artjet-card" data-artjet-card>
                             <div class="artjet-card-inner">
                                 <button class="artjet-card-face artjet-card-front" type="button" data-artjet-flip aria-expanded="false" aria-label="Ver información de <?= $escape((string) $product['name']) ?>">
-                                    <span class="artjet-card-image<?= $isA4 ? ' is-a4' : '' ?>"><?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt="<?= $escape((string) $product['name']) ?>"><?php else: ?><span>SIN IMAGEN</span><?php endif; ?><b><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></b></span>
+                                    <span class="artjet-card-image<?= $isA4 ? ' is-a4' : '' ?>"><?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt="<?= $escape((string) $product['name']) ?>"><?php endif; ?><span class="artjet-image-fallback"<?= !empty($image) ? ' hidden' : '' ?>>SIN IMAGEN</span><b><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></b></span>
                                 </button>
                                 <div class="artjet-card-face artjet-card-back" inert>
                                     <button class="artjet-card-close" type="button" data-artjet-flip aria-label="Volver a la foto">↙</button>
@@ -157,5 +157,5 @@ $formatFor = static function (string $name): string {
     <div class="artjet-chat-typing" id="artjet-chat-typing" hidden>Escribiendo…</div>
     <form id="artjet-chat-form"><textarea id="artjet-chat-input" rows="1" maxlength="800" placeholder="Escribí tu consulta…" aria-label="Consulta"></textarea><button type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3-6-8-2Z"/></svg></button></form>
 </section>
-<script src="assets/artjet.js?v=2" defer></script>
+<script src="assets/artjet.js?v=3" defer></script>
 </body></html>

@@ -1,6 +1,17 @@
 (() => {
     'use strict';
 
+    document.querySelectorAll('.artjet-card-image img').forEach(image => {
+        const showFallback = () => {
+            image.hidden = true;
+            const fallback = image.parentElement?.querySelector('.artjet-image-fallback');
+            if (fallback) fallback.hidden = false;
+        };
+
+        image.addEventListener('error', showFallback, { once: true });
+        if (image.complete && image.naturalWidth === 0) showFallback();
+    });
+
     document.addEventListener('click', event => {
         const back = event.target.closest('.artjet-card-back');
         const trigger = event.target.closest('[data-artjet-flip]')
