@@ -104,6 +104,9 @@ final class ArtjetService
         $variants = $this->pdo->query('SELECT product_id, sku FROM product_variants WHERE sku <> ""')->fetchAll();
         foreach ($variants as $variant) {
             $productId = (int) $variant['product_id'];
+            if (isset($images[$productId])) {
+                continue;
+            }
             foreach (['webp', 'jpg', 'png'] as $extension) {
                 $path = '/uploads/artjet/products/' . rawurlencode((string) $variant['sku']) . '.' . $extension;
                 if (is_file($this->root . '/v1' . $path)) {

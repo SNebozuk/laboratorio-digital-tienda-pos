@@ -76,6 +76,20 @@
     padding: clamp(24px, 5vw, 76px);
 }
 
+.artjet-card-front .artjet-card-image img {
+    width: auto;
+    height: 88%;
+    max-width: 84%;
+    max-height: 88%;
+}
+
+.artjet-card-front .artjet-card-image.is-a4 img {
+    width: auto;
+    height: 92%;
+    max-width: 82%;
+    max-height: 92%;
+}
+
 .artjet-card:hover .artjet-card-image img {
     transform: none;
 }
