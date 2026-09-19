@@ -90,6 +90,46 @@ final class ArtjetService
         }));
     }
 
+    /** @return array<int, string> */
+    public function imagePaths(): array
+    {
+        $rows = $this->pdo->query(
+            'SELECT product_id, primary_image_path FROM artjet_product_sync WHERE primary_image_path <> ""'
+        )->fetchAll();
+        $images = [];
+        foreach ($rows as $row) {
+            $images[(int) $row['product_id']] = (string) $row['primary_image_path'];
+        }
+        $defaults = ['200A420' => '/uploads/artjet/papel-fotografico-a4-200g-artjet.png'];
+        $variants = $this->pdo->query('SELECT product_id, sku FROM product_variants WHERE sku IN ("200A420")')->fetchAll();
+        foreach ($variants as $variant) {
+            $productId = (int) $variant['product_id'];
+            $images[$productId] ??= $defaults[(string) $variant['sku']];
+        }
+        return $images;
+    }
+
+    public function setProductImage(int $productId, string $imagePath): void
+    {
+        $exists = $this->pdo->prepare('SELECT 1 FROM products WHERE id = :id AND deleted_at IS NULL');
+        $exists->execute(['id' => $productId]);
+        if ($exists->fetchColumn() === false) {
+            throw new ValidationException('Producto inválido.');
+        }
+
+        $statement = $this->pdo->prepare(
+            'INSERT INTO artjet_product_sync(product_id, primary_image_path, updated_at)
+             VALUES(:product_id, :primary_image_path, CURRENT_TIMESTAMP)
+             ON CONFLICT(product_id) DO UPDATE SET
+                primary_image_path = excluded.primary_image_path,
+                updated_at = CURRENT_TIMESTAMP'
+        );
+        $statement->execute([
+            'product_id' => $productId,
+            'primary_image_path' => $this->localImagePath($imagePath),
+        ]);
+    }
+
     /** @return array{product_id:int,image_path:string} */
     public function importVerifiedSample(): array
     {

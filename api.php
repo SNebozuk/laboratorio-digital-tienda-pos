@@ -61,6 +61,7 @@ try {
                 Http::json([
                     'ok' => true,
                     'products' => $app['products']->adminCatalog(),
+                    'artjet_image_paths' => $app['artjet']->imagePaths(),
                     'featured_product_ids' => $app['settings']->featuredProductIds(),
                 ]);
 
@@ -275,6 +276,14 @@ try {
         case 'artjet_product_update':
             $app['auth']->requireAdmin();
             $app['artjet']->save(is_array($input['product'] ?? null) ? $input['product'] : []);
+            Http::json(['ok' => true]);
+
+        case 'artjet_product_image_update':
+            $app['auth']->requireAdmin();
+            $app['artjet']->setProductImage(
+                (int) ($input['product_id'] ?? 0),
+                (string) ($input['image_path'] ?? '')
+            );
             Http::json(['ok' => true]);
 
         case 'ai_catalog_transcribe':
