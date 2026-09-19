@@ -7,7 +7,10 @@ use PDO;
 
 final class ArtjetService
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(
+        private readonly PDO $pdo,
+        private readonly ProductImageService $images
+    )
     {
     }
 
@@ -82,8 +85,69 @@ final class ArtjetService
     public function publicProducts(): array
     {
         return array_values(array_filter($this->adminList(), static function (array $product): bool {
-            return array_filter($product['variants'], static fn (array $variant): bool => $variant['active']) !== [];
+            return $product['publish_store']
+                && array_filter($product['variants'], static fn (array $variant): bool => $variant['active']) !== [];
         }));
+    }
+
+    /** @return array{product_id:int,image_path:string} */
+    public function importVerifiedSample(): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT p.id, s.primary_image_path
+             FROM products p
+             JOIN product_variants v ON v.product_id = p.id
+             LEFT JOIN artjet_product_sync s ON s.product_id = p.id
+             WHERE p.deleted_at IS NULL AND p.active = 1
+               AND v.sku = :sku AND v.barcode = :barcode
+             LIMIT 1'
+        );
+        $statement->execute(['sku' => '115A4100', 'barcode' => '721450695454']);
+        $matched = $statement->fetch();
+        $productId = (int) ($matched['id'] ?? 0);
+        if ($productId < 1) {
+            throw new ValidationException('No encontramos el producto Art-Jet de prueba con su SKU y código de barras exactos.');
+        }
+
+        $existingImage = trim((string) ($matched['primary_image_path'] ?? ''));
+        $image = $existingImage !== ''
+            ? ['image_path' => $existingImage]
+            : $this->images->receiveTiendaNubeImage(
+                'https://acdn-us.mitiendanube.com/stores/001/796/172/products/papel-fotografico-brillante-foil-adhesivo-nuevo-115g-a4-100h-c5538cf89d455f326317852506822652-640-0.webp'
+            );
+        $description = 'Papel fotográfico brillante autoadhesivo de alta resolución, con pegamento potente. No amarillea con el tiempo y resiste agua y salpicaduras (no sumergible). Ideal para stickers con calidad fotográfica, candy bar, etiquetas de producto y packaging. Recomendado para superficies 100% lisas y no porosas.';
+        $technical = "Formato: A4\nGramaje: 115 g\nPresentación: 100 hojas\nTerminación: brillante autoadhesiva\nUso recomendado: stickers, etiquetas, candy bar y packaging\nResistencia: agua y salpicaduras (no sumergible)";
+
+        $this->pdo->beginTransaction();
+        try {
+            $update = $this->pdo->prepare(
+                'UPDATE products SET description = :description, image_path = :image_path, updated_at = CURRENT_TIMESTAMP WHERE id = :id'
+            );
+            $update->execute(['id' => $productId, 'description' => $description, 'image_path' => $image['image_path']]);
+            $this->save([
+                'product_id' => $productId,
+                'source_url' => '',
+                'store_title' => 'Papel Fotográfico Brillante Adhesivo 115g',
+                'store_description' => $description,
+                'artjet_category' => 'Papeles',
+                'artjet_subcategory' => 'Fotográficos adhesivos',
+                'primary_image_path' => $image['image_path'],
+                'additional_images' => [],
+                'technical_info' => $technical,
+                'match_status' => 'confirmed',
+                'sync_description' => true,
+                'sync_images' => true,
+                'publish_store' => true,
+            ]);
+            $synced = $this->pdo->prepare('UPDATE artjet_product_sync SET last_synced_at = CURRENT_TIMESTAMP WHERE product_id = :id');
+            $synced->execute(['id' => $productId]);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            $this->pdo->rollBack();
+            throw $exception;
+        }
+
+        return ['product_id' => $productId, 'image_path' => $image['image_path']];
     }
 
     /** @param array<string, mixed> $data */

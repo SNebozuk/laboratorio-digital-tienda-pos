@@ -52,7 +52,6 @@ require_once __DIR__ . '/SettingsService.php';
 
 $app['auth'] = new Auth($app['pdo']);
 $app['products'] = new ProductService($app['pdo']);
-$app['artjet'] = new ArtjetService($app['pdo']);
 $app['settings'] = new SettingsService($app['pdo']);
 $app['tutorials'] = new TutorialService($app['pdo']);
 $app['catalog_ai_tools'] = new CatalogAiToolService($app['products']);
@@ -67,6 +66,7 @@ $app['product_images'] = new ProductImageService(
     $app['root'],
     $app['config']
 );
+$app['artjet'] = new ArtjetService($app['pdo'], $app['product_images']);
 $app['stock'] = new StockService($app['pdo']);
 $app['store_visits'] = new StoreVisitService($app['pdo']);
 $app['supplier_orders'] = new SupplierOrderService($app['pdo']);

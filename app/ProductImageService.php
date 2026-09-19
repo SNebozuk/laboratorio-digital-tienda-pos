@@ -55,17 +55,30 @@ final class ProductImageService
         if (($parts['scheme'] ?? '') !== 'https' || !str_ends_with($host, '.mitiendanube.com')) {
             throw new ValidationException('La foto de importación debe provenir de Tiendanube.');
         }
-        $context = stream_context_create(['http' => ['timeout' => 15, 'follow_location' => 0], 'https' => ['timeout' => 15, 'follow_location' => 0]]);
-        $bytes = @file_get_contents($url, false, $context);
-        if ($bytes === false || strlen($bytes) < 1 || strlen($bytes) > 8 * 1024 * 1024) {
+        $request = curl_init($url);
+        if ($request === false) throw new \RuntimeException('No se pudo iniciar la descarga de la foto.');
+        curl_setopt_array($request, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_USERAGENT => 'LaboratorioDigital/1.0 Artjet importer',
+        ]);
+        $bytes = curl_exec($request);
+        $status = (int) curl_getinfo($request, CURLINFO_RESPONSE_CODE);
+        curl_close($request);
+        if (!is_string($bytes) || $status < 200 || $status >= 300 || strlen($bytes) < 1 || strlen($bytes) > 8 * 1024 * 1024) {
             throw new ValidationException('No se pudo descargar una foto de Tiendanube.');
         }
         $temporary = tempnam(sys_get_temp_dir(), 'ld-image-');
         if ($temporary === false || file_put_contents($temporary, $bytes) === false) throw new \RuntimeException('No se pudo preparar la foto importada.');
         try {
-            $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->file($temporary);
+            $dimensions = @getimagesize($temporary);
+            $mime = class_exists('\finfo')
+                ? (string) (new \finfo(FILEINFO_MIME_TYPE))->file($temporary)
+                : (string) ($dimensions['mime'] ?? '');
             $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-            if (!isset($extensions[$mime]) || @getimagesize($temporary) === false) throw new ValidationException('Una foto de Tiendanube no es válida.');
+            if (!isset($extensions[$mime]) || $dimensions === false) throw new ValidationException('Una foto de Tiendanube no es válida.');
             $relativeDirectory = date('Y/m');
             $directory = $this->storageRoot() . '/' . $relativeDirectory;
             if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) throw new \RuntimeException('No se pudo crear la carpeta de fotos.');

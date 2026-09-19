@@ -248,6 +248,7 @@
         artjetSyncSummary: document.getElementById('artjet-sync-summary'),
         artjetSyncSearch: document.getElementById('artjet-sync-search'),
         artjetSyncFilter: document.getElementById('artjet-sync-filter'),
+        artjetImportSample: document.getElementById('artjet-import-sample'),
     };
     let aiMicStream = null;
     let aiMicAudioContext = null;
@@ -7594,6 +7595,20 @@
     elements.artjetSyncFilter?.addEventListener('change', event => {
         state.artjetFilter = event.target.value;
         renderArtjetProducts();
+    });
+    elements.artjetImportSample?.addEventListener('click', async () => {
+        const button = elements.artjetImportSample;
+        button.disabled = true;
+        try {
+            await apiPost({ action: 'artjet_import_verified_sample' });
+            state.artjetLoaded = false;
+            await loadArtjetProducts(true);
+            toast('Producto de prueba importado con información e imagen local.');
+        } catch (error) {
+            toast(error.message);
+        } finally {
+            button.disabled = false;
+        }
     });
     elements.artjetSyncList?.addEventListener('click', event => {
         const row = event.target.closest('[data-edit-artjet-product]');

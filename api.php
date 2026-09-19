@@ -268,6 +268,10 @@ try {
     Http::requireCsrf($input);
 
     switch ($action) {
+        case 'artjet_import_verified_sample':
+            $app['auth']->requireAdmin();
+            Http::json(['ok' => true, 'imported' => $app['artjet']->importVerifiedSample()]);
+
         case 'artjet_product_update':
             $app['auth']->requireAdmin();
             $app['artjet']->save(is_array($input['product'] ?? null) ? $input['product'] : []);
