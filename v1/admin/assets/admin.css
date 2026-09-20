@@ -1718,6 +1718,15 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
     line-height: 1.2;
     text-transform: uppercase;
 }
+.order-detail-item-row.is-assembly-active { grid-template-columns: 28px 48px 64px minmax(170px, 1fr) minmax(135px, .8fr) minmax(95px, auto); }
+.order-assembly-start { min-height: 46px; padding: 0 16px; border: 1px solid #1769e0; border-radius: 10px; background: #1769e0; color: #fff; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.order-assembly-start:disabled { border-color: #4c5664; background: #4c5664; cursor: default; }
+.order-assembly-check { position: relative; display: grid; width: 24px; height: 24px; place-items: center; margin: 0; cursor: pointer; }
+.order-assembly-check[hidden] { display: none; }
+.order-assembly-check input { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; opacity: 0; }
+.order-assembly-check span { display: grid; width: 22px; height: 22px; place-items: center; border: 2px solid #62d8ff; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px rgba(98,216,255,.18); color: transparent; font-size: 16px; font-weight: 900; line-height: 1; }
+.order-assembly-check input:checked + span { border-color: transparent; background: transparent; box-shadow: none; color: #20b85a; }
+.order-assembly-check input:focus-visible + span { outline: 3px solid rgba(24,140,76,.2); outline-offset: 2px; }
 .order-detail-item-row:nth-child(odd) { background: #f2edf0; }
 .order-detail-item-row:nth-child(even) { background: #fff; }
 .order-detail-item-row > * { min-width: 0; color: inherit; font: inherit; }

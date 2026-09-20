@@ -3851,9 +3851,10 @@
         });
     }
 
-    function orderDetailItemsMarkup(items) {
+    function orderDetailItemsMarkup(items, assemblyControl = false) {
         return `<div class="order-detail-item-list">${sortedOrderItems(items).map(item => `
-            <div class="order-detail-item-row">
+            <div class="order-detail-item-row ${assemblyControl ? 'order-detail-assembly-row' : ''}">
+                ${assemblyControl ? '<label class="order-assembly-check" hidden><input type="checkbox" data-order-assembly-item><span aria-hidden="true">✓</span></label>' : ''}
                 ${safeImage(item.image_path) ? `<img src="${escapeHtml(safeImage(item.image_path))}" alt="">` : '<span class="order-detail-product-placeholder">SIN FOTO</span>'}
                 <span class="order-detail-quantity">${Number(item.quantity)}</span>
                 <span class="order-detail-product-name">${escapeHtml(item.product_name || 'Producto')}</span>
@@ -3920,6 +3921,7 @@
                         </div>
                         <div class="order-detail-head-actions">
                             ${historyName ? `<button class="small-button" type="button" data-customer-history="${escapeHtml(historyName)}">← Historial</button>` : ''}
+                            ${order.archived_at || order.status === 'cancelled' ? '' : `<button class="order-assembly-start" type="button" data-start-order-assembly>ARMAR PEDIDO</button>`}
                             ${order.archived_at ? '' : `<button class="small-button" type="button" data-archive-order="${Number(order.id)}">Archivar</button>`}
                             <button class="small-button" type="button" data-reopen-order="${Number(order.id)}">Reabrir</button>
                             ${order.archived_at || order.status === 'cancelled' ? '' : `<button class="small-button danger-button" type="button" data-cancel-order="${Number(order.id)}">Cancelar Venta</button>`}
@@ -3930,7 +3932,7 @@
                         <div><span>FECHA</span><strong>${escapeHtml(argentinaDateLabel(order.created_at))}</strong><small>${escapeHtml(order.archived_at ? 'Venta archivada' : (order.status === 'cancelled' ? 'Venta cancelada' : 'Venta activa'))}</small></div>
                     </div>
                     <div class="order-detail-lines">
-                        ${orderDetailItemsMarkup(order.items)}
+                        ${orderDetailItemsMarkup(order.items, !order.archived_at && order.status !== 'cancelled')}
                     </div>
                     <div class="order-detail-total"><span>${Number(order.discount_cents) > 0 ? `SUBTOTAL ${money(order.subtotal_cents)}<small>DESCUENTO ${discountSourceText(order.discount_type)} (${Number(order.discount_percent)}%): −${money(order.discount_cents)}</small><b>TOTAL</b>` : 'TOTAL'}</span><strong>${money(order.total_cents)}</strong></div>
                     <div class="order-actions order-detail-actions">${orderActions(actionOrder)}</div>
@@ -6678,7 +6680,34 @@
         }
         const archiveOrder = event.target.closest('[data-archive-order]');
         if (archiveOrder) {
+            const detail = archiveOrder.closest('.order-detail');
+            if (detail?.dataset.orderAssemblyActive === '1' && detail.querySelector('[data-order-assembly-item]:not(:checked)')) {
+                toast('Marcá todos los productos antes de archivar la venta.');
+                return;
+            }
             archiveSelectedOrders([Number(archiveOrder.dataset.archiveOrder)]);
+            return;
+        }
+        const startOrderAssembly = event.target.closest('[data-start-order-assembly]');
+        if (startOrderAssembly) {
+            const detail = startOrderAssembly.closest('.order-detail');
+            if (!detail) return;
+            detail.dataset.orderAssemblyActive = '1';
+            detail.querySelectorAll('.order-assembly-check').forEach(control => { control.hidden = false; });
+            detail.querySelectorAll('.order-detail-assembly-row').forEach(row => row.classList.add('is-assembly-active'));
+            startOrderAssembly.disabled = true;
+            startOrderAssembly.textContent = 'ARMANDO PEDIDO';
+            const archiveButton = detail.querySelector('[data-archive-order]');
+            if (archiveButton) archiveButton.disabled = true;
+            return;
+        }
+        const assemblyItem = event.target.closest('[data-order-assembly-item]');
+        if (assemblyItem) {
+            const detail = assemblyItem.closest('.order-detail');
+            const archiveButton = detail?.querySelector('[data-archive-order]');
+            if (archiveButton) {
+                archiveButton.disabled = Boolean(detail.querySelector('[data-order-assembly-item]:not(:checked)'));
+            }
             return;
         }
         const reopenOrder = event.target.closest('[data-reopen-order]');
