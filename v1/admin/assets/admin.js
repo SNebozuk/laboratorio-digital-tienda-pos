@@ -2350,7 +2350,7 @@
                             <input type="number" value="${item.quantity}" min="0" max="${Number(item.variant.available_stock)}" data-pos-input="${item.variantId}" aria-label="Cantidad de ${escapeHtml(item.product.name)}">
                             <button type="button" data-pos-quantity="${item.variantId}" data-value="${item.quantity + 1}" ${item.quantity >= Number(item.variant.available_stock) ? 'disabled' : ''} aria-label="Agregar una unidad">+</button>
                         </div>
-                        <small class="pos-cart-available">Stock disponible: ${Math.max(0, Number(item.variant.available_stock) - item.quantity)}</small>
+                        <small class="pos-cart-available">Stock: ${Math.max(0, Number(item.variant.available_stock) - item.quantity)}</small>
                         <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
                         <button class="pos-remove-cart-line icon-action-button trash-button" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
                     </div>
