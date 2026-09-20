@@ -3317,8 +3317,8 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-page-cart .cart-lines { align-content: start; grid-auto-rows: max-content; gap: 0; margin: 4px 0; }
 .pos-page-cart .pos-cart-product-group { border-bottom: 1px solid #e4e8f0; }
 .pos-page-cart .pos-cart-product-group:last-child { border-bottom: 0; }
-.pos-cart-group-name { display: block; padding: 2px 0 0; color: #252a3a; font-size: 15px; font-weight: 750; text-transform: uppercase; }
-.pos-page-cart .pos-cart-detail-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto minmax(105px, auto) minmax(100px, auto) 34px; align-items: center; gap: 10px; padding: 1px 0; background: transparent !important; border-width: 0 0 1px !important; border-radius: 0; box-shadow: none !important; }
+.pos-cart-group-name { display: block; padding: 2px 0 0 34px; color: #252a3a; font-size: 15px; font-weight: 750; text-transform: uppercase; }
+.pos-page-cart .pos-cart-detail-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto minmax(105px, auto) minmax(100px, auto) 34px; align-items: center; gap: 8px; padding: 1px 0; background: transparent !important; border-width: 0 0 1px !important; border-radius: 0; box-shadow: none !important; }
 .pos-page-cart .pos-cart-product-group .pos-cart-detail-row { border-bottom: 0 !important; }
 .pos-cart-product { min-width: 0; }
 .pos-cart-product strong { display: block; overflow: hidden; color: #252a3a; font-size: 15px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
@@ -4189,13 +4189,12 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .pos-embedded .pos-main-total { min-width: 0; padding-left: 0; border-left: 0; }
 
 @media (min-width:981px) {
-    .pos-page-workspace { height:calc(100vh - 70px); min-height:0; overflow:hidden; box-sizing:border-box; }
+    .pos-page-workspace { min-height:0; overflow:visible; box-sizing:border-box; }
     .pos-page-products { position:sticky; top:0; align-self:start; }
     .pos-page-products .pos-customer-checkout { margin-top:10px; padding-top:0; }
     .pos-page-products > #complete-sale-button { margin-top:10px; }
-    .pos-page-cart { position:sticky; top:0; display:flex; flex-direction:column; align-self:stretch; min-height:0; overflow:hidden; }
-    .pos-page-cart .cart-lines { flex:1 1 auto; min-height:0; overflow-y:auto; }
-    .pos-embedded .pos-page-workspace { height:100vh; }
+    .pos-page-cart { position:sticky; top:0; display:flex; flex-direction:column; align-self:start; min-height:0; overflow:visible; }
+    .pos-page-cart .cart-lines { flex:none; min-height:0; overflow:visible; }
 }
 
 /* Buscadores: el criterio queda dentro del campo y la lupa a la derecha. */

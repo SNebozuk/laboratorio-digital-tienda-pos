@@ -2366,11 +2366,12 @@
         )));
         elements.posCartLines.innerHTML = conflictNotice + (items.length ? sortedGroups.map(group => `
             <section class="pos-cart-product-group">
-                <strong class="pos-cart-group-name">${escapeHtml(group.product.name)}</strong>
+                ${group.items.length > 1 ? `<strong class="pos-cart-group-name">${escapeHtml(group.product.name)}</strong>` : ''}
                 ${group.items.map(item => `
                     <div class="cart-line pos-cart-detail-row ${state.posStockConflicts.has(Number(item.variantId)) ? 'stock-conflict' : ''}">
                         ${requiresVerification ? `<label class="pos-cart-check" title="Producto verificado"><input type="checkbox" data-pos-checked="${item.variantId}" ${state.posCheckedVariants.has(Number(item.variantId)) ? 'checked' : ''} aria-label="Marcar ${escapeHtml(item.product.name)} como verificado"><span aria-hidden="true">✓</span></label>` : '<span aria-hidden="true"></span>'}
                         <div class="pos-cart-product">
+                            ${group.items.length === 1 ? `<strong>${escapeHtml(group.product.name)}</strong>` : ''}
                             ${variantDisplayName(item.product, item.variant)
                                 ? `<small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
                                 : ''}
