@@ -35,6 +35,7 @@
         openOrderCount: 0,
         pendingDeliveryCount: 0,
         posCart: new Map(),
+        posCheckedVariants: new Set(),
         posQuery: '',
         posProductId: null,
         pendingBarcode: '',
@@ -485,6 +486,7 @@
             button.classList.toggle('active', highlightNavigation && button.dataset.view === view);
         });
         document.querySelector('.admin-shell')?.classList.toggle('admin-design-mode', view === 'design');
+        if (elements.adminKlaus) elements.adminKlaus.hidden = view === 'pos';
         if (elements.mobileDashboard) {
             elements.mobileDashboard.hidden = true;
             elements.mobileDashboardToggle?.setAttribute('aria-expanded', 'false');
@@ -2080,6 +2082,19 @@
         return Number(state.posCart.get(Number(variantId)) || 0);
     }
 
+    function posHasIdentifiedCustomer() {
+        const customer = document.getElementById('pos-customer')?.value.trim() || '';
+        return customer !== '' && fold(customer) !== 'consumidor final';
+    }
+
+    function updatePosCompletionState() {
+        if (!elements.completeSale) return;
+        const allChecked = Array.from(state.posCart.keys()).every(variantId => (
+            state.posCheckedVariants.has(Number(variantId))
+        ));
+        elements.completeSale.disabled = state.posCart.size === 0 || (!posHasIdentifiedCustomer() && !allChecked);
+    }
+
     function persistPosCart() {
         try {
             if (state.posCart.size === 0) {
@@ -2115,6 +2130,7 @@
             } catch {
                 // El nombre sigue disponible durante esta pantalla.
             }
+            updatePosCompletionState();
         });
     }
 
@@ -2170,6 +2186,9 @@
         }
         const max = Number(indexed.variant.available_stock);
         const quantity = Math.max(0, Math.min(max, Number(requested) || 0));
+        if (quantity !== posQuantity(variantId)) {
+            state.posCheckedVariants.delete(Number(variantId));
+        }
         if (quantity) {
             state.posCart.set(Number(variantId), quantity);
         } else {
@@ -2302,7 +2321,11 @@
             0
         );
         elements.posTotal.textContent = money(total);
-        elements.completeSale.disabled = items.length === 0;
+        const currentVariantIds = new Set(items.map(item => Number(item.variantId)));
+        Array.from(state.posCheckedVariants).forEach(variantId => {
+            if (!currentVariantIds.has(Number(variantId))) state.posCheckedVariants.delete(Number(variantId));
+        });
+        updatePosCompletionState();
         elements.posClearCart.disabled = items.length === 0;
         const conflictNames = Array.from(state.posStockConflicts).map(variantId => {
             const indexed = index.get(Number(variantId));
@@ -2352,6 +2375,7 @@
                         </div>
                         <small class="pos-cart-available">Stock: ${Math.max(0, Number(item.variant.available_stock) - item.quantity)}</small>
                         <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
+                        <label class="pos-cart-check" title="Producto verificado"><input type="checkbox" data-pos-checked="${item.variantId}" ${state.posCheckedVariants.has(Number(item.variantId)) ? 'checked' : ''} aria-label="Marcar ${escapeHtml(item.product.name)} como verificado"><span aria-hidden="true">✓</span></label>
                         <button class="pos-remove-cart-line icon-action-button trash-button" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
                     </div>
                 `).join('')}
@@ -2665,6 +2689,10 @@
         }
         const customerName = document.getElementById('pos-customer')?.value.trim() || '';
         const customerPhone = document.getElementById('pos-customer-phone')?.value.trim() || '';
+        if (!posHasIdentifiedCustomer() && items.some(item => !state.posCheckedVariants.has(Number(item.variant_id)))) {
+            toast('Verificá todos los productos antes de finalizar la venta.');
+            return null;
+        }
         if (customerName && customerPhone.replace(/\D+/g, '').length < 8) {
             toast('Para registrar una venta a nombre de un cliente, ingresá su WhatsApp.');
             document.getElementById('pos-customer-phone')?.focus();
@@ -2684,6 +2712,7 @@
             salesChannel?.postMessage({ type: 'sale-created', orderId: Number(sale.id) });
             state.posStockConflicts.clear();
             state.posCart.clear();
+            state.posCheckedVariants.clear();
             persistPosCart();
             try { localStorage.removeItem(POS_CUSTOMER_STORAGE_KEY); } catch {}
             if (document.getElementById('pos-customer')) document.getElementById('pos-customer').value = '';
@@ -2696,7 +2725,7 @@
             await markPosStockConflicts();
             return null;
         } finally {
-            elements.completeSale.disabled = state.posCart.size === 0;
+            updatePosCompletionState();
             elements.completeSale.textContent = 'FINALIZAR VENTA';
         }
     }
@@ -6617,6 +6646,7 @@
             const action = posCheckoutAction.dataset.posCheckoutAction;
             if (action === 'cancel') {
                 state.posCart.clear();
+                state.posCheckedVariants.clear();
                 persistPosCart();
                 renderPosCart();
                 closeModal();
@@ -6751,6 +6781,13 @@
         }
         if (event.target.matches('[data-delivery-field]')) {
             saveDeliverySlot(Number(event.target.dataset.deliverySlot), event.target);
+            return;
+        }
+        if (event.target.matches('[data-pos-checked]')) {
+            const variantId = Number(event.target.dataset.posChecked);
+            if (event.target.checked) state.posCheckedVariants.add(variantId);
+            else state.posCheckedVariants.delete(variantId);
+            updatePosCompletionState();
             return;
         }
         if (event.target.matches('[data-select-product]')) {
@@ -7302,6 +7339,7 @@
     });
     elements.posClearCart?.addEventListener('click', () => {
         state.posCart.clear();
+        state.posCheckedVariants.clear();
         persistPosCart();
         renderPosCart();
     });
