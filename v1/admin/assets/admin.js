@@ -2087,12 +2087,17 @@
         return customer !== '' && fold(customer) !== 'consumidor final';
     }
 
+    function posRequiresVerification() {
+        const productCount = Array.from(state.posCart.values()).reduce((sum, quantity) => sum + Number(quantity), 0);
+        return !posHasIdentifiedCustomer() && productCount > 3;
+    }
+
     function updatePosCompletionState() {
         if (!elements.completeSale) return;
         const allChecked = Array.from(state.posCart.keys()).every(variantId => (
             state.posCheckedVariants.has(Number(variantId))
         ));
-        elements.completeSale.disabled = state.posCart.size === 0 || (!posHasIdentifiedCustomer() && !allChecked);
+        elements.completeSale.disabled = state.posCart.size === 0 || (posRequiresVerification() && !allChecked);
     }
 
     function persistPosCart() {
@@ -2130,7 +2135,7 @@
             } catch {
                 // El nombre sigue disponible durante esta pantalla.
             }
-            updatePosCompletionState();
+            renderPosCart();
         });
     }
 
@@ -2320,6 +2325,7 @@
             (sum, item) => sum + Number(item.variant.price_cents) * item.quantity,
             0
         );
+        const requiresVerification = posRequiresVerification();
         elements.posTotal.textContent = money(total);
         const currentVariantIds = new Set(items.map(item => Number(item.variantId)));
         Array.from(state.posCheckedVariants).forEach(variantId => {
@@ -2363,6 +2369,7 @@
                 <strong class="pos-cart-group-name">${escapeHtml(group.product.name)}</strong>
                 ${group.items.map(item => `
                     <div class="cart-line pos-cart-detail-row ${state.posStockConflicts.has(Number(item.variantId)) ? 'stock-conflict' : ''}">
+                        ${requiresVerification ? `<label class="pos-cart-check" title="Producto verificado"><input type="checkbox" data-pos-checked="${item.variantId}" ${state.posCheckedVariants.has(Number(item.variantId)) ? 'checked' : ''} aria-label="Marcar ${escapeHtml(item.product.name)} como verificado"><span aria-hidden="true">✓</span></label>` : '<span aria-hidden="true"></span>'}
                         <div class="pos-cart-product">
                             ${variantDisplayName(item.product, item.variant)
                                 ? `<small>${escapeHtml(variantDisplayName(item.product, item.variant))}</small>`
@@ -2375,7 +2382,6 @@
                         </div>
                         <small class="pos-cart-available">Stock: ${Math.max(0, Number(item.variant.available_stock) - item.quantity)}</small>
                         <strong class="pos-cart-subtotal">${money(Number(item.variant.price_cents) * item.quantity)}</strong>
-                        <label class="pos-cart-check" title="Producto verificado"><input type="checkbox" data-pos-checked="${item.variantId}" ${state.posCheckedVariants.has(Number(item.variantId)) ? 'checked' : ''} aria-label="Marcar ${escapeHtml(item.product.name)} como verificado"><span aria-hidden="true">✓</span></label>
                         <button class="pos-remove-cart-line icon-action-button trash-button" type="button" data-pos-quantity="${item.variantId}" data-value="0" aria-label="Eliminar ${escapeHtml(item.product.name)} del carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
                     </div>
                 `).join('')}
@@ -2689,7 +2695,7 @@
         }
         const customerName = document.getElementById('pos-customer')?.value.trim() || '';
         const customerPhone = document.getElementById('pos-customer-phone')?.value.trim() || '';
-        if (!posHasIdentifiedCustomer() && items.some(item => !state.posCheckedVariants.has(Number(item.variant_id)))) {
+        if (posRequiresVerification() && items.some(item => !state.posCheckedVariants.has(Number(item.variant_id)))) {
             toast('Verificá todos los productos antes de finalizar la venta.');
             return null;
         }
