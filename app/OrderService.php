@@ -262,7 +262,7 @@ final class OrderService
     ): array {
         $quantities = $this->normalizeItems($items);
         $customerName = $this->normalizeCustomerName($customerName) ?: 'Consumidor final';
-        $customerPhone = preg_replace('/\D+/', '', $customerPhone) ?: '';
+        $customerPhone = CustomerService::normalizeWhatsapp($customerPhone);
         // Las ventas rápidas sin cliente identificado no requieren seguimiento
         // en la lista diaria. Se conservan en la base de datos, pero quedan
         // archivadas desde su creación.
@@ -314,6 +314,9 @@ final class OrderService
                 ]);
                 $orderId = (int) $pdo->lastInsertId();
                 $this->insertOrderItems($pdo, $orderId, $resolvedItems);
+                if (!$archiveConsumerFinal) {
+                    CustomerService::save($pdo, $customerName, $customerPhone);
+                }
 
                 foreach ($resolvedItems as $item) {
                     $quantity = (int) $item['quantity'];

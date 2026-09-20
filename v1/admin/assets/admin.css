@@ -3211,6 +3211,14 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 @media (prefers-reduced-motion: reduce) { .pos-klaus * { animation:none !important; } }
 .pos-customer-checkout input { font-size: 16px; }
 .pos-customer-checkout { display: grid; gap: 12px; margin-top: auto; padding-top: 18px; }
+.pos-customer-search { position: relative; }
+.pos-customer-search > input { width: 100%; }
+.pos-customer-suggestions { position: absolute; z-index: 20; top: calc(100% + 4px); right: 0; left: 0; display: grid; overflow: hidden; border: 1px solid #cfd8e6; border-radius: 10px; background: #fff; box-shadow: 0 12px 28px rgba(20, 31, 52, .18); }
+.pos-customer-suggestions[hidden] { display: none; }
+.pos-customer-suggestions button { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 12px; border: 0; border-bottom: 1px solid #e6eaf0; background: #fff; color: #252a3a; text-align: left; cursor: pointer; }
+.pos-customer-suggestions button:last-child { border-bottom: 0; }
+.pos-customer-suggestions button:hover { background: #edf5ff; }
+.pos-customer-suggestions small { color: #667087; white-space: nowrap; }
 .pos-customer-checkout input { border: 0; background: #fff; box-shadow: none; color: #111827; }
 .pos-customer-checkout input:focus { border: 0; box-shadow: none; }
 #complete-sale-button { min-height: 46px; border: 1px solid #1769e0; border-radius: 10px; background: #1769e0 !important; box-shadow: none; color: #fff !important; font-size: 13px; font-weight: 700; }

@@ -197,7 +197,11 @@ try {
 
             case 'customers':
                 $app['auth']->requireAdmin();
-                Http::json(['ok' => true, 'customers' => $app['checkout_google']->customers()]);
+                Http::json(['ok' => true, 'customers' => $app['customers']->all()]);
+
+            case 'pos_customer_search':
+                $app['auth']->requireUser();
+                Http::json(['ok' => true, 'customers' => $app['customers']->search((string) ($_GET['q'] ?? ''))]);
 
             case 'payment_proof':
                 $app['auth']->requireUser();

@@ -58,7 +58,10 @@ header('Referrer-Policy: same-origin');
                     <div class="pos-main-total"><span>TOTAL</span><strong id="pos-total">$ 0</strong></div>
                 </section>
                 <div class="pos-customer-checkout">
-                    <input id="pos-customer" value="" placeholder="Nombre y apellido (opcional)" autocomplete="name" aria-label="Nombre y apellido del cliente, opcional">
+                    <div class="pos-customer-search">
+                        <input id="pos-customer" value="" placeholder="Nombre y apellido (opcional)" autocomplete="off" aria-label="Nombre y apellido del cliente, opcional" aria-controls="pos-customer-suggestions" aria-expanded="false">
+                        <div id="pos-customer-suggestions" class="pos-customer-suggestions" role="listbox" hidden></div>
+                    </div>
                     <input id="pos-customer-phone" value="" inputmode="tel" placeholder="WhatsApp" autocomplete="tel" aria-label="WhatsApp del cliente">
                 </div>
                 <button class="primary-button" id="complete-sale-button" type="button" disabled>FINALIZAR VENTA</button>

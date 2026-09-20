@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 51;
+    private const CURRENT_MIGRATION_VERSION = 52;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -96,6 +96,7 @@ final class Database
                 self::migrateAiConversationCustomers($pdo);
                 self::migrateArtjetProductSync($pdo);
                 self::migrateArtjetVisits($pdo);
+                self::migrateCustomers($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -162,6 +163,7 @@ final class Database
         self::migrateAiConversationCustomers($pdo);
         self::migrateArtjetProductSync($pdo);
         self::migrateArtjetVisits($pdo);
+        self::migrateCustomers($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }
@@ -180,6 +182,42 @@ final class Database
                 PRIMARY KEY (visitor_hash, visit_day)
             )");
             $pdo->exec('CREATE INDEX IF NOT EXISTS idx_artjet_visits_day ON artjet_visits(visit_day)');
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
+    }
+
+    private static function migrateCustomers(PDO $pdo): void
+    {
+        $version = 52;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                phone TEXT NOT NULL UNIQUE
+            )");
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name COLLATE NOCASE)');
+            $rows = $pdo->query("SELECT name, phone FROM checkout_customers WHERE trim(name) <> '' AND trim(phone) <> '' ORDER BY updated_at")->fetchAll();
+            $find = $pdo->prepare('SELECT id FROM customers WHERE phone = :phone LIMIT 1');
+            $insert = $pdo->prepare('INSERT INTO customers(name, phone) VALUES(:name, :phone)');
+            $update = $pdo->prepare('UPDATE customers SET name = :name WHERE id = :id');
+            foreach ($rows as $row) {
+                $phone = preg_replace('/\D+/', '', (string) $row['phone']) ?: '';
+                if (str_starts_with($phone, '00')) $phone = substr($phone, 2);
+                if (str_starts_with($phone, '54') && !str_starts_with($phone, '549')) $phone = '549' . substr($phone, 2);
+                if (!str_starts_with($phone, '54')) {
+                    $phone = ltrim($phone, '0');
+                    if (strlen($phone) === 10) $phone = '549' . $phone;
+                }
+                if (strlen($phone) < 11) continue;
+                $name = function_exists('mb_strtoupper') ? mb_strtoupper(trim((string) $row['name']), 'UTF-8') : strtoupper(trim((string) $row['name']));
+                $find->execute(['phone' => $phone]);
+                $id = (int) $find->fetchColumn();
+                if ($id > 0) $update->execute(['name' => $name, 'id' => $id]);
+                else $insert->execute(['name' => $name, 'phone' => $phone]);
+            }
             $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
         });
     }

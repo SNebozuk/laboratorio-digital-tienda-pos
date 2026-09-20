@@ -42,6 +42,14 @@ CREATE TABLE IF NOT EXISTS checkout_customers (
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL UNIQUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name COLLATE NOCASE);
+
 CREATE TABLE IF NOT EXISTS checkout_customer_sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_id INTEGER NOT NULL REFERENCES checkout_customers(id) ON DELETE CASCADE,

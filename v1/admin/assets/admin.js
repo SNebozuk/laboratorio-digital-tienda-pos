@@ -36,6 +36,7 @@
         pendingDeliveryCount: 0,
         posCart: new Map(),
         posCheckedVariants: new Set(),
+        posCustomerSuggestions: [],
         posQuery: '',
         posProductId: null,
         pendingBarcode: '',
@@ -188,6 +189,7 @@
         posProducts: document.getElementById('pos-products'),
         posCartLines: document.getElementById('pos-cart-lines'),
         posTotal: document.getElementById('pos-total'),
+        posCustomerSuggestions: document.getElementById('pos-customer-suggestions'),
         posKlaus: document.getElementById('pos-klaus'),
         adminKlaus: document.getElementById('admin-klaus'),
         posClearCart: document.getElementById('pos-clear-cart'),
@@ -2122,6 +2124,25 @@
     function restorePosCustomer() {
         const input = document.getElementById('pos-customer');
         if (!input) return;
+        let searchTimer = 0;
+        let searchSequence = 0;
+        const hideSuggestions = () => {
+            if (!elements.posCustomerSuggestions) return;
+            elements.posCustomerSuggestions.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+        };
+        const renderSuggestions = customers => {
+            if (!elements.posCustomerSuggestions) return;
+            state.posCustomerSuggestions = customers;
+            elements.posCustomerSuggestions.innerHTML = customers.map(customer => `
+                <button type="button" role="option" data-pos-customer-id="${Number(customer.id)}">
+                    <strong>${escapeHtml(customer.name)}</strong>
+                    <small>${escapeHtml(customer.phone || 'Sin WhatsApp')}</small>
+                </button>
+            `).join('');
+            elements.posCustomerSuggestions.hidden = customers.length === 0;
+            input.setAttribute('aria-expanded', String(customers.length > 0));
+        };
         try {
             input.value = localStorage.getItem(POS_CUSTOMER_STORAGE_KEY) || '';
         } catch {
@@ -2135,6 +2156,37 @@
             } catch {
                 // El nombre sigue disponible durante esta pantalla.
             }
+            renderPosCart();
+            window.clearTimeout(searchTimer);
+            const query = input.value.trim();
+            if (query.length < 2) {
+                hideSuggestions();
+                return;
+            }
+            const sequence = ++searchSequence;
+            searchTimer = window.setTimeout(async () => {
+                try {
+                    const data = await apiGet('pos_customer_search', { q: query });
+                    if (sequence === searchSequence && input.value.trim() === query) {
+                        renderSuggestions(data.customers || []);
+                    }
+                } catch {
+                    hideSuggestions();
+                }
+            }, 180);
+        });
+        input.addEventListener('blur', () => window.setTimeout(hideSuggestions, 120));
+        elements.posCustomerSuggestions?.addEventListener('mousedown', event => event.preventDefault());
+        elements.posCustomerSuggestions?.addEventListener('click', event => {
+            const button = event.target.closest('[data-pos-customer-id]');
+            if (!button) return;
+            const customer = state.posCustomerSuggestions.find(item => Number(item.id) === Number(button.dataset.posCustomerId));
+            if (!customer) return;
+            input.value = customer.name || '';
+            const phoneInput = document.getElementById('pos-customer-phone');
+            if (phoneInput) phoneInput.value = customer.phone || '';
+            try { localStorage.setItem(POS_CUSTOMER_STORAGE_KEY, input.value); } catch {}
+            hideSuggestions();
             renderPosCart();
         });
     }
@@ -4739,10 +4791,8 @@
             state.customers = data.customers || [];
             elements.customerList.innerHTML = state.customers.map(customer => `
                 <article class="user-card">
-                    <div><strong>${escapeHtml(customer.name)}</strong><br><small>${escapeHtml(customer.email || 'Sin email')} · ${escapeHtml(customer.phone || 'Sin WhatsApp')}</small></div>
+                    <div><strong>${escapeHtml(customer.name)}</strong><br><small><a href="${escapeHtml(customer.whatsapp_url)}" target="_blank" rel="noopener">${escapeHtml(customer.phone)}</a></small></div>
                     <span class="status-pill">CLIENTE</span>
-                    <small>Registrado: ${escapeHtml(argentinaDateLabel(customer.created_at))}</small>
-                    <small>Actualizado: ${escapeHtml(argentinaDateLabel(customer.updated_at))}</small>
                 </article>
             `).join('') || '<p class="empty-copy">Todavía no hay clientes registrados.</p>';
         } catch (error) {
