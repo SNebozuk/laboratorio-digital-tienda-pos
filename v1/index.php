@@ -71,7 +71,18 @@ if ($checkoutCustomer === null) {
         <section class="store-login-card" aria-labelledby="store-login-title">
             <button class="store-login-back" type="button" onclick="history.back()">← ATRÁS</button>
             <p>RECEPCIÓN</p><h1 id="store-login-title">LABORATORIO DIGITAL</h1><span>Te ayudo a entrar a la tienda.</span>
-            <div class="reception-messages" id="reception-messages" role="log" aria-live="polite"><div class="vendor-ai-message">¡Hola! Soy el asistente de recepción. Para ingresar, decime tu nombre y apellido reales, bien escritos, y tu WhatsApp con código de área. Usaremos tu número para identificarte y comunicarnos sobre tus pedidos; no lo usaremos para publicidad. También podés consultarme sobre el comercio.</div></div>
+            <form class="customer-entry-form" id="customer-entry-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post" novalidate>
+                <input type="hidden" name="csrf_token" value="<?= $escapeLogin($app['csrf_token']) ?>">
+                <input type="hidden" name="action" value="register">
+                <label for="customer-full-name">Nombre y apellido</label>
+                <input id="customer-full-name" name="full_name" autocomplete="name" maxlength="120" placeholder="Tu nombre y apellido" aria-describedby="customer-name-error" required>
+                <small id="customer-name-error" class="customer-field-error" aria-live="polite"></small>
+                <label for="customer-phone">WhatsApp argentino</label>
+                <input id="customer-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="32" placeholder="Ej.: 341 15 1234567" aria-describedby="customer-phone-error" required>
+                <small id="customer-phone-error" class="customer-field-error" aria-live="polite"></small>
+                <button type="submit">INGRESAR</button>
+            </form>
+            <div class="reception-messages" id="reception-messages" role="log" aria-live="polite"><div class="vendor-ai-message">¡Hola! Completá el formulario con tu nombre y apellido reales y tu WhatsApp con código de área para ingresar. No usaremos tu número para publicidad. Si necesitás ayuda o querés consultar sobre el comercio, escribime acá.</div></div>
             <form class="reception-form" id="reception-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post">
                 <input type="hidden" name="csrf_token" value="<?= $escapeLogin($app['csrf_token']) ?>">
                 <input name="message" id="reception-input" autocomplete="off" maxlength="500" placeholder="Escribí un mensaje…" aria-label="Mensaje para recepción" required>

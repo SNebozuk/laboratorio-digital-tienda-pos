@@ -127,9 +127,26 @@ final class CheckoutGoogleService
         $length = preg_match_all('/./us', $value);
         if ($length === false || $length < 2 || $length > 60
             || !preg_match("/^\\p{L}[\\p{L}'’.-]*(?: +\\p{L}[\\p{L}'’.-]*)*$/u", $value)
-            || preg_match('/(\\p{L})\\1{3,}/iu', $value)) return false;
+            || preg_match('/^(\\p{L})\\1{2,}$/iu', $value)) return false;
         $plain = function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
         return !in_array($plain, ['asdf', 'qwerty', 'abc', 'abcd', 'test', 'testing', 'prueba', 'nombre', 'apellido', 'usuario', 'anonimo', 'anónimo', 'cliente', 'xxx', 'xxxx', 'nn', 'n n'], true);
+    }
+
+    public static function validFullName(string $value): bool
+    {
+        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+        if (!preg_match("/^\\p{L}+(?:['’\\-]\\p{L}+)*(?: +\\p{L}+(?:['’\\-]\\p{L}+)*)+$/u", $value)) return false;
+        $words = explode(' ', $value);
+        if (count($words) < 2 || count($words) > 8 || strlen($value) > 120) return false;
+        $plain = function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
+        if (in_array($plain, ['nombre apellido', 'laboratorio digital'], true)) return false;
+        foreach ($words as $word) {
+            if (strtolower($word) === 'y' && count($words) > 2) continue;
+            if (!self::validNamePart($word)) return false;
+            $lower = function_exists('mb_strtolower') ? mb_strtolower($word, 'UTF-8') : strtolower($word);
+            if (in_array($lower, ['empresa', 'compañía', 'compania', 'sociedad', 'comercio', 'negocio', 'tienda', 'srl', 'sas', 'sa', 'ltd', 'llc', 'inc'], true)) return false;
+        }
+        return true;
     }
 
     /** @return array{name:string}|null */

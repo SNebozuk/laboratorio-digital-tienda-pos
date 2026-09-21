@@ -68,10 +68,13 @@ final class CustomerService
         if ($hasCountry) $digits = substr($digits, 2);
         if ($hasCountry && str_starts_with($digits, '9') && in_array(strlen($digits), [11, 12], true)) $digits = substr($digits, 1);
         $digits = ltrim($digits, '0');
+        if (str_starts_with($digits, '15')) return '';
         if (preg_match('/^(\d{2,4})15(\d+)$/', $digits, $matches) && in_array(strlen($matches[1] . $matches[2]), [10, 11], true)) {
             $digits = $matches[1] . $matches[2];
         }
-        if (!in_array(strlen($digits), [10, 11], true) || preg_match('/^(\d)\1+$/', $digits)) return '';
+        if (!in_array(strlen($digits), [10, 11], true)
+            || preg_match('/^(\d)\1+$/', $digits)
+            || in_array($digits, ['1234567890', '9876543210', '12345678901', '10987654321'], true)) return '';
         return '+549' . $digits;
     }
 
