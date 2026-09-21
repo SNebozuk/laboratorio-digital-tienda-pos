@@ -40,19 +40,25 @@ final class ReceptionAiService
                 'required' => ['message', 'first_name', 'last_name', 'phone', 'first_name_plausible', 'last_name_plausible'],
             ]]],
         ];
+        if (!function_exists('curl_init') || trim((string) ($this->config['openai_api_key'] ?? '')) === '') {
+            return $this->localReply($history, $firstName, $lastName, $phone, $settings);
+        }
         $handle = curl_init(rtrim((string) ($this->config['openai_base_url'] ?? 'https://api.openai.com/v1'), '/') . '/responses');
-        if (!$handle) throw new \RuntimeException('No se pudo conectar con recepción.');
+        if (!$handle) return $this->localReply($history, $firstName, $lastName, $phone, $settings);
         curl_setopt_array($handle, [
             CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . (string) ($this->config['openai_api_key'] ?? ''), 'Content-Type: application/json'],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE),
-            CURLOPT_TIMEOUT => 25,
+            CURLOPT_TIMEOUT => 10,
         ]);
         $body = curl_exec($handle);
         $status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
         curl_close($handle);
         $response = json_decode((string) $body, true);
-        if ($status < 200 || $status >= 300 || !is_array($response)) throw new \RuntimeException('Recepción no pudo responder. Intentá de nuevo.');
+        if ($status < 200 || $status >= 300 || !is_array($response)) {
+            error_log('Recepción IA: respuesta HTTP ' . $status);
+            return $this->localReply($history, $firstName, $lastName, $phone, $settings);
+        }
         $text = '';
         foreach (($response['output'] ?? []) as $item) {
             foreach (($item['content'] ?? []) as $content) {
@@ -60,7 +66,10 @@ final class ReceptionAiService
             }
         }
         $result = json_decode($text, true);
-        if (!is_array($result)) throw new \RuntimeException('Recepción no pudo responder. Intentá de nuevo.');
+        if (!is_array($result) || trim((string) ($result['message'] ?? '')) === '') {
+            error_log('Recepción IA: respuesta estructurada inválida');
+            return $this->localReply($history, $firstName, $lastName, $phone, $settings);
+        }
         return [
             'message' => trim((string) ($result['message'] ?? '')),
             'first_name' => trim((string) ($result['first_name'] ?? '')),
@@ -68,6 +77,56 @@ final class ReceptionAiService
             'phone' => trim((string) ($result['phone'] ?? '')),
             'first_name_plausible' => ($result['first_name_plausible'] ?? false) === true,
             'last_name_plausible' => ($result['last_name_plausible'] ?? false) === true,
+        ];
+    }
+
+    /** @param list<array{role:string,content:string}> $history
+     *  @param array<string,mixed> $settings
+     *  @return array{message:string,first_name:string,last_name:string,phone:string,first_name_plausible:bool,last_name_plausible:bool}
+     */
+    private function localReply(array $history, string $firstName, string $lastName, string $phone, array $settings): array
+    {
+        $message = trim((string) (end($history)['content'] ?? ''));
+        $remaining = $message;
+        if (preg_match('/(?:\+|00)?\d[\d\s().-]{3,}\d/u', $message, $matches)) {
+            $phone = trim($matches[0]);
+            $remaining = trim(str_replace($matches[0], ' ', $message));
+        }
+        $explicitName = (bool) preg_match('/\b(?:soy|llamo|nombre|apellido)\b/iu', $remaining);
+        $remaining = preg_replace('/\b(?:hola|soy|me|llamo|mi|nombre|apellido|es|whatsapp|número|numero|teléfono|telefono|celular|y)\b/iu', ' ', $remaining) ?? $remaining;
+        $remaining = trim(preg_replace('/[^\p{L}\s\x27’.-]+/u', ' ', $remaining) ?? '');
+        $words = preg_split('/\s+/u', $remaining, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $looksLikeName = $explicitName || (count($words) <= 3 && !preg_match('/[?¿]/u', $message)
+            && !preg_match('/\b(?:horario|direcci[oó]n|domicilio|producto|precio|stock|ingresar|entrar|ayuda|local|tienda|tengo|consulta|quiero|necesito|puedo|funciona|buenas|buenos|d[ií]as|tardes)\b/iu', $message));
+        if ($looksLikeName && $words !== []) {
+            if ($firstName === '') $firstName = (string) array_shift($words);
+            if ($lastName === '' && $words !== []) $lastName = implode(' ', $words);
+            elseif ($lastName === '' && $firstName !== '' && count($words) === 1) $lastName = (string) $words[0];
+        }
+        $answer = '';
+        if (preg_match('/\b(?:horario|abren|cierran)\b/iu', $message)) {
+            $hours = trim((string) ($settings['business_hours'] ?? ''));
+            $answer = $hours !== '' ? 'Nuestro horario es: ' . $hours . '.' : 'El horario no está publicado en este momento.';
+        } elseif (preg_match('/\b(?:direcci[oó]n|domicilio|ubicaci[oó]n|donde|d[oó]nde)\b/iu', $message)) {
+            $address = trim((string) ($settings['pickup_address'] ?? ''));
+            $answer = $address !== '' ? 'Estamos en ' . $address . '.' : 'La dirección no está publicada en este momento.';
+        } elseif (preg_match('/\b(?:producto|precio|stock|cat[aá]logo)\b/iu', $message)) {
+            $answer = 'Podés buscar los productos personalmente dentro de la tienda después de ingresar.';
+        } elseif (preg_match('/\b(?:ingresar|entrar|acceso)\b/iu', $message)) {
+            $answer = 'Para entrar a la tienda necesito tu nombre, apellido y WhatsApp.';
+        }
+        $normalizedPhone = CustomerService::normalizeWhatsapp($phone);
+        if ($phone !== '' && $normalizedPhone === '') $answer .= ' Revisá tu WhatsApp con código de área; por ejemplo, 341 15 1234567.';
+        if ($firstName === '') $answer .= ' ¿Me decís tu nombre real, bien escrito?';
+        elseif ($lastName === '') $answer .= ' ¿Y tu apellido real, bien escrito?';
+        elseif ($phone === '') $answer .= ' ¿Me pasás tu WhatsApp con código de área? No lo usaremos para publicidad.';
+        return [
+            'message' => trim($answer),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'phone' => $phone,
+            'first_name_plausible' => CheckoutGoogleService::validNamePart($firstName),
+            'last_name_plausible' => CheckoutGoogleService::validNamePart($lastName),
         ];
     }
 }
