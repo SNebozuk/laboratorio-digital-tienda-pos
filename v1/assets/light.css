@@ -8,6 +8,13 @@
 .store-login-background { pointer-events:none; }
 .store-login-card { width:min(300px,calc(100vw - 34px)) !important; gap:8px !important; padding:16px 18px 18px !important; }
 .store-login-card h1 { font-size:20px !important; }
+.store-login-card:has(.reception-form) { width:min(430px,calc(100vw - 24px)) !important; gap:10px !important; padding:18px !important; }
+.reception-messages { display:grid; align-content:start; gap:9px; width:100%; height:min(45vh,360px); min-height:230px; padding:12px; overflow-y:auto; border-radius:10px; background:#efeae2; text-align:left; }
+.reception-messages .vendor-ai-message { justify-self:start; }
+.reception-form { display:flex; gap:8px; width:100%; }
+.reception-form input { flex:1; min-width:0; padding:11px 12px; border:1px solid #d1d9d2; border-radius:10px; background:#fff; font:inherit; font-size:13px; }
+.reception-form button { min-height:46px; padding:0 13px; border:1px solid #1769e0; border-radius:10px; background:#1769e0; color:#fff; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+.reception-form button:disabled { opacity:.6; cursor:wait; }
 .store-login-form { display:grid; width:100%; gap:8px; }
 .store-login-form label { position:relative; display:block; }
 .store-login-form label svg { position:absolute; z-index:1; top:50%; left:12px; width:20px; height:20px; fill:#25d366; transform:translateY(-50%); pointer-events:none; }

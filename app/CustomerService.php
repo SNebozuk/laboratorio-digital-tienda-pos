@@ -45,12 +45,12 @@ final class CustomerService
     {
         $name = self::upper(preg_replace('/\s+/u', ' ', trim($name)) ?? '');
         $phone = self::normalizeWhatsapp($phone);
-        if ($name === '' || strlen($phone) < 11) return;
-        $query = $pdo->prepare('SELECT id FROM customers WHERE phone = :phone LIMIT 1');
-        $query->execute(['phone' => $phone]);
+        if ($name === '' || $phone === '') return;
+        $query = $pdo->prepare('SELECT id FROM customers WHERE phone IN (:e164, :digits, :national, :old_country) ORDER BY CASE WHEN phone = :preferred THEN 0 ELSE 1 END, id LIMIT 1');
+        $query->execute(self::phoneVariants($phone) + ['preferred' => $phone]);
         $id = (int) $query->fetchColumn();
         if ($id > 0) {
-            $pdo->prepare('UPDATE customers SET name = :name WHERE id = :id')->execute(['name' => $name, 'id' => $id]);
+            $pdo->prepare('UPDATE customers SET name = :name, phone = :phone WHERE id = :id')->execute(['name' => $name, 'phone' => $phone, 'id' => $id]);
             return;
         }
         $pdo->prepare('INSERT INTO customers(name, phone) VALUES(:name, :phone)')->execute(['name' => $name, 'phone' => $phone]);
@@ -58,24 +58,40 @@ final class CustomerService
 
     public static function normalizeWhatsapp(string $value): string
     {
+        $value = trim($value);
+        if ($value === '' || !preg_match('/^\+?[\d\s().-]+$/', $value)) return '';
+        $international = str_starts_with($value, '+') || str_starts_with($value, '00');
         $digits = preg_replace('/\D+/', '', $value) ?: '';
         if (str_starts_with($digits, '00')) $digits = substr($digits, 2);
-        if (str_starts_with($digits, '549')) return $digits;
-        if (str_starts_with($digits, '54')) return '549' . substr($digits, 2);
+        if ($international && !str_starts_with($digits, '54')) return '';
+        $hasCountry = str_starts_with($digits, '54') && strlen($digits) > 11;
+        if ($hasCountry) $digits = substr($digits, 2);
+        if ($hasCountry && str_starts_with($digits, '9') && in_array(strlen($digits), [11, 12], true)) $digits = substr($digits, 1);
         $digits = ltrim($digits, '0');
-        return strlen($digits) === 10 ? '549' . $digits : $digits;
+        if (preg_match('/^(\d{2,4})15(\d+)$/', $digits, $matches) && in_array(strlen($matches[1] . $matches[2]), [10, 11], true)) {
+            $digits = $matches[1] . $matches[2];
+        }
+        if (!in_array(strlen($digits), [10, 11], true) || preg_match('/^(\d)\1+$/', $digits)) return '';
+        return '+549' . $digits;
+    }
+
+    /** @return array{e164:string,digits:string,national:string,old_country:string} */
+    public static function phoneVariants(string $phone): array
+    {
+        $national = substr($phone, 4);
+        return ['e164' => $phone, 'digits' => substr($phone, 1), 'national' => $national, 'old_country' => '54' . $national];
     }
 
     /** @param array<string,mixed> $row @return array<string,mixed> */
     private function present(array $row): array
     {
         $row['id'] = (int) $row['id'];
-        $row['whatsapp_url'] = 'https://wa.me/' . $row['phone'];
+        $row['whatsapp_url'] = 'https://wa.me/' . ltrim((string) $row['phone'], '+');
         return $row;
     }
 
     private static function upper(string $value): string
     {
-        return function_exists('mb_strtoupper') ? mb_strtoupper($value, 'UTF-8') : strtoupper($value);
+        return function_exists('mb_strtoupper') ? mb_strtoupper($value, 'UTF-8') : strtoupper(strtr($value, ['á' => 'Á', 'é' => 'É', 'í' => 'Í', 'ó' => 'Ó', 'ú' => 'Ú', 'ü' => 'Ü', 'ñ' => 'Ñ']));
     }
 }

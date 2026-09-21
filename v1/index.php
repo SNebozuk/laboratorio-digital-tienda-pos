@@ -38,6 +38,7 @@ $assetVersion = substr(hash('sha256',
     . (string) @file_get_contents(__DIR__ . '/assets/klaus.js')
     . (string) @file_get_contents(__DIR__ . '/assets/pulga.js')
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
+    . (string) @file_get_contents(__DIR__ . '/assets/reception.js')
 ), 0, 12);
 $searchNormalizerJsVersion = substr(hash_file('sha256', __DIR__ . '/assets/search-normalizer.js') ?: '1', 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
@@ -69,16 +70,15 @@ if ($checkoutCustomer === null) {
         </main>
         <section class="store-login-card" aria-labelledby="store-login-title">
             <button class="store-login-back" type="button" onclick="history.back()">← ATRÁS</button>
-            <p>ACCEDÉ A TU CUENTA</p><h1 id="store-login-title">LABORATORIO DIGITAL</h1><span>Ingresá tus datos una sola vez. Quedarán guardados en tu cuenta para tus próximas visitas.</span>
-            <form class="store-login-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post">
+            <p>RECEPCIÓN</p><h1 id="store-login-title">LABORATORIO DIGITAL</h1><span>Te ayudo a entrar a la tienda.</span>
+            <div class="reception-messages" id="reception-messages" role="log" aria-live="polite"><div class="vendor-ai-message">¡Hola! Soy el asistente de recepción. Para ingresar, decime tu nombre y apellido reales, bien escritos, y tu WhatsApp con código de área. Usaremos tu número para identificarte y comunicarnos sobre tus pedidos; no lo usaremos para publicidad. También podés consultarme sobre el comercio.</div></div>
+            <form class="reception-form" id="reception-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post">
                 <input type="hidden" name="csrf_token" value="<?= $escapeLogin($app['csrf_token']) ?>">
-                <label><input name="first_name" autocomplete="given-name" placeholder="Nombre" required></label>
-                <label><input name="last_name" autocomplete="family-name" placeholder="Apellido" required></label>
-                <label><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp" required></label>
-                <?php if (isset($_GET['customer_error'])): ?><small><?= $escapeLogin((string) $_GET['customer_error']) ?></small><?php endif ?>
-                <button class="store-login-google" type="submit">INGRESAR</button>
+                <input name="message" id="reception-input" autocomplete="off" maxlength="500" placeholder="Escribí un mensaje…" aria-label="Mensaje para recepción" required>
+                <button type="submit">ENVIAR</button>
             </form>
         </section>
+        <script src="<?= $escapeLogin($assetPath) ?>/reception.js?v=<?= $escapeLogin($assetVersion) ?>" defer></script>
     </body></html>
     <?php
     exit;

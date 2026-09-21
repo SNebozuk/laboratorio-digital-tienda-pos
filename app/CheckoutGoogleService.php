@@ -60,6 +60,16 @@ final class CheckoutGoogleService
             unset($_SESSION['checkout_google_customer_id']);
             return null;
         }
+        $normalizedPhone = CustomerService::normalizeWhatsapp((string) $customer['phone']);
+        $phoneChanged = $normalizedPhone !== '' && $normalizedPhone !== (string) $customer['phone'];
+        if ($phoneChanged) {
+            $this->pdo->prepare('UPDATE checkout_customers SET phone = :phone, updated_at = CURRENT_TIMESTAMP WHERE id = :id')->execute(['phone' => $normalizedPhone, 'id' => $id]);
+            $customer['phone'] = $normalizedPhone;
+        }
+        if ($phoneChanged || (int) ($_SESSION['checkout_customer_synced'] ?? 0) !== $id) {
+            CustomerService::save($this->pdo, (string) $customer['name'], (string) $customer['phone']);
+            $_SESSION['checkout_customer_synced'] = $id;
+        }
         return [
             'id' => (int) $customer['id'],
             'name' => (string) $customer['name'],
@@ -74,10 +84,10 @@ final class CheckoutGoogleService
     {
         $firstName = trim($firstName);
         $lastName = trim($lastName);
-        $phone = preg_replace('/\D+/', '', $phone) ?: '';
-        if (!preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $firstName)
-            || !preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $lastName)
-            || strlen($phone) < 8 || strlen($phone) > 20) {
+        $phone = CustomerService::normalizeWhatsapp($phone);
+        if (!self::validNamePart($firstName)
+            || !self::validNamePart($lastName)
+            || $phone === '') {
             throw new \RuntimeException('Ingresá nombre, apellido y un WhatsApp válidos.');
         }
         $firstName = self::upper($firstName);
@@ -85,18 +95,25 @@ final class CheckoutGoogleService
 
         Database::immediate($this->pdo, function (PDO $pdo) use ($firstName, $lastName, $phone): void {
             $name = trim($firstName . ' ' . $lastName);
-            $email = bin2hex(random_bytes(16)) . '@local.invalid';
-            $insert = $pdo->prepare('INSERT INTO checkout_customers(first_name, last_name, name, email, phone) VALUES(:first_name, :last_name, :name, :email, :phone)');
-            $insert->execute([
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'name' => $name,
-                'email' => $email,
-                'phone' => $phone,
-            ]);
-            $id = (int) $pdo->lastInsertId();
+            $lookup = $pdo->prepare('SELECT id, name FROM checkout_customers WHERE phone IN (:e164, :digits, :national, :old_country) ORDER BY CASE WHEN phone = :preferred THEN 0 ELSE 1 END, id LIMIT 1');
+            $lookup->execute(CustomerService::phoneVariants($phone) + ['preferred' => $phone]);
+            $existing = $lookup->fetch();
+            if ($existing && self::upper((string) $existing['name']) !== $name) {
+                throw new \RuntimeException('Ese WhatsApp ya está registrado con otro nombre. Revisá los datos o consultanos.');
+            }
+            if ($existing) {
+                $id = (int) $existing['id'];
+                $pdo->prepare('UPDATE checkout_customers SET phone = :phone, updated_at = CURRENT_TIMESTAMP WHERE id = :id')->execute(['phone' => $phone, 'id' => $id]);
+            } else {
+                $email = bin2hex(random_bytes(16)) . '@local.invalid';
+                $insert = $pdo->prepare('INSERT INTO checkout_customers(first_name, last_name, name, email, phone) VALUES(:first_name, :last_name, :name, :email, :phone)');
+                $insert->execute(['first_name' => $firstName, 'last_name' => $lastName, 'name' => $name, 'email' => $email, 'phone' => $phone]);
+                $id = (int) $pdo->lastInsertId();
+            }
+            CustomerService::save($pdo, $name, $phone);
             session_regenerate_id(true);
             $_SESSION['checkout_google_customer_id'] = $id;
+            $_SESSION['checkout_customer_synced'] = $id;
             $token = bin2hex(random_bytes(32));
             $pdo->prepare("INSERT INTO checkout_customer_sessions(customer_id, token_hash, expires_at) VALUES(:customer_id, :token_hash, datetime('now', '+365 days'))")
                 ->execute(['customer_id' => $id, 'token_hash' => hash('sha256', $token)]);
@@ -104,16 +121,43 @@ final class CheckoutGoogleService
         });
     }
 
+    public static function validNamePart(string $value): bool
+    {
+        $value = trim($value);
+        $length = preg_match_all('/./us', $value);
+        if ($length === false || $length < 2 || $length > 60
+            || !preg_match("/^\\p{L}[\\p{L}'’.-]*(?: +\\p{L}[\\p{L}'’.-]*)*$/u", $value)
+            || preg_match('/(\\p{L})\\1{3,}/iu', $value)) return false;
+        $plain = function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
+        return !in_array($plain, ['asdf', 'qwerty', 'abc', 'abcd', 'test', 'testing', 'prueba', 'nombre', 'apellido', 'usuario', 'anonimo', 'anónimo', 'cliente', 'xxx', 'xxxx', 'nn', 'n n'], true);
+    }
+
+    /** @return array{name:string}|null */
+    public function knownWhatsapp(string $phone): ?array
+    {
+        $phone = CustomerService::normalizeWhatsapp($phone);
+        if ($phone === '') return null;
+        $query = $this->pdo->prepare('SELECT name FROM checkout_customers WHERE phone IN (:e164, :digits, :national, :old_country) ORDER BY CASE WHEN phone = :preferred THEN 0 ELSE 1 END, id LIMIT 1');
+        $query->execute(CustomerService::phoneVariants($phone) + ['preferred' => $phone]);
+        $name = $query->fetchColumn();
+        if ($name === false) {
+            $query = $this->pdo->prepare('SELECT name FROM customers WHERE phone IN (:e164, :digits, :national, :old_country) ORDER BY CASE WHEN phone = :preferred THEN 0 ELSE 1 END, id LIMIT 1');
+            $query->execute(CustomerService::phoneVariants($phone) + ['preferred' => $phone]);
+            $name = $query->fetchColumn();
+        }
+        return $name === false ? null : ['name' => (string) $name];
+    }
+
     public function updateLocalCustomer(string $firstName, string $lastName, string $phone): void
     {
         $customer = $this->customer();
         $firstName = trim($firstName);
         $lastName = trim($lastName);
-        $phone = preg_replace('/\D+/', '', $phone) ?: '';
+        $phone = CustomerService::normalizeWhatsapp($phone);
         if ($customer === null
             || !preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $firstName)
             || !preg_match("/^\\p{L}[\\p{L}'’.-]{1,}$/u", $lastName)
-            || strlen($phone) < 8 || strlen($phone) > 20) {
+            || $phone === '') {
             throw new \RuntimeException('Ingresá nombre, apellido y un WhatsApp válidos.');
         }
         $firstName = self::upper($firstName);
@@ -126,6 +170,7 @@ final class CheckoutGoogleService
                 'phone' => $phone,
                 'id' => $customer['id'],
             ]);
+        CustomerService::save($this->pdo, trim($firstName . ' ' . $lastName), $phone);
     }
 
     /** @param array<string, mixed> $profile */
@@ -140,8 +185,8 @@ final class CheckoutGoogleService
         $firstName = trim((string) ($profile['given_name'] ?? ''));
         $lastName = trim((string) ($profile['family_name'] ?? ''));
         $name = trim((string) ($profile['name'] ?? ''));
-        $phone = preg_replace('/\D+/', '', (string) ($profile['phone'] ?? ''));
-        if (strlen((string) $phone) < 8 || strlen((string) $phone) > 20) throw new \RuntimeException('Ingresá un WhatsApp válido.');
+        $phone = CustomerService::normalizeWhatsapp((string) ($profile['phone'] ?? ''));
+        if ($phone === '') throw new \RuntimeException('Ingresá un WhatsApp válido.');
         if ($name === '') $name = trim($firstName . ' ' . $lastName);
         if ($name === '') throw new \RuntimeException('Google no devolvió tu nombre completo.');
 
@@ -182,6 +227,8 @@ final class CheckoutGoogleService
             }
             session_regenerate_id(true);
             $_SESSION['checkout_google_customer_id'] = $id;
+            CustomerService::save($pdo, $name, $phone);
+            $_SESSION['checkout_customer_synced'] = $id;
             $token = bin2hex(random_bytes(32));
             $pdo->prepare('DELETE FROM checkout_customer_sessions WHERE customer_id = :customer_id OR expires_at <= CURRENT_TIMESTAMP')->execute(['customer_id' => $id]);
             $pdo->prepare("INSERT INTO checkout_customer_sessions(customer_id, token_hash, expires_at) VALUES(:customer_id, :token_hash, datetime('now', '+365 days'))")->execute(['customer_id' => $id, 'token_hash' => hash('sha256', $token)]);
@@ -210,7 +257,7 @@ final class CheckoutGoogleService
 
     private static function upper(string $value): string
     {
-        return function_exists('mb_strtoupper') ? mb_strtoupper($value, 'UTF-8') : strtoupper($value);
+        return function_exists('mb_strtoupper') ? mb_strtoupper($value, 'UTF-8') : strtoupper(strtr($value, ['á' => 'Á', 'é' => 'É', 'í' => 'Í', 'ó' => 'Ó', 'ú' => 'Ú', 'ü' => 'Ü', 'ñ' => 'Ñ']));
     }
 
     private function setPersistentCookie(string $token): void
