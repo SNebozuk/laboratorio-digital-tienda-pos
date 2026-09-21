@@ -38,7 +38,6 @@ $assetVersion = substr(hash('sha256',
     . (string) @file_get_contents(__DIR__ . '/assets/klaus.js')
     . (string) @file_get_contents(__DIR__ . '/assets/pulga.js')
     . (string) @file_get_contents(__DIR__ . '/assets/store.js')
-    . (string) @file_get_contents(__DIR__ . '/assets/reception.js')
 ), 0, 12);
 $searchNormalizerJsVersion = substr(hash_file('sha256', __DIR__ . '/assets/search-normalizer.js') ?: '1', 0, 12);
 $storeUrl = $storePath === '' ? '/' : $storePath . '/';
@@ -47,57 +46,9 @@ $quoteUrl = $storePath . '/cotizador.php';
 $quoteEnabled = ($app['settings']->quote()['enabled'] ?? '1') === '1';
 $apiUrl = $storePath . '/api.php';
 $checkoutCustomer = $app['checkout_google']->customer();
-if ($checkoutCustomer === null) {
-    $escapeLogin = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    $loginLogoText = trim((string) ($design['logo_text'] ?? '')) ?: 'Laboratorio Digital';
-    $loginLogoImage = trim((string) ($design['logo_path'] ?? ''));
-    $loginBackground = trim((string) ($design['hero_1_path'] ?? ''));
-    $loginPreviewProducts = array_slice($app['products']->publicCatalog(), 0, 3);
-    ?>
-    <!doctype html>
-    <html lang="es"><head>
-        <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Ingresar · <?= $escapeLogin($loginLogoText) ?></title>
-        <link rel="icon" href="<?= $escapeLogin($storePath) ?>/favicon.php" type="image/svg+xml">
-        <link rel="stylesheet" href="<?= $escapeLogin($assetPath) ?>/app.css?v=<?= $escapeLogin($assetVersion) ?>">
-        <link rel="stylesheet" href="<?= $escapeLogin($assetPath) ?>/light.css?v=<?= $escapeLogin($assetVersion) ?>">
-    </head><body class="store-login-page">
-        <main class="store-login-background"<?= $loginBackground !== '' ? ' style="background-image:url(' . $escapeLogin($loginBackground) . ')"' : '' ?>>
-            <div class="store-login-store-preview" aria-hidden="true">
-                <header><span>☰ MENÚ</span><?php if ($loginLogoImage !== ''): ?><img src="<?= $escapeLogin($loginLogoImage) ?>" alt=""><?php else: ?><strong><?= $escapeLogin($loginLogoText) ?></strong><?php endif ?><span>COTIZADOR · APRENDE · VER TALLES</span></header>
-                <div class="store-login-preview-body"><aside>CATEGORÍAS</aside><section><?php foreach ($loginPreviewProducts as $product): ?><article><?php if (!empty($product['image_path'])): ?><img src="<?= $escapeLogin((string) $product['image_path']) ?>" alt=""><?php endif ?><strong><?= $escapeLogin((string) $product['name']) ?></strong><span>Ver producto</span></article><?php endforeach ?></section></div>
-            </div>
-        </main>
-        <section class="store-login-card" aria-labelledby="store-login-title">
-            <button class="store-login-back" type="button" onclick="history.back()">← ATRÁS</button>
-            <p>RECEPCIÓN</p><h1 id="store-login-title">LABORATORIO DIGITAL</h1><span>Te ayudo a entrar a la tienda.</span>
-            <form class="customer-entry-form" id="customer-entry-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post" novalidate>
-                <input type="hidden" name="csrf_token" value="<?= $escapeLogin($app['csrf_token']) ?>">
-                <input type="hidden" name="action" value="register">
-                <label for="customer-full-name">Nombre y apellido</label>
-                <input id="customer-full-name" name="full_name" autocomplete="name" maxlength="120" placeholder="Tu nombre y apellido" aria-describedby="customer-name-error" required>
-                <small id="customer-name-error" class="customer-field-error" aria-live="polite"></small>
-                <label for="customer-phone">WhatsApp argentino</label>
-                <input id="customer-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="32" placeholder="Ej.: 341 15 1234567" aria-describedby="customer-phone-error" required>
-                <small id="customer-phone-error" class="customer-field-error" aria-live="polite"></small>
-                <button type="submit">INGRESAR</button>
-            </form>
-            <div class="reception-messages" id="reception-messages" role="log" aria-live="polite"><div class="vendor-ai-message">¡Hola! Completá el formulario con tu nombre y apellido reales y tu WhatsApp con código de área para ingresar. No usaremos tu número para publicidad. Si necesitás ayuda o querés consultar sobre el comercio, escribime acá.</div></div>
-            <form class="reception-form" id="reception-form" action="<?= $escapeLogin($app['checkout_google']->loginUrl()) ?>" method="post">
-                <input type="hidden" name="csrf_token" value="<?= $escapeLogin($app['csrf_token']) ?>">
-                <input name="message" id="reception-input" autocomplete="off" maxlength="500" placeholder="Escribí un mensaje…" aria-label="Mensaje para recepción" required>
-                <button type="submit">ENVIAR</button>
-            </form>
-        </section>
-        <script src="<?= $escapeLogin($assetPath) ?>/reception.js?v=<?= $escapeLogin($assetVersion) ?>" defer></script>
-    </body></html>
-    <?php
-    exit;
-}
 $checkoutCustomerData = [
     'enabled' => $app['checkout_google']->enabled(),
     'customer' => $checkoutCustomer,
-    'login_url' => $app['checkout_google']->loginUrl(),
     'return_to_checkout' => false,
     'error' => '',
 ];

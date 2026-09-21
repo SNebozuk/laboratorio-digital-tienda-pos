@@ -395,9 +395,9 @@
         }
     }
 
-    function persistCustomer(name, phone, email) {
+    function persistCustomer(firstName, lastName, phone, email) {
         try {
-            localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify({ name, phone, email }));
+            localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify({ first_name: firstName, last_name: lastName, name: `${firstName} ${lastName}`.trim(), phone, email }));
         } catch {
             // El autocompletado nativo sigue funcionando aunque el navegador bloquee storage.
         }
@@ -1662,10 +1662,11 @@
         const discount = cartDiscount(subtotal, items.reduce((sum, item) => sum + item.quantity, 0));
         const total = subtotal - discount.cents;
         const saved = savedCustomer();
+        const savedNameParts = String(saved.name || '').trim().split(/\s+/).filter(Boolean);
         const accountCustomer = app.checkout_customer?.customer || null;
         const customer = accountCustomer
             ? { ...saved, first_name: accountCustomer.first_name, last_name: accountCustomer.last_name, name: accountCustomer.name, email: accountCustomer.email, phone: accountCustomer.phone }
-            : saved;
+            : { ...saved, first_name: saved.first_name || savedNameParts[0] || '', last_name: saved.last_name || savedNameParts.slice(1).join(' ') };
         // Crea un paso de historial interno: Atrás cierra el checkout y no
         // abandona la tienda hacia la página anterior del navegador.
         window.history.pushState({ catalogCheckout: true }, '', window.location.href);
@@ -1832,7 +1833,6 @@
             return;
         }
         errorBox.hidden = true;
-        persistCustomer(customerName, String(formData.get('phone') || '').trim(), customerEmail);
         button.disabled = true;
         button.textContent = 'PREPARANDO TRANSFERENCIA…';
         try {
@@ -1853,6 +1853,7 @@
                     quantity: item.quantity,
                 })),
             });
+            persistCustomer(customerFirstName, customerLastName, String(formData.get('phone') || '').trim(), customerEmail);
             state.order = data.order;
             surpriseUnlocked = false;
             surpriseChecked = false;

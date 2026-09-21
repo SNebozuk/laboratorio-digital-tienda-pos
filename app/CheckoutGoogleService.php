@@ -80,34 +80,41 @@ final class CheckoutGoogleService
         ];
     }
 
-    public function createLocalCustomer(string $firstName, string $lastName, string $phone): void
+    public function saveCheckoutCustomer(string $firstName, string $lastName, string $phone, string $email = ''): void
     {
         $firstName = trim($firstName);
         $lastName = trim($lastName);
         $phone = CustomerService::normalizeWhatsapp($phone);
+        $email = strtolower(trim($email));
         if (!self::validNamePart($firstName)
             || !self::validNamePart($lastName)
             || $phone === '') {
             throw new \RuntimeException('Ingresá nombre, apellido y un WhatsApp válidos.');
         }
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) throw new \RuntimeException('Ingresá un email válido o dejalo vacío.');
         $firstName = self::upper($firstName);
         $lastName = self::upper($lastName);
 
-        Database::immediate($this->pdo, function (PDO $pdo) use ($firstName, $lastName, $phone): void {
+        Database::immediate($this->pdo, function (PDO $pdo) use ($firstName, $lastName, $phone, $email): void {
             $name = trim($firstName . ' ' . $lastName);
-            $lookup = $pdo->prepare('SELECT id, name FROM checkout_customers WHERE phone IN (:e164, :digits, :national, :old_country) ORDER BY CASE WHEN phone = :preferred THEN 0 ELSE 1 END, id LIMIT 1');
+            $lookup = $pdo->prepare('SELECT id FROM checkout_customers WHERE phone IN (:e164, :digits, :national, :old_country) ORDER BY CASE WHEN phone = :preferred THEN 0 ELSE 1 END, id LIMIT 1');
             $lookup->execute(CustomerService::phoneVariants($phone) + ['preferred' => $phone]);
-            $existing = $lookup->fetch();
-            if ($existing && self::upper((string) $existing['name']) !== $name) {
-                throw new \RuntimeException('Ese WhatsApp ya está registrado con otro nombre. Revisá los datos o consultanos.');
+            $id = (int) $lookup->fetchColumn();
+            if ($email !== '') {
+                $byEmail = $pdo->prepare('SELECT id FROM checkout_customers WHERE email = :email COLLATE NOCASE LIMIT 1');
+                $byEmail->execute(['email' => $email]);
+                $emailId = (int) $byEmail->fetchColumn();
+                if ($id > 0 && $emailId > 0 && $id !== $emailId) {
+                    throw new \RuntimeException('Ese email está asociado a otro WhatsApp. Revisalo o dejalo vacío.');
+                }
+                if ($id === 0) $id = $emailId;
             }
-            if ($existing) {
-                $id = (int) $existing['id'];
-                $pdo->prepare('UPDATE checkout_customers SET phone = :phone, updated_at = CURRENT_TIMESTAMP WHERE id = :id')->execute(['phone' => $phone, 'id' => $id]);
+            if ($id > 0) {
+                $pdo->prepare("UPDATE checkout_customers SET first_name = :first_name, last_name = :last_name, name = :name, phone = :phone, email = COALESCE(NULLIF(:email_value, ''), email), updated_at = CURRENT_TIMESTAMP WHERE id = :id")
+                    ->execute(['first_name' => $firstName, 'last_name' => $lastName, 'name' => $name, 'phone' => $phone, 'email_value' => $email, 'id' => $id]);
             } else {
-                $email = bin2hex(random_bytes(16)) . '@local.invalid';
                 $insert = $pdo->prepare('INSERT INTO checkout_customers(first_name, last_name, name, email, phone) VALUES(:first_name, :last_name, :name, :email, :phone)');
-                $insert->execute(['first_name' => $firstName, 'last_name' => $lastName, 'name' => $name, 'email' => $email, 'phone' => $phone]);
+                $insert->execute(['first_name' => $firstName, 'last_name' => $lastName, 'name' => $name, 'email' => $email !== '' ? $email : bin2hex(random_bytes(16)) . '@local.invalid', 'phone' => $phone]);
                 $id = (int) $pdo->lastInsertId();
             }
             CustomerService::save($pdo, $name, $phone);

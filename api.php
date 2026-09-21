@@ -362,10 +362,14 @@ try {
             $cached = $requestKey !== '' ? ($_SESSION['web_order_requests'][$requestKey] ?? null) : null;
             $customerInput = is_array($input['customer'] ?? null) ? $input['customer'] : [];
             if (!is_array($cached) && (string) ($input['channel'] ?? 'web') === 'web') {
-                $app['checkout_google']->updateLocalCustomer(
+                if (!\LaboratorioDigital\CheckoutGoogleService::validFullName(trim((string) ($customerInput['first_name'] ?? '') . ' ' . (string) ($customerInput['last_name'] ?? '')))) {
+                    throw new ValidationException('Ingresá tu nombre y apellido reales.');
+                }
+                $app['checkout_google']->saveCheckoutCustomer(
                     (string) ($customerInput['first_name'] ?? ''),
                     (string) ($customerInput['last_name'] ?? ''),
-                    (string) ($customerInput['phone'] ?? '')
+                    (string) ($customerInput['phone'] ?? ''),
+                    (string) ($customerInput['email'] ?? '')
                 );
             }
             $order = is_array($cached) ? $cached : $app['orders']->createWebOrder(
