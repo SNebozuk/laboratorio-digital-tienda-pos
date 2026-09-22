@@ -19,6 +19,8 @@ final class SettingsService
         'pickup_address',
         'business_hours',
         'cart_maintenance_enabled',
+        'welcome_popup_enabled',
+        'welcome_popup_text',
         'vendor_ai_enabled',
         'reward_surprise_enabled', 'reward_surprise_percent', 'reward_surprise_probability', 'reward_surprise_text', 'reward_surprise_continue_text',
         'reward_quantity_enabled', 'reward_quantity_units', 'reward_quantity_percent', 'reward_quantity_pending_text', 'reward_quantity_unlocked_text',
@@ -53,6 +55,8 @@ final class SettingsService
                 'pickup_address',
                 'business_hours',
                 'cart_maintenance_enabled',
+                'welcome_popup_enabled',
+                'welcome_popup_text',
                 'vendor_ai_enabled',
                 'reward_surprise_enabled', 'reward_surprise_percent', 'reward_surprise_probability', 'reward_surprise_text', 'reward_surprise_continue_text',
                 'reward_quantity_enabled', 'reward_quantity_units', 'reward_quantity_percent', 'reward_quantity_pending_text', 'reward_quantity_unlocked_text',
@@ -83,6 +87,8 @@ final class SettingsService
         $values += [
             'business_hours' => 'Lunes a viernes de 9:30 a 17 · Sábados de 9:30 a 12:30',
             'cart_maintenance_enabled' => '0',
+            'welcome_popup_enabled' => '0',
+            'welcome_popup_text' => '',
             'vendor_ai_enabled' => '1',
             'reward_surprise_enabled' => '1', 'reward_surprise_percent' => '5', 'reward_surprise_probability' => '10', 'reward_surprise_text' => '🎁 ¡Sorpresa! Ganaste 5% de descuento en este carrito.', 'reward_surprise_continue_text' => 'Tu 5% ya está asegurado. Podés seguir agregando productos y aprovecharlo en todo este pedido.',
             'reward_quantity_enabled' => '1', 'reward_quantity_units' => '20', 'reward_quantity_percent' => '3', 'reward_quantity_pending_text' => 'Agregá {{faltan}} más y obtené {{porcentaje}}% de descuento.', 'reward_quantity_unlocked_text' => '🎉 ¡Desbloqueaste {{porcentaje}}% de descuento!',
@@ -467,6 +473,18 @@ final class SettingsService
             ['1', 'true', 'on'],
             true
         ) ? '1' : '0';
+        $welcomePopupEnabled = in_array(
+            (string) ($data['welcome_popup_enabled'] ?? $current['welcome_popup_enabled'] ?? '0'),
+            ['1', 'true', 'on'],
+            true
+        ) ? '1' : '0';
+        $welcomePopupText = trim((string) ($data['welcome_popup_text'] ?? $current['welcome_popup_text'] ?? ''));
+        if (strlen($welcomePopupText) > 1000) {
+            throw new ValidationException('El mensaje de bienvenida puede tener hasta 1000 caracteres.');
+        }
+        if ($welcomePopupEnabled === '1' && $welcomePopupText === '') {
+            throw new ValidationException('Escribí el mensaje de bienvenida antes de activarlo.');
+        }
         $vendorAiEnabled = in_array(
             (string) ($data['vendor_ai_enabled'] ?? $current['vendor_ai_enabled'] ?? '1'),
             ['1', 'true', 'on'],
@@ -534,6 +552,8 @@ final class SettingsService
             'pickup_address' => $pickupAddress,
             'business_hours' => $businessHours,
             'cart_maintenance_enabled' => $cartMaintenanceEnabled,
+            'welcome_popup_enabled' => $welcomePopupEnabled,
+            'welcome_popup_text' => $welcomePopupText,
             'vendor_ai_enabled' => $vendorAiEnabled,
             'reward_surprise_enabled' => $toggle('reward_surprise_enabled'), 'reward_surprise_percent' => $integer('reward_surprise_percent', 1, 100), 'reward_surprise_probability' => $integer('reward_surprise_probability', 0, 100),
             'reward_quantity_enabled' => $toggle('reward_quantity_enabled'), 'reward_quantity_units' => $integer('reward_quantity_units', 1, 10000), 'reward_quantity_percent' => $integer('reward_quantity_percent', 1, 100),

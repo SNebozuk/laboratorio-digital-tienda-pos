@@ -57,6 +57,8 @@ $pickupAddress = trim((string) ($publicSettings['pickup_address'] ?? ''));
 $businessHours = trim((string) ($publicSettings['business_hours'] ?? ''));
 $mapUrl = $pickupAddress === '' ? '' : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($pickupAddress);
 $cartMaintenanceEnabled = in_array((string) ($publicSettings['cart_maintenance_enabled'] ?? '0'), ['1', 'true', 'on'], true);
+$welcomePopupEnabled = in_array((string) ($publicSettings['welcome_popup_enabled'] ?? '0'), ['1', 'true', 'on'], true);
+$welcomePopupText = trim((string) ($publicSettings['welcome_popup_text'] ?? ''));
 $featuredProductIds = $app['settings']->featuredProductIds();
 $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 $logoIsText = ($design['logo_mode'] ?? 'image') === 'text' && trim((string) ($design['logo_text'] ?? '')) !== '';
@@ -290,6 +292,17 @@ header('Referrer-Policy: same-origin');
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <?php if ($welcomePopupEnabled && $welcomePopupText !== ''): ?>
+        <div class="welcome-popup" id="welcome-popup" role="dialog" aria-modal="true" aria-labelledby="welcome-popup-title">
+            <section class="welcome-popup-card">
+                <p class="eyebrow">BIENVENIDOS</p>
+                <h1 id="welcome-popup-title">Antes de ingresar</h1>
+                <p class="welcome-popup-message"><?= $escape($welcomePopupText) ?></p>
+                <button class="primary-button" id="welcome-popup-enter" type="button">INGRESAR AL SITIO</button>
+            </section>
+        </div>
+    <?php endif; ?>
 
     <script id="app-data" type="application/json"><?=
         json_encode([

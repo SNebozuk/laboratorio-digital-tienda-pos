@@ -30,6 +30,16 @@
         textLogo.style.fontWeight = ['1', 'true', 'on'].includes(String(design.logo_bold || '1')) ? '700' : '400';
     }
     const cartMaintenanceEnabled = app.cart_maintenance_enabled === true || String(app.cart_maintenance_enabled) === '1';
+    const welcomePopup = document.getElementById('welcome-popup');
+    const welcomePopupEnter = document.getElementById('welcome-popup-enter');
+    if (welcomePopup && welcomePopupEnter) {
+        document.body.classList.add('welcome-popup-open');
+        welcomePopupEnter.addEventListener('click', () => {
+            welcomePopup.remove();
+            document.body.classList.remove('welcome-popup-open');
+        });
+        window.setTimeout(() => welcomePopupEnter.focus(), 0);
+    }
     let products = Array.isArray(app.products) ? app.products : [];
     let categoryTree = Array.isArray(app.categories) ? app.categories : [];
     let tutorials = Array.isArray(app.tutorials) ? app.tutorials : [];

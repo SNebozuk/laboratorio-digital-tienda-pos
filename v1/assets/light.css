@@ -48,6 +48,14 @@
 .vendor-ai form { display:flex; gap:7px; padding-top:8px; }.vendor-ai textarea { flex:1; min-height:38px; max-height:90px; padding:9px; resize:none; border:0; border-radius:8px; font:inherit; text-transform:none; }.vendor-ai-send { display:grid; width:38px; min-width:38px; height:38px; place-items:center; border:0; border-radius:50%; background:#128c7e; color:#fff; cursor:pointer; }.vendor-ai-send svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }.vendor-ai-human { display:block; padding:9px; border-radius:8px; background:#fff3d4; color:#735d17; font-size:12px; text-decoration:none; }
 @media (max-width:600px) { .vendor-ai,.vendor-ai-launcher { right:14px; bottom:76px; }.vendor-ai { width:calc(100vw - 28px); }.vendor-ai-body { grid-template-columns:1fr; }.vendor-ai-messages { max-height:42vh; }.vendor-ai-results { min-height:120px; max-height:180px; } }
 body { background:#f7faf7 !important; color:var(--text) !important; }
+.welcome-popup-open { overflow:hidden; }
+.welcome-popup { position:fixed; z-index:1000; inset:0; display:grid; place-items:center; padding:22px; background:rgba(24,35,27,.55); }
+.welcome-popup-card { display:grid; width:min(520px,100%); gap:16px; padding:30px; border-radius:18px; background:#fff; box-shadow:0 24px 70px rgba(0,0,0,.28); text-align:center; }
+.welcome-popup-card .eyebrow,.welcome-popup-card h1,.welcome-popup-message { margin:0; }
+.welcome-popup-card h1 { color:var(--text); font-size:clamp(24px,5vw,32px); }
+.welcome-popup-message { color:var(--muted); font-size:16px; line-height:1.55; white-space:pre-wrap; }
+.welcome-popup-card .primary-button { justify-self:center; min-width:min(100%,250px); min-height:46px; padding-inline:22px; border:1px solid #1769e0; border-radius:10px; background:#1769e0 !important; color:#fff !important; font:inherit; font-weight:800; cursor:pointer; }
+@media (max-width:600px) { .welcome-popup { padding:16px; }.welcome-popup-card { padding:25px 20px; }.welcome-popup-card .primary-button { width:100%; } }
 .store-header { background:rgba(255,255,255,.97) !important; border-color:var(--line) !important; box-shadow:0 8px 25px rgba(24,35,27,.08) !important; }
 .brand strong,.header-link { color:var(--text) !important; }.header-link:hover { color:var(--accent) !important; background:#edf7ef !important; }
 .category-panel { background:rgba(255,255,255,.99) !important; border-color:var(--line) !important; box-shadow:14px 0 34px rgba(24,35,27,.12) !important; }.category-title,.eyebrow { color:var(--muted) !important; }.category-button { color:#344238 !important; }.category-button:hover,.category-button.active { color:var(--accent) !important; background:#e6f4e9 !important; border-color:#b9dbbf !important; }.category-help { background:#edf7ef !important; border-color:#c7dec9 !important; }

@@ -4901,6 +4901,8 @@
             const data = await apiGet('settings');
             state.settings = data.settings;
             form.elements.cart_maintenance_enabled.checked = ['1', 'true', 'on'].includes(String(data.settings.cart_maintenance_enabled || '0'));
+            form.elements.welcome_popup_enabled.checked = ['1', 'true', 'on'].includes(String(data.settings.welcome_popup_enabled || '0'));
+            form.elements.welcome_popup_text.value = String(data.settings.welcome_popup_text || '');
         } catch (error) {
             toast(error.message);
         }
@@ -4917,10 +4919,12 @@
                 settings: {
                     ...state.settings,
                     cart_maintenance_enabled: form.elements.cart_maintenance_enabled.checked ? '1' : '0',
+                    welcome_popup_enabled: form.elements.welcome_popup_enabled.checked ? '1' : '0',
+                    welcome_popup_text: form.elements.welcome_popup_text.value,
                 },
             });
             state.settings = response.settings;
-            toast(form.elements.cart_maintenance_enabled.checked ? 'Carrito bloqueado para mantenimiento.' : 'Carrito habilitado nuevamente.');
+            toast('Mantenimiento actualizado.');
         } catch (error) {
             toast(error.message);
         } finally {

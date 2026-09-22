@@ -668,6 +668,17 @@ header('Referrer-Policy: same-origin');
                                     <small>La tienda seguirá disponible para navegar. Las personas no podrán agregar, modificar ni confirmar productos en el carrito.</small>
                                 </span>
                             </label>
+                            <label class="checkbox-setting">
+                                <input name="welcome_popup_enabled" type="checkbox" value="1">
+                                <span>
+                                    <strong>Mostrar mensaje de bienvenida</strong>
+                                    <small>Al ingresar a la tienda, las personas verán este aviso y deberán pulsar “Ingresar al sitio” para continuar.</small>
+                                </span>
+                            </label>
+                            <label>
+                                <span>Mensaje que se mostrará en el popup</span>
+                                <textarea name="welcome_popup_text" rows="5" maxlength="1000" placeholder="Escribí acá el mensaje que querés mostrar a los clientes."></textarea>
+                            </label>
                             <button class="primary-button fit-button" type="submit">GUARDAR MANTENIMIENTO</button>
                         </form>
                     </section>
