@@ -84,6 +84,7 @@
 .checkbox-setting input { width:18px; height:18px; margin:1px 0 0; accent-color:var(--accent); }
 .checkbox-setting strong,.checkbox-setting small { display:block; }
 .checkbox-setting small,.form-hint { margin-top:4px; color:var(--muted); font-size:12px; font-weight:400; line-height:1.45; }
+#maintenance-form textarea[name="welcome_popup_text"] { text-transform:none; }
 .form-hint code { padding:1px 4px; border-radius:4px; background:rgba(118,82,184,.12); color:inherit; }
 .email-template-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:18px; }
 .email-template-grid label { display:grid; gap:6px; font-size:12px; font-weight:800; }

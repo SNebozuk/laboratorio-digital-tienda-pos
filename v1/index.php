@@ -297,7 +297,7 @@ header('Referrer-Policy: same-origin');
         <div class="welcome-popup" id="welcome-popup" role="dialog" aria-modal="true" aria-labelledby="welcome-popup-title">
             <section class="welcome-popup-card">
                 <p class="eyebrow">BIENVENIDOS</p>
-                <h1 id="welcome-popup-title">Antes de ingresar</h1>
+                <h1 id="welcome-popup-title">Aviso</h1>
                 <p class="welcome-popup-message"><?= $escape($welcomePopupText) ?></p>
                 <button class="primary-button" id="welcome-popup-enter" type="button">INGRESAR AL SITIO</button>
             </section>
