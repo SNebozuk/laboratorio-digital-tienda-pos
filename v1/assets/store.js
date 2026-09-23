@@ -1396,16 +1396,17 @@
                 .filter(Boolean);
             const roots = [...preferredRoots, ...rootCategories.filter(category => !preferredRoots.includes(category))]
                 .slice(0, 4);
+            const galleryImages = [1, 2, 3].map((number, index) => {
+                const path = app.design?.[`hero_${number}_path`];
+                const image = path?.startsWith('/v1/assets/') ? `${app.asset_url}/${path.slice('/v1/assets/'.length)}` : safeImage(path);
+                return image ? `<img src="${escapeHtml(image)}" alt="${['Productos para personalizar', 'Indumentaria personalizada', 'Materiales y productos para crear'][index]}" loading="lazy">` : '';
+            }).join('');
             const homeSections = {
                 featured: featured.length ? `<section class="home-featured-products" aria-labelledby="featured-products-title">
                         <div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2 id="featured-products-title">PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div>
                         <div class="featured-product-grid">${featured.map(featuredProductCard).join('')}</div>
                     </section>` : '',
-                gallery: `<section class="home-people-gallery" aria-label="Lo que podés encontrar en Laboratorio Digital">
-                        <img src="${escapeHtml(safeImage(app.design?.hero_1_path) || '/v1/assets/brand/hero-1.webp')}" alt="Productos para personalizar" loading="lazy">
-                        <img src="${escapeHtml(safeImage(app.design?.hero_2_path) || '/v1/assets/brand/hero-2.webp')}" alt="Indumentaria personalizada" loading="lazy">
-                        <img src="${escapeHtml(safeImage(app.design?.hero_3_path) || '/v1/assets/brand/hero-3.webp')}" alt="Materiales y productos para crear" loading="lazy">
-                    </section>`,
+                gallery: galleryImages ? `<section class="home-people-gallery" aria-label="Lo que podés encontrar en Laboratorio Digital">${galleryImages}</section>` : '',
                 categories: `<div class="quick-categories">
                         ${roots.map((category, index) => `<button type="button" data-category="${escapeHtml(category.slug)}"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}
                     </div>

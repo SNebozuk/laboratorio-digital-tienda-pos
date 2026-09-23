@@ -373,7 +373,7 @@ final class SettingsService
         }
         foreach (['logo_path', 'hero_1_path', 'hero_2_path', 'hero_3_path'] as $key) {
             $image = trim((string) ($data[$key] ?? $current[$key]));
-            if ($image === '' || !str_starts_with($image, '/')) throw new ValidationException('Elegí una imagen válida.');
+            if ($image !== '' && !str_starts_with($image, '/')) throw new ValidationException('Elegí una imagen válida.');
             $values[$key] = $image;
         }
         foreach (['color_background', 'color_surface', 'color_secondary', 'color_text', 'color_accent'] as $key) {

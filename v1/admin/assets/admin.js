@@ -1710,8 +1710,8 @@
                     const single = product.variants[0];
                     // Un producto con variantes no tiene un único precio ni stock: esos valores
                     // se muestran únicamente en las filas de cada variante.
-                    const inlineFields = !hasVariants && single ? `<label class="product-inline-field ${quickStockSaved.has(Number(single.id)) ? 'is-saved' : ''} ${single.stock_on_hand != null && Number(single.stock_on_hand) === 0 ? 'is-empty' : ''}"><input type="number" min="0" step="1" value="${single.stock_on_hand == null ? '' : Number(single.stock_on_hand)}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
-                        <label class="product-inline-field"><input type="number" min="0" step="1" value="${single.price_cents == null ? '' : Number(single.price_cents) / 100}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
+                    const inlineFields = !hasVariants && single ? `<label class="product-inline-field ${quickStockSaved.has(Number(single.id)) ? 'is-saved' : ''}"><input type="number" min="0" step="1" value="${Number(single.stock_on_hand) || ''}" data-quick-stock="${Number(single.id)}" aria-label="Stock de ${escapeHtml(product.name)}"></label>
+                        <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(single.price_cents) ? Number(single.price_cents) / 100 : ''}" data-quick-price="${Number(single.id)}" aria-label="Precio de ${escapeHtml(product.name)}"></label>` : '<span></span><span></span>';
                     const visible = isProductVisible(product);
                     const featured = state.featuredProductIds.has(Number(product.id));
                     return `<div class="product-list-row ${visible ? '' : 'is-hidden'}" role="row">
@@ -1725,8 +1725,8 @@
                         return `<div class="product-variant-inline-row ${product.active && variant.active ? '' : 'is-hidden'}" role="row">
                             <span></span>
                             <span class="product-inline-variant-name"><strong>${escapeHtml(name || 'Variante única')}</strong><small>${escapeHtml(variant.sku || '')}</small></span>
-                            <label class="product-inline-field ${quickStockSaved.has(Number(variant.id)) ? 'is-saved' : ''} ${variant.stock_on_hand != null && Number(variant.stock_on_hand) === 0 ? 'is-empty' : ''}"><input type="number" min="0" step="1" value="${variant.stock_on_hand == null ? '' : Number(variant.stock_on_hand)}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
-                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${variant.price_cents == null ? '' : Number(variant.price_cents) / 100}" data-quick-price="${Number(variant.id)}" aria-label="Precio de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
+                            <label class="product-inline-field ${quickStockSaved.has(Number(variant.id)) ? 'is-saved' : ''}"><input type="number" min="0" step="1" value="${Number(variant.stock_on_hand) || ''}" data-quick-stock="${Number(variant.id)}" aria-label="Stock de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
+                            <label class="product-inline-field"><input type="number" min="0" step="1" value="${Number(variant.price_cents) ? Number(variant.price_cents) / 100 : ''}" data-quick-price="${Number(variant.id)}" aria-label="Precio de ${escapeHtml(product.name)} ${escapeHtml(name)}"></label>
                             <span></span>
                             <span></span>
                         </div>`;
@@ -1927,10 +1927,10 @@
         const priceInput = document.querySelector(`[data-quick-price="${variantId}"]`);
         const stockInput = document.querySelector(`[data-quick-stock="${variantId}"]`);
         const priceCents = priceInput.value.trim() === ''
-            ? null
+            ? 0
             : Math.round(Number(priceInput.value) * 100);
         const stockOnHand = stockInput.value.trim() === ''
-            ? null
+            ? 0
             : Number(stockInput.value);
         input.disabled = true;
         quickUpdateInFlight += 1;
@@ -1947,11 +1947,12 @@
             variant.price_cents = priceCents;
             variant.stock_on_hand = stockOnHand;
             variant.available_stock = stockOnHand;
+            if (priceCents === 0) priceInput.value = '';
+            if (stockOnHand === 0) stockInput.value = '';
             if (input.dataset.quickStock) {
                 quickStockSaved.add(variantId);
                 const field = input.closest('.product-inline-field');
                 field?.classList.add('is-saved');
-                field?.classList.toggle('is-empty', stockOnHand === 0);
                 window.clearTimeout(quickStockSavedTimers.get(variantId));
                 quickStockSavedTimers.set(variantId, window.setTimeout(() => {
                     quickStockSaved.delete(variantId);
@@ -5080,12 +5081,8 @@
                 if (field.type === 'checkbox') field.checked = ['1', 'true', 'on'].includes(String(value));
                 else field.value = value;
             });
-            const preview = document.getElementById('design-logo-preview');
-            if (preview) preview.src = data.design.logo_path;
-            [1, 2, 3].forEach(number => {
-                const image = document.getElementById(`design-hero-${number}-preview`);
-                if (image) image.src = data.design[`hero_${number}_path`];
-            });
+            setDesignImagePreview('logo', data.design.logo_path);
+            [1, 2, 3].forEach(number => setDesignImagePreview(`hero_${number}`, data.design[`hero_${number}_path`]));
             const order = String(data.design.section_order || '').split(',');
             const visibility = String(data.design.section_visibility || 'featured,gallery,categories,tutorials').split(',');
             const list = form.querySelector('[data-design-section-order]');
@@ -5136,7 +5133,7 @@
             const target = document.getElementById(targetId);
             const source = document.getElementById(sourceId);
             if (!target || !source) return;
-            target.src = source.currentSrc || source.src || '';
+            target.src = source.getAttribute('src') || '';
             target.hidden = !target.getAttribute('src');
         };
 
@@ -5250,16 +5247,22 @@
             data.delete('hero_2_file');
             data.delete('hero_3_file');
             const response = await apiPost({ action: 'design_update', design: Object.fromEntries(data.entries()) });
-            const preview = document.getElementById('design-logo-preview');
-            if (preview) preview.src = response.design.logo_path;
-            [1, 2, 3].forEach(number => {
-                const image = document.getElementById(`design-hero-${number}-preview`);
-                if (image) image.src = response.design[`hero_${number}_path`];
-            });
+            setDesignImagePreview('logo', response.design.logo_path);
+            [1, 2, 3].forEach(number => setDesignImagePreview(`hero_${number}`, response.design[`hero_${number}_path`]));
             renderDesignPreview();
             toast('Diseño guardado y publicado.');
         } catch (error) { toast(error.message); }
         finally { button.disabled = false; button.textContent = 'GUARDAR DISEÑO'; }
+    }
+
+    function setDesignImagePreview(key, path) {
+        const preview = document.getElementById(key === 'logo' ? 'design-logo-preview' : `design-hero-${key.slice(-1)}-preview`);
+        if (!preview) return;
+        if (path) preview.src = path;
+        else preview.removeAttribute('src');
+        const container = preview.closest('.design-image-preview');
+        container.hidden = !path;
+        container.querySelector('[data-remove-design-image]').hidden = !path;
     }
 
     function previewDesignImage(input, preview) {
@@ -5268,6 +5271,8 @@
         const reader = new FileReader();
         reader.addEventListener('load', () => {
             preview.src = String(reader.result || '');
+            preview.closest('.design-image-preview').hidden = false;
+            preview.closest('.design-image-preview').querySelector('[data-remove-design-image]').hidden = false;
             renderDesignPreview();
         });
         reader.readAsDataURL(file);
@@ -7642,14 +7647,22 @@
             previewDesignImage(event.target, document.getElementById(`design-hero-${number}-preview`));
         });
     });
+    designForm?.addEventListener('click', event => {
+        const button = event.target.closest('[data-remove-design-image]');
+        if (!button) return;
+        const key = button.dataset.removeDesignImage;
+        designForm.elements.namedItem(`${key}_path`).value = '';
+        designForm.elements.namedItem(`${key}_file`).value = '';
+        setDesignImagePreview(key, '');
+        renderDesignPreview();
+    });
     document.getElementById('restore-default-logo')?.addEventListener('click', () => {
         if (!designForm) return;
         const path = '/v1/assets/brand/logo-laboratorio-digital.png';
         designForm.elements.namedItem('logo_path').value = path;
         const file = designForm.elements.namedItem('logo_file');
         if (file) file.value = '';
-        const preview = document.getElementById('design-logo-preview');
-        if (preview) preview.src = path;
+        setDesignImagePreview('logo', path);
         renderDesignPreview();
         toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
     });

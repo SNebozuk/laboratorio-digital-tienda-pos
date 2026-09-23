@@ -114,7 +114,7 @@ header('Referrer-Policy: same-origin');
                 <span aria-hidden="true">☰</span><span>MENÚ</span>
             </button>
             <a class="brand store-brand" href="<?= $escape($logoHref) ?>" aria-label="<?= $escape($logoText) ?>">
-                <?php if ($logoIsText): ?>
+                <?php if ($logoIsText || $design['logo_path'] === ''): ?>
                     <span class="store-text-logo"><?= $escape($logoText) ?></span>
                 <?php else: ?>
                     <img class="brand-logo" src="<?= $escape((string) $design['logo_path']) ?>" alt="<?= $escape($logoText) ?>">
