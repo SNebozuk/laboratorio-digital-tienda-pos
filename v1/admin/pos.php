@@ -69,9 +69,10 @@ header('Referrer-Policy: same-origin');
             <aside class="pos-cart pos-page-cart">
                 <div class="pos-cart-heading">
                     <div><p class="eyebrow">VENTA ACTUAL</p><h2>RESUMEN</h2></div>
-                    <button class="pos-clear-cart" id="pos-clear-cart" type="button" disabled>VACIAR CARRITO</button>
+                    <div class="pos-cart-heading-actions"><button class="pos-save-cart" id="pos-save-cart" type="button" disabled>GUARDAR CARRITO</button><button class="pos-clear-cart" id="pos-clear-cart" type="button" disabled>VACIAR CARRITO</button></div>
                 </div>
                 <div id="pos-cart-lines" class="cart-lines"></div>
+                <section class="pos-saved-carts" aria-labelledby="pos-saved-carts-title"><h3 id="pos-saved-carts-title">CARRITOS GUARDADOS</h3><div id="pos-saved-carts-list"></div></section>
             </aside>
         </section>
     </main>

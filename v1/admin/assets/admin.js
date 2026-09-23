@@ -193,6 +193,8 @@
         posKlaus: document.getElementById('pos-klaus'),
         adminKlaus: document.getElementById('admin-klaus'),
         posClearCart: document.getElementById('pos-clear-cart'),
+        posSaveCart: document.getElementById('pos-save-cart'),
+        posSavedCarts: document.getElementById('pos-saved-carts-list'),
         completeSale: document.getElementById('complete-sale-button'),
         orderList: document.getElementById('order-list'),
         deliverySlots: document.getElementById('delivery-slots'),
@@ -250,12 +252,15 @@
     let aiRecorder = null;
     const POS_CART_STORAGE_KEY = `laboratorio-digital:pos-cart:v1:${Number(app.user?.id || 0)}`;
     const POS_CUSTOMER_STORAGE_KEY = `laboratorio-digital:pos-customer:v1:${Number(app.user?.id || 0)}`;
+    const POS_SAVED_CARTS_STORAGE_KEY = `laboratorio-digital:pos-saved-carts:v1:${Number(app.user?.id || 0)}`;
     const ADMIN_SIDEBAR_COLLAPSED_STORAGE_KEY = 'laboratorio-digital:admin-sidebar-collapsed';
     const quickUpdateTimers = new Map();
     const quickStockSaved = new Set();
     const quickStockSavedTimers = new Map();
     let automaticRefreshRunning = false;
     let quickUpdateInFlight = 0;
+    let deliveryDeletePointerDown = false;
+    let deliveryRenderPending = false;
 
     function setAdminSidebarCollapsed(collapsed) {
         const shell = document.querySelector('.admin-shell');
@@ -2121,6 +2126,117 @@
         }
     }
 
+    function savedPosCarts() {
+        try {
+            const carts = JSON.parse(localStorage.getItem(POS_SAVED_CARTS_STORAGE_KEY) || '[]');
+            return Array.isArray(carts) ? carts : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function writeSavedPosCarts(carts) {
+        try {
+            localStorage.setItem(POS_SAVED_CARTS_STORAGE_KEY, JSON.stringify(carts));
+            return true;
+        } catch {
+            toast('No se pudo guardar el carrito en este navegador.');
+            return false;
+        }
+    }
+
+    function renderSavedPosCarts() {
+        if (!elements.posSavedCarts) return;
+        const carts = savedPosCarts();
+        elements.posSavedCarts.innerHTML = carts.length ? carts.map(cart => {
+            const items = Array.isArray(cart.items) ? cart.items : [];
+            const date = new Date(cart.saved_at);
+            const dateLabel = Number.isNaN(date.getTime()) ? '' : date.toLocaleString('es-AR');
+            const customer = [cart.customer_name, cart.customer_phone].filter(Boolean).join(' · ');
+            return `<article class="pos-saved-cart"><strong>${escapeHtml(customer || `Carrito del ${dateLabel}`)}</strong>${customer ? `<small>${escapeHtml(dateLabel)}</small>` : ''}<ul>${items.map(item => `<li>${Number(item.quantity)} × ${escapeHtml(item.name || 'Producto')}${item.variant ? ` · ${escapeHtml(item.variant)}` : ''}</li>`).join('')}</ul><div class="pos-saved-cart-actions"><button type="button" data-resume-saved-pos-cart="${escapeHtml(cart.id)}">RETOMAR</button><button type="button" data-delete-saved-pos-cart="${escapeHtml(cart.id)}">ELIMINAR</button></div></article>`;
+        }).join('') : '<p class="empty-copy">No hay carritos guardados.</p>';
+    }
+
+    function saveCurrentPosCart() {
+        if (!state.posCart.size) return;
+        const index = variantIndex();
+        const items = Array.from(state.posCart, ([variantId, quantity]) => {
+            const entry = index.get(Number(variantId));
+            return entry ? {
+                variant_id: Number(variantId), quantity: Number(quantity),
+                name: entry.product.name, variant: variantDisplayName(entry.product, entry.variant),
+                checked: state.posCheckedVariants.has(Number(variantId)),
+            } : null;
+        }).filter(Boolean);
+        if (!items.length) return;
+        const customerName = document.getElementById('pos-customer')?.value.trim() || '';
+        const customerPhone = document.getElementById('pos-customer-phone')?.value.trim() || '';
+        const carts = savedPosCarts();
+        carts.unshift({ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, saved_at: new Date().toISOString(), customer_name: customerName, customer_phone: customerPhone, items });
+        if (!writeSavedPosCarts(carts)) return;
+        state.posCart.clear();
+        state.posCheckedVariants.clear();
+        persistPosCart();
+        try { localStorage.removeItem(POS_CUSTOMER_STORAGE_KEY); } catch {}
+        if (document.getElementById('pos-customer')) document.getElementById('pos-customer').value = '';
+        if (document.getElementById('pos-customer-phone')) document.getElementById('pos-customer-phone').value = '';
+        renderPos();
+        renderPosCart();
+        renderSavedPosCarts();
+        toast('Carrito guardado.');
+    }
+
+    function resumeSavedPosCart(id) {
+        if (!state.productsLoaded) {
+            toast('Esperá a que carguen los productos.');
+            return;
+        }
+        if (state.posCart.size) {
+            toast('Guardá o vaciá el carrito actual antes de retomar otro.');
+            return;
+        }
+        const carts = savedPosCarts();
+        const cart = carts.find(item => String(item.id) === String(id));
+        if (!cart || !Array.isArray(cart.items)) return;
+        const index = variantIndex();
+        const available = cart.items.map(item => {
+            const entry = index.get(Number(item.variant_id));
+            const quantity = Math.min(Number(item.quantity) || 0, Number(entry?.variant.available_stock || 0));
+            return quantity > 0 ? { variantId: Number(item.variant_id), quantity, checked: Boolean(item.checked) } : null;
+        }).filter(Boolean);
+        if (!available.length) {
+            toast('Los productos de este carrito ya no tienen stock disponible.');
+            return;
+        }
+        const remaining = carts.filter(item => String(item.id) !== String(id));
+        if (!writeSavedPosCarts(remaining)) return;
+        state.posCart = new Map(available.map(item => [item.variantId, item.quantity]));
+        state.posCheckedVariants = new Set(available.filter(item => item.checked).map(item => item.variantId));
+        const customer = document.getElementById('pos-customer');
+        const phone = document.getElementById('pos-customer-phone');
+        if (customer) customer.value = String(cart.customer_name || '');
+        if (phone) phone.value = String(cart.customer_phone || '');
+        try {
+            if (customer?.value) localStorage.setItem(POS_CUSTOMER_STORAGE_KEY, customer.value);
+            else localStorage.removeItem(POS_CUSTOMER_STORAGE_KEY);
+        } catch {}
+        persistPosCart();
+        renderPos();
+        renderPosCart();
+        renderSavedPosCarts();
+        toast(available.length < cart.items.length || available.some(item => item.quantity !== Number(cart.items.find(saved => Number(saved.variant_id) === item.variantId)?.quantity))
+            ? 'Carrito retomado con cantidades ajustadas al stock actual.' : 'Carrito retomado.');
+    }
+
+    function deleteSavedPosCart(id) {
+        const carts = savedPosCarts();
+        if (!carts.some(item => String(item.id) === String(id))) return;
+        if (writeSavedPosCarts(carts.filter(item => String(item.id) !== String(id)))) {
+            renderSavedPosCarts();
+            toast('Carrito guardado eliminado.');
+        }
+    }
+
     function restorePosCustomer() {
         const input = document.getElementById('pos-customer');
         if (!input) return;
@@ -2377,14 +2493,15 @@
             (sum, item) => sum + Number(item.variant.price_cents) * item.quantity,
             0
         );
-        const requiresVerification = posRequiresVerification();
         elements.posTotal.textContent = money(total);
         const currentVariantIds = new Set(items.map(item => Number(item.variantId)));
         Array.from(state.posCheckedVariants).forEach(variantId => {
             if (!currentVariantIds.has(Number(variantId))) state.posCheckedVariants.delete(Number(variantId));
         });
+        const showVerification = posRequiresVerification() || state.posCheckedVariants.size > 0;
         updatePosCompletionState();
         elements.posClearCart.disabled = items.length === 0;
+        if (elements.posSaveCart) elements.posSaveCart.disabled = items.length === 0;
         const conflictNames = Array.from(state.posStockConflicts).map(variantId => {
             const indexed = index.get(Number(variantId));
             if (!indexed) return null;
@@ -2421,7 +2538,7 @@
                 ${group.items.length > 1 ? `<strong class="pos-cart-group-name">${escapeHtml(group.product.name)}</strong>` : ''}
                 ${group.items.map(item => `
                     <div class="cart-line pos-cart-detail-row ${state.posStockConflicts.has(Number(item.variantId)) ? 'stock-conflict' : ''}">
-                        ${requiresVerification ? `<label class="pos-cart-check" title="Producto verificado"><input type="checkbox" data-pos-checked="${item.variantId}" ${state.posCheckedVariants.has(Number(item.variantId)) ? 'checked' : ''} aria-label="Marcar ${escapeHtml(item.product.name)} como verificado"><span aria-hidden="true">✓</span></label>` : '<span aria-hidden="true"></span>'}
+                        ${showVerification ? `<label class="pos-cart-check" title="Producto verificado"><input type="checkbox" data-pos-checked="${item.variantId}" ${state.posCheckedVariants.has(Number(item.variantId)) ? 'checked' : ''} aria-label="Marcar ${escapeHtml(item.product.name)} como verificado"><span aria-hidden="true">✓</span></label>` : '<span aria-hidden="true"></span>'}
                         <div class="pos-cart-product">
                             ${group.items.length === 1 ? `<strong>${escapeHtml(group.product.name)}</strong>` : ''}
                             ${variantDisplayName(item.product, item.variant)
@@ -3059,6 +3176,10 @@
     function renderDeliverySlots() {
         renderDeliveryBadge();
         if (!elements.deliverySlots) return;
+        if (deliveryDeletePointerDown) {
+            deliveryRenderPending = true;
+            return;
+        }
         const byNumber = new Map(state.deliverySlots.map(slot => [Number(slot.slot_number), slot]));
         const pendingOrders = pendingDeliveryOrders();
         const pending = pendingOrders[0];
@@ -7018,6 +7139,21 @@
     });
 
     document.getElementById('open-deliveries')?.addEventListener('click', () => showView('deliveries'));
+    document.addEventListener('pointerdown', event => {
+        if (event.target.closest('[data-delete-delivery-slot]')) deliveryDeletePointerDown = true;
+    }, true);
+    const finishDeliveryDeletePointer = () => {
+        if (!deliveryDeletePointerDown) return;
+        setTimeout(() => {
+            deliveryDeletePointerDown = false;
+            if (deliveryRenderPending) {
+                deliveryRenderPending = false;
+                renderDeliverySlots();
+            }
+        }, 0);
+    };
+    document.addEventListener('pointerup', finishDeliveryDeletePointer);
+    document.addEventListener('pointercancel', finishDeliveryDeletePointer);
     document.addEventListener('click', event => {
         const zone = event.target.closest('[data-image-drop]');
         if (zone) zone.closest('label')?.querySelector('[name="image_file"]')?.click();
@@ -7433,6 +7569,16 @@
         persistPosCart();
         renderPosCart();
     });
+    elements.posSaveCart?.addEventListener('click', saveCurrentPosCart);
+    elements.posSavedCarts?.addEventListener('click', event => {
+        const resume = event.target.closest('[data-resume-saved-pos-cart]');
+        if (resume) {
+            resumeSavedPosCart(resume.dataset.resumeSavedPosCart);
+            return;
+        }
+        const remove = event.target.closest('[data-delete-saved-pos-cart]');
+        if (remove) deleteSavedPosCart(remove.dataset.deleteSavedPosCart);
+    });
     elements.posCartLines?.addEventListener('pointerdown', event => {
         if (event.target.closest('[data-pos-quantity]')) {
             event.preventDefault();
@@ -7686,6 +7832,7 @@
             restorePosCustomer();
             loadProducts();
             renderPosCart();
+            renderSavedPosCarts();
         }
         if (elements.invitationsBadge) loadInvitations();
         if (elements.ordersBadge) loadOrderNotifications();

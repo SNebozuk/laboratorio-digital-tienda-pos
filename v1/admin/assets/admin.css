@@ -3238,9 +3238,23 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-main-total strong { color: #252a3a; font-size: clamp(32px, 3.4vw, 48px); font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -.04em; }
 .pos-cart-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 .pos-cart-heading h2 { margin-bottom: 12px; }
+.pos-cart-heading-actions { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: 4px; margin-left: auto; white-space: nowrap; }
+@media (max-width: 600px) { .pos-cart-heading { flex-wrap: wrap; }.pos-cart-heading-actions { order: -1; width: 100%; } }
+.pos-save-cart { min-height: 46px; padding: 0 12px; border: 1px solid #1769e0; border-radius: 10px; background: #1769e0; color: #fff; font-size: 11px; font-weight: 750; cursor: pointer; }
+.pos-save-cart:hover:not(:disabled) { background: #1459bd; }
+.pos-save-cart:disabled { border-color: #dce2ed; background: #dce2ed; color: #8997aa; cursor: default; }
 .pos-clear-cart { padding: 7px 9px; border: 0; background: transparent; color: #d54b4b; font-size: 10px; font-weight: 850; letter-spacing: .04em; cursor: pointer; }
 .pos-clear-cart:hover { text-decoration: underline; }
 .pos-clear-cart:disabled { color: #a7adba; cursor: default; text-decoration: none; }
+.pos-saved-carts { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e4e8f0; }
+.pos-saved-carts h3 { margin: 0 0 10px; color: #667087; font-size: 11px; letter-spacing: .08em; }
+.pos-saved-cart { margin-bottom: 10px; padding: 12px; border: 1px solid #dce2ed; border-radius: 10px; background: #f8faff; }
+.pos-saved-cart > strong, .pos-saved-cart > small { display: block; }
+.pos-saved-cart > small { margin-top: 3px; color: #667087; }
+.pos-saved-cart ul { margin: 9px 0; padding-left: 20px; font-size: 13px; }
+.pos-saved-cart-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pos-saved-cart-actions button { min-height: 46px; padding: 0 12px; border: 1px solid #1769e0; border-radius: 10px; background: #1769e0; color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+.pos-saved-cart-actions button[data-delete-saved-pos-cart] { border-color: #d9bfc1; background: #fff; color: #b63e3e; }
 .pos-remove-cart-line { display: grid; width: 34px; height: 34px; place-items: center; padding: 0; border: 1px solid #e7d7d7; border-radius: 8px; background: #fff; color: #c64242; cursor: pointer; font-size: 15px; }
 .pos-remove-cart-line:hover { border-color: #d85a5a; background: #fff4f4; }
 .pos-checkout-menu { display: grid; gap: 18px; }
