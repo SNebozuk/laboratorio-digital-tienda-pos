@@ -2,9 +2,8 @@
 declare(strict_types=1);
 
 $host = strtolower((string) preg_replace('/:\\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
-$requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
-if (in_array($host, ['artjet.com.ar', 'www.artjet.com.ar'], true) && in_array($requestPath, ['/', '/index.php'], true)) {
-    header('Location: /artjet/', true, 302);
+if (in_array($host, ['artjet.com.ar', 'www.artjet.com.ar'], true)) {
+    header('Location: https://www.laboratoriodigital.com.ar/', true, 301);
     exit;
 }
 

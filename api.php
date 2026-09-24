@@ -61,7 +61,6 @@ try {
                 Http::json([
                     'ok' => true,
                     'products' => $app['products']->adminCatalog(),
-                    'artjet_image_paths' => $app['artjet']->imagePaths(),
                     'featured_product_ids' => $app['settings']->featuredProductIds(),
                 ]);
 
@@ -280,14 +279,6 @@ try {
     Http::requireCsrf($input);
 
     switch ($action) {
-        case 'artjet_product_image_update':
-            $app['auth']->requireAdmin();
-            $app['artjet']->setProductImage(
-                (int) ($input['product_id'] ?? 0),
-                (string) ($input['image_path'] ?? '')
-            );
-            Http::json(['ok' => true]);
-
         case 'ai_catalog_transcribe':
             $app['auth']->requireUser();
             Http::json(['ok' => true, 'text' => $app['catalog_ai_audio']->transcribe($_FILES['audio'] ?? [])]);

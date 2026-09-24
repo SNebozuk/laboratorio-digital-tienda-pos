@@ -665,10 +665,6 @@
         try {
             const data = await apiGet('admin_products');
             state.products = data.products;
-            const artjetImages = data.artjet_image_paths || {};
-            state.products.forEach(product => {
-                product.artjet_image_path = artjetImages[product.id] || '';
-            });
             state.featuredProductIds = new Set((data.featured_product_ids || []).map(Number));
             if (elements.categoryTree) {
                 const categoryData = await apiGet('admin_categories');
@@ -1807,14 +1803,6 @@
                     URL DE IMAGEN · OPCIONAL
                     <input name="image_path" value="${escapeHtml(product?.image_path || '')}" placeholder="https://...">
                 </label>
-                <label class="product-image-field">
-                    IMAGEN PARA TIENDA ARTJET · OPCIONAL
-                    <input name="artjet_image_file" type="file" accept="image/jpeg,image/png,image/webp">
-                    <span class="image-drop-zone" data-image-drop data-image-input="artjet_image_file">Arrastrá la imagen exclusiva de Artjet aquí o hacé clic para elegirla</span>
-                    <small>Solo se muestra en Artjet. La foto de Laboratorio Digital no se modifica.</small>
-                    ${product?.artjet_image_path ? `<img class="product-editor-image-preview" data-image-preview src="${escapeHtml(product.artjet_image_path)}" alt="Imagen actual para Artjet">` : ''}
-                    ${product ? `<a class="secondary-button fit-button" href="/artjet/?preview_product=${Number(product.id)}" target="_blank" rel="noopener">VISTA PREVIA ARTJET</a>` : ''}
-                </label>
                 <label>
                     PRODUCTO ACTIVO
                     <select name="active">
@@ -1871,29 +1859,16 @@
         try {
             const product = readProductForm(form);
             const imageFile = form.querySelector('[name="image_file"]').files[0];
-            const artjetImageFile = form.querySelector('[name="artjet_image_file"]').files[0];
             if (imageFile) {
                 button.textContent = 'SUBIENDO FOTO…';
                 product.image_path = await uploadProductImage(imageFile);
             }
-            let artjetImagePath = '';
-            if (artjetImageFile) {
-                button.textContent = 'SUBIENDO IMAGEN ARTJET…';
-                artjetImagePath = await uploadProductImage(artjetImageFile);
-            }
             button.textContent = 'GUARDANDO…';
-            const saved = await apiPost({
+            await apiPost({
                 action: productId ? 'product_update' : 'product_create',
                 product_id: productId || undefined,
                 product,
             });
-            if (artjetImagePath) {
-                await apiPost({
-                    action: 'artjet_product_image_update',
-                    product_id: productId || saved.product_id,
-                    image_path: artjetImagePath,
-                });
-            }
             closeModal();
             await loadProducts();
             toast(productId ? 'Producto guardado correctamente.' : 'Producto creado correctamente.');
