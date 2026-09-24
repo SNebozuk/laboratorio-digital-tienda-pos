@@ -73,8 +73,8 @@ $formatFor = static function (string $name): string {
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Artjet · Materiales para crear</title>
-    <link rel="stylesheet" href="assets/artjet.css?v=4">
-    <link rel="stylesheet" href="assets/artjet-cards.css?v=1">
+    <link rel="stylesheet" href="assets/artjet.css?v=5">
+    <link rel="stylesheet" href="assets/artjet-cards.css?v=2">
     <link rel="stylesheet" href="assets/artjet-chat.css?v=1">
 </head><body>
 <header class="artjet-header">
@@ -92,16 +92,7 @@ $formatFor = static function (string $name): string {
         <div class="artjet-hero-copy"><p>PAPELES · TINTAS · SUPERFICIES</p><h1>Creá.<br><em>Imprimí.</em><br>Dejá huella.</h1><span>Materiales Art‑Jet para transformar una idea en algo que se puede tocar.</span><a href="#categorias">DESCUBRIR COLECCIONES <b>↓</b></a></div>
         <div class="artjet-hero-visual"><div class="artjet-hero-word">MATERIAL</div><i></i><?php if (!empty($featuredImage)): ?><img src="<?= $escape((string) $featuredImage) ?>" alt="<?= $escape((string) $featured['name']) ?>"><?php endif; ?><span>FORMATO A4<br>ESCALA VISUAL 1:2</span></div>
     </section>
-    <section class="artjet-marquee" aria-label="Identidad Artjet"><span>ALTA DEFINICIÓN</span><b>✳</b><span>COLOR QUE IMPACTA</span><b>✳</b><span>SUPERFICIES QUE INSPIRAN</span><b>✳</b><span>ARTJET</span></section>
-
-    <section class="artjet-intro" id="categorias">
-        <p>COLECCIONES</p><h2>Un material para<br>cada <em>idea.</em></h2><span><?= count($products) ?> productos Art‑Jet disponibles con precio y stock de Laboratorio Digital.</span>
-    </section>
-    <section class="artjet-editorial-categories">
-        <a class="artjet-editorial-card artjet-editorial-paper" id="papeles" href="#fotograficos"><img src="/uploads/artjet/editorial/artjet-papeles.jpg" alt="Aplicaciones realizadas con papeles Art-Jet"><span>01 / PAPELES</span><h3>Imágenes que<br>se vuelven objeto.</h3><b>VER PAPELES ↘</b></a>
-        <a class="artjet-editorial-card artjet-editorial-ink" id="tintas" href="#tintas-productos"><img src="/uploads/artjet/editorial/artjet-tintas.jpg" alt="Tintas Art-Jet"><span>02 / TINTAS</span><h3>Color preciso.<br>Impacto real.</h3><b>VER TINTAS ↘</b></a>
-    </section>
-    <nav class="artjet-category-nav" aria-label="Categorías Artjet">
+    <nav class="artjet-category-nav" id="categorias" aria-label="Categorías Artjet">
         <?php foreach ($grouped as $category => $items): ?><a href="#<?= $escape($category === 'Tintas' ? 'tintas-productos' : $categorySlugs[$category]) ?>"><span><?= str_pad((string) count($items), 2, '0', STR_PAD_LEFT) ?></span><?= $escape($upper($category)) ?></a><?php endforeach; ?>
     </nav>
 
@@ -110,34 +101,28 @@ $formatFor = static function (string $name): string {
             $slug = $category === 'Tintas' ? 'tintas-productos' : $categorySlugs[$category];
         ?>
             <section class="artjet-collection" id="<?= $escape($slug) ?>">
-                <header><p>COLECCIÓN / <?= $escape($upper($category)) ?></p><h2><?= $escape($category) ?><sup><?= str_pad((string) count($items), 2, '0', STR_PAD_LEFT) ?></sup></h2></header>
+                <header><div><p>COLECCIÓN / <?= $escape($upper($category)) ?></p><h2><?= $escape($category) ?><sup><?= str_pad((string) count($items), 2, '0', STR_PAD_LEFT) ?></sup></h2></div><div class="artjet-carousel-controls"><button class="icon-button" type="button" data-artjet-prev aria-label="Retroceder en <?= $escape($category) ?>">‹</button><button class="icon-button" type="button" data-artjet-next aria-label="Avanzar en <?= $escape($category) ?>">›</button></div></header>
                 <div class="artjet-product-grid">
                     <?php foreach ($items as $index => $product):
                         $variants = $product['variants'];
                         $firstVariant = $variants[0] ?? null;
                         $hasStock = array_filter($variants, static fn (array $variant): bool => $variant['available_stock'] === null || (int) $variant['available_stock'] > 0) !== [];
                         $price = $firstVariant['price_cents'] ?? null;
-                        $isA4 = preg_match('/\bA4\b/i', (string) $product['name']) === 1;
+                        $size = preg_match('/\b(?:A6|10\s*[X×]\s*15)\b/i', (string) $product['name']) ? 'is-a6' : (preg_match('/\bA3\+?\b/i', (string) $product['name']) ? 'is-a3' : 'is-a4');
                         $image = $artjetImages[(int) $product['id']] ?? $product['image_path'];
                         $format = $formatFor((string) $product['name']);
                     ?>
-                        <article class="artjet-card" data-artjet-card>
-                            <div class="artjet-card-inner">
-                                <button class="artjet-card-face artjet-card-front" type="button" data-artjet-flip aria-expanded="false" aria-label="Ver información de <?= $escape((string) $product['name']) ?>">
-                                    <span class="artjet-card-image<?= $isA4 ? ' is-a4' : '' ?>"><?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt="<?= $escape((string) $product['name']) ?>"><?php endif; ?><span class="artjet-image-fallback"<?= !empty($image) ? ' hidden' : '' ?>>SIN IMAGEN</span><b><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></b></span>
-                                </button>
-                                <div class="artjet-card-face artjet-card-back" inert>
-                                    <button class="artjet-card-close" type="button" data-artjet-flip aria-label="Volver a la foto">↙</button>
-                                    <div class="artjet-card-back-heading">
-                                        <?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt=""><?php endif; ?>
-                                        <p><?= $escape($upper($category)) ?></p>
-                                    </div>
-                                    <h3><?= $escape($displayName((string) $product['name'])) ?></h3>
-                                    <?php if ($format !== ''): ?><p class="artjet-card-format"><?= $escape($upper($format)) ?></p><?php endif; ?>
-                                    <?php if (!empty($product['description'])): ?><p class="artjet-card-description"><?= nl2br($escape((string) $product['description'])) ?></p><?php endif; ?>
-                                    <div class="artjet-card-meta"><strong><?= $price !== null ? $escape($money((int) $price)) : 'Consultar' ?></strong><span class="<?= $hasStock ? 'is-available' : '' ?>"><?= $hasStock ? 'Disponible' : 'Sin stock' ?></span></div>
-                                    <a class="artjet-card-action" href="/?producto=<?= (int) $product['id'] ?>">VER PRODUCTO ↗</a>
-                                </div>
+                        <article class="artjet-card">
+                            <button class="artjet-card-open" type="button" data-artjet-open aria-label="Ver información de <?= $escape((string) $product['name']) ?>">
+                                <span class="artjet-card-image <?= $size ?>"><?php if (!empty($image)): ?><img src="<?= $escape((string) $image) ?>" alt="" loading="lazy"><?php endif; ?><span class="artjet-image-fallback"<?= !empty($image) ? ' hidden' : '' ?>>SIN IMAGEN</span></span>
+                                <span class="artjet-card-title"><?= $escape($displayName((string) $product['name'])) ?></span>
+                            </button>
+                            <div class="artjet-card-details" hidden>
+                                <p><?= $escape($upper($category)) ?></p><h3><?= $escape($displayName((string) $product['name'])) ?></h3>
+                                <?php if ($format !== ''): ?><p class="artjet-card-format"><?= $escape($upper($format)) ?></p><?php endif; ?>
+                                <?php if (!empty($product['description'])): ?><p class="artjet-card-description"><?= nl2br($escape((string) $product['description'])) ?></p><?php endif; ?>
+                                <div class="artjet-card-meta"><strong><?= $price !== null ? $escape($money((int) $price)) : 'Consultar' ?></strong><span class="<?= $hasStock ? 'is-available' : '' ?>"><?= $hasStock ? 'Disponible' : 'Sin stock' ?></span></div>
+                                <a class="artjet-card-action" href="/?producto=<?= (int) $product['id'] ?>">VER PRODUCTO ↗</a>
                             </div>
                         </article>
                     <?php endforeach; ?>
@@ -148,6 +133,7 @@ $formatFor = static function (string $name): string {
     <section class="artjet-manifesto"><p>ARTJET / LABORATORIO DIGITAL</p><h2>Inspirar momentos.<br>Crear valor.<br><em>Dejar huella.</em></h2><span>Catálogo, precios, stock e imágenes servidos desde nuestra propia infraestructura.</span></section>
 <?php endif; ?>
 </main>
+<div class="artjet-modal" id="artjet-modal" role="dialog" aria-modal="true" aria-label="Detalle de producto" hidden><div class="artjet-modal-panel"><button class="artjet-modal-close icon-button" type="button" aria-label="Cerrar detalle">×</button><div class="artjet-modal-image"></div><div class="artjet-modal-details"></div></div></div>
 <footer><strong>ART<span>JET</span></strong><span>Una experiencia de Laboratorio Digital.</span><a href="#inicio">VOLVER ARRIBA ↑</a></footer>
 <a class="artjet-whatsapp" href="https://wa.me/5493415699338?text=Hola%2C%20les%20hablo%20desde%20el%20sitio%20de%20Artjet" target="_blank" rel="noopener" aria-label="Hablar por WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5l1.4-4.4a8.4 8.4 0 1 1 15.6-4.4Z"/><path d="M8.2 7.7c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.8 1.9c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.7 1.3 1.7 2.3 3 2.9.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.9.9c.3.1.4.3.4.5 0 .3-.2 1.5-.9 2.1-.6.6-1.5.9-2.5.7-1.1-.2-2.5-.7-4.2-2.2-2-1.8-3.3-4-3.5-5.5-.2-.9.1-1.6.5-2Z"/></svg></a>
 <button class="artjet-chat-launcher" id="artjet-chat-launcher" type="button" aria-label="Abrir atención con IA">IA</button>
@@ -157,5 +143,5 @@ $formatFor = static function (string $name): string {
     <div class="artjet-chat-typing" id="artjet-chat-typing" hidden>Escribiendo…</div>
     <form id="artjet-chat-form"><textarea id="artjet-chat-input" rows="1" maxlength="800" placeholder="Escribí tu consulta…" aria-label="Consulta"></textarea><button type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3-6-8-2Z"/></svg></button></form>
 </section>
-<script src="assets/artjet.js?v=3" defer></script>
+<script src="assets/artjet.js?v=4" defer></script>
 </body></html>

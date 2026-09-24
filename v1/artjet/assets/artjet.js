@@ -12,27 +12,63 @@
         if (image.complete && image.naturalWidth === 0) showFallback();
     });
 
-    document.addEventListener('click', event => {
-        const back = event.target.closest('.artjet-card-back');
-        const trigger = event.target.closest('[data-artjet-flip]')
-            || (back && !event.target.closest('a, button') ? back : null);
-        if (!trigger) return;
-
-        const card = trigger.closest('[data-artjet-card]');
-        if (!card) return;
-
-        const flipped = card.classList.toggle('is-flipped');
-        const front = card.querySelector('.artjet-card-front');
-        const reverse = card.querySelector('.artjet-card-back');
-        if (front) front.setAttribute('aria-expanded', String(flipped));
-        if (front) front.inert = flipped;
-        if (reverse) reverse.inert = !flipped;
-
-        if (flipped) {
-            card.querySelector('.artjet-card-close')?.focus({ preventScroll: true });
-        } else {
-            front?.focus({ preventScroll: true });
+    const modal = document.getElementById('artjet-modal');
+    const modalImage = modal?.querySelector('.artjet-modal-image');
+    const modalDetails = modal?.querySelector('.artjet-modal-details');
+    let previousFocus = null;
+    const closeModal = () => {
+        if (!modal || modal.hidden) return;
+        modal.hidden = true;
+        document.body.style.overflow = '';
+        modalImage.replaceChildren();
+        modalDetails.replaceChildren();
+        previousFocus?.focus({ preventScroll: true });
+    };
+    document.querySelectorAll('[data-artjet-open]').forEach(button => {
+        button.addEventListener('click', () => {
+            previousFocus = button;
+            const card = button.closest('.artjet-card');
+            const image = button.querySelector('img');
+            modalImage.className = 'artjet-modal-image ' + [...button.querySelector('.artjet-card-image').classList].filter(name => name.startsWith('is-')).join(' ');
+            if (image && !image.hidden) {
+                const enlarged = image.cloneNode();
+                enlarged.alt = button.getAttribute('aria-label').replace(/^Ver información de /, '');
+                modalImage.append(enlarged);
+            } else {
+                modalImage.textContent = 'SIN IMAGEN';
+            }
+            modalDetails.innerHTML = card.querySelector('.artjet-card-details').innerHTML;
+            modal.hidden = false;
+            document.body.style.overflow = 'hidden';
+            modal.querySelector('.artjet-modal-close').focus();
+        });
+    });
+    modal?.querySelector('.artjet-modal-close').addEventListener('click', closeModal);
+    modal?.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeModal();
+        if (event.key === 'Tab' && modal && !modal.hidden) {
+            const focusable = [...modal.querySelectorAll('button, a[href]')];
+            const target = event.shiftKey ? focusable[focusable.length - 1] : focusable[0];
+            if (document.activeElement === (event.shiftKey ? focusable[0] : focusable[focusable.length - 1])) {
+                event.preventDefault(); target.focus();
+            }
         }
+    });
+    document.querySelectorAll('.artjet-collection').forEach(collection => {
+        const track = collection.querySelector('.artjet-product-grid');
+        const prev = collection.querySelector('[data-artjet-prev]');
+        const next = collection.querySelector('[data-artjet-next]');
+        const update = () => {
+            prev.disabled = track.scrollLeft <= 2;
+            next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+        };
+        const move = direction => track.scrollBy({ left: direction * Math.max(track.clientWidth * .8, 250), behavior: 'smooth' });
+        prev.addEventListener('click', () => move(-1));
+        next.addEventListener('click', () => move(1));
+        track.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        update();
     });
 
     const chat = document.getElementById('artjet-chat');
