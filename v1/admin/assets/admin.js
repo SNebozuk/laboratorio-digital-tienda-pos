@@ -2358,9 +2358,10 @@
         if (!indexed) {
             return;
         }
+        const previousQuantity = posQuantity(variantId);
         const max = Number(indexed.variant.available_stock);
         const quantity = Math.max(0, Math.min(max, Number(requested) || 0));
-        if (quantity !== posQuantity(variantId)) {
+        if (quantity !== previousQuantity) {
             state.posCheckedVariants.delete(Number(variantId));
         }
         if (quantity) {
@@ -2372,6 +2373,10 @@
             state.posStockConflicts.delete(Number(variantId));
         }
         persistPosCart();
+        if (quantity > previousQuantity && document.body.classList.contains('pos-search-page')) {
+            window.location.href = 'pos.php';
+            return;
+        }
         renderPos();
         renderPosCart();
         if (state.posQuery.trim()) {
@@ -3103,11 +3108,15 @@
     }
 
     function suggestedDeliverySlots(order) {
-        if (!deliveryCustomerKey(order?.customer_name)) return [];
-        return state.deliverySlots.filter(slot => (
-            String(slot.order_numbers || '').trim()
-            && isLikelySameDeliveryCustomer(slot.customer_name, order.customer_name)
-        ));
+        const customerKey = exactCustomerKey(order?.customer_name);
+        if (!customerKey) return [];
+        return state.deliverySlots.filter(slot => {
+            if (!String(slot.order_numbers || '').trim()) return false;
+            const linkedOrders = Array.isArray(slot.orders) ? slot.orders : [];
+            return linkedOrders.length
+                ? linkedOrders.some(linkedOrder => exactCustomerKey(linkedOrder.customer_name) === customerKey)
+                : exactCustomerKey(deliveryCustomerKey(slot.customer_name)) === customerKey;
+        });
     }
 
     function exactDeliveryCustomerOrders(order) {
@@ -3192,7 +3201,7 @@
         if (elements.deliveryCopyGuide) {
             elements.deliveryCopyGuide.hidden = !pending;
             const suggestedHtml = suggestions.length
-                ? `<span class="delivery-suggestion-label">Posibles coincidencias de cliente:</span><span class="delivery-suggestions">${suggestions.map(slot => `<button type="button" class="delivery-suggestion" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${Number(slot.slot_number)}">FILA ${Number(slot.slot_number)}${slot.location ? ` · ${escapeHtml(slot.location)}` : ''}</button>`).join('')}</span>`
+                ? `<span class="delivery-suggestion-label">Coincidencia exacta de cliente:</span><span class="delivery-suggestions">${suggestions.map(slot => `<button type="button" class="delivery-suggestion" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${Number(slot.slot_number)}">FILA ${Number(slot.slot_number)}${slot.location ? ` · ${escapeHtml(slot.location)}` : ''}</button>`).join('')}</span>`
                 : '<span>Elegí una fila: una vacía queda marcada <b>ARMAR</b>; si ya tiene pedidos, se suma como <b>AGREGAR</b>.</span>';
             const pendingLabel = pendingOrders.length === 1
                 ? `${escapeHtml(pending.public_number)}`

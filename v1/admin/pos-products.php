@@ -37,13 +37,7 @@ header('Referrer-Policy: same-origin');
 </head>
 <body class="admin-body pos-page-body pos-search-page">
     <main class="pos-page">
-        <header class="pos-page-header">
-            <a href="pos.php" class="pos-back-link">← Volver a la venta</a>
-            <div class="pos-page-brand"><strong>LABORATORIO DIGITAL</strong><span>PUNTO DE VENTA</span></div>
-            <a href="pos.php" class="pos-search-close" aria-label="Cerrar búsqueda">×</a>
-        </header>
         <section class="pos-page-intro">
-            <div class="pos-page-title"><p class="eyebrow">PRODUCTOS</p><h1>AGREGAR PRODUCTOS</h1></div>
             <div class="search-wrap pos-search-wrap">
                 <div class="search-input-field"><input id="pos-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" aria-label="Buscar o escanear producto" autofocus placeholder="Producto, talle, SKU o código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg><div id="pos-suggestions" class="suggestions"></div></div>
             </div>
