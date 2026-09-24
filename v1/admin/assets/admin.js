@@ -7548,11 +7548,6 @@
             && document.querySelector('.pos-page')
         ) {
             event.preventDefault();
-            if (window.parent !== window) {
-                window.parent.postMessage({ type: 'laboratorio-pos-back' }, window.location.origin);
-            } else {
-                window.history.back();
-            }
         } else if (
             event.key === 'Escape'
             && !event.defaultPrevented
