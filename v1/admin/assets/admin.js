@@ -3026,6 +3026,7 @@
                 ));
             state.knownOrderIds = currentOrderIds;
             state.orders = orders;
+            if (state.view === 'deliveries') renderDeliverySlots();
             state.openOrderCount = Number(data.open_count || 0);
             renderOrderBadge();
             const currentIds = new Set(state.orders.map(order => Number(order.id)));
@@ -3225,7 +3226,10 @@
                     : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">${orderActionIconMarkup('return')}</button>` : '';
             const hasSale = linkedOrders.length > 0 || String(slot.order_numbers || '').trim() !== '';
-            const deleteButton = hasSale ? `<button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('door')}</button>` : '';
+            const customerKeys = new Set((linkedOrders.length ? linkedOrders.map(order => order.customer_name) : [deliveryCustomerKey(slot.customer_name)]).map(exactCustomerKey).filter(Boolean));
+            const matchingSales = hasSale ? state.orders.filter(order => !order.archived_at && order.status !== 'cancelled' && customerKeys.has(exactCustomerKey(order.customer_name))).length : 0;
+            const salesBadge = matchingSales ? `<span class="delivery-door-sales-count" role="status" aria-label="${matchingSales} ventas en Lista de Ventas" title="${matchingSales} ventas en Lista de Ventas">${matchingSales}</span>` : '';
+            const deleteButton = hasSale ? `<span class="delivery-door-action"><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('door')}</button>${salesBadge}</span>` : '';
             const transferAmount = transferTotal(slot.transfers);
             const transferMatches = transferAmount !== null && Math.round(transferAmount * 100) === Number(slot.order_total_cents || 0);
             const transferStatus = hasSale ? `<span class="delivery-transfer-status ${transferMatches ? 'is-matched' : 'is-unmatched'}" data-order-total-cents="${Number(slot.order_total_cents || 0)}" role="img" aria-label="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}" title="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}"></span>` : '';
