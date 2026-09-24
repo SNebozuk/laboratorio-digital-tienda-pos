@@ -3269,6 +3269,16 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 @media (max-width: 560px) { .pos-checkout-actions { grid-template-columns: 1fr; } }
 .pos-search-close { justify-self: end; display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; color: #252a3a; font-size: 32px; line-height: 1; text-decoration: none; }
 .pos-search-close:hover { background: #eef1f7; }
+.pos-search-open { overflow: hidden; }
+.pos-search-overlay:not([hidden]) { position: fixed; z-index: 900; inset: 0; display: grid; place-items: center; padding: 20px; }
+.pos-search-overlay[hidden] { display: none; }
+.pos-search-backdrop { position: absolute; inset: 0; background: rgba(20, 27, 42, .6); }
+.pos-search-panel { position: relative; display: flex; flex-direction: column; width: min(1200px, 100%); max-height: calc(100vh - 40px); overflow: hidden; border-radius: 14px; background: #f6f7fb; box-shadow: 0 20px 60px rgba(0, 0, 0, .25); }
+.pos-search-panel-top { display: flex; align-items: center; gap: 12px; padding: 20px 24px 0; }
+.pos-search-panel-top .pos-search-wrap { flex: 1; min-width: 0; margin: 0; }
+.pos-search-panel-top .pos-search-wrap input { min-height: 54px; font-size: 16px; }
+.pos-search-modal-close { flex: 0 0 32px; }
+.pos-search-overlay .pos-search-results { overflow-y: auto; min-height: 0; }
 .pos-search-results { width: 100%; padding: 24px 30px 40px; }
 .pos-search-page .pos-products { width: 100%; }
 .pos-search-page .pos-product { width: 100%; border-radius: 0; border-width: 0 0 1px; box-shadow: none; }

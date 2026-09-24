@@ -76,6 +76,18 @@ header('Referrer-Policy: same-origin');
             </aside>
         </section>
     </main>
+    <div class="pos-search-overlay pos-search-page" id="pos-search-overlay" role="dialog" aria-modal="true" aria-label="Buscar productos" hidden>
+        <div class="pos-search-backdrop" data-close-pos-search></div>
+        <section class="pos-search-panel">
+            <div class="pos-search-panel-top">
+                <div class="search-wrap pos-search-wrap">
+                    <div class="search-input-field"><input id="pos-search" type="search" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none" aria-label="Buscar o escanear producto" placeholder="Producto, talle, SKU o código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg><div id="pos-suggestions" class="suggestions"></div></div>
+                </div>
+                <button class="pos-search-modal-close icon-button" type="button" data-close-pos-search aria-label="Cerrar búsqueda"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+            </div>
+            <section class="pos-search-results"><div id="pos-products" class="pos-products"></div></section>
+        </section>
+    </div>
     <div class="modal" id="modal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><section class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close" type="button" data-close-modal aria-label="Cerrar">×</button><div id="modal-content"></div></section></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script id="admin-app-data" type="application/json"><?= json_encode(['api_url' => $apiUrl, 'csrf_token' => $app['csrf_token'], 'user' => $user, 'setup_required' => false, 'size_guide_url' => $storePath . '/tabla-de-talles.php', 'store_url' => $storeUrl], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>

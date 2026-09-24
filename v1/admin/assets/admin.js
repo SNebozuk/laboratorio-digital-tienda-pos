@@ -185,6 +185,7 @@
         productSearchShare: document.getElementById('copy-product-search-link'),
         categoryTree: document.getElementById('category-admin-tree'),
         posSearch: document.getElementById('pos-search'),
+        posSearchOverlay: document.getElementById('pos-search-overlay'),
         posSuggestions: document.getElementById('pos-suggestions'),
         posProducts: document.getElementById('pos-products'),
         posCartLines: document.getElementById('pos-cart-lines'),
@@ -2373,6 +2374,9 @@
             state.posStockConflicts.delete(Number(variantId));
         }
         persistPosCart();
+        if (quantity > previousQuantity && elements.posSearchOverlay && !elements.posSearchOverlay.hidden) {
+            closePosSearchModal();
+        }
         if (quantity > previousQuantity && document.body.classList.contains('pos-search-page')) {
             window.location.href = 'pos.php';
             return;
@@ -2575,6 +2579,17 @@
         }
         elements.posSuggestions.classList.remove('open');
         elements.posSuggestions.innerHTML = '';
+    }
+
+    function closePosSearchModal() {
+        if (!elements.posSearchOverlay) return;
+        elements.posSearchOverlay.hidden = true;
+        document.body.classList.remove('pos-search-open');
+        state.posQuery = '';
+        state.posProductId = null;
+        elements.posSearch.value = '';
+        closePosSuggestions();
+        document.querySelector('.pos-add-products-link')?.focus();
     }
 
     function choosePosProduct(productId) {
@@ -7393,6 +7408,17 @@
         renderPos();
         closePosSuggestions();
     });
+    document.querySelector('.pos-add-products-link')?.addEventListener('click', event => {
+        if (!elements.posSearchOverlay) return;
+        event.preventDefault();
+        elements.posSearchOverlay.hidden = false;
+        document.body.classList.add('pos-search-open');
+        renderPos();
+        elements.posSearch.focus();
+    });
+    elements.posSearchOverlay?.addEventListener('click', event => {
+        if (event.target.closest('[data-close-pos-search]')) closePosSearchModal();
+    });
     elements.posSearch?.addEventListener('keydown', event => {
         if (event.defaultPrevented) return;
         if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && !event.isComposing) {
@@ -7441,6 +7467,10 @@
         if (event.key === ' ' || event.key === 'Spacebar') {
             event.preventDefault();
             if (elements.posSearch) {
+                if (elements.posSearchOverlay) {
+                    elements.posSearchOverlay.hidden = false;
+                    document.body.classList.add('pos-search-open');
+                }
                 elements.posSearch.focus();
             } else {
                 window.location.href = 'pos-products.php';
@@ -7451,6 +7481,18 @@
     });
     // Esc sigue el historial también desde la búsqueda del PDV.
     document.addEventListener('keydown', event => {
+        if (
+            event.key === 'Escape'
+            && !event.defaultPrevented
+            && elements.posSearchOverlay
+            && !elements.posSearchOverlay.hidden
+            && !elements.modal?.classList.contains('open')
+        ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            closePosSearchModal();
+            return;
+        }
         if (
             event.key === 'Escape'
             && !event.defaultPrevented
