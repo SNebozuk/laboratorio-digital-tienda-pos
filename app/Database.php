@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 52;
+    private const CURRENT_MIGRATION_VERSION = 53;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -97,6 +97,7 @@ final class Database
                 self::migrateArtjetProductSync($pdo);
                 self::migrateArtjetVisits($pdo);
                 self::migrateCustomers($pdo);
+                self::migrateSpecialtiesCategories($pdo);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -164,8 +165,45 @@ final class Database
         self::migrateArtjetProductSync($pdo);
         self::migrateArtjetVisits($pdo);
         self::migrateCustomers($pdo);
+        self::migrateSpecialtiesCategories($pdo);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
+    }
+
+    private static function migrateSpecialtiesCategories(PDO $pdo): void
+    {
+        $version = 53;
+        $check = $pdo->prepare('SELECT 1 FROM schema_migrations WHERE version = :version');
+        $check->execute(['version' => $version]);
+        if ($check->fetchColumn() !== false) return;
+
+        self::immediate($pdo, static function (PDO $pdo) use ($version): void {
+            $names = ['Vinilo Sublimable', 'Winky, Termocontraíble', 'Tatufan, Tatuajes Temporales', 'Duralite, Transfer', 'Magnético'];
+            $find = $pdo->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
+            $ids = [];
+            foreach ($names as $name) {
+                $find->execute(['name' => $name]);
+                $id = (int) $find->fetchColumn();
+                if ($id > 0) $ids[] = $id;
+            }
+
+            if ($ids) {
+                $find->execute(['name' => 'Especialidades']);
+                $targetId = (int) $find->fetchColumn();
+                if ($targetId < 1) {
+                    $targetId = array_shift($ids);
+                    $pdo->prepare("UPDATE categories SET name = 'Especialidades', slug = 'especialidades', updated_at = CURRENT_TIMESTAMP WHERE id = :id")
+                        ->execute(['id' => $targetId]);
+                }
+                $moveProducts = $pdo->prepare('UPDATE products SET category_id = :target_id, updated_at = CURRENT_TIMESTAMP WHERE category_id = :source_id');
+                $delete = $pdo->prepare('DELETE FROM categories WHERE id = :id');
+                foreach ($ids as $id) {
+                    $moveProducts->execute(['target_id' => $targetId, 'source_id' => $id]);
+                    $delete->execute(['id' => $id]);
+                }
+            }
+            $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(:version)')->execute(['version' => $version]);
+        });
     }
 
     private static function migrateArtjetVisits(PDO $pdo): void
