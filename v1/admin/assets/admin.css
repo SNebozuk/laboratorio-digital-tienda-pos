@@ -3277,7 +3277,7 @@ button.product-admin-title:focus-visible strong { text-decoration: underline; te
 .pos-search-panel-top { display: flex; align-items: center; gap: 12px; padding: 20px 24px 0; }
 .pos-search-panel-top .pos-search-wrap { flex: 1; min-width: 0; margin: 0; }
 .pos-search-panel-top .pos-search-wrap input { min-height: 54px; font-size: 16px; }
-.pos-search-modal-close { flex: 0 0 32px; }
+.pos-search-modal-back { padding: 0; border: 0; background: none; color: #315fa9; font-size: 14px; font-weight: 700; cursor: pointer; }
 .pos-search-overlay .pos-search-results { overflow-y: auto; min-height: 0; }
 .pos-search-results { width: 100%; padding: 24px 30px 40px; }
 .pos-search-page .pos-products { width: 100%; }

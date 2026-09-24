@@ -2374,13 +2374,6 @@
             state.posStockConflicts.delete(Number(variantId));
         }
         persistPosCart();
-        if (quantity > previousQuantity && elements.posSearchOverlay && !elements.posSearchOverlay.hidden) {
-            closePosSearchModal();
-        }
-        if (quantity > previousQuantity && document.body.classList.contains('pos-search-page')) {
-            window.location.href = 'pos.php';
-            return;
-        }
         renderPos();
         renderPosCart();
         if (state.posQuery.trim()) {
