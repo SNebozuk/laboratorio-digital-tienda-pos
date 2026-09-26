@@ -416,7 +416,8 @@ try {
         case 'product_image_upload':
             $app['auth']->requireAdmin();
             $image = $app['product_images']->receive(
-                is_array($_FILES['image'] ?? null) ? $_FILES['image'] : []
+                is_array($_FILES['image'] ?? null) ? $_FILES['image'] : [],
+                (string) ($_POST['product_photo'] ?? '') === '1'
             );
             Http::json([
                 'ok' => true,

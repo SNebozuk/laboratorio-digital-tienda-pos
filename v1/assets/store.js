@@ -98,7 +98,7 @@
         initialUrl.searchParams.delete('google_cart');
         window.history.replaceState(window.history.state, '', initialUrl.href);
     }
-    const PRODUCT_VIEWS = new Set(['list', 'catalog', 'minimal']);
+    const PRODUCT_VIEWS = new Set(['list', 'catalog', 'minimal', 'immersive']);
     let alwaysUseProductView = false;
     let productView = (() => {
         try {
@@ -1215,8 +1215,34 @@
         </div>`;
     }
 
+    function immersiveProductGrid(matches) {
+        const groups = new Map();
+        matches.forEach(product => {
+            const name = product.category?.name || 'Otros productos';
+            if (!groups.has(name)) groups.set(name, []);
+            groups.get(name).push(product);
+        });
+        return `<div class="immersive-gallery">${Array.from(groups, ([name, items]) => `
+            <section class="immersive-section" aria-label="${escapeHtml(name)}">
+                <header><span>EXPLORÁ LA COLECCIÓN</span><h2>${escapeHtml(name)}</h2></header>
+                <div class="immersive-grid">${items.map(product => `
+                    <article class="immersive-card">
+                        <div class="immersive-image">${productImage(product, 'immersive-photo')}</div>
+                        <div class="immersive-copy">
+                            <button class="immersive-title" type="button" data-open-product="${Number(product.id)}"><h3>${escapeHtml(product.name)}</h3></button>
+                            <strong>${priceRange(product)}</strong>
+                            <span>${product.variants.length > 1 ? `${product.variants.length} variantes` : exactAvailableLabel(visibleAvailable(product.variants[0]))}</span>
+                            ${product.variants.length > 1
+                                ? `<button class="immersive-options" type="button" data-open-product="${Number(product.id)}">VER OPCIONES</button>`
+                                : quantityControl(product, product.variants[0], 'immersive-quantity')}
+                        </div>
+                    </article>`).join('')}</div>
+            </section>`).join('')}</div>`;
+    }
+
     function productViewContent(matches, showCount = false) {
         const count = showCount ? productResultCount(matches) : '';
+        if (productView === 'immersive') return `${count}${immersiveProductGrid(matches)}`;
         if (productView === 'catalog') return state.category || state.searchActive ? `${count}${catalogProductGrid(matches)}` : catalogCategoryLanding();
         if (productView === 'minimal') return state.category || state.searchActive ? productSummaryList(matches, showCount) : minimalCategoryPrompt();
         if (showCount) return productSummaryList(matches, true);
@@ -1255,6 +1281,7 @@
                     <button type="button" data-product-view="list"><strong>Lista completa</strong><small>Todos los productos ordenados por categoría y subcategoría.</small></button>
                     <button type="button" data-product-view="catalog"><strong>Catálogo</strong><small>Una grilla visual para recorrer productos por categoría.</small></button>
                     <button type="button" data-product-view="minimal"><strong>Minimalista</strong><small>Elegí una categoría desde el menú para ver solo esa sección.</small></button>
+                    <button type="button" data-product-view="immersive"><strong>Inmersiva</strong><small>Imágenes protagonistas y productos en una galería amplia.</small></button>
                 </div>
                 <div class="product-view-chooser-actions">
                     <button type="button" data-continue-product-view>Continuar</button>
@@ -1717,6 +1744,10 @@
                         value="${escapeHtml(customer.phone || '')}"
                     >
                 </label>
+                <label>
+                    Email (opcional)
+                    <input name="email" type="email" autocomplete="email" value="${escapeHtml(customer.email || '')}">
+                </label>
                 <p class="form-error" id="checkout-error" role="alert" hidden></p>
                 <button class="primary-button" type="submit">CONTINUAR AL PAGO</button>
             </form>
@@ -1813,6 +1844,7 @@
         const customerLastName = String(formData.get('last_name') || '').trim();
         const customerName = `${customerFirstName} ${customerLastName}`.trim();
         const customerPhone = String(formData.get('phone') || '').replace(/\D+/g, '');
+        const customerEmail = String(formData.get('email') || '').trim();
         // La tienda opera con transferencia como único medio de pago web.
         const paymentMethod = 'bank_transfer';
         if (!hasValidCustomerFullName(customerName) || customerPhone.length < 8) {
@@ -1823,6 +1855,13 @@
             form.querySelector(!hasValidCustomerFullName(customerName)
                 ? '[name="first_name"]'
                 : '[name="phone"]')?.focus();
+            return;
+        }
+        const emailInput = form.querySelector('[name="email"]');
+        if (customerEmail && !emailInput.checkValidity()) {
+            errorBox.hidden = false;
+            errorBox.textContent = 'Ingresá un email válido o dejalo vacío.';
+            emailInput.focus();
             return;
         }
         errorBox.hidden = true;
@@ -1839,13 +1878,14 @@
                     first_name: customerFirstName,
                     last_name: customerLastName,
                     phone: formData.get('phone'),
+                    email: customerEmail,
                 },
                 items: cartItems().map(item => ({
                     variant_id: Number(item.variant.id),
                     quantity: item.quantity,
                 })),
             });
-            persistCustomer(customerFirstName, customerLastName, String(formData.get('phone') || '').trim(), '');
+            persistCustomer(customerFirstName, customerLastName, String(formData.get('phone') || '').trim(), customerEmail);
             state.order = data.order;
             surpriseUnlocked = false;
             surpriseChecked = false;

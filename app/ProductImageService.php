@@ -16,9 +16,12 @@ final class ProductImageService
      * @param array<string, mixed> $upload Elemento de $_FILES.
      * @return array{image_path: string, size_bytes: int, mime_type: string}
      */
-    public function receive(array $upload): array
+    public function receive(array $upload, bool $productPhoto = false): array
     {
         $file = $this->validateUpload($upload);
+        if ($productPhoto && filesize($file['tmp_name']) > 2 * 1024 * 1024) {
+            throw new ValidationException('La foto del producto supera el límite de 2 MB.');
+        }
         $relativeDirectory = date('Y/m');
         $directory = $this->storageRoot() . '/' . $relativeDirectory;
 

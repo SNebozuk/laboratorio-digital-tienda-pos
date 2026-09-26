@@ -199,6 +199,7 @@ header('Referrer-Policy: same-origin');
                 <button type="button" data-product-view="list" aria-pressed="true"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6h10M9 12h10M9 18h10M5 6h.01M5 12h.01M5 18h.01"/></svg>Lista completa</button>
                 <button type="button" data-product-view="catalog" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>Catálogo</button>
                 <button type="button" data-product-view="minimal" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Minimalista</button>
+                <button type="button" data-product-view="immersive" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>Inmersiva</button>
             </nav>
 
             <div id="catalog-results" class="catalog-results"></div>

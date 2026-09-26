@@ -335,12 +335,16 @@
         return data;
     }
 
-    async function uploadProductImage(file) {
+    async function uploadProductImage(file, productPhoto = false) {
         await validateProductImage(file);
+        if (productPhoto && file.size > 2 * 1024 * 1024) {
+            throw new Error('La foto del producto supera el límite de 2 MB.');
+        }
         const payload = new FormData();
         payload.append('action', 'product_image_upload');
         payload.append('csrf_token', app.csrf_token);
         payload.append('image', file);
+        if (productPhoto) payload.append('product_photo', '1');
         const response = await fetch(app.api_url, {
             method: 'POST',
             headers: { 'X-CSRF-Token': app.csrf_token },
@@ -1796,7 +1800,7 @@
                     FOTO DEL PRODUCTO
                     <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp">
                     <span class="image-drop-zone" data-image-drop data-image-input="image_file">Arrastrá la foto aquí o hacé clic para elegirla</span>
-                    <small>JPG, PNG o WebP · máximo 8 MB. Se sube automáticamente al alojamiento.</small>
+                    <small>JPG, PNG o WebP · máximo 2 MB. Se guarda sin compresión.</small>
                     ${product?.image_path ? `<img class="product-editor-image-preview" data-image-preview src="${escapeHtml(product.image_path)}" alt="Foto actual del producto">` : ''}
                 </label>
                 <label>
@@ -1861,7 +1865,7 @@
             const imageFile = form.querySelector('[name="image_file"]').files[0];
             if (imageFile) {
                 button.textContent = 'SUBIENDO FOTO…';
-                product.image_path = await uploadProductImage(imageFile);
+                product.image_path = await uploadProductImage(imageFile, true);
             }
             button.textContent = 'GUARDANDO…';
             await apiPost({
@@ -1986,7 +1990,7 @@
                     AGREGAR O REEMPLAZAR FOTO
                     <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp">
                     <span class="image-drop-zone" data-image-drop data-image-input="image_file">Arrastrá la foto aquí o hacé clic para elegirla</span>
-                    <small>JPG, PNG o WebP · máximo 8 MB.</small>
+                    <small>JPG, PNG o WebP · máximo 2 MB. Se guarda sin compresión.</small>
                 </label>
                 <h3 class="variant-section-title">${variants.length === 1 ? 'PRECIO, STOCK Y SKU' : 'PRECIO, STOCK Y SKU POR VARIANTE'}</h3>
                 <div class="duplicate-variant-list">
@@ -2012,7 +2016,7 @@
             let imagePath = formData.get('image_path') || '';
             if (imageFile) {
                 button.textContent = 'SUBIENDO FOTO…';
-                imagePath = await uploadProductImage(imageFile);
+                imagePath = await uploadProductImage(imageFile, true);
             }
             const variants = Array.from(form.querySelectorAll('[data-duplicate-variant]')).map(row => ({
                 name: row.dataset.variantName,
