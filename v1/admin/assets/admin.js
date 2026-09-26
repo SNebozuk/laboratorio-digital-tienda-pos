@@ -3218,10 +3218,7 @@
                     : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">${orderActionIconMarkup('return')}</button>` : '';
             const hasSale = linkedOrders.length > 0 || String(slot.order_numbers || '').trim() !== '';
-            const customerKeys = new Set((linkedOrders.length ? linkedOrders.map(order => order.customer_name) : [deliveryCustomerKey(slot.customer_name)]).map(exactCustomerKey).filter(Boolean));
-            const matchingSales = hasSale ? state.orders.filter(order => !order.archived_at && order.status !== 'cancelled' && customerKeys.has(exactCustomerKey(order.customer_name))).length : 0;
-            const salesBadge = matchingSales ? `<span class="delivery-door-sales-count" role="status" aria-label="${matchingSales} ventas en Lista de Ventas" title="${matchingSales} ventas en Lista de Ventas">${matchingSales}</span>` : '';
-            const deleteButton = hasSale ? `<span class="delivery-door-action"><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('door')}</button>${salesBadge}</span>` : '';
+            const deleteButton = hasSale ? `<span class="delivery-door-action"><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('door')}</button></span>` : '';
             const transferAmount = transferTotal(slot.transfers);
             const transferMatches = transferAmount !== null && Math.round(transferAmount * 100) === Number(slot.order_total_cents || 0);
             const transferStatus = hasSale ? `<span class="delivery-transfer-status ${transferMatches ? 'is-matched' : 'is-unmatched'}" data-order-total-cents="${Number(slot.order_total_cents || 0)}" role="img" aria-label="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}" title="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}"></span>` : '';
@@ -3522,41 +3519,7 @@
     }
 
     async function deleteDeliverySlot(slotNumber) {
-        const slot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slotNumber));
-        const customer = String(slot?.customer_name || '').trim();
-        const customerLabel = deliveryCustomerKey(customer) || 'sin nombre y apellido cargado';
-        try {
-            // Se consulta nuevamente al servidor para no depender del listado que pudo quedar viejo.
-            const data = await apiGet('orders', { limit: 150, include_archived: 0 });
-            const matches = (data.orders || []).filter(order => (
-                !order.archived_at
-                && order.status !== 'cancelled'
-                && customer !== ''
-                && isLikelySameDeliveryCustomer(customer, order.customer_name)
-            ));
-            if (!matches.length) {
-                await removeDeliverySlot(slotNumber, '', true);
-                return;
-            }
-            const details = await Promise.all(matches.map(async order => {
-                try {
-                    return (await apiGet('order', { id: Number(order.id) })).order;
-                } catch {
-                    return order;
-                }
-            }));
-            openModal(`
-                <section class="delivery-delete-warning">
-                    <p class="eyebrow">REVISIÓN ANTES DE VACIAR</p>
-                    <h2 id="modal-title">¿VACIAR FILA ${Number(slotNumber)}?</h2>
-                    <p class="delivery-delete-location"><strong>FILA ${Number(slotNumber)}</strong><span>UBICACIÓN: ${escapeHtml(String(slot?.location || '').trim() || 'Sin ubicación cargada')}</span></p>
-                    <p>Vas a vaciar la fila que contiene a <strong>${escapeHtml(customerLabel)}</strong>.</p>
-                    ${details.length ? `<p>Además, encontramos ${details.length === 1 ? 'una venta activa' : `${details.length} ventas activas`} con un nombre similar en la Lista de Ventas.</p><div class="delivery-match-table-wrap"><table class="delivery-match-table delivery-delete-orders"><thead><tr><th>VENTA</th><th>NOMBRE Y APELLIDO</th><th>FECHA</th><th>PRODUCTOS</th><th>TOTAL</th><th>ESTADO</th></tr></thead><tbody>${details.map(order => `<tr><td><strong>${escapeHtml(order.public_number)}</strong></td><td><strong>${escapeHtml(order.customer_name || '—')}</strong></td>${deliveryOrderSummaryCells(order).replace(/^\s*<td>[\s\S]*?<\/td>/, '')}</tr>`).join('')}</tbody></table></div>` : '<p class="notice">No encontramos otras ventas abiertas asociadas a esta fila.</p>'}
-                    <p class="notice">Vaciar la fila solamente borra sus datos en Entregas. No modifica, reabre ni restaura las ventas originales.</p>
-                    <div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>VOLVER</button><button class="danger-button" type="button" data-confirm-delete-delivery-slot="${Number(slotNumber)}">VACIAR FILA ${Number(slotNumber)}</button></div>
-                </section>
-            `);
-        } catch (error) { toast(error.message); }
+        await removeDeliverySlot(slotNumber, '', true);
     }
 
     function adminHasUnsavedInteraction() {
@@ -4242,14 +4205,6 @@
                 ${matchingOrders.map(order => {
                     const inDeliveries = orderIsInDeliveries(order);
                     const deliverySlot = inDeliveries ? Number(order.delivery_slot_number) : null;
-                    const orderCustomerCount = exactOrderCustomerCount(order);
-                    const orderCustomerCountIndicator = orderCustomerCount > 1
-                        ? `<span class="order-customer-sales-count" role="status" aria-label="${orderCustomerCount} ventas en Lista de Ventas" title="${orderCustomerCount} ventas en Lista de Ventas">${orderCustomerCount}</span>`
-                        : '';
-                    const deliveryCustomerOrders = exactDeliveryCustomerOrders(order);
-                    const deliveryCustomerMatches = deliveryCustomerOrders.count
-                        ? `<span class="order-delivery-customer-match" role="status" aria-label="${deliveryCustomerOrders.count} ventas activas en Entrega de pedidos, filas ${deliveryCustomerOrders.slotNumbers.join(', ')}" title="${deliveryCustomerOrders.count} ventas activas en Entrega de pedidos, filas ${deliveryCustomerOrders.slotNumbers.join(', ')}">+${deliveryCustomerOrders.count} / ${deliveryCustomerOrders.slotNumbers.join(', ')}</span>`
-                        : '';
                     const stateIndicator = order.archived_at
                         ? '<span class="order-status-indicator order-status-indicator-archived" role="img" aria-label="Venta archivada" title="Venta archivada">A</span>'
                         : (order.status === 'cancelled'
@@ -4259,7 +4214,7 @@
                     return `
                     <div class="order-list-row ${inDeliveries && !order.archived_at && order.status !== 'cancelled' ? 'order-list-row-in-deliveries' : ''}" role="button" tabindex="0" data-view-order="${Number(order.id)}">
                         <span class="order-select-control"><input data-select-order="${Number(order.id)}" type="checkbox" ${state.selectedOrderIds.has(Number(order.id)) ? 'checked' : ''} aria-label="Seleccionar ${escapeHtml(order.public_number)}"></span>
-                        <span class="order-list-number"><span class="order-list-number-main"><strong>${escapeHtml(order.public_number)}</strong>${stateIndicator}</span>${orderCustomerCountIndicator || deliveryCustomerMatches ? `<span class="order-list-indicators">${orderCustomerCountIndicator}${deliveryCustomerMatches}</span>` : ''}${inDeliveries && !order.archived_at && order.status !== 'cancelled' ? `<small class="order-delivery-note">✓ EN ENTREGAS · FILA ${deliverySlot}</small>` : ''}</span>
+                        <span class="order-list-number"><span class="order-list-number-main"><strong>${escapeHtml(order.public_number)}</strong>${stateIndicator}</span>${inDeliveries && !order.archived_at && order.status !== 'cancelled' ? `<small class="order-delivery-note">✓ EN ENTREGAS · FILA ${deliverySlot}</small>` : ''}</span>
                         <button class="order-list-customer" type="button" data-customer-history="${escapeHtml(order.customer_name)}" aria-label="Ver historial de ${escapeHtml(order.customer_name)}">${escapeHtml(order.customer_name)}</button>
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
@@ -5071,130 +5026,276 @@
         }
     }
 
+    let savedDesign = null;
+    let designLoading = false;
+    let designSaving = false;
+    let designDirty = false;
+    let designPreviewObserver = null;
+    let designPreviewDocument = null;
+    let designPreviewSections = {};
+
+    function designValues() {
+        const form = document.getElementById('design-form');
+        if (!form) return {};
+        const values = Object.fromEntries(new FormData(form).entries());
+        ['logo_file', 'hero_1_file', 'hero_2_file', 'hero_3_file'].forEach(key => delete values[key]);
+        ['logo_bold', 'mascot_klaus_enabled', 'mascot_klaus_animations_enabled'].forEach(key => {
+            values[key] = form.elements.namedItem(key)?.checked ? '1' : '0';
+        });
+        const sections = [...form.querySelectorAll('[data-design-section]')];
+        values.section_order = sections.map(item => item.dataset.designSection).join(',');
+        values.section_visibility = sections.filter(item => !item.classList.contains('is-hidden')).map(item => item.dataset.designSection).join(',');
+        return values;
+    }
+
+    function setDesignEditor(name) {
+        const panel = document.getElementById('admin-sidebar-design-editor');
+        panel?.querySelectorAll('[data-design-editor-section]').forEach(section => {
+            section.hidden = section.dataset.designEditorSection !== name;
+        });
+        document.querySelectorAll('.design-editor-tabs [data-design-editor]').forEach(button => {
+            button.setAttribute('aria-pressed', String(button.dataset.designEditor === name));
+            if (button.dataset.designEditor === name) document.getElementById('admin-sidebar-design-editor-title').textContent = button.textContent;
+        });
+    }
+
+    function applyDesignToForm(design) {
+        const form = document.getElementById('design-form');
+        Object.entries(design).forEach(([key, value]) => {
+            const field = form.elements.namedItem(key);
+            if (!field) return;
+            if (field.type === 'checkbox') field.checked = ['1', 'true', 'on'].includes(String(value));
+            else field.value = value;
+        });
+        form.querySelectorAll('input[type="file"]').forEach(field => { field.value = ''; });
+        setDesignImagePreview('logo', design.logo_path);
+        [1, 2, 3].forEach(number => setDesignImagePreview(`hero_${number}`, design[`hero_${number}_path`]));
+        const list = form.querySelector('[data-design-section-order]');
+        String(design.section_order).split(',').forEach(key => {
+            const item = list.querySelector(`[data-design-section="${key}"]`);
+            if (item) list.appendChild(item);
+        });
+        const visible = String(design.section_visibility ?? 'featured,gallery,categories,tutorials').split(',');
+        list.querySelectorAll('[data-design-section]').forEach(item => item.classList.toggle('is-hidden', !visible.includes(item.dataset.designSection)));
+        renderDesignPreview();
+    }
+
     async function loadDesign() {
         const form = document.getElementById('design-form');
-        if (!form || app.user?.role !== 'admin') return;
+        if (!form || app.user?.role !== 'admin' || designLoading || savedDesign) return;
+        designLoading = true;
+        form.querySelector('button[type="submit"]').disabled = true;
         try {
             const data = await apiGet('design');
-            Object.entries(data.design).forEach(([key, value]) => {
-                const field = form.elements.namedItem(key);
-                if (!field) return;
-                if (field.type === 'checkbox') field.checked = ['1', 'true', 'on'].includes(String(value));
-                else field.value = value;
-            });
-            setDesignImagePreview('logo', data.design.logo_path);
-            [1, 2, 3].forEach(number => setDesignImagePreview(`hero_${number}`, data.design[`hero_${number}_path`]));
-            const order = String(data.design.section_order || '').split(',');
-            const visibility = String(data.design.section_visibility || 'featured,gallery,categories,tutorials').split(',');
-            const list = form.querySelector('[data-design-section-order]');
-            order.forEach(section => {
-                const item = list?.querySelector(`[data-design-section="${section}"]`);
-                if (item) list.appendChild(item);
-            });
-            form.querySelectorAll('[data-design-section]').forEach(item => {
-                const visible = visibility.includes(item.dataset.designSection);
-                item.classList.toggle('is-hidden', !visible);
-                const button = item.querySelector('[data-design-section-visibility]');
-                if (button) {
-                    const label = item.querySelector('strong')?.textContent?.toLowerCase() || 'sección';
-                    button.setAttribute('aria-label', `${visible ? 'Ocultar' : 'Mostrar'} ${label}`);
-                    button.setAttribute('title', `${visible ? 'Ocultar' : 'Mostrar'} ${label}`);
-                }
-            });
+            savedDesign = data.design;
+            applyDesignToForm(savedDesign);
+            await loadDesignStorePreview();
+        } catch (error) {
+            toast(error.message);
+            document.getElementById('design-save-status').textContent = 'No se pudo cargar el diseño. Volvé a abrir esta sección para reintentar.';
+        } finally {
+            designLoading = false;
             renderDesignPreview();
-        } catch (error) { toast(error.message); }
+        }
+    }
+
+    async function loadDesignStorePreview() {
+        const frame = document.getElementById('design-store-preview');
+        const status = document.getElementById('design-preview-status');
+        const retry = document.getElementById('design-preview-retry');
+        retry.hidden = true;
+        status.textContent = 'Cargando vista previa…';
+        try {
+            const response = await fetch(app.store_url, { cache: 'no-store' });
+            if (!response.ok) throw new Error('No se pudo cargar la tienda para la vista previa.');
+            const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const dataElement = doc.getElementById('app-data');
+            if (!dataElement) throw new Error('La tienda no está disponible para la vista previa.');
+            const data = JSON.parse(dataElement.textContent);
+            const links = document.getElementById('design-link-options');
+            links.replaceChildren();
+            [{ value: app.store_url, label: 'Inicio de la tienda' }, ...(data.products || []).map(product => ({ value: `${app.store_url}?producto=${Number(product.id)}`, label: product.name }))].forEach(({ value, label }) => {
+                const option = document.createElement('option');
+                option.value = value; option.label = label; links.appendChild(option);
+            });
+            // La vista previa es una copia visual: no ejecuta el carrito ni comparte su almacenamiento.
+            doc.querySelectorAll('script, #welcome-popup, .modal').forEach(element => element.remove());
+            doc.body.classList.add('home-mode');
+            doc.body.classList.remove('welcome-popup-open');
+            const image = path => {
+                if (!path || !/^(\/|https?:|data:image\/)/i.test(path)) return '';
+                if (path.startsWith('/v1/assets/')) return data.asset_url + '/' + path.slice('/v1/assets/'.length);
+                return path;
+            };
+            const photo = (path, name, className) => image(path) ? `<img class="${className}" src="${escapeHtml(image(path))}" alt="${escapeHtml(name)}">` : `<div class="${className}-placeholder">SIN FOTO</div>`;
+            const featured = (data.featured_product_ids || []).map(id => (data.products || []).find(product => Number(product.id) === Number(id))).filter(Boolean);
+            const featuredCards = featured.map(product => {
+                const prices = (product.variants || []).map(variant => Number(variant.price_cents));
+                const price = prices.length ? (Math.min(...prices) === Math.max(...prices) ? money(prices[0]) : `${money(Math.min(...prices))} a ${money(Math.max(...prices))}`) : '';
+                return `<article class="featured-product-card"><div class="featured-product-image"><button class="product-image-button" type="button">${photo(product.image_path, product.name, 'featured-product-photo')}</button></div><div class="featured-product-copy"><span>PRODUCTO DESTACADO</span><button type="button"><strong>${escapeHtml(product.name)}</strong></button><small>${escapeHtml(product.category?.name || 'Laboratorio Digital')}</small></div><div class="featured-product-bottom"><strong>${price}</strong>${product.variants.length > 1 ? `<button class="featured-product-options" type="button">VER ${product.variants.length} VARIANTES →</button>` : '<div class="quantity-control featured-quantity-control"><button type="button" disabled>−</button><input type="number" value="0" disabled><button type="button">+</button></div>'}</div></article>`;
+            }).join('');
+            const roots = (data.categories || []).filter(category => category.active !== false);
+            const preferred = ['sublimables', 'accesorios', 'remeras', 'papeles'].map(slug => roots.find(category => category.slug === slug)).filter(Boolean);
+            const categories = [...preferred, ...roots.filter(category => !preferred.includes(category))].slice(0, 4);
+            const tutorials = (data.tutorials || []).map(tutorial => `<button class="tutorial-card" type="button">${image(tutorial.image_path) ? photo(tutorial.image_path, '', '') : '<span class="tutorial-placeholder">APRENDE</span>'}<strong>${escapeHtml(tutorial.title)}</strong><small>LEER TUTORIAL →</small></button>`).join('');
+            const results = doc.getElementById('catalog-results');
+            results.innerHTML = `<section class="store-home" aria-label="Empezar a comprar">${featuredCards ? `<section class="home-featured-products"><div class="home-featured-heading"><div><p class="eyebrow">SELECCIÓN ESPECIAL</p><h2>PRODUCTOS DESTACADOS</h2></div><span>Elegidos para inspirarte</span></div><div class="featured-product-grid">${featuredCards}</div></section>` : ''}<section class="home-people-gallery"></section><div class="quick-categories">${categories.map((category, index) => `<button type="button"><span>${['◈', '◌', '◇', '△'][index]}</span><strong>${escapeHtml(category.name)}</strong><small>Ver productos</small></button>`).join('')}</div><button class="show-all-products" type="button">VER TODOS LOS PRODUCTOS <span>→</span></button>${tutorials ? `<section class="home-tutorials"><div class="home-featured-heading"><div><p class="eyebrow">APRENDE</p><h2>TUTORIALES</h2></div><span>Ideas y técnicas para crear</span></div><div class="tutorial-carousel"><button class="tutorial-carousel-arrow" type="button">&lt;</button><div class="tutorial-grid">${tutorials}</div><button class="tutorial-carousel-arrow" type="button">&gt;</button></div></section>` : ''}</section>`;
+            const base = doc.createElement('base');
+            base.href = new URL(app.store_url, window.location.href).href;
+            doc.head.prepend(base);
+            frame.srcdoc = '<!doctype html>' + doc.documentElement.outerHTML;
+            status.textContent = 'Cargando el catálogo real…';
+        } catch (error) {
+            status.textContent = error.message;
+            retry.hidden = false;
+        }
     }
 
     function renderDesignPreview() {
         const form = document.getElementById('design-form');
-        const preview = document.getElementById('design-live-preview');
-        if (!form || !preview) return;
-        const fontStacks = {
-            'Arial': 'Arial, sans-serif',
-            'Helvetica': 'Helvetica, Arial, sans-serif',
-            'Verdana': 'Verdana, sans-serif',
-            'Georgia': 'Georgia, serif',
-            'Times New Roman': '"Times New Roman", serif',
-            'Trebuchet MS': '"Trebuchet MS", sans-serif',
-            'Montserrat': 'Montserrat, Arial, sans-serif',
-            'Roboto': 'Roboto, Arial, sans-serif',
-            'Poppins': 'Poppins, Arial, sans-serif',
-            'Oswald': 'Oswald, Arial, sans-serif',
-            'Inter': 'Inter, Arial, sans-serif',
-            'Bebas Neue': '"Bebas Neue", Arial, sans-serif',
+        if (!form || designSaving) return;
+        const values = designValues();
+        const hasFiles = [...form.querySelectorAll('input[type="file"]')].some(field => field.files.length);
+        designDirty = Boolean(savedDesign && (hasFiles || Object.keys(values).some(key => String(values[key]) !== String(savedDesign[key] ?? ''))));
+        document.getElementById('design-save-status').textContent = !savedDesign ? 'Diseño sin cargar.' : designSaving ? 'Guardando y publicando…' : designDirty ? 'Cambios pendientes de publicar.' : 'El diseño coincide con la tienda publicada.';
+        form.querySelector('button[type="submit"]').disabled = !savedDesign || designSaving || !designDirty;
+        document.getElementById('design-discard').disabled = !designDirty || designSaving;
+        form.querySelectorAll('[data-design-section]').forEach(item => {
+            const visible = !item.classList.contains('is-hidden');
+            item.querySelector('[data-design-section-status]').textContent = visible ? 'Se muestra' : 'Oculta';
+            const button = item.querySelector('[data-design-section-visibility]');
+            const label = `${visible ? 'Ocultar' : 'Mostrar'} ${item.querySelector('strong').textContent.toLowerCase()}`;
+            button.setAttribute('aria-label', label);
+            button.title = label;
+            button.setAttribute('aria-pressed', String(visible));
+            item.querySelector('[data-design-section-move="up"]').disabled = !item.previousElementSibling;
+            item.querySelector('[data-design-section-move="down"]').disabled = !item.nextElementSibling;
+        });
+        const usesText = values.logo_mode === 'text';
+        ['logo_font', 'logo_size', 'logo_color', 'logo_bold'].forEach(key => {
+            form.elements.namedItem(key).closest('label').hidden = !usesText;
+        });
+        const logoOutput = document.getElementById('design-text-logo-preview');
+        logoOutput.hidden = !usesText;
+        logoOutput.textContent = values.logo_text || 'Nombre de la empresa';
+        logoOutput.style.fontFamily = values.logo_font;
+        logoOutput.style.fontSize = `${values.logo_size}px`;
+        logoOutput.style.color = values.logo_color;
+        logoOutput.style.fontWeight = values.logo_bold === '1' ? '700' : '400';
+        const icon = document.getElementById('design-favicon-preview');
+        icon.textContent = values.favicon_text;
+        icon.style.fontFamily = values.favicon_font;
+        icon.style.backgroundColor = values.favicon_background_color;
+        icon.style.color = values.favicon_text_color;
+        const animation = form.elements.namedItem('mascot_klaus_animations_enabled');
+        animation.disabled = values.mascot_klaus_enabled !== '1';
+        form.querySelectorAll('.font-family-select').forEach(select => { select.style.fontFamily = select.value; });
+        const luminance = color => {
+            const rgb = color.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16) / 255) || [0, 0, 0];
+            const linear = rgb.map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+            return linear[0] * .2126 + linear[1] * .7152 + linear[2] * .0722;
         };
-        const value = name => String(form.elements.namedItem(name)?.value || '');
-        const checked = name => Boolean(form.elements.namedItem(name)?.checked);
-        const fontStack = name => fontStacks[value(name)] || fontStacks.Montserrat;
-        const setText = (id, text) => {
-            const element = document.getElementById(id);
-            if (element) element.textContent = text;
+        const contrast = (first, second) => {
+            const a = luminance(first), b = luminance(second);
+            return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
         };
-        const setImage = (targetId, sourceId) => {
-            const target = document.getElementById(targetId);
-            const source = document.getElementById(sourceId);
-            if (!target || !source) return;
-            target.src = source.getAttribute('src') || '';
-            target.hidden = !target.getAttribute('src');
-        };
+        const warnings = [];
+        if (['color_background', 'color_surface', 'color_secondary'].some(key => contrast(values.color_text, values[key]) < 4.5)) warnings.push('El texto puede ser difícil de leer sobre alguno de los fondos.');
+        if (contrast('#ffffff', values.color_accent) < 4.5) warnings.push('El texto blanco de los botones puede ser difícil de leer.');
+        document.getElementById('design-contrast-status').textContent = warnings.join(' ') || 'Los colores elegidos mantienen un buen contraste para el texto.';
+        updateDesignStorePreview(values);
+    }
 
-        preview.style.setProperty('--design-preview-background', value('color_background'));
-        preview.style.setProperty('--design-preview-surface', value('color_surface'));
-        preview.style.setProperty('--design-preview-secondary', value('color_secondary'));
-        preview.style.setProperty('--design-preview-text', value('color_text'));
-        preview.style.setProperty('--design-preview-accent', value('color_accent'));
-        setText('design-preview-badge', value('hero_badge'));
-        setText('design-preview-title', value('hero_title'));
-        setText('design-preview-text', value('hero_text'));
-        const usesTextLogo = value('logo_mode') === 'text';
-        const imageLogo = document.getElementById('design-preview-logo');
-        const textLogo = document.getElementById('design-preview-text-logo');
-        if (usesTextLogo) {
-            if (imageLogo) imageLogo.hidden = true;
-            if (textLogo) {
-                textLogo.hidden = false;
-                textLogo.textContent = value('logo_text') || 'Nombre de la empresa';
-                textLogo.style.fontFamily = fontStack('logo_font');
-                textLogo.style.fontSize = `${value('logo_size') || 24}px`;
-                textLogo.style.color = value('logo_color');
-                textLogo.style.fontWeight = checked('logo_bold') ? '700' : '400';
+    function updateDesignStorePreview(values = designValues()) {
+        const doc = designPreviewDocument;
+        if (!doc?.body || !savedDesign) return;
+        designPreviewObserver?.disconnect();
+        try {
+            Object.entries({ color_background: '--bg', color_surface: '--panel', color_secondary: '--panel-2', color_text: '--text', color_accent: '--accent' }).forEach(([key, variable]) => doc.documentElement.style.setProperty(variable, values[key]));
+            const intro = doc.querySelector('.catalog-intro');
+            if (intro) {
+                intro.querySelector('.eyebrow').textContent = values.hero_badge;
+                intro.querySelector('#catalog-title').textContent = values.hero_title;
+                intro.querySelector('p:last-child').textContent = values.hero_text;
             }
-        } else {
-            if (textLogo) textLogo.hidden = true;
-            setImage('design-preview-logo', 'design-logo-preview');
-        }
-        const textLogoPreview = document.getElementById('design-text-logo-preview');
-        if (textLogoPreview) {
-            textLogoPreview.textContent = value('logo_text') || 'Nombre de la empresa';
-            textLogoPreview.style.fontFamily = fontStack('logo_font');
-            textLogoPreview.style.fontSize = `${value('logo_size') || 24}px`;
-            textLogoPreview.style.color = value('logo_color');
-            textLogoPreview.style.fontWeight = checked('logo_bold') ? '700' : '400';
-        }
-        const faviconPreview = document.getElementById('design-favicon-preview');
-        if (faviconPreview) {
-            faviconPreview.textContent = value('favicon_text') || 'LD';
-            faviconPreview.style.fontFamily = fontStack('favicon_font');
-            faviconPreview.style.backgroundColor = value('favicon_background_color');
-            faviconPreview.style.color = value('favicon_text_color');
-        }
-        form.querySelectorAll('.font-family-select').forEach(select => { select.style.fontFamily = fontStacks[select.value] || fontStacks.Montserrat; });
-        [1, 2, 3].forEach(number => setImage(`design-preview-hero-${number}`, `design-hero-${number}-preview`));
-
-        const klaus = document.getElementById('design-preview-klaus');
-        if (klaus) klaus.hidden = !checked('mascot_klaus_enabled');
-        preview.classList.toggle('design-preview-klaus-animated', checked('mascot_klaus_enabled') && checked('mascot_klaus_animations_enabled'));
-
-        const sections = document.getElementById('design-preview-sections');
-        if (sections) {
-            [...form.querySelectorAll('[data-design-section]')]
-                .forEach(item => {
-                    const section = sections.querySelector(`[data-design-preview-section="${item.dataset.designSection}"]`);
-                    if (section) {
-                        section.hidden = item.classList.contains('is-hidden');
-                        sections.appendChild(section);
+            const brand = doc.querySelector('.store-brand');
+            if (brand) {
+                brand.replaceChildren();
+                const imagePath = document.getElementById('design-logo-preview').getAttribute('src');
+                if (values.logo_mode === 'text' || !imagePath) {
+                    const logo = doc.createElement('span');
+                    logo.className = 'store-text-logo';
+                    logo.textContent = values.logo_text || 'Laboratorio Digital';
+                    logo.style.fontFamily = values.logo_font;
+                    logo.style.fontSize = `${values.logo_size}px`;
+                    logo.style.color = values.logo_color;
+                    logo.style.fontWeight = values.logo_bold === '1' ? '700' : '400';
+                    brand.appendChild(logo);
+                } else {
+                    const logo = doc.createElement('img');
+                    logo.className = 'brand-logo';
+                    logo.src = imagePath;
+                    logo.alt = values.logo_text;
+                    brand.appendChild(logo);
+                }
+            }
+            const home = doc.querySelector('.store-home');
+            if (home) {
+                const selectors = { featured: '.home-featured-products', gallery: '.home-people-gallery', categories: '.quick-categories', tutorials: '.home-tutorials' };
+                Object.entries(selectors).forEach(([key, selector]) => {
+                    const current = home.querySelector(selector);
+                    if (current) designPreviewSections[key] = current;
+                });
+                if (!designPreviewSections.gallery) {
+                    const gallery = doc.createElement('section');
+                    gallery.className = 'home-people-gallery';
+                    designPreviewSections.gallery = gallery;
+                }
+                const gallery = designPreviewSections.gallery;
+                gallery.replaceChildren();
+                [1, 2, 3].forEach(number => {
+                    const path = document.getElementById(`design-hero-${number}-preview`).getAttribute('src');
+                    if (!path) return;
+                    const image = doc.createElement('img');
+                    image.src = path;
+                    image.alt = `Foto de portada ${number}`;
+                    gallery.appendChild(image);
+                });
+                const visible = values.section_visibility.split(',');
+                const allButton = home.querySelector('.show-all-products');
+                values.section_order.split(',').forEach(key => {
+                    const section = designPreviewSections[key];
+                    if (!section) return;
+                    section.hidden = !visible.includes(key) || (key === 'gallery' && !gallery.children.length);
+                    if (section.hidden) section.style.setProperty('display', 'none', 'important');
+                    else section.style.removeProperty('display');
+                    home.appendChild(section);
+                    if (key === 'categories' && allButton) {
+                        allButton.hidden = !visible.includes(key);
+                        if (allButton.hidden) allButton.style.setProperty('display', 'none', 'important');
+                        else allButton.style.removeProperty('display');
+                        home.appendChild(allButton);
                     }
                 });
+                document.getElementById('design-preview-status').textContent = designDirty ? 'Vista previa de cambios sin publicar.' : 'Vista previa del diseño publicado.';
+            }
+            doc.querySelector('#welcome-popup')?.remove();
+            doc.body.classList.remove('welcome-popup-open');
+            doc.querySelectorAll('.klaus-welcome, .klaus-checkout, .pulga').forEach(element => { element.hidden = true; });
+            let mascot = doc.getElementById('design-preview-mascot');
+            if (!mascot) {
+                mascot = doc.createElement('img');
+                mascot.id = 'design-preview-mascot';
+                mascot.src = new URL('assets/klaus_checkout_sitting.png', new URL(app.store_url, window.location.href)).href;
+                mascot.alt = 'Klaus';
+                mascot.style.cssText = 'position:fixed;bottom:16px;right:16px;width:74px;pointer-events:none;z-index:20';
+                doc.body.appendChild(mascot);
+            }
+            mascot.hidden = values.mascot_klaus_enabled !== '1';
+            if (values.mascot_klaus_animations_enabled === '1' && !mascot.getAnimations().length) mascot.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-7px)' }], { duration: 1600, iterations: Infinity, direction: 'alternate' });
+            if (values.mascot_klaus_animations_enabled !== '1') mascot.getAnimations().forEach(animation => animation.cancel());
+        } finally {
+            designPreviewObserver?.observe(doc.body, { childList: true, subtree: true });
         }
     }
 
@@ -5224,42 +5325,47 @@
     }
 
     async function saveDesign(form) {
+        if (!savedDesign || designSaving) return;
+        const invalid = [...form.elements].find(field => field.willValidate && !field.validity.valid);
+        if (invalid) {
+            setDesignEditor(invalid.closest('[data-design-editor-section]').dataset.designEditorSection);
+            invalid.focus();
+            invalid.reportValidity();
+            return;
+        }
+        const values = designValues();
+        const files = ['logo', 'hero_1', 'hero_2', 'hero_3'].map(key => ({ key, file: form.elements.namedItem(`${key}_file`).files[0] }));
+        designSaving = true;
+        form.querySelectorAll('input, textarea, select, button').forEach(field => {
+            field.dataset.designWasDisabled = String(field.disabled);
+            field.disabled = true;
+        });
+        document.getElementById('design-save-status').textContent = 'Guardando y publicando…';
         const button = form.querySelector('button[type="submit"]');
-        button.disabled = true;
-        button.textContent = 'GUARDANDO…';
+        button.textContent = 'PUBLICANDO…';
         try {
-            const logoFile = form.elements.namedItem('logo_file')?.files?.[0];
-            if (logoFile) {
-                form.elements.namedItem('logo_path').value = await uploadProductImage(logoFile);
-            }
-            for (const number of [1, 2, 3]) {
-                const file = form.elements.namedItem(`hero_${number}_file`)?.files?.[0];
-                if (file) form.elements.namedItem(`hero_${number}_path`).value = await uploadProductImage(file);
-            }
-            const sections = [...form.querySelectorAll('[data-design-section]')];
-            form.elements.namedItem('section_order').value = sections.map(item => item.dataset.designSection).join(',');
-            form.elements.namedItem('section_visibility').value = sections.filter(item => !item.classList.contains('is-hidden')).map(item => item.dataset.designSection).join(',');
-            const data = new FormData(form);
-            ['logo_bold', 'mascot_klaus_enabled', 'mascot_klaus_animations_enabled'].forEach(key => {
-                data.set(key, form.elements.namedItem(key)?.checked ? '1' : '0');
-            });
-            data.delete('logo_file');
-            data.delete('hero_1_file');
-            data.delete('hero_2_file');
-            data.delete('hero_3_file');
-            const response = await apiPost({ action: 'design_update', design: Object.fromEntries(data.entries()) });
-            setDesignImagePreview('logo', response.design.logo_path);
-            [1, 2, 3].forEach(number => setDesignImagePreview(`hero_${number}`, response.design[`hero_${number}_path`]));
-            renderDesignPreview();
+            for (const { key, file } of files) if (file) values[`${key}_path`] = await uploadProductImage(file);
+            const response = await apiPost({ action: 'design_update', design: values });
+            savedDesign = response.design;
+            form.querySelectorAll('[data-design-was-disabled]').forEach(field => { field.disabled = field.dataset.designWasDisabled === 'true'; });
+            applyDesignToForm(savedDesign);
             toast('Diseño guardado y publicado.');
         } catch (error) { toast(error.message); }
-        finally { button.disabled = false; button.textContent = 'GUARDAR DISEÑO'; }
+        finally {
+            form.querySelectorAll('[data-design-was-disabled]').forEach(field => {
+                field.disabled = field.dataset.designWasDisabled === 'true';
+                delete field.dataset.designWasDisabled;
+            });
+            designSaving = false;
+            button.textContent = 'GUARDAR Y PUBLICAR';
+            renderDesignPreview();
+        }
     }
 
     function setDesignImagePreview(key, path) {
         const preview = document.getElementById(key === 'logo' ? 'design-logo-preview' : `design-hero-${key.slice(-1)}-preview`);
         if (!preview) return;
-        if (path) preview.src = path;
+        if (path) preview.src = path.startsWith('/v1/assets/') ? new URL(`assets/${path.slice('/v1/assets/'.length)}`, new URL(app.store_url, window.location.href)).href : path;
         else preview.removeAttribute('src');
         const container = preview.closest('.design-image-preview');
         container.hidden = !path;
@@ -5269,8 +5375,15 @@
     function previewDesignImage(input, preview) {
         const file = input?.files?.[0];
         if (!file || !preview) return;
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024) {
+            input.value = '';
+            toast('Elegí una imagen JPG, PNG o WebP de hasta 8 MB.');
+            renderDesignPreview();
+            return;
+        }
         const reader = new FileReader();
         reader.addEventListener('load', () => {
+            if (input.files[0] !== file) return;
             preview.src = String(reader.result || '');
             preview.closest('.design-image-preview').hidden = false;
             preview.closest('.design-image-preview').querySelector('[data-remove-design-image]').hidden = false;
@@ -7641,11 +7754,54 @@
     const designForm = document.getElementById('design-form');
     designForm?.addEventListener('input', renderDesignPreview);
     designForm?.addEventListener('change', renderDesignPreview);
+    document.getElementById('design-preview-retry')?.addEventListener('click', loadDesignStorePreview);
+    document.getElementById('design-discard')?.addEventListener('click', () => {
+        if (savedDesign && !designSaving) applyDesignToForm(savedDesign);
+    });
+    const designFrame = document.getElementById('design-store-preview');
+    designFrame?.addEventListener('load', () => {
+        if (!designFrame.srcdoc) return;
+        designPreviewObserver?.disconnect();
+        designPreviewDocument = designFrame.contentDocument;
+        designPreviewSections = {};
+        // Capturar antes de los handlers de la tienda: la vista previa solo permite desplazarse.
+        ['click', 'submit', 'keydown', 'input', 'change'].forEach(type => {
+            designPreviewDocument.addEventListener(type, event => {
+                if (type === 'keydown' && ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', 'Tab'].includes(event.key)) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }, true);
+        });
+        designPreviewDocument.querySelectorAll('input, textarea, select').forEach(field => { field.disabled = true; });
+        designPreviewObserver = new MutationObserver(() => updateDesignStorePreview());
+        updateDesignStorePreview();
+    });
+    document.querySelectorAll('[data-design-device]').forEach(button => button.addEventListener('click', () => {
+        designFrame.parentElement.classList.toggle('is-mobile', button.dataset.designDevice === 'mobile');
+        document.querySelectorAll('[data-design-device]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    }));
+    designForm?.addEventListener('click', event => {
+        if (designSaving) return;
+        const move = event.target.closest('[data-design-section-move]');
+        if (move) {
+            const item = move.closest('[data-design-section]');
+            if (move.dataset.designSectionMove === 'up' && item.previousElementSibling) item.parentElement.insertBefore(item, item.previousElementSibling);
+            if (move.dataset.designSectionMove === 'down' && item.nextElementSibling) item.parentElement.insertBefore(item.nextElementSibling, item);
+            renderDesignPreview();
+        }
+        const palette = event.target.closest('[data-design-palette]');
+        if (palette && savedDesign) {
+            const colors = { violet: ['#fbf8ff', '#ffffff', '#f4effb', '#2a1d3c', '#7652b8'], blue: ['#f5f8fc', '#ffffff', '#eaf0fa', '#172b4d', '#2457a7'], neutral: ['#f7f7f7', '#ffffff', '#eeeeee', '#222222', '#444444'] };
+            const keys = ['color_background', 'color_surface', 'color_secondary', 'color_text', 'color_accent'];
+            keys.forEach((key, index) => { designForm.elements.namedItem(key).value = palette.dataset.designPalette === 'original' ? savedDesign[key] : colors[palette.dataset.designPalette][index]; });
+            renderDesignPreview();
+        }
+    });
     const designSectionOrder = designForm?.querySelector('[data-design-section-order]');
     let draggedDesignSection = null;
     designSectionOrder?.addEventListener('dragstart', event => {
         const item = event.target.closest('[data-design-section]');
-        if (!item) return;
+        if (!item || designSaving) { event.preventDefault(); return; }
         draggedDesignSection = item;
         item.classList.add('is-dragging');
         event.dataTransfer.effectAllowed = 'move';
@@ -7698,7 +7854,7 @@
         if (file) file.value = '';
         setDesignImagePreview('logo', path);
         renderDesignPreview();
-        toast('Logo preparado. Presioná GUARDAR DISEÑO para publicarlo.');
+        toast('Logo preparado. Presioná GUARDAR Y PUBLICAR para publicarlo.');
     });
     elements.mobileDashboardToggle?.addEventListener('click', () => {
         if (!elements.mobileDashboard) return;
@@ -7729,16 +7885,9 @@
     const sidebarDesignMenu = document.getElementById('admin-sidebar-design-menu');
     const sidebarDesignMenuToggle = document.getElementById('admin-sidebar-design-menu-toggle');
     const sidebarDesignEditor = document.getElementById('admin-sidebar-design-editor');
-    const sidebarDesignEditorTitle = document.getElementById('admin-sidebar-design-editor-title');
     let activeDesignEditor = '';
-    const closeSidebarDesignEditor = () => {
-        if (!sidebarDesignEditor) return;
-        sidebarDesignEditor.hidden = true;
-        sidebarDesignEditor.querySelectorAll('[data-design-editor-section]').forEach(section => { section.hidden = true; });
-    };
     const closeSidebarDesignMenu = () => {
         if (!sidebarDesignMenu) return;
-        closeSidebarDesignEditor();
         sidebarDesignMenu.hidden = true;
         sidebarDesignMenuToggle?.setAttribute('aria-expanded', 'false');
     };
@@ -7765,7 +7914,7 @@
     sidebarSettingsMenu?.addEventListener('click', event => {
         if (event.target.closest('[data-view], .admin-sidebar-settings-menu-close')) closeSidebarSettingsMenu();
     });
-    sidebarDesignMenu?.addEventListener('click', event => {
+    document.addEventListener('click', event => {
         if (event.target.closest('.admin-sidebar-design-menu-back')) {
             closeSidebarDesignMenu();
             sidebarDesignMenuToggle?.focus();
@@ -7773,32 +7922,16 @@
         }
         const option = event.target.closest('[data-design-editor]');
         if (!option) return;
-        const editorName = option.dataset.designEditor;
-        const section = sidebarDesignEditor?.querySelector(`[data-design-editor-section="${editorName}"]`);
-        if (!section || !sidebarDesignEditor) return;
-        activeDesignEditor = editorName;
+        activeDesignEditor = option.dataset.designEditor;
         showView('design');
-        sidebarDesignEditor.querySelectorAll('[data-design-editor-section]').forEach(item => {
-            item.hidden = item !== section;
-        });
-        if (sidebarDesignEditorTitle) sidebarDesignEditorTitle.textContent = option.textContent.trim().toUpperCase();
-        sidebarDesignEditor.hidden = false;
-        window.requestAnimationFrame(() => section.querySelector('input, textarea, select, button')?.focus());
-    });
-    sidebarDesignEditor?.addEventListener('click', event => {
-        if (!event.target.closest('.admin-sidebar-design-editor-back')) return;
-        closeSidebarDesignEditor();
-        sidebarDesignMenu?.querySelector(`[data-design-editor="${activeDesignEditor}"]`)?.focus();
+        setDesignEditor(activeDesignEditor);
+        closeSidebarSettingsMenu();
+        window.requestAnimationFrame(() => sidebarDesignEditor?.querySelector('[data-design-editor-section]:not([hidden]) input')?.focus());
     });
     document.addEventListener('keydown', event => {
         if (event.key !== 'Escape' || event.defaultPrevented || !sidebarSettingsMenu || sidebarSettingsMenu.hidden) return;
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (sidebarDesignEditor && !sidebarDesignEditor.hidden) {
-            closeSidebarDesignEditor();
-            sidebarDesignMenu?.querySelector(`[data-design-editor="${activeDesignEditor}"]`)?.focus();
-            return;
-        }
         if (sidebarDesignMenu && !sidebarDesignMenu.hidden) {
             closeSidebarDesignMenu();
             sidebarDesignMenuToggle?.focus();
@@ -7902,7 +8035,7 @@
         window.addEventListener('focus', refreshActiveAdminView);
         window.addEventListener('pageshow', refreshActiveAdminView);
         window.addEventListener('beforeunload', event => {
-            if (!state.sizeGuideDirty) return;
+            if (!state.sizeGuideDirty && !designDirty) return;
             event.preventDefault();
             event.returnValue = '';
         });
