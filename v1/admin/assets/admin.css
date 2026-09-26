@@ -89,6 +89,9 @@
 .email-template-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:18px; }
 .email-template-grid label { display:grid; gap:6px; font-size:12px; font-weight:800; }
 .email-template-grid textarea { min-height:88px; resize:vertical; }
+.transactional-email-card { display:grid; align-content:start; gap:14px; padding:20px; border:1px solid #e2e6ef; border-radius:14px; background:#fff; }
+.transactional-email-card h3,.transactional-email-card p { margin:0; }
+.transactional-email-card .checkbox-setting { display:flex; }
 @media (max-width: 680px) { .email-template-grid { grid-template-columns:1fr; } }
 
 .admin-shell {

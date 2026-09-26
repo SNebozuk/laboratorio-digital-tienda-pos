@@ -637,13 +637,6 @@ header('Referrer-Policy: same-origin');
                             <p>La tarea programada genera una copia automática diaria, verificada, de la base, comprobantes y fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
                             <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
                         </section>
-                        <form id="ses-test-form" class="settings-card backup-card">
-                            <p class="eyebrow">CORREOS AUTOMÁTICOS</p>
-                            <h2>Prueba de Amazon SES</h2>
-                            <p>Las credenciales se guardan únicamente en el archivo privado del servidor. Este botón no activa los avisos de ventas: solo verifica la conexión con SES.</p>
-                            <label>DESTINATARIO DE PRUEBA<input name="recipient" type="email" value="ventas@laboratorio-digital.com.ar" required autocomplete="off"></label>
-                            <button class="primary-button fit-button" type="submit">ENVIAR PRUEBA</button>
-                        </form>
                     </section>
 
                     <section class="admin-view" id="view-maintenance">
@@ -674,6 +667,41 @@ header('Referrer-Policy: same-origin');
                                 <textarea name="welcome_popup_text" rows="5" maxlength="1000" placeholder="Escribí acá el mensaje que querés mostrar a los clientes."></textarea>
                             </label>
                             <button class="primary-button fit-button" type="submit">GUARDAR MANTENIMIENTO</button>
+                        </form>
+                        <form id="transactional-email-form" class="settings-card">
+                            <p class="eyebrow">E-MAIL</p>
+                            <h2>E-mail</h2>
+                            <label class="checkbox-setting">
+                                <input name="mail_enabled" type="checkbox" value="1">
+                                <span><strong>Activar emails automáticos</strong><small>Enviar los correos seleccionados cuando se confirma un pedido web. Al desactivar, también se pausan los envíos pendientes.</small></span>
+                            </label>
+                            <div class="settings-grid">
+                                <label>EMAIL DE RESPUESTA<input name="mail_reply_to" type="email" required autocomplete="email"></label>
+                                <label>EMAIL PARA AVISOS INTERNOS<input name="sales_notification_email" type="email" required></label>
+                            </div>
+                            <p>Podés usar {{cliente}}, {{pedido}}, {{whatsapp}}, {{email}}, {{total}} y {{detalle}} en los mensajes.</p>
+                            <div class="email-template-grid">
+                                <section class="transactional-email-card">
+                                    <h3>Nueva venta · aviso interno</h3>
+                                    <label class="checkbox-setting"><input name="mail_internal_enabled" type="checkbox" value="1"><span>Enviar aviso interno</span></label>
+                                    <label>ASUNTO<input name="mail_subject_internal" required maxlength="200"></label>
+                                    <label>MENSAJE<textarea name="mail_message_internal" rows="9" required maxlength="6000"></textarea></label>
+                                </section>
+                                <section class="transactional-email-card">
+                                    <h3>Pedido recibido · cliente</h3>
+                                    <label class="checkbox-setting"><input name="mail_customer_enabled" type="checkbox" value="1"><span>Enviar confirmación al cliente</span></label>
+                                    <p>Se envía únicamente si el cliente completó su email en el checkout.</p>
+                                    <label>ASUNTO<input name="mail_subject_customer" required maxlength="200"></label>
+                                    <label>MENSAJE<textarea name="mail_message_customer" rows="9" required maxlength="6000"></textarea></label>
+                                </section>
+                            </div>
+                            <button class="primary-button fit-button" type="submit" disabled>GUARDAR E-MAIL</button>
+                        </form>
+                        <form id="mail-test-form" class="settings-card">
+                            <h2>Prueba de e-mail</h2>
+                            <p>Envía un único correo de prueba sin activar los emails automáticos. Guardá primero la configuración.</p>
+                            <label>DESTINATARIO DE PRUEBA<input name="recipient" type="email" required autocomplete="off"></label>
+                            <button class="primary-button fit-button" type="submit">ENVIAR PRUEBA</button>
                         </form>
                     </section>
                 <?php endif ?>

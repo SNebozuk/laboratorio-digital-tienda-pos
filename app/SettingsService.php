@@ -37,6 +37,58 @@ final class SettingsService
     {
     }
 
+    /** @param array<string,mixed> $config @return array<string,string> */
+    public function mailSettings(array $config = []): array
+    {
+        $values = [
+            'mail_enabled' => '0',
+            'mail_reply_to' => (string) ($config['mail_reply_to'] ?? 'ventas@laboratorio-digital.com.ar'),
+            'sales_notification_email' => (string) ($config['sales_notification_email'] ?? 'ventas@laboratorio-digital.com.ar'),
+            'mail_internal_enabled' => '1',
+            'mail_customer_enabled' => '1',
+            'mail_subject_internal' => 'Nueva venta {{pedido}} · {{cliente}}',
+            'mail_subject_customer' => 'Recibimos tu pedido {{pedido}} · Laboratorio Digital',
+            'mail_message_internal' => "Nueva venta {{pedido}}\n\nCliente: {{cliente}}\nWhatsApp: {{whatsapp}}\nEmail: {{email}}\n\nDetalle:\n{{detalle}}\n\nTotal: {{total}}",
+            'mail_message_customer' => "Hola {{cliente}}. ¡Gracias por tu pedido {{pedido}}!\n\nRecibimos correctamente tu compra.\n\nDetalle:\n{{detalle}}\n\nTotal: {{total}}\n\nNos comunicaremos por WhatsApp para coordinar tu compra. Muchas gracias.",
+        ];
+        $query = $this->pdo->prepare('SELECT key, value FROM settings WHERE key IN (' . implode(',', array_fill(0, count($values), '?')) . ')');
+        $query->execute(array_keys($values));
+        foreach ($query->fetchAll() as $row) $values[(string) $row['key']] = (string) $row['value'];
+        return $values;
+    }
+
+    /** @param array<string,mixed> $data @param array<string,mixed> $config @return array<string,string> */
+    public function updateMailSettings(array $data, array $config = []): array
+    {
+        $values = $this->mailSettings($config);
+        foreach ($values as $key => $current) {
+            $value = $data[$key] ?? $current;
+            if (!is_scalar($value)) throw new ValidationException('Revisá los campos de e-mail.');
+            $values[$key] = trim((string) $value);
+        }
+        foreach (['mail_enabled', 'mail_internal_enabled', 'mail_customer_enabled'] as $key) {
+            $values[$key] = in_array($values[$key], ['1', 'true', 'on'], true) ? '1' : '0';
+        }
+        foreach (['mail_reply_to', 'sales_notification_email'] as $key) {
+            if (!filter_var($values[$key], FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/', $values[$key])) {
+                throw new ValidationException('Ingresá un email de respuesta y un destinatario interno válidos.');
+            }
+        }
+        foreach (['internal', 'customer'] as $audience) {
+            $subject = $values['mail_subject_' . $audience];
+            $body = $values['mail_message_' . $audience];
+            if ($subject === '' || strlen($subject) > 200 || preg_match('/[\r\n]/', $subject)) {
+                throw new ValidationException('Cada asunto debe tener entre 1 y 200 caracteres y una sola línea.');
+            }
+            if ($body === '' || strlen($body) > 6000) throw new ValidationException('Cada mensaje debe tener entre 1 y 6000 caracteres.');
+        }
+        Database::immediate($this->pdo, function (PDO $pdo) use ($values): void {
+            $save = $pdo->prepare('INSERT INTO settings(key, value, updated_at) VALUES(:key, :value, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP');
+            foreach ($values as $key => $value) $save->execute(['key' => $key, 'value' => $value]);
+        });
+        return $values;
+    }
+
     /** @return array<string, mixed> */
     public function values(): array
     {

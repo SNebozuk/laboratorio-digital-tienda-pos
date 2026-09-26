@@ -32,6 +32,16 @@ final class MailService
         $query = "SELECT * FROM mail_queue
                   WHERE status = 'pending' AND available_at <= CURRENT_TIMESTAMP
                     AND attempts < 5";
+        $disabledAudiences = [];
+        foreach (['internal', 'customer'] as $audience) {
+            if (($this->config['mail_' . $audience . '_enabled'] ?? '1') !== '1') {
+                $disabledAudiences[] = $audience;
+            }
+        }
+        if ($disabledAudiences !== []) {
+            $query .= " AND (CASE WHEN json_valid(payload_json) THEN COALESCE(json_extract(payload_json, '$.audience'), '') ELSE '' END) NOT IN ("
+                . implode(',', array_map(static fn (string $audience): string => "'" . $audience . "'", $disabledAudiences)) . ')';
+        }
         if ($orderId !== null) {
             $query .= ' AND order_id = :order_id';
         }
@@ -45,6 +55,8 @@ final class MailService
         $result = ['sent' => 0, 'retried' => 0, 'failed' => 0, 'disabled' => false];
 
         foreach ($messages as $message) {
+            $queuedPayload = json_decode((string) $message['payload_json'], true);
+            $audience = is_array($queuedPayload) ? (string) ($queuedPayload['audience'] ?? '') : '';
             $claim = $this->pdo->prepare(
                 "UPDATE mail_queue SET status = 'sending', attempts = attempts + 1,
                  available_at = datetime('now', '+10 minutes')
@@ -64,7 +76,7 @@ final class MailService
                 }
                 $this->send(
                     (string) $message['recipient'],
-                    (string) $message['subject'],
+                    $this->renderTemplate((string) ($this->config['mail_subject_' . $audience] ?? $message['subject']), $payload),
                     $this->renderOrderText($payload)
                 );
                 $update = $this->pdo->prepare(
@@ -101,13 +113,19 @@ final class MailService
         $this->send(
             $recipient,
             'Prueba de correo · Laboratorio Digital',
-            "LABORATORIO DIGITAL\n\nAmazon SES está conectado.\n\nEsta es una prueba enviada por la tienda. Si la recibiste, el remitente, Reply-To y la conexión SMTP con Amazon SES están funcionando correctamente."
+            "LABORATORIO DIGITAL\n\nEsta es una prueba enviada por la tienda desde el servidor de correo configurado. Si la recibiste, el remitente, el email de respuesta y el envío están funcionando."
         );
     }
 
     private function assertConfiguration(): void
     {
         $transport = (string) ($this->config['mail_transport'] ?? 'ses_smtp');
+        foreach (['mail_from', 'mail_reply_to'] as $key) {
+            $value = (string) ($this->config[$key] ?? $this->config['mail_from'] ?? '');
+            if (!filter_var($value, FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/', $value)) {
+                throw new \RuntimeException('Revisá el remitente y el email de respuesta.');
+            }
+        }
         if ($transport === 'native') {
             if (trim((string) ($this->config['mail_from'] ?? '')) === '') {
                 throw new \RuntimeException('Falta completar el remitente del correo.');
@@ -122,6 +140,9 @@ final class MailService
             if (trim((string) ($this->config[$key] ?? '')) === '') {
                 throw new \RuntimeException('Falta completar la configuración privada de correo.');
             }
+        }
+        if (!in_array(strtolower((string) ($this->config['mail_smtp_encryption'] ?? 'ssl')), ['ssl', 'tls'], true)) {
+            throw new \RuntimeException('El SMTP requiere una conexión cifrada.');
         }
     }
 
@@ -145,13 +166,7 @@ final class MailService
         $target = ($encryption === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
         $socket = @stream_socket_client($target, $errno, $error, 20, STREAM_CLIENT_CONNECT);
         if (!is_resource($socket)) {
-            if ($transport === 'ses_smtp') {
-                throw new \RuntimeException('No se pudo conectar de forma segura con Amazon SES: ' . $error);
-            }
-            // En algunos planes compartidos el servidor bloquea conexiones SMTP
-            // hacia sí mismo. El MTA local de Ferozo mantiene el mismo remitente.
-            $this->sendNative($recipient, $subject, $text);
-            return;
+            throw new \RuntimeException('No se pudo conectar con el servidor SMTP: ' . $error);
         }
         stream_set_timeout($socket, 20);
 
@@ -184,7 +199,7 @@ final class MailService
                 'X-Mailer: Laboratorio Digital',
             ];
             $body = str_replace("\r\n", "\n", $text);
-            $body = str_replace("\n.", "\n..", $body);
+            $body = preg_replace('/^\./m', '..', $body) ?? $body;
             $message = implode("\r\n", $headers) . "\r\n\r\n"
                 . str_replace("\n", "\r\n", $body);
             $this->command($socket, $message . "\r\n.", [250]);
@@ -236,6 +251,10 @@ final class MailService
     /** @param array<string, mixed> $payload */
     private function renderOrderText(array $payload): string
     {
+        $audience = (string) ($payload['audience'] ?? '');
+        if (isset($this->config['mail_message_' . $audience])) {
+            return $this->renderTemplate((string) $this->config['mail_message_' . $audience], $payload);
+        }
         $lines = [];
         foreach ((array) ($payload['items'] ?? []) as $item) {
             if (!is_array($item)) continue;
@@ -264,6 +283,29 @@ final class MailService
     private function money(int $cents): string
     {
         return '$ ' . number_format($cents / 100, 0, ',', '.');
+    }
+
+    /** @param array<string,mixed> $payload */
+    private function renderTemplate(string $template, array $payload): string
+    {
+        $lines = [];
+        foreach ((array) ($payload['items'] ?? []) as $item) {
+            if (!is_array($item)) continue;
+            $variant = trim((string) ($item['variant_name'] ?? ''));
+            if (preg_match('/^única$/iu', $variant) === 1) $variant = '';
+            $lines[] = (string) ($item['product_name'] ?? '')
+                . ($variant !== '' ? ' (' . $variant . ')' : '')
+                . ' x' . (int) ($item['quantity'] ?? 0)
+                . ' — ' . $this->money((int) ($item['line_total_cents'] ?? 0));
+        }
+        return strtr($template, [
+            '{{cliente}}' => (string) ($payload['customer_name'] ?? ''),
+            '{{pedido}}' => (string) ($payload['public_number'] ?? ''),
+            '{{whatsapp}}' => (string) ($payload['customer_phone'] ?? ''),
+            '{{email}}' => (string) ($payload['customer_email'] ?? ''),
+            '{{total}}' => $this->money((int) ($payload['total_cents'] ?? 0)),
+            '{{detalle}}' => implode("\n", $lines),
+        ]);
     }
 
     private function escape(string $value): string

@@ -534,6 +534,7 @@
         }
         if (view === 'maintenance') {
             loadMaintenance();
+            loadTransactionalEmailSettings();
         }
         if (view === 'contact') {
             loadContact();
@@ -5439,7 +5440,7 @@
         }
     }
 
-    async function sendSesTest(form) {
+    async function sendMailTest(form) {
         const button = form.querySelector('button[type="submit"]');
         button.disabled = true;
         button.textContent = 'ENVIANDO…';
@@ -5473,6 +5474,41 @@
                 }
             });
         } catch (error) { toast(error.message); }
+    }
+
+    async function loadTransactionalEmailSettings() {
+        const form = document.getElementById('transactional-email-form');
+        if (!form || app.user?.role !== 'admin') return;
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        try {
+            const data = await apiGet('mail_settings');
+            Object.entries(data.settings).forEach(([key, value]) => {
+                const field = form.elements.namedItem(key);
+                if (!field) return;
+                if (field.type === 'checkbox') field.checked = String(value) === '1';
+                else field.value = value;
+            });
+            button.disabled = false;
+        } catch (error) { toast(error.message); }
+    }
+
+    async function saveTransactionalEmailSettings(form) {
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'GUARDANDO…';
+        try {
+            const settings = Object.fromEntries(new FormData(form).entries());
+            form.querySelectorAll('input[type="checkbox"]').forEach(field => {
+                settings[field.name] = field.checked ? '1' : '0';
+            });
+            await apiPost({ action: 'mail_settings_update', settings });
+            toast('Configuración de e-mail guardada.');
+        } catch (error) { toast(error.message); }
+        finally {
+            button.disabled = false;
+            button.textContent = 'GUARDAR E-MAIL';
+        }
     }
 
     async function loadMailDiagnostics() {
@@ -6220,9 +6256,13 @@
             event.preventDefault();
             saveAiCriteria(event.target);
         }
-        if (event.target.id === 'ses-test-form') {
+        if (event.target.id === 'mail-test-form') {
             event.preventDefault();
-            sendSesTest(event.target);
+            sendMailTest(event.target);
+        }
+        if (event.target.id === 'transactional-email-form') {
+            event.preventDefault();
+            saveTransactionalEmailSettings(event.target);
         }
         if (event.target.id === 'maintenance-form') {
             event.preventDefault();

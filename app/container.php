@@ -57,6 +57,11 @@ require_once __DIR__ . '/SettingsService.php';
 $app['auth'] = new Auth($app['pdo']);
 $app['products'] = new ProductService($app['pdo']);
 $app['settings'] = new SettingsService($app['pdo']);
+$mailSettings = $app['settings']->mailSettings($app['config']);
+$app['config'] = array_replace($app['config'], $mailSettings, [
+    'mail_enabled' => $mailSettings['mail_enabled'] === '1',
+    'mail_transport' => 'smtp',
+]);
 $app['tutorials'] = new TutorialService($app['pdo']);
 $app['catalog_ai_tools'] = new CatalogAiToolService($app['products']);
 $app['catalog_ai_chat'] = new CatalogAiChatService($app['config'], $app['catalog_ai_tools'], $app['settings'], $app['tutorials']);

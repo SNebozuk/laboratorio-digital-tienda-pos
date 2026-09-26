@@ -179,6 +179,7 @@ final class OrderService
                     ?? 'ventas@laboratorio-digital.com.ar'));
                 if (
                     !empty($this->config['mail_enabled'])
+                    && ($this->config['mail_internal_enabled'] ?? '1') === '1'
                     && filter_var($salesEmail, FILTER_VALIDATE_EMAIL)
                 ) {
                     $internalPayload = $mailPayload;
@@ -194,6 +195,7 @@ final class OrderService
                 }
                 if (
                     !empty($this->config['mail_enabled'])
+                    && ($this->config['mail_customer_enabled'] ?? '1') === '1'
                     && $customerEmail !== null
                 ) {
                     $customerPayload = $mailPayload;

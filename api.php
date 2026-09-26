@@ -184,6 +184,10 @@ try {
                     'settings' => $app['settings']->values(),
                 ]);
 
+            case 'mail_settings':
+                $app['auth']->requireAdmin();
+                Http::json(['ok' => true, 'settings' => $app['settings']->mailSettings($app['config'])]);
+
             case 'design':
                 $app['auth']->requireAdmin();
                 Http::json(['ok' => true, 'design' => $app['settings']->design()]);
@@ -722,6 +726,13 @@ try {
             }
             $app['mail']->sendTest($recipient);
             Http::json(['ok' => true]);
+
+        case 'mail_settings_update':
+            $app['auth']->requireAdmin();
+            Http::json(['ok' => true, 'settings' => $app['settings']->updateMailSettings(
+                is_array($input['settings'] ?? null) ? $input['settings'] : [],
+                $app['config']
+            )]);
 
         case 'reset_demo_data':
             $app['auth']->requireAdmin();
