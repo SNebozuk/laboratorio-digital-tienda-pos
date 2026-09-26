@@ -3668,6 +3668,7 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .statistics-lock .eyebrow,.statistics-lock h2,.statistics-lock p { margin:0; }.statistics-lock h2 { color:#303c55; font-size:22px; }.statistics-lock p:last-child { margin-top:4px; color:#6c778b; font-size:13px; }
 .statistics-lock form { display:flex; grid-column:2; gap:9px; }.statistics-lock input { min-width:0; flex:1; padding:11px 12px; border:1px solid #d5dbe4; border-radius:10px; background:#fff; color:#25314a; }
 .statistics-periods { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.statistics-history-button { height:46px; min-height:46px; border:1px solid #1769e0; border-radius:10px; background:#1769e0; color:#fff; }
 .statistics-period-card,.statistics-card { position:relative; overflow:hidden; padding:20px; border:1px solid #dce2ea; border-radius:16px; background:#fff; box-shadow:0 5px 18px rgba(34,47,70,.05); }
 .statistics-period-card > span,.statistics-card .eyebrow { display:block; margin:0; color:#657086; font-size:11px; font-weight:850; letter-spacing:.1em; }
 .statistics-period-card > strong { display:block; margin-top:9px; color:#303c55; font-size:36px; line-height:1; font-variant-numeric:tabular-nums; }

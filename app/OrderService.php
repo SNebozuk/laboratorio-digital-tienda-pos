@@ -919,6 +919,7 @@ final class OrderService
     public function statistics(): array
     {
         $periods = [
+            'total' => '1 = 1',
             'daily' => "date(archived_at, 'localtime') = date('now', 'localtime')",
             'weekly' => "date(archived_at, 'localtime') >= date('now', '-6 days', 'weekday 1', 'localtime')",
             'monthly' => "strftime('%Y-%m', archived_at, 'localtime') = strftime('%Y-%m', 'now', 'localtime')",
@@ -930,6 +931,16 @@ final class OrderService
                  FROM orders WHERE archived_at IS NOT NULL AND {$dateFilter}"
             )->fetch();
         }
+
+        $archived['total']['first_sale_at'] = $this->pdo->query(
+            'SELECT MIN(created_at) FROM orders WHERE archived_at IS NOT NULL'
+        )->fetchColumn() ?: null;
+        $archivedMonths = $this->pdo->query(
+            "SELECT strftime('%Y-%m', archived_at, 'localtime') AS month,
+                    COUNT(*) AS sale_count, COALESCE(SUM(total_cents), 0) AS total_cents
+             FROM orders WHERE archived_at IS NOT NULL
+             GROUP BY month ORDER BY month"
+        )->fetchAll();
 
         $discounts = $this->pdo->query(
             "SELECT
@@ -1003,7 +1014,7 @@ final class OrderService
             "SELECT COUNT(DISTINCT visitor_hash) FROM klaus_interactions WHERE interaction_day >= date('now', 'localtime', 'start of month', '-2 months')"
         )->fetchColumn();
 
-        return ['archived' => $archived, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries, 'visits' => $visits, 'artjet_visits' => $artjetVisits, 'klaus_interactions' => $klausInteractions, 'klaus_interactions_total' => $klausInteractionTotal];
+        return ['archived' => $archived, 'archived_months' => $archivedMonths, 'discounts' => $discounts ?: [], 'beneficiaries' => $beneficiaries, 'visits' => $visits, 'artjet_visits' => $artjetVisits, 'klaus_interactions' => $klausInteractions, 'klaus_interactions_total' => $klausInteractionTotal];
     }
 
     /** @return array<string, mixed> */

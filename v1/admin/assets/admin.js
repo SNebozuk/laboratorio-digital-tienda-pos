@@ -4594,11 +4594,15 @@
 
     function renderStatistics(statistics, deliveries, financialsVisible) {
         if (!elements.statisticsContent) return;
+        state.statisticsHistory = financialsVisible ? statistics : null;
         const periods = [
             ['daily', 'HOY', 'Ventas archivadas hoy'],
             ['weekly', 'SEMANA', 'Desde el lunes'],
             ['monthly', 'MES', 'Mes en curso'],
         ].map(([key, label, detail]) => ({ key, label, detail, ...(statistics.archived?.[key] || {}) }));
+        if (financialsVisible) {
+            periods.push({ key: 'total', label: 'TOTAL HISTÓRICO', detail: 'Todas las ventas archivadas', ...(statistics.archived?.total || {}) });
+        }
         const maximum = Math.max(1, ...periods.map(period => Number(financialsVisible ? period.total_cents : period.sale_count || 0)));
         const visits = [
             ['HOY', Number(statistics.visits?.daily || 0)],
@@ -4635,7 +4639,8 @@
                         <small>ventas archivadas</small>
                         ${financialsVisible ? `<b>${money(period.total_cents)}</b>` : ''}
                         <i style="--statistics-size:${Math.max(8, Math.round(Number(financialsVisible ? period.total_cents : period.sale_count || 0) / maximum * 100))}%"></i>
-                        <em>${period.detail}</em>
+                        <em>${period.detail}${period.key === 'total' && period.first_sale_at ? ` · Primera venta: ${escapeHtml(argentinaDateLabel(period.first_sale_at))}` : ''}</em>
+                        ${period.key === 'total' ? '<button class="primary-button statistics-history-button" type="button" data-statistics-history>VER HISTORIAL POR MES</button>' : ''}
                     </article>
                 `).join('')}
             </div>
@@ -6183,6 +6188,15 @@
     });
 
     document.addEventListener('click', async event => {
+        if (event.target.closest('[data-statistics-history]')) {
+            const statistics = state.statisticsHistory;
+            if (!statistics) return;
+            const months = statistics.archived_months || [];
+            const total = statistics.archived?.total || {};
+            const monthLabel = value => new Intl.DateTimeFormat('es-AR', { month: 'long', year: 'numeric' }).format(new Date(`${value}-01T12:00:00`));
+            openModal(`<section class="customer-history"><header><p class="eyebrow">VENTAS ARCHIVADAS · HISTORIAL COMPLETO</p><h2 id="modal-title">VENTAS POR MES</h2><small>Agrupadas por fecha de archivo.${total.first_sale_at ? ` Primera venta: ${escapeHtml(argentinaDateLabel(total.first_sale_at))}.` : ''}</small></header><div class="customer-history-table-wrap"><table class="customer-history-table"><thead><tr><th>Mes</th><th>Total de ventas</th><th>Importe total</th></tr></thead><tbody>${months.map(row => `<tr><td>${escapeHtml(monthLabel(row.month))}</td><td>${Number(row.sale_count)}</td><td>${money(row.total_cents)}</td></tr>`).join('') || '<tr><td colspan="3">No hay ventas archivadas.</td></tr>'}</tbody><tfoot><tr><th>TOTAL HISTÓRICO</th><th>${Number(total.sale_count || 0)}</th><th>${money(total.total_cents || 0)}</th></tr></tfoot></table></div><div class="modal-actions"><button class="secondary-button" type="button" data-close-modal>CERRAR</button></div></section>`);
+            return;
+        }
         const aiConversationDetail = event.target.closest('[data-ai-conversation-detail]');
         if (aiConversationDetail) {
             showAiConversation(aiConversationDetail.dataset.aiConversationDetail);

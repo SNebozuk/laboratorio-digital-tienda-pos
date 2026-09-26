@@ -144,6 +144,7 @@ try {
                 $statistics = $app['orders']->statistics();
                 $deliveries = $app['deliveries']->summary();
                 if (!$financialsVisible) {
+                    unset($statistics['archived_months']);
                     foreach ($statistics['archived'] as &$period) {
                         unset($period['total_cents']);
                     }
