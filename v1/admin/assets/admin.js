@@ -480,7 +480,7 @@
     }
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'customers', 'users', 'settings', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'customers', 'users', 'settings', 'email', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -531,8 +531,8 @@
         if (view === 'statistics') loadStatistics();
         if (view === 'settings') {
             loadSettings();
-            loadTransactionalEmailSettings();
         }
+        if (view === 'email') loadTransactionalEmailSettings();
         if (view === 'maintenance') {
             loadMaintenance();
         }

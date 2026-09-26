@@ -91,15 +91,16 @@ header('Referrer-Policy: same-origin');
                     <div class="admin-sidebar-settings-menu" id="admin-sidebar-settings-menu" hidden>
                         <button class="admin-sidebar-settings-menu-close" type="button" aria-label="Cerrar configuración">Menú principal</button>
                         <strong>CONFIGURACIÓN</strong>
-                        <button type="button" data-view="contact">Contacto</button>
-                        <button type="button" data-view="size-guide">Tabla de Talles</button>
                         <button type="button" data-view="tutorials">Aprende</button>
-                        <button id="admin-sidebar-design-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-design-menu">Diseño</button>
-                        <button type="button" data-view="quote">Cotizador</button>
-                        <button type="button" data-view="whatsapp">WhatsApp</button>
-                        <button type="button" data-view="users">Usuarios</button>
                         <button type="button" data-view="categories">Categorías</button>
+                        <button type="button" data-view="contact">Contacto</button>
+                        <button type="button" data-view="quote">Cotizador</button>
+                        <button id="admin-sidebar-design-menu-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar-design-menu">Diseño</button>
+                        <button type="button" data-view="email">E-mail</button>
                         <button type="button" data-view="maintenance">Mantenimiento</button>
+                        <button type="button" data-view="size-guide">Tabla de Talles</button>
+                        <button type="button" data-view="users">Usuarios</button>
+                        <button type="button" data-view="whatsapp">WhatsApp</button>
                     </div>
                     <div class="admin-sidebar-settings-menu admin-sidebar-design-menu" id="admin-sidebar-design-menu" hidden>
                         <button class="admin-sidebar-design-menu-back" type="button" aria-label="Volver a configuración">Configuración</button>
@@ -153,6 +154,7 @@ header('Referrer-Policy: same-origin');
                             <button type="button" data-view="contact">Contacto</button>
                             <button type="button" data-view="design">Diseño</button>
                             <button type="button" data-view="quote">Cotizador</button>
+                            <button type="button" data-view="email">E-mail</button>
                             <button type="button" data-view="whatsapp">WhatsApp</button>
                             <button type="button" data-view="customers">Clientes</button>
                             <button type="button" data-view="users">Usuarios</button>
@@ -637,6 +639,15 @@ header('Referrer-Policy: same-origin');
                             <p>La tarea programada genera una copia automática diaria, verificada, de la base, comprobantes y fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
                             <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
                         </section>
+                    </section>
+
+                    <section class="admin-view" id="view-email">
+                        <div class="view-heading">
+                            <div>
+                                <p class="eyebrow">CONFIGURACIÓN</p>
+                                <h1 class="admin-page-title">E-MAIL</h1>
+                            </div>
+                        </div>
                         <form id="transactional-email-form" class="settings-card">
                             <p class="eyebrow">E-MAIL</p>
                             <h2>E-mail</h2>
