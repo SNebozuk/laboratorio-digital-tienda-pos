@@ -637,37 +637,6 @@ header('Referrer-Policy: same-origin');
                             <p>La tarea programada genera una copia automática diaria, verificada, de la base, comprobantes y fotos cargadas. Se conservan las últimas 30 copias automáticas; las manuales no se eliminan solas.</p>
                             <button class="primary-button fit-button" id="create-backup" type="button">CREAR RESPALDO AHORA</button>
                         </section>
-                    </section>
-
-                    <section class="admin-view" id="view-maintenance">
-                        <div class="view-heading">
-                            <div>
-                                <p class="eyebrow">OPERACIÓN DE LA TIENDA</p>
-                                <h1 class="admin-page-title">MANTENIMIENTO</h1>
-                                <p>Podés pausar temporalmente el carrito sin cerrar el catálogo al público.</p>
-                            </div>
-                        </div>
-                        <form id="maintenance-form" class="settings-card">
-                            <label class="checkbox-setting">
-                                <input name="cart_maintenance_enabled" type="checkbox" value="1">
-                                <span>
-                                    <strong>Bloquear el carrito de compras</strong>
-                                    <small>La tienda seguirá disponible para navegar. Las personas no podrán agregar, modificar ni confirmar productos en el carrito.</small>
-                                </span>
-                            </label>
-                            <label class="checkbox-setting">
-                                <input name="welcome_popup_enabled" type="checkbox" value="1">
-                                <span>
-                                    <strong>Mostrar mensaje de bienvenida</strong>
-                                    <small>Al ingresar a la tienda, las personas verán este aviso y deberán pulsar “Ingresar al sitio” para continuar.</small>
-                                </span>
-                            </label>
-                            <label>
-                                <span>Mensaje que se mostrará en el popup</span>
-                                <textarea name="welcome_popup_text" rows="5" maxlength="1000" placeholder="Escribí acá el mensaje que querés mostrar a los clientes."></textarea>
-                            </label>
-                            <button class="primary-button fit-button" type="submit">GUARDAR MANTENIMIENTO</button>
-                        </form>
                         <form id="transactional-email-form" class="settings-card">
                             <p class="eyebrow">E-MAIL</p>
                             <h2>E-mail</h2>
@@ -702,6 +671,37 @@ header('Referrer-Policy: same-origin');
                             <p>Envía un único correo de prueba sin activar los emails automáticos. Guardá primero la configuración.</p>
                             <label>DESTINATARIO DE PRUEBA<input name="recipient" type="email" required autocomplete="off"></label>
                             <button class="primary-button fit-button" type="submit">ENVIAR PRUEBA</button>
+                        </form>
+                    </section>
+
+                    <section class="admin-view" id="view-maintenance">
+                        <div class="view-heading">
+                            <div>
+                                <p class="eyebrow">OPERACIÓN DE LA TIENDA</p>
+                                <h1 class="admin-page-title">MANTENIMIENTO</h1>
+                                <p>Podés pausar temporalmente el carrito sin cerrar el catálogo al público.</p>
+                            </div>
+                        </div>
+                        <form id="maintenance-form" class="settings-card">
+                            <label class="checkbox-setting">
+                                <input name="cart_maintenance_enabled" type="checkbox" value="1">
+                                <span>
+                                    <strong>Bloquear el carrito de compras</strong>
+                                    <small>La tienda seguirá disponible para navegar. Las personas no podrán agregar, modificar ni confirmar productos en el carrito.</small>
+                                </span>
+                            </label>
+                            <label class="checkbox-setting">
+                                <input name="welcome_popup_enabled" type="checkbox" value="1">
+                                <span>
+                                    <strong>Mostrar mensaje de bienvenida</strong>
+                                    <small>Al ingresar a la tienda, las personas verán este aviso y deberán pulsar “Ingresar al sitio” para continuar.</small>
+                                </span>
+                            </label>
+                            <label>
+                                <span>Mensaje que se mostrará en el popup</span>
+                                <textarea name="welcome_popup_text" rows="5" maxlength="1000" placeholder="Escribí acá el mensaje que querés mostrar a los clientes."></textarea>
+                            </label>
+                            <button class="primary-button fit-button" type="submit">GUARDAR MANTENIMIENTO</button>
                         </form>
                     </section>
                 <?php endif ?>

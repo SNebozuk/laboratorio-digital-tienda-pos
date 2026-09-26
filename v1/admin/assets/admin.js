@@ -531,10 +531,10 @@
         if (view === 'statistics') loadStatistics();
         if (view === 'settings') {
             loadSettings();
+            loadTransactionalEmailSettings();
         }
         if (view === 'maintenance') {
             loadMaintenance();
-            loadTransactionalEmailSettings();
         }
         if (view === 'contact') {
             loadContact();
