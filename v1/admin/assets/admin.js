@@ -2476,7 +2476,7 @@
         Array.from(state.posCheckedVariants).forEach(variantId => {
             if (!currentVariantIds.has(Number(variantId))) state.posCheckedVariants.delete(Number(variantId));
         });
-        const showVerification = posRequiresVerification() || state.posCheckedVariants.size > 0;
+        const showVerification = true;
         updatePosCompletionState();
         elements.posClearCart.disabled = items.length === 0;
         if (elements.posSaveCart) elements.posSaveCart.disabled = items.length === 0;
@@ -2659,7 +2659,7 @@
         const averageGap = barcode.length > 1
             ? duration / (barcode.length - 1)
             : Number.POSITIVE_INFINITY;
-        const scannerSpeed = barcode.length >= 3 && averageGap <= 250;
+        const scannerSpeed = barcode.length >= 3 && averageGap <= 35;
         if (!scannerSpeed) {
             resetBarcodeCapture();
             return false;
@@ -2691,7 +2691,7 @@
         const now = performance.now();
         if (event.key.length === 1) {
             const startsNewScan = !state.barcodeBuffer
-                || now - state.barcodeLastAt > 120;
+                || now - state.barcodeLastAt > 60;
             if (startsNewScan) {
                 resetBarcodeCapture();
                 state.barcodeStartedAt = now;
@@ -2704,7 +2704,7 @@
             state.barcodeBuffer += event.key;
             state.barcodeLastAt = now;
             window.clearTimeout(state.barcodeTimer);
-            state.barcodeTimer = window.setTimeout(finishBarcodeCapture, 350);
+            state.barcodeTimer = window.setTimeout(finishBarcodeCapture, 100);
             return;
         }
 
@@ -7370,10 +7370,12 @@
         updateSupplierOrderCategoriesCount();
         queueSupplierOrderSave();
     });
+    let posSearchRenderTimer = 0;
     elements.posSearch?.addEventListener('input', event => {
         state.posQuery = event.target.value;
         state.posProductId = null;
-        renderPos();
+        window.clearTimeout(posSearchRenderTimer);
+        posSearchRenderTimer = window.setTimeout(renderPos, 80);
         closePosSuggestions();
     });
     document.querySelector('.pos-add-products-link')?.addEventListener('click', event => {
