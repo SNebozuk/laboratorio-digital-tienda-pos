@@ -7,6 +7,20 @@ if (in_array($host, ['artjet.com.ar', 'www.artjet.com.ar'], true)) {
     exit;
 }
 
+// También sirve los archivos de rastreo cuando el hosting usa esta página
+// como controlador para las rutas públicas que no son archivos físicos.
+$publicRequestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+if ($publicRequestPath === '/robots.txt') {
+    header('Content-Type: text/plain; charset=UTF-8');
+    readfile(dirname(__DIR__) . '/robots.txt');
+    exit;
+}
+if ($publicRequestPath === '/sitemap.xml') {
+    require dirname(__DIR__) . '/sitemap.php';
+    exit;
+}
+
+require_once dirname(__DIR__) . '/app/StoreSeo.php';
 $app = require dirname(__DIR__) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
 $storeUser = $app['auth']->user();
@@ -76,13 +90,16 @@ if (isset($_GET['producto']) && $seoProduct === null) {
     http_response_code(404);
     header('X-Robots-Tag: noindex');
 }
-$seoBaseUrl = 'https://laboratoriodigital.com.ar' . $storeUrl;
+$seoBaseUrl = \LaboratorioDigital\StoreSeo::storeUrl($storePath);
 $canonicalUrl = $seoBaseUrl . ($seoProduct ? '?producto=' . $seoProduct['id'] : '');
-$seoTitle = $seoProduct ? $seoProduct['name'] . ' · Laboratorio Digital' : 'Laboratorio Digital · Catálogo mayorista';
-$seoDescription = trim(strip_tags((string) ($seoProduct['description'] ?? $design['hero_text'])));
+$seoTitle = $seoProduct ? $seoProduct['name'] . ' · Laboratorio Digital' : 'Laboratorio Digital · Catálogo mayorista de sublimación y personalización';
+$seoDescription = trim(strip_tags((string) ($seoProduct['description'] ?? ('Insumos para sublimación y personalización. ' . $design['hero_text']))));
 if ($seoDescription === '') {
     $seoDescription = $seoTitle . '. Consultá las variantes disponibles y armá tu pedido online.';
 }
+$seoImageUrl = \LaboratorioDigital\StoreSeo::imageUrl($seoProduct['image_path'] ?? null, $seoBaseUrl);
+$structuredData = isset($_GET['producto']) && $seoProduct === null
+    ? null : \LaboratorioDigital\StoreSeo::structuredData($seoBaseUrl, $publicSettings, $seoProduct);
 
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
 header('X-Content-Type-Options: nosniff');
@@ -101,6 +118,13 @@ header('Referrer-Policy: same-origin');
     <meta property="og:title" content="<?= $escape($seoTitle) ?>">
     <meta property="og:description" content="<?= $escape($seoDescription) ?>">
     <meta property="og:url" content="<?= $escape($canonicalUrl) ?>">
+    <meta property="og:locale" content="es_AR">
+    <?php if ($seoImageUrl !== null): ?>
+    <meta property="og:image" content="<?= $escape($seoImageUrl) ?>">
+    <?php endif ?>
+    <?php if ($structuredData !== null): ?>
+    <script type="application/ld+json"><?= json_encode($structuredData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
+    <?php endif ?>
     <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="apple-touch-icon" href="<?= $escape($assetPath) ?>/favicon.png">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
@@ -221,6 +245,12 @@ header('Referrer-Policy: same-origin');
                     </article>
                 <?php endforeach ?>
                 <?php if ($seoProduct): ?><a href="<?= $escape($storeUrl) ?>">Ver todos los productos</a><?php endif ?>
+                <section aria-label="Información de contacto">
+                    <h2><?= $escape((string) ($publicSettings['store_name'] ?? 'Laboratorio Digital')) ?></h2>
+                    <?php if ($pickupAddress !== ''): ?><p>Ubicación: <?= $escape($pickupAddress) ?></p><?php endif ?>
+                    <?php if ($businessHours !== ''): ?><p>Horario: <?= $escape($businessHours) ?></p><?php endif ?>
+                    <p><a href="https://wa.me/<?= $escape($whatsappNumber) ?>">Consultar por WhatsApp</a></p>
+                </section>
             </details>
         </section>
 

@@ -11,4 +11,4 @@ Disallow: /payment.php
 Disallow: /v1/payment.php
 Disallow: /tienda/payment.php
 
-Sitemap: https://laboratoriodigital.com.ar/sitemap.xml
+Sitemap: https://www.laboratoriodigital.com.ar/sitemap.xml
