@@ -1314,6 +1314,7 @@
     }
 
     function renderOpenedProduct(product) {
+        const description = String(product.description || '').trim();
         elements.results.innerHTML = `
             <section class="opened-product" aria-labelledby="opened-product-title">
                 <header class="opened-product-head">
@@ -1325,11 +1326,7 @@
                     >‹</button>
                     <div>
                         <h2 id="opened-product-title">${escapeHtml(product.name)}</h2>
-                        <button
-                            class="description-button"
-                            type="button"
-                            data-description="${Number(product.id)}"
-                        >Ver descripción</button>
+                        ${description ? `<p class="product-description-text">${formatDescription(description)}</p>` : ''}
                     </div>
                 </header>
                 <div class="opened-variant-list" role="list">

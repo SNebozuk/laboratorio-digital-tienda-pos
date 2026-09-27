@@ -218,9 +218,9 @@ header('Referrer-Policy: same-origin');
             </div>
             <div class="catalog-intro">
                 <p class="eyebrow"><?= $escape((string) $design['hero_badge']) ?></p>
-                <?php if ((string) $design['hero_link'] !== ''): ?><a class="catalog-title-link" href="<?= $escape((string) $design['hero_link']) ?>"><?php endif ?>
-                <h1 id="catalog-title"><?= $escape((string) $design['hero_title']) ?></h1>
-                <?php if ((string) $design['hero_link'] !== ''): ?></a><?php endif ?>
+                <?php if (!$seoProduct && (string) $design['hero_link'] !== ''): ?><a class="catalog-title-link" href="<?= $escape((string) $design['hero_link']) ?>"><?php endif ?>
+                <h1 id="catalog-title"><?= $escape((string) ($seoProduct['name'] ?? $design['hero_title'])) ?></h1>
+                <?php if (!$seoProduct && (string) $design['hero_link'] !== ''): ?></a><?php endif ?>
                 <p><?= $escape((string) $design['hero_text']) ?></p>
             </div>
 
