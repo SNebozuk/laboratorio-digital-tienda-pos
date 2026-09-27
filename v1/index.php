@@ -127,6 +127,7 @@ header('Referrer-Policy: same-origin');
 <head>
     <meta charset="utf-8">
     <meta name="google-site-verification" content="8azoEAFPPWisdBLqL-TbSgBqxFxK2dd0Ir_O2Hyagi8">
+    <meta name="msvalidate.01" content="0E592E25ED5A040836D3CFE3632C3E82">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="<?= $escape((string) ($design['color_background'] ?? '#f7faf7')) ?>">
     <title><?= $escape($seoTitle) ?></title>
