@@ -23,6 +23,23 @@ if ($publicRequestPath === '/sitemap.xml') {
 require_once dirname(__DIR__) . '/app/StoreSeo.php';
 $app = require dirname(__DIR__) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
+// El alojamiento puede enviar rutas antiguas o inexistentes al catálogo.
+// Solo sus entradas reales deben responder como la página principal.
+$publicStorePrefix = trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
+$catalogPaths = ['/', '/index.php', '/v1', '/v1/', '/v1/index.php', '/tienda', '/tienda/'];
+if ($publicStorePrefix !== '') {
+    $catalogPaths[] = '/' . $publicStorePrefix;
+    $catalogPaths[] = '/' . $publicStorePrefix . '/';
+    $catalogPaths[] = '/' . $publicStorePrefix . '/index.php';
+}
+if (!in_array($publicRequestPath, $catalogPaths, true)) {
+    http_response_code(404);
+    header('X-Robots-Tag: noindex');
+    header('Content-Type: text/html; charset=UTF-8');
+    $catalogLink = htmlspecialchars(\LaboratorioDigital\StoreSeo::storeUrl($publicStorePrefix), ENT_QUOTES, 'UTF-8');
+    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Página no disponible · Laboratorio Digital</title></head><body><main><h1>Esta página no está disponible</h1><p>Podés encontrar los productos actuales en nuestro catálogo.</p><a href="' . $catalogLink . '">Ver catálogo de Laboratorio Digital</a></main></body></html>';
+    exit;
+}
 $storeUser = $app['auth']->user();
 if ($storeUser === null) {
     $visitorId = (string) ($_COOKIE['laboratorio_store_visitor'] ?? '');
@@ -109,6 +126,7 @@ header('Referrer-Policy: same-origin');
 <html lang="es">
 <head>
     <meta charset="utf-8">
+    <meta name="google-site-verification" content="8azoEAFPPWisdBLqL-TbSgBqxFxK2dd0Ir_O2Hyagi8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="<?= $escape((string) ($design['color_background'] ?? '#f7faf7')) ?>">
     <title><?= $escape($seoTitle) ?></title>
