@@ -268,6 +268,7 @@ header('Referrer-Policy: same-origin');
                     <h2><?= $escape((string) ($publicSettings['store_name'] ?? 'Laboratorio Digital')) ?></h2>
                     <?php if ($pickupAddress !== ''): ?><p>Ubicación: <?= $escape($pickupAddress) ?></p><?php endif ?>
                     <?php if ($businessHours !== ''): ?><p>Horario: <?= $escape($businessHours) ?></p><?php endif ?>
+                    <p>Vendemos a consumidores finales. Hacemos envíos y ofrecemos retiro en el local. Consultá zonas, costos y plazos por WhatsApp.</p>
                     <p><a href="https://wa.me/<?= $escape($whatsappNumber) ?>">Consultar por WhatsApp</a></p>
                 </section>
             </details>
@@ -299,7 +300,7 @@ header('Referrer-Policy: same-origin');
                     SEGUIR AGREGANDO PRODUCTOS
                 </button>
                 <p class="order-note">
-                    Transferencia bancaria · Retiro únicamente en el local
+                    Transferencia bancaria · Envíos y retiro en el local
                 </p>
             </div>
             <div class="cart-products-divider" aria-hidden="true"></div>
