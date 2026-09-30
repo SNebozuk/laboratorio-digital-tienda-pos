@@ -13,7 +13,7 @@ final class Database
      * Marca que todas las migraciones históricas de esta versión ya fueron
      * aplicadas. Evita recorrer el esquema completo en cada visita pública.
      */
-    private const CURRENT_MIGRATION_VERSION = 53;
+    private const CURRENT_MIGRATION_VERSION = 54;
 
     public static function connect(string $databasePath, string $schemaPath): PDO
     {
@@ -98,6 +98,8 @@ final class Database
                 self::migrateArtjetVisits($pdo);
                 self::migrateCustomers($pdo);
                 self::migrateSpecialtiesCategories($pdo);
+                require_once __DIR__ . '/OrderTracking.php';
+                $pdo->exec(OrderTracking::SCHEMA);
                 $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
                     ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
                 return;
@@ -166,6 +168,8 @@ final class Database
         self::migrateArtjetVisits($pdo);
         self::migrateCustomers($pdo);
         self::migrateSpecialtiesCategories($pdo);
+        require_once __DIR__ . '/OrderTracking.php';
+        $pdo->exec(OrderTracking::SCHEMA);
         $pdo->prepare('INSERT OR IGNORE INTO schema_migrations(version) VALUES(:version)')
             ->execute(['version' => self::CURRENT_MIGRATION_VERSION]);
     }

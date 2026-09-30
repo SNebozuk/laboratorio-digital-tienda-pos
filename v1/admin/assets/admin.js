@@ -463,7 +463,7 @@
     const pendingViewLoads = new Map();
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'customers', 'users', 'settings', 'email', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'whatsapp-api', 'customers', 'users', 'settings', 'email', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -481,6 +481,7 @@
             button.classList.toggle('active', highlightNavigation && button.dataset.view === view);
         });
         document.querySelector('.admin-shell')?.classList.toggle('admin-design-mode', view === 'design');
+        if (view === 'whatsapp-api') window.WhatsAppWorkspace?.activate();
         if (elements.mobileDashboard) {
             elements.mobileDashboard.hidden = true;
             elements.mobileDashboardToggle?.setAttribute('aria-expanded', 'false');
@@ -5448,7 +5449,48 @@
                     field.value = value;
                 }
             });
+            renderMessageEditorPreviews();
         } catch (error) { toast(error.message); }
+    }
+
+    function renderMessageEditorPreviews() {
+        const samples = {
+            cliente: 'María López', pedido: '#1234', whatsapp: '+54 9 341 1234567',
+            email: 'maria@example.com', total: '$ 25.000', plazo: '6 horas',
+            detalle: 'Remera (Negra · M) x2 — $ 25.000',
+        };
+        const render = text => String(text || '').replace(/\{\{(cliente|pedido|whatsapp|email|total|plazo|detalle)\}\}/g,
+            (_, key) => samples[key]);
+        for (const formId of ['whatsapp-settings-form', 'transactional-email-form']) {
+            const form = document.getElementById(formId);
+            if (!form) continue;
+            form.querySelectorAll('textarea').forEach(field => {
+                let card = field.closest('.transactional-email-card');
+                if (!card) {
+                    const label = field.closest('label');
+                    card = document.createElement('section');
+                    card.className = 'transactional-email-card';
+                    label.before(card);
+                    card.append(label);
+                }
+                let preview = card.querySelector('.template-edit-preview');
+                if (!preview) {
+                    preview = document.createElement('section');
+                    preview.className = 'template-edit-preview';
+                    preview.setAttribute('aria-label', 'Vista previa del mensaje');
+                    preview.innerHTML = '<h4>Vista previa</h4><div class="template-edit-preview-subject"></div><div class="template-edit-preview-body"></div><small>Datos de ejemplo. Respeta mayúsculas, minúsculas y saltos de línea. No envía mensajes.</small>';
+                    card.append(preview);
+                }
+                const subject = card.querySelector('input[name^="mail_subject_"]');
+                const subjectPreview = preview.querySelector('.template-edit-preview-subject');
+                subjectPreview.hidden = !subject;
+                subjectPreview.textContent = subject ? render(subject.value) : '';
+                preview.querySelector('.template-edit-preview-body').textContent = render(field.value) || 'Escribí un mensaje para ver la vista previa.';
+            });
+        }
+    }
+    for (const formId of ['whatsapp-settings-form', 'transactional-email-form']) {
+        document.getElementById(formId)?.addEventListener('input', renderMessageEditorPreviews);
     }
 
     async function loadTransactionalEmailSettings() {
@@ -5464,6 +5506,7 @@
                 if (field.type === 'checkbox') field.checked = String(value) === '1';
                 else field.value = value;
             });
+            renderMessageEditorPreviews();
             button.disabled = false;
         } catch (error) { toast(error.message); }
     }

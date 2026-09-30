@@ -1,0 +1,26 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__) . '/app/OrderTracking.php';
+$pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$pdo->exec(file_get_contents(dirname(__DIR__) . '/database/schema.sql'));
+$pdo->exec(LaboratorioDigital\OrderTracking::SCHEMA);
+$insert = $pdo->prepare("INSERT INTO orders(public_number,channel,status,customer_name,customer_email,customer_phone,subtotal_cents,total_cents,payment_method,upload_token_hash) VALUES(?,'web',?,'Cliente',?,?,10000,10000,'cash','test')");
+foreach ([['A','pending_payment','a@example.test','3415699338'], ['B','pending_payment','a@example.test','3415699338'], ['C','cancelled','a@example.test','3415699338'], ['D','pending_payment','b@example.test','3415699338'], ['E','pending_payment',null,'+54 9 3415699338'], ['F','pending_payment','a@example.test','3415699338']] as $row) $insert->execute($row);
+$pdo->exec("UPDATE orders SET archived_at=CURRENT_TIMESTAMP WHERE public_number IN ('B','F'); UPDATE orders SET delivery_slot_number=1 WHERE public_number='B'; INSERT INTO delivery_slots(slot_number,order_numbers,customer_name) VALUES(1,'B','Cliente · ARMAR')");
+$service = new LaboratorioDigital\OrderTracking($pdo);
+$url = $service->issue(1, ['base_url'=>'https://example.test','public_store_path'=>'']);
+$token = substr($url, strpos($url, 'token=') + 6);
+$check = static function ($ok, $message) { if (!$ok) throw new RuntimeException($message); };
+$result = $service->lookup($token);
+$check($result['order']['state']==='Recibida', 'Received');
+$check(array_column($result['others'],'number')===['E','B'], 'Active selection and identity isolation');
+$check($result['others'][1]['state']==='En preparación', 'Assembly state');
+$pdo->exec("UPDATE delivery_slots SET customer_name='Cliente · ✓'");
+$check($service->lookup($token)['others'][1]['state']==='Listo para entregar', 'Prepared state');
+$pdo->exec('DELETE FROM delivery_slots');
+$check(count($service->lookup($token)['others'])===1, 'Archived historical delivery excluded');
+$pdo->exec("UPDATE orders SET status='cancelled' WHERE id=1");
+$check($service->lookup($token)['order']['state']==='Cancelada', 'Direct cancelled order');
+$check($service->lookup(str_repeat('0',64))===null && $service->lookup('1')===null, 'Invalid token');
+$check($pdo->query('SELECT token_hash FROM order_tracking_links')->fetchColumn()!==$token, 'Token stored hashed');
+echo "Order tracking checks passed\n";

@@ -77,7 +77,7 @@ final class MailService
                 $this->send(
                     (string) $message['recipient'],
                     $this->renderTemplate((string) ($this->config['mail_subject_' . $audience] ?? $message['subject']), $payload),
-                    $this->renderOrderText($payload)
+                    $this->renderOrderText($payload) . (($payload['audience'] ?? '') === 'customer' && !empty($payload['tracking_url']) ? "\n\nConsultá el estado de tu pedido y tus otras compras activas:\n" . $payload['tracking_url'] : '')
                 );
                 $update = $this->pdo->prepare(
                     "UPDATE mail_queue SET status = 'sent', sent_at = CURRENT_TIMESTAMP,

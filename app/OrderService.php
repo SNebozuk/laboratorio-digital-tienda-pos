@@ -7,6 +7,8 @@ use DateInterval;
 use DateTimeImmutable;
 use PDO;
 
+require_once __DIR__ . '/OrderTracking.php';
+
 final class OrderService
 {
     /** @param array<string, mixed> $config */
@@ -146,6 +148,7 @@ final class OrderService
                 ]);
                 $orderId = (int) $pdo->lastInsertId();
                 $paymentUrl = $this->publicPaymentUrl($orderId, $uploadToken);
+                $trackingUrl = (new OrderTracking($pdo))->issue($orderId, $this->config);
                 $this->insertOrderItems($pdo, $orderId, $resolvedItems);
                 $this->reserveCashItems(
                     $pdo,
@@ -173,6 +176,7 @@ final class OrderService
                     'payment_method' => $paymentMethod,
                     'payment_deadline_at' => $deadline,
                     'payment_url' => $paymentUrl,
+                    'tracking_url' => $trackingUrl,
                     'items' => $resolvedItems,
                 ];
                 $salesEmail = trim((string) ($this->config['sales_notification_email']
