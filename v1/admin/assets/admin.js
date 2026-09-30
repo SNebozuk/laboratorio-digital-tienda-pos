@@ -479,6 +479,9 @@
         }
     }
 
+    let viewLoadSequence = 0;
+    const pendingViewLoads = new Map();
+
     function showView(view, highlightNavigation = true, updateHistory = true) {
         const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'customers', 'users', 'settings', 'email', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
@@ -503,62 +506,91 @@
             elements.mobileDashboard.hidden = true;
             elements.mobileDashboardToggle?.setAttribute('aria-expanded', 'false');
         }
-        if (view === 'orders') {
-            loadOrders().then(markOrdersSeen);
-        }
-        if (view === 'products') {
-            loadProducts();
-        }
-        if (view === 'ai-search') {
-            loadAiConversationHistory();
-            loadAiVendorEnabled();
-            startAiStatusChecks();
-        } else if (state.aiStatusTimer) {
+        if (view === 'ai-search') startAiStatusChecks();
+        else if (state.aiStatusTimer) {
             window.clearInterval(state.aiStatusTimer);
             state.aiStatusTimer = 0;
         }
-        if (view === 'ai-criteria') loadAiCriteria();
-        if (view === 'supplier-order') {
-            loadSupplierOrder();
+        const sequence = ++viewLoadSequence;
+        const main = document.querySelector('.admin-main');
+        let loader = document.getElementById('admin-panel-loading');
+        if (main && !loader) {
+            loader = document.createElement('div');
+            loader.id = 'admin-panel-loading';
+            loader.className = 'admin-panel-loading';
+            loader.setAttribute('role', 'status');
+            loader.setAttribute('aria-label', 'Cargando panel');
+            loader.innerHTML = '<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>';
+            main.appendChild(loader);
         }
-        if (view === 'tutorials') loadTutorials();
-        if (view === 'deliveries') {
-            loadDeliverySlots();
-            loadOrders(true).then(() => {
-                if (state.view === 'deliveries') renderDeliverySalesSearchResults();
-            });
+        const loads = [];
+        main?.classList.add('admin-panel-busy');
+        main?.setAttribute('aria-busy', 'true');
+        if (loader) loader.hidden = false;
+        const pending = pendingViewLoads.get(view);
+        if (!pending) {
+            if (view === 'orders') {
+                loads.push(loadOrders().then(markOrdersSeen));
+            }
+            if (view === 'products') {
+                loads.push(loadProducts());
+            }
+            if (view === 'ai-search') {
+                loads.push(loadAiConversationHistory());
+                loads.push(loadAiVendorEnabled());
+            }
+            if (view === 'ai-criteria') loads.push(loadAiCriteria());
+            if (view === 'supplier-order') {
+                loads.push(loadSupplierOrder());
+            }
+            if (view === 'tutorials') loads.push(loadTutorials());
+            if (view === 'deliveries') {
+                loads.push(loadDeliverySlots());
+                loads.push(loadOrders(true).then(() => {
+                    if (state.view === 'deliveries') renderDeliverySalesSearchResults();
+                }));
+            }
+            if (view === 'statistics') loads.push(loadStatistics());
+            if (view === 'settings') {
+                loads.push(loadSettings());
+            }
+            if (view === 'email') loads.push(loadTransactionalEmailSettings());
+            if (view === 'maintenance') {
+                loads.push(loadMaintenance());
+            }
+            if (view === 'contact') {
+                loads.push(loadContact());
+            }
+            if (view === 'design') {
+                loads.push(loadDesign());
+            }
+            if (view === 'quote') loads.push(loadQuoteSettings());
+            if (view === 'invitations') {
+                loads.push(loadInvitations());
+            }
+            if (view === 'whatsapp') {
+                loads.push(loadEmailSettings());
+            }
+            if (view === 'users') {
+                loads.push(loadUsers());
+            }
+            if (view === 'customers') loads.push(loadCustomers());
+            if (view === 'categories') {
+                loads.push(loadCategories());
+            }
+            if (view === 'size-guide') {
+                loads.push(loadSizeGuide());
+            }
         }
-        if (view === 'statistics') loadStatistics();
-        if (view === 'settings') {
-            loadSettings();
-        }
-        if (view === 'email') loadTransactionalEmailSettings();
-        if (view === 'maintenance') {
-            loadMaintenance();
-        }
-        if (view === 'contact') {
-            loadContact();
-        }
-        if (view === 'design') {
-            loadDesign();
-        }
-        if (view === 'quote') loadQuoteSettings();
-        if (view === 'invitations') {
-            loadInvitations();
-        }
-        if (view === 'whatsapp') {
-            loadEmailSettings();
-        }
-        if (view === 'users') {
-            loadUsers();
-        }
-        if (view === 'customers') loadCustomers();
-        if (view === 'categories') {
-            loadCategories();
-        }
-        if (view === 'size-guide') {
-            loadSizeGuide();
-        }
+        const ready = pending || Promise.allSettled(loads);
+        pendingViewLoads.set(view, ready);
+        ready.finally(() => {
+            if (pendingViewLoads.get(view) === ready) pendingViewLoads.delete(view);
+            if (sequence !== viewLoadSequence) return;
+            main?.classList.remove('admin-panel-busy');
+            main?.setAttribute('aria-busy', 'false');
+            if (loader) loader.hidden = true;
+        });
     }
 
     function invitationDate(value) {
@@ -668,11 +700,13 @@
 
     async function loadProducts() {
         try {
-            const data = await apiGet('admin_products');
+            const [data, categoryData] = await Promise.all([
+                apiGet('admin_products'),
+                elements.categoryTree ? apiGet('admin_categories') : Promise.resolve(null),
+            ]);
             state.products = data.products;
             state.featuredProductIds = new Set((data.featured_product_ids || []).map(Number));
             if (elements.categoryTree) {
-                const categoryData = await apiGet('admin_categories');
                 state.categories = categoryData.categories;
                 renderCategories();
             }
@@ -3491,7 +3525,7 @@
     }
 
     async function refreshActiveAdminView() {
-        if (automaticRefreshRunning || document.visibilityState !== 'visible' || adminHasUnsavedInteraction()) {
+        if (pendingViewLoads.size || automaticRefreshRunning || document.visibilityState !== 'visible' || adminHasUnsavedInteraction()) {
             return;
         }
         automaticRefreshRunning = true;
