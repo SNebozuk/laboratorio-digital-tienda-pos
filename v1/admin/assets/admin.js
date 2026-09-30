@@ -3052,7 +3052,7 @@
 
     function deliveryCustomerKey(value) {
         return fold(String(value || '')
-            .replace(/\b(ARMAR|AGREGAR)\b|📦|✓/gi, '')
+            .replace(/\s*·?\s*(ARMAR|AGREGAR|📦|✓)\s*$/iu, '')
             .replace(/\s+/g, ' ')
             .trim());
     }
@@ -3095,18 +3095,6 @@
         )));
     }
 
-    function suggestedDeliverySlots(order) {
-        const customerKey = exactCustomerKey(order?.customer_name);
-        if (!customerKey) return [];
-        return state.deliverySlots.filter(slot => {
-            if (!String(slot.order_numbers || '').trim()) return false;
-            const linkedOrders = Array.isArray(slot.orders) ? slot.orders : [];
-            return linkedOrders.length
-                ? linkedOrders.some(linkedOrder => exactCustomerKey(linkedOrder.customer_name) === customerKey)
-                : exactCustomerKey(deliveryCustomerKey(slot.customer_name)) === customerKey;
-        });
-    }
-
     function exactDeliveryCustomerOrders(order) {
         const customerKey = exactCustomerKey(order?.customer_name);
         if (!customerKey || orderIsInDeliveries(order)) return { count: 0, slotNumbers: [] };
@@ -3123,12 +3111,13 @@
         }, { count: 0, slotNumbers: [] });
     }
 
-    function exactOrderCustomerCount(order) {
-        const customerKey = exactCustomerKey(order?.customer_name);
-        if (!customerKey || order.archived_at || order.status === 'cancelled') return 0;
+    function exactOrderCustomerCount(customerName) {
+        const customerKey = exactCustomerKey(customerName);
+        if (!customerKey) return 0;
         return state.orders.filter(candidate => (
             !candidate.archived_at
             && candidate.status !== 'cancelled'
+            && !orderIsInDeliveries(candidate)
             && exactCustomerKey(candidate.customer_name) === customerKey
         )).length;
     }
@@ -3183,21 +3172,16 @@
         const pendingOrders = pendingDeliveryOrders();
         const pending = pendingOrders[0];
         const pendingIds = pendingOrders.map(order => Number(order.id));
-        const suggestions = pendingOrders.length === 1 ? suggestedDeliverySlots(pending) : [];
-        const suggestedNumbers = new Set(suggestions.map(slot => Number(slot.slot_number)));
         const query = fold(state.deliveryQuery);
         if (elements.deliveryCopyGuide) {
             elements.deliveryCopyGuide.hidden = !pending;
-            const suggestedHtml = suggestions.length
-                ? `<span class="delivery-suggestion-label">Coincidencia exacta de cliente:</span><span class="delivery-suggestions">${suggestions.map(slot => `<button type="button" class="delivery-suggestion" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${Number(slot.slot_number)}">FILA ${Number(slot.slot_number)}${slot.location ? ` · ${escapeHtml(slot.location)}` : ''}</button>`).join('')}</span>`
-                : '<span>Elegí una fila: una vacía queda marcada <b>ARMAR</b>; si ya tiene pedidos, se suma como <b>AGREGAR</b>.</span>';
             const pendingLabel = pendingOrders.length === 1
                 ? `${escapeHtml(pending.public_number)}`
                 : `${pendingOrders.length} VENTAS`;
             const customerLabel = pendingOrders.length === 1
                 ? `${escapeHtml(pending.customer_name)}.`
                 : 'Las ventas seleccionadas se agregarán juntas, separadas por / y con sus importes sumados.';
-            elements.deliveryCopyGuide.innerHTML = pending ? `<strong><span class="delivery-guide-arrow" aria-hidden="true">→</span> ${pendingLabel}</strong><span class="delivery-guide-content"><span>${customerLabel}</span>${suggestedHtml}</span><button class="small-button" type="button" data-cancel-delivery-placement>CANCELAR</button>` : '';
+            elements.deliveryCopyGuide.innerHTML = pending ? `<strong><span class="delivery-guide-arrow" aria-hidden="true">→</span> ${pendingLabel}</strong><span class="delivery-guide-content"><span>${customerLabel}</span><span>Elegí una fila: una vacía queda marcada <b>ARMAR</b>; si ya tiene pedidos, se suma como <b>AGREGAR</b>.</span></span><button class="small-button" type="button" data-cancel-delivery-placement>CANCELAR</button>` : '';
         }
         const rows = Array.from({ length: 100 }, (_, index) => {
             const number = index + 1;
@@ -3211,9 +3195,6 @@
                 : field('order_numbers', 'Órdenes');
             const location = `<input type="text" value="${escapeHtml(slot.location || '')}" data-delivery-field="location" data-delivery-slot="${number}" data-delivery-revision="${Number(slot.revision || 0)}" aria-label="Ubicación fila ${number}">`;
             const markerButton = /\b(ARMAR|AGREGAR)\b/i.test(String(slot.customer_name || '')) ? `<button class="delivery-marker-clear icon-button" type="button" data-mark-delivery-packed="${number}" aria-label="Pendiente: marcar pedido armado" title="Pendiente: marcar pedido armado"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>` : '';
-            const statusAttention = tone === 'delivery-slot-add'
-                ? '<span class="delivery-status-attention delivery-add-attention" role="img" aria-label="Atención: pedido agregado a una fila existente" title="Atención: este pedido se agregó a una fila existente">!</span>'
-                : (tone === 'delivery-slot-build' ? '<span class="delivery-status-attention delivery-build-attention" role="img" aria-label="Atención: pedido pendiente de armar" title="Atención: este pedido está pendiente de armar">!</span>' : '');
             const printButton = linkedOrders.length ? `<button class="delivery-print" type="button" data-print-delivery-slot="${number}" aria-label="Imprimir ventas de fila ${number}" title="Imprimir ventas de esta fila">${printerIconMarkup()}</button>` : '';
             const whatsappOrders = linkedOrders.filter(order => String(order.customer_phone || '').replace(/\D+/g, '').length >= 8);
             const whatsappButton = whatsappOrders.length === 1
@@ -3223,14 +3204,15 @@
                     : '');
             const returnButton = linkedOrders.length ? `<button class="delivery-return" type="button" data-open-return-delivery-slot="${number}" aria-label="Mover ventas de fila ${number} a Lista de Ventas" title="Mover a Lista de Ventas">${orderActionIconMarkup('return')}</button>` : '';
             const hasSale = linkedOrders.length > 0 || String(slot.order_numbers || '').trim() !== '';
-            const deleteButton = hasSale ? `<span class="delivery-door-action"><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('door')}</button></span>` : '';
+            const matchingSalesCount = hasSale ? exactOrderCustomerCount(deliveryCustomerKey(slot.customer_name)) : 0;
+            const deleteButton = hasSale ? `<span class="delivery-door-action"><button class="delivery-delete" type="button" data-delete-delivery-slot="${number}" aria-label="Vaciar fila ${number}" title="Vaciar fila">${orderActionIconMarkup('door')}</button>${matchingSalesCount ? `<span class="delivery-door-sales-count" role="img" aria-label="${matchingSalesCount} ventas del mismo cliente en Lista de Ventas" title="${matchingSalesCount} ventas del mismo cliente en Lista de Ventas">${matchingSalesCount}</span>` : ''}</span>` : '';
             const transferAmount = transferTotal(slot.transfers);
             const transferMatches = transferAmount !== null && Math.round(transferAmount * 100) === Number(slot.order_total_cents || 0);
             const transferStatus = hasSale ? `<span class="delivery-transfer-status ${transferMatches ? 'is-matched' : 'is-unmatched'}" data-order-total-cents="${Number(slot.order_total_cents || 0)}" role="img" aria-label="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}" title="${transferMatches ? 'Importe transferido coincide con el total' : 'Importe transferido distinto del total'}"></span>` : '';
             const transfers = hasSale ? field('transfers', 'Transferencias') : '';
             const total = hasSale ? `<span class="delivery-order-total">${money(slot.order_total_cents)}</span>` : '';
             const actions = `<div class="delivery-flow-actions-grid"><span>${printButton}</span><span>${deleteButton}</span><span>${whatsappButton}</span><span>${returnButton}</span></div>`;
-            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''} ${suggestedNumbers.has(number) ? 'delivery-placement-suggested' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><span>${number}${statusAttention}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${actions}</td><td>${orderNumbers}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${total}</td><td class="delivery-transfer-status-cell">${transferStatus}</td><td>${transfers}</td></tr>`;
+            return `<tr class="${tone} ${pending ? 'delivery-placement-active' : ''}" data-delivery-row="${number}"><th class="delivery-row-number" scope="row"><span>${number}</span></th><td>${pending ? `<button class="delivery-place" type="button" data-place-delivery-orders="${pendingIds.join(',')}" data-place-delivery-slot="${number}" aria-label="Ubicar ventas seleccionadas en fila ${number}" title="Ubicar aquí">→</button>` : ''}</td><td>${location}</td><td class="delivery-flow-actions">${actions}</td><td>${orderNumbers}</td><td>${field('customer_name', 'Nombre y apellido')}</td><td>${markerButton}</td><td>${total}</td><td class="delivery-transfer-status-cell">${transferStatus}</td><td>${transfers}</td></tr>`;
         }).filter(Boolean);
         elements.deliverySlots.innerHTML = rows.length
             ? rows.join('')
@@ -3282,12 +3264,6 @@
         state.pendingDeliveryOrderId = Number(orderId);
         state.pendingDeliveryOrderIds = [];
         state.deliveryQuery = '';
-        const matchGroups = [{ order, slots: suggestedDeliverySlots(order) }]
-            .filter(group => group.slots.length);
-        if (matchGroups.length) {
-            showDeliveryMatchWarning([Number(orderId)], null, matchGroups);
-            return;
-        }
         showView('deliveries');
         toast('Elegí la fila donde querés ubicar esta venta.');
     }
@@ -3302,24 +3278,6 @@
         state.deliveryQuery = '';
         showView('deliveries');
         toast(`Elegí una fila para pasar ${available.length === 1 ? 'la venta seleccionada' : `las ${available.length} ventas seleccionadas`}.`);
-    }
-
-    function showDeliveryMatchWarning(orderIds, selectedSlot, matchGroups) {
-        const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
-        const selectedSlotNumber = Number(selectedSlot);
-        const hasSelectedSlot = Number.isInteger(selectedSlotNumber) && selectedSlotNumber > 0;
-        const rows = matchGroups.flatMap(({ order, slots }) => slots.map(item => ({ order, item })));
-        const rowCount = new Set(rows.map(({ item }) => Number(item.slot_number))).size;
-        openModal(`
-            <p class="eyebrow">REVISIÓN DE PEDIDOS EXISTENTES</p>
-            <h2 id="modal-title">¿DÓNDE QUERÉS UBICAR LAS VENTAS?</h2>
-            <p class="empty-copy">Encontramos <strong>${rowCount === 1 ? 'una fila con una coincidencia' : `${rowCount} filas con coincidencias`}</strong> para las ventas seleccionadas. Revisá cada caso antes de continuar.</p>
-            <div class="delivery-match-table-wrap"><table class="delivery-match-table"><thead><tr><th>VENTA NUEVA</th><th>CLIENTE NUEVO</th><th>FILA</th><th>UBICACIÓN</th><th>ÓRDENES CARGADAS</th><th>CLIENTE CARGADO</th><th>TRANSFERENCIAS</th><th>IMPORTE</th><th></th></tr></thead><tbody>
-                ${rows.map(({ order, item }) => `<tr><td>${escapeHtml(order.public_number)}</td><td>${escapeHtml(order.customer_name)}</td><td><strong>${Number(item.slot_number)}</strong></td><td>${escapeHtml(item.location || '—')}</td><td>${escapeHtml(item.order_numbers || '—')}</td><td>${escapeHtml(item.customer_name || '—')}</td><td>${escapeHtml(item.transfers || '—')}</td><td>${money(item.order_total_cents)}</td><td><button class="small-button" type="button" data-confirm-delivery-match-slot="${Number(item.slot_number)}" data-delivery-order-ids="${ids.join(',')}">USAR FILA ${Number(item.slot_number)} →</button></td></tr>`).join('')}
-            </tbody></table></div>
-            ${hasSelectedSlot ? `<div class="delivery-match-choice"><span>También podés continuar con la fila <strong>${selectedSlotNumber}</strong> que habías elegido.</span><button class="secondary-button" type="button" data-confirm-delivery-other-slot="${selectedSlotNumber}" data-delivery-order-ids="${ids.join(',')}">UBICAR IGUAL EN FILA ${selectedSlotNumber}</button></div>` : ''}
-            <div class="modal-actions"><button class="secondary-button" type="button" ${hasSelectedSlot ? 'data-close-modal' : 'data-choose-delivery-row'}>${hasSelectedSlot ? 'VOLVER' : 'ELEGIR OTRA FILA'}</button></div>
-        `);
     }
 
     function showDeliveryOccupiedWarning(orderIds, selectedSlot, existingSlot) {
@@ -3349,21 +3307,13 @@
         input?.select();
     }
 
-    async function copyOrdersToDelivery(orderIds, slot, skipDeliveryMatchWarning = false, transferCents = null) {
+    async function copyOrdersToDelivery(orderIds, slot, skipOccupiedWarning = false, transferCents = null) {
         const ids = Array.from(new Set(orderIds.map(Number).filter(Number.isFinite)));
         try {
             if (!ids.length) return;
-            const pendingOrders = pendingDeliveryOrders();
             const targetSlot = state.deliverySlots.find(item => Number(item.slot_number) === Number(slot));
-            if (String(targetSlot?.order_numbers || '').trim() !== '' && !skipDeliveryMatchWarning) {
+            if (String(targetSlot?.order_numbers || '').trim() !== '' && !skipOccupiedWarning) {
                 showDeliveryOccupiedWarning(ids, slot, targetSlot);
-                return;
-            }
-            const matchGroups = pendingOrders
-                .map(order => ({ order, slots: suggestedDeliverySlots(order) }))
-                .filter(group => group.slots.length && !group.slots.some(item => Number(item.slot_number) === Number(slot)));
-            if (matchGroups.length && !skipDeliveryMatchWarning) {
-                showDeliveryMatchWarning(ids, slot, matchGroups);
                 return;
             }
             if (transferCents === null) {
@@ -3373,8 +3323,8 @@
             await apiPost(ids.length === 1
                 ? { action: 'delivery_copy_order', order_id: ids[0], slot_number: slot, transfer_cents: transferCents }
                 : { action: 'delivery_copy_orders', order_ids: ids, slot_number: slot, transfer_cents: transferCents });
-            // Si la ubicación fue elegida desde una ventana de validación, la
-            // decisión ya se aplicó correctamente: no dejamos el modal abierto.
+            // Si la ubicación fue elegida desde una ventana de confirmación,
+            // la decisión ya se aplicó correctamente: no dejamos el modal abierto.
             closeModal();
             state.pendingDeliveryOrderId = 0;
             state.pendingDeliveryOrderIds = [];
@@ -4210,6 +4160,9 @@
                 ${matchingOrders.map(order => {
                     const inDeliveries = orderIsInDeliveries(order);
                     const deliverySlot = inDeliveries ? Number(order.delivery_slot_number) : null;
+                    const matchingDeliveriesCount = !inDeliveries && !order.archived_at && order.status !== 'cancelled'
+                        ? exactDeliveryCustomerOrders(order).count
+                        : 0;
                     const stateIndicator = order.archived_at
                         ? '<span class="order-status-indicator order-status-indicator-archived" role="img" aria-label="Venta archivada" title="Venta archivada">A</span>'
                         : (order.status === 'cancelled'
@@ -4224,7 +4177,7 @@
                         <strong class="order-list-total">${money(order.total_cents)}</strong>
                         <button class="order-list-units" type="button" data-preview-order="${Number(order.id)}" aria-label="Ver productos de ${escapeHtml(order.public_number)}">${Number(order.unit_count)} unid.⌄</button>
                         <span>${statusDisplay}</span>
-                        <button class="order-list-copy ${order.delivery_reopened_at ? 'order-list-copy-reopened' : ''}" type="button" data-copy-order-delivery="${Number(order.id)}" ${inDeliveries ? 'disabled' : ''} aria-label="Mover ${escapeHtml(order.public_number)} a Entregas" title="${order.delivery_reopened_at ? 'Volvió desde EDP: mover otra vez a Entregas' : 'Mover venta'}">${orderActionIconMarkup(order.delivery_reopened_at ? 'reopen' : 'delivery')}</button>
+                        <span class="order-copy-action"><button class="order-list-copy ${order.delivery_reopened_at ? 'order-list-copy-reopened' : ''}" type="button" data-copy-order-delivery="${Number(order.id)}" ${inDeliveries ? 'disabled' : ''} aria-label="Mover ${escapeHtml(order.public_number)} a Entregas" title="${order.delivery_reopened_at ? 'Volvió desde EDP: mover otra vez a Entregas' : 'Mover venta'}">${orderActionIconMarkup(order.delivery_reopened_at ? 'reopen' : 'delivery')}</button>${matchingDeliveriesCount ? `<span class="order-delivery-count" role="img" aria-label="${matchingDeliveriesCount} pedidos del mismo cliente en Entrega de pedidos" title="${matchingDeliveriesCount} pedidos del mismo cliente en Entrega de pedidos">${matchingDeliveriesCount}</span>` : ''}</span>
                         <button class="order-list-print" type="button" data-print-order="${Number(order.id)}" aria-label="Imprimir ${escapeHtml(order.public_number)}" title="Imprimir">${orderActionIconMarkup('print')}</button>
                         ${String(order.customer_phone || '').replace(/\D+/g, '').length >= 8 ? `<button class="order-list-whatsapp" type="button" data-whatsapp-order="${Number(order.id)}" aria-label="Abrir WhatsApp de ${escapeHtml(order.customer_name)}" title="Abrir WhatsApp">${whatsappLogoMarkup()}</button>` : '<span class="order-list-whatsapp-placeholder" aria-hidden="true"></span>'}
                         ${order.status !== 'cancelled' && !order.archived_at
@@ -6910,22 +6863,10 @@
             copyOrdersToDelivery(ids, Number(placeDelivery.dataset.placeDeliverySlot));
             return;
         }
-        if (event.target.closest('[data-choose-delivery-row]')) {
-            closeModal();
-            showView('deliveries');
-            toast('Elegí la fila donde querés ubicar esta venta.');
-            return;
-        }
         const confirmOtherDeliverySlot = event.target.closest('[data-confirm-delivery-other-slot]');
         if (confirmOtherDeliverySlot) {
             const ids = String(confirmOtherDeliverySlot.dataset.deliveryOrderIds || '').split(',').map(Number).filter(Number.isFinite);
             copyOrdersToDelivery(ids, Number(confirmOtherDeliverySlot.dataset.confirmDeliveryOtherSlot), true);
-            return;
-        }
-        const confirmDeliveryMatchSlot = event.target.closest('[data-confirm-delivery-match-slot]');
-        if (confirmDeliveryMatchSlot) {
-            const ids = String(confirmDeliveryMatchSlot.dataset.deliveryOrderIds || '').split(',').map(Number).filter(Number.isFinite);
-            copyOrdersToDelivery(ids, Number(confirmDeliveryMatchSlot.dataset.confirmDeliveryMatchSlot), true);
             return;
         }
         const confirmDeliveryTransfer = event.target.closest('[data-confirm-delivery-transfer]');

@@ -3764,7 +3764,9 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .delivery-return .order-action-icon,
 .delivery-delete .order-action-icon { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .delivery-door-action { position:relative; display:inline-grid; place-items:center; }
-.delivery-door-sales-count { position:absolute; top:-7px; right:-8px; display:grid; min-width:17px; height:17px; padding:0 3px; place-items:center; border-radius:999px; background:#c62828; color:#fff; font-size:10px; font-weight:700; line-height:1; pointer-events:none; }
+.delivery-door-sales-count { position:absolute; top:-7px; right:-8px; display:grid; min-width:17px; height:17px; padding:0 3px; place-items:center; border-radius:999px; background:#21864b; color:#fff; font-size:10px; font-weight:700; line-height:1; pointer-events:none; }
+#view-orders .order-list-row > .order-copy-action { position:relative; display:inline-grid; width:32px; height:32px; place-items:center; overflow:visible; }
+#view-orders .order-delivery-count { position:absolute; top:-7px; right:-8px; display:grid; min-width:17px; height:17px; padding:0 3px; place-items:center; border-radius:999px; background:#1769e0; color:#fff; font-size:10px; font-weight:700 !important; line-height:1; pointer-events:none; }
 .order-status-indicator { display:inline-grid; width:20px; height:20px; margin-inline:6px; place-items:center; border-radius:50%; color:#fff; font-size:12px; line-height:1; }
 .order-status-indicator-archived { background:#21864b; }
 .order-status-indicator-cancelled { background:#b93131; }
@@ -4448,3 +4450,9 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 #view-design button[aria-pressed="true"]:not(.icon-action-button) { border-color:#0b397c !important; background:#0b397c !important; }
 #view-design .icon-action-button { height:32px; min-height:32px !important; width:32px; padding:0 !important; border-radius:8px !important; }
 #view-design [hidden] { display:none !important; }
+
+/* Colores de los iconos de Ventas y Entregas en la barra lateral. */
+.admin-icon-sidebar .admin-nav-orders .admin-menu-icon { color:#167347; }
+.admin-icon-sidebar .admin-nav-orders.active .admin-menu-icon { color:#c4f4d2; }
+.admin-icon-sidebar .admin-nav-deliveries .admin-menu-icon { color:#1b5f9b; }
+.admin-icon-sidebar .admin-nav-deliveries.active .admin-menu-icon { color:#c1e2ff; }
