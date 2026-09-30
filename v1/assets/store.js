@@ -2496,7 +2496,7 @@
             showCheckout();
         }
         if (app.checkout_customer?.error) toast(app.checkout_customer.error);
-    });
+    }).finally(() => window.LDPageLoader?.finish());
     try {
         const completedOrder = JSON.parse(
             sessionStorage.getItem(ORDER_COMPLETE_STORAGE_KEY) || 'null'

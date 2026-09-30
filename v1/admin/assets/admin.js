@@ -54,7 +54,6 @@
         customerHistoryName: '',
         customerHistoryChildOpen: false,
         posSaleConfirmationTimer: 0,
-        posKlausTimer: 0,
         knownOrderIds: null,
         supplierOrder: null,
         supplierOrderCategories: [],
@@ -77,11 +76,12 @@
         aiCriteriaTab: 'search',
     };
 
-    const money = cents => new Intl.NumberFormat('es-AR', {
+    const moneyFormatter = new Intl.NumberFormat('es-AR', {
         style: 'currency',
         currency: 'ARS',
         maximumFractionDigits: 0,
-    }).format(Number(cents || 0) / 100);
+    });
+    const money = cents => moneyFormatter.format(Number(cents || 0) / 100);
     const aiGreeting = '¡Hola! Soy el Asesor IA de Laboratorio Digital. ¿En qué te ayudo?';
 
     const emptyOrdersMessages = [
@@ -191,8 +191,6 @@
         posCartLines: document.getElementById('pos-cart-lines'),
         posTotal: document.getElementById('pos-total'),
         posCustomerSuggestions: document.getElementById('pos-customer-suggestions'),
-        posKlaus: document.getElementById('pos-klaus'),
-        adminKlaus: document.getElementById('admin-klaus'),
         posClearCart: document.getElementById('pos-clear-cart'),
         posSaveCart: document.getElementById('pos-save-cart'),
         posSavedCarts: document.getElementById('pos-saved-carts-list'),
@@ -395,24 +393,6 @@
         window.setTimeout(() => elements.toast.classList.remove('open'), 3600);
     }
 
-    function petPosKlaus() {
-        const klaus = elements.posKlaus;
-        if (!klaus) return;
-        apiPost({ action: 'klaus_interaction' }).catch(() => {});
-        window.Klaus?.pose(klaus, 'touch_bark_hearts');
-        klaus.classList.remove('is-petted');
-        void klaus.offsetWidth;
-        klaus.classList.add('is-petted');
-        window.clearTimeout(state.posKlausTimer);
-        state.posKlausTimer = window.setTimeout(() => {
-            klaus.classList.remove('is-petted');
-            window.Klaus?.pose(klaus, 'after_touch_happy_tailwag');
-            window.Klaus?.pant(1600);
-        }, 1100);
-        window.setTimeout(() => window.Klaus?.pose(klaus, 'checkout_sitting'), 4500);
-        toast('🐾 ¡Klaus está contento!');
-    }
-
     function toastDeliveryDelivered() {
         if (!elements.toast) return;
         elements.toast.innerHTML = '<span aria-hidden="true">✓</span><span>Venta entregada</span>';
@@ -501,7 +481,6 @@
             button.classList.toggle('active', highlightNavigation && button.dataset.view === view);
         });
         document.querySelector('.admin-shell')?.classList.toggle('admin-design-mode', view === 'design');
-        if (elements.adminKlaus) elements.adminKlaus.hidden = view === 'pos';
         if (elements.mobileDashboard) {
             elements.mobileDashboard.hidden = true;
             elements.mobileDashboardToggle?.setAttribute('aria-expanded', 'false');
@@ -524,6 +503,14 @@
             main.appendChild(loader);
         }
         const loads = [];
+        if (view === 'pos') {
+            const frame = document.querySelector('.admin-pos-frame');
+            if (frame?.dataset.src) {
+                loads.push(new Promise(resolve => frame.addEventListener('load', resolve, { once: true })));
+                frame.src = frame.dataset.src;
+                delete frame.dataset.src;
+            }
+        }
         main?.classList.add('admin-panel-busy');
         main?.setAttribute('aria-busy', 'true');
         if (loader) loader.hidden = false;
@@ -591,6 +578,7 @@
             main?.setAttribute('aria-busy', 'false');
             if (loader) loader.hidden = true;
         });
+        return ready;
     }
 
     function invitationDate(value) {
@@ -2945,9 +2933,6 @@
     }
 
     function showPosSaleFinished(sale) {
-        window.Klaus?.pose(elements.posKlaus, 'cart_add_jump');
-        window.setTimeout(() => window.Klaus?.pose(elements.posKlaus, 'after_touch_happy_tailwag'), 1000);
-        window.setTimeout(() => window.Klaus?.pose(elements.posKlaus, 'checkout_sitting'), 3800);
         openModal(`
             <div class="pos-checkout-menu">
                 <p class="eyebrow">VENTA REGISTRADA</p>
@@ -3525,7 +3510,10 @@
     }
 
     async function refreshActiveAdminView() {
-        if (pendingViewLoads.size || automaticRefreshRunning || document.visibilityState !== 'visible' || adminHasUnsavedInteraction()) {
+        if (pendingViewLoads.size || document.documentElement.classList.contains('page-loading')
+            || automaticRefreshRunning || document.visibilityState !== 'visible'
+            || (window.frameElement && !window.frameElement.getClientRects().length)
+            || adminHasUnsavedInteraction()) {
             return;
         }
         automaticRefreshRunning = true;
@@ -7688,13 +7676,6 @@
         }
     });
     elements.completeSale?.addEventListener('click', finishPosSaleDirectly);
-    elements.posKlaus?.addEventListener('click', petPosKlaus);
-    window.Klaus?.attach(document, '.admin-klaus', (klaus) => {
-        apiPost({ action: 'klaus_interaction' }).catch(() => {});
-        window.Klaus?.pose(klaus, 'touch_bark_hearts');
-        window.setTimeout(() => { window.Klaus?.pose(klaus, 'after_touch_happy_tailwag'); window.Klaus?.pant(1600); }, 950);
-        window.setTimeout(() => window.Klaus?.pose(klaus, 'checkout_sitting'), 4300);
-    });
     elements.categoryTree?.addEventListener('dragstart', event => {
         const row = event.target.closest('[data-category-row]');
         if (!row) return;
@@ -8016,6 +7997,7 @@
         }
     });
 
+    const initialLoads = [];
     if (app.user) {
         try {
             setAdminSidebarCollapsed(window.localStorage.getItem(ADMIN_SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true');
@@ -8027,18 +8009,17 @@
         const isPosPage = Boolean(document.querySelector('.pos-page'));
         if (isPosPage) {
             state.view = 'pos';
-            window.Klaus?.attach(document, '.pos-klaus');
             restorePosCustomer();
-            loadProducts();
+            initialLoads.push(loadProducts());
             renderPosCart();
             renderSavedPosCarts();
         }
-        if (elements.invitationsBadge) loadInvitations();
-        if (elements.ordersBadge) loadOrderNotifications();
+        if (elements.invitationsBadge) initialLoads.push(loadInvitations());
+        if (elements.ordersBadge) initialLoads.push(loadOrderNotifications());
         if (document.getElementById('view-orders')) {
             const requestedView = new URL(window.location.href).searchParams.get('view');
-            showView(requestedView || 'orders', true, false);
-            if (elements.deliveriesBadge && requestedView !== 'deliveries') loadDeliverySlots();
+            initialLoads.push(showView(requestedView || 'orders', true, false));
+            if (elements.deliveriesBadge && requestedView !== 'deliveries') initialLoads.push(loadDeliverySlots());
         }
         window.addEventListener('popstate', () => {
             if (!document.getElementById('view-orders')) return;
@@ -8072,4 +8053,5 @@
             }).catch(() => {});
         });
     }
+    Promise.allSettled(initialLoads).then(() => window.LDPageLoader?.finish());
 })();

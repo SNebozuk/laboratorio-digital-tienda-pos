@@ -12,7 +12,6 @@ $adminAssetPath = $storePath . '/admin/assets';
 $assetVersion = static fn (string $path): string => substr(hash_file('sha256', $path) ?: '1', 0, 12);
 $appCssVersion = $assetVersion(dirname(__DIR__) . '/assets/app.css');
 $adminCssVersion = $assetVersion(__DIR__ . '/assets/admin.css');
-$klausJsVersion = $assetVersion(dirname(__DIR__) . '/assets/klaus.js');
 $adminJsVersion = $assetVersion(__DIR__ . '/assets/admin.js');
 $apiUrl = $storePath . '/api.php';
 $sizeGuideUrl = $storePath . '/tabla-de-talles.php';
@@ -33,8 +32,11 @@ header('Referrer-Policy: same-origin');
     <link rel="icon" href="<?= $escape($storePath) ?>/favicon.php" type="image/svg+xml">
     <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($appCssVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($adminCssVersion) ?>">
+    <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/page-loading.css?v=<?= substr(hash_file('sha256', dirname(__DIR__) . '/assets/page-loading.css') ?: '1', 0, 12) ?>">
+    <script src="<?= $escape($storeAssetPath) ?>/page-loading.js?v=<?= substr(hash_file('sha256', dirname(__DIR__) . '/assets/page-loading.js') ?: '1', 0, 12) ?>"></script>
 </head>
 <body class="admin-body">
+    <div id="page-loading" role="status" aria-label="Cargando sitio"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></div>
     <?php if (!$user): ?>
         <main class="login-shell">
             <section class="login-card">
@@ -415,7 +417,7 @@ header('Referrer-Policy: same-origin');
                             <p>Registrá ventas y gestioná el carrito sin salir de la administración.</p>
                         </div>
                     </div>
-                    <iframe class="admin-pos-frame" src="pos.php?embedded=1" title="Punto de Venta"></iframe>
+                    <iframe class="admin-pos-frame" data-src="pos.php?embedded=1" title="Punto de Venta"></iframe>
                 </section>
 
                 <section class="admin-view active" id="view-orders">
@@ -728,7 +730,6 @@ header('Referrer-Policy: same-origin');
         </section>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <?php if ($user): ?><button class="admin-klaus" id="admin-klaus" type="button" aria-label="Acariciar a Klaus"><img class="admin-klaus-image" src="<?= $escape($storeAssetPath) ?>/klaus_checkout_sitting.png" alt=""></button><?php endif ?>
 
     <script id="admin-app-data" type="application/json"><?=
         json_encode([
@@ -740,7 +741,6 @@ header('Referrer-Policy: same-origin');
             'store_url' => $storeUrl,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP)
     ?></script>
-    <?php if ($user): ?><script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($klausJsVersion) ?>" defer></script><?php endif ?>
     <script src="<?= $escape($storeAssetPath) ?>/search-normalizer.js?v=<?= $escape($assetVersion(dirname(__DIR__) . '/assets/search-normalizer.js')) ?>" defer></script>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($adminJsVersion) ?>" defer></script>
 </body>

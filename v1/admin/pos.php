@@ -13,7 +13,6 @@ $storeAssetPath = $storePath . '/assets';
 $adminAssetPath = $storePath . '/admin/assets';
 $assetVersion = substr(hash('sha256',
     (string) @file_get_contents(dirname(__DIR__) . '/assets/app.css')
-    . (string) @file_get_contents(dirname(__DIR__) . '/assets/klaus.js')
     . (string) @file_get_contents(__DIR__ . '/assets/admin.css')
     . (string) @file_get_contents(__DIR__ . '/assets/admin.js')
 ), 0, 12);
@@ -36,8 +35,11 @@ header('Referrer-Policy: same-origin');
     <title>Punto de Venta · Laboratorio Digital</title>
     <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>">
     <link rel="stylesheet" href="<?= $escape($adminAssetPath) ?>/admin.css?v=<?= $escape($assetVersion) ?>">
+    <link rel="stylesheet" href="<?= $escape($storeAssetPath) ?>/page-loading.css?v=<?= substr(hash_file('sha256', dirname(__DIR__) . '/assets/page-loading.css') ?: '1', 0, 12) ?>">
+    <script src="<?= $escape($storeAssetPath) ?>/page-loading.js?v=<?= substr(hash_file('sha256', dirname(__DIR__) . '/assets/page-loading.js') ?: '1', 0, 12) ?>"></script>
 </head>
 <body class="admin-body pos-page-body<?= $embedded ? ' pos-embedded' : '' ?>">
+    <div id="page-loading" role="status" aria-label="Cargando sitio"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></div>
     <main class="pos-page">
         <header class="pos-page-header">
             <div class="pos-page-brand"><strong>LABORATORIO DIGITAL</strong><span>PUNTO DE VENTA</span></div>
@@ -91,7 +93,6 @@ header('Referrer-Policy: same-origin');
     <div class="modal" id="modal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><section class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close" type="button" data-close-modal aria-label="Cerrar">×</button><div id="modal-content"></div></section></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script id="admin-app-data" type="application/json"><?= json_encode(['api_url' => $apiUrl, 'csrf_token' => $app['csrf_token'], 'user' => $user, 'setup_required' => false, 'size_guide_url' => $storePath . '/tabla-de-talles.php', 'store_url' => $storeUrl], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
-    <script src="<?= $escape($storeAssetPath) ?>/klaus.js?v=<?= $escape($assetVersion) ?>" defer></script>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($assetVersion) ?>" defer></script>
 </body>
 </html>

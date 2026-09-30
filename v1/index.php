@@ -148,8 +148,11 @@ header('Referrer-Policy: same-origin');
     <link rel="apple-touch-icon" href="<?= $escape($assetPath) ?>/favicon.png">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/app.css?v=<?= $escape($assetVersion) ?>&theme=light-20260811">
     <link rel="stylesheet" href="<?= $escape($assetPath) ?>/light.css?v=<?= $escape($assetVersion) ?>">
+    <link rel="stylesheet" href="<?= $escape($assetPath) ?>/page-loading.css?v=<?= substr(hash_file('sha256', __DIR__ . '/assets/page-loading.css') ?: '1', 0, 12) ?>">
+    <script src="<?= $escape($assetPath) ?>/page-loading.js?v=<?= substr(hash_file('sha256', __DIR__ . '/assets/page-loading.js') ?: '1', 0, 12) ?>"></script>
 </head>
 <body>
+    <div id="page-loading" role="status" aria-label="Cargando sitio"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></div>
     <header class="store-header">
         <div class="header-leading">
             <button class="catalog-menu-button" id="catalog-menu-button" type="button" aria-expanded="false" aria-controls="category-panel">
