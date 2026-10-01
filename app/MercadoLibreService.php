@@ -227,6 +227,10 @@ final class MercadoLibreService
     public function changeListingStatus(string $itemId, string $target): array
     {
         if (!in_array($target, ['active', 'paused'], true)) throw new \RuntimeException('Estado inválido.');
+        if ($target === 'active') {
+            $link = $this->listingLinks()[$itemId] ?? null;
+            if ($link) $this->requireVisibleProduct((int) $link['product_id']);
+        }
         [$item, $token] = $this->ownedItem($itemId);
         if (!in_array($item['status'], ['active', 'paused'], true)) throw new \RuntimeException('El estado actual no permite pausar o reactivar.');
         if ($target === 'active' && (int) $item['available_quantity'] < 1) throw new \RuntimeException('La publicación necesita stock para reactivarse.');
@@ -235,6 +239,37 @@ final class MercadoLibreService
             if ($code !== 200 || ($updated['status'] ?? '') !== $target) throw new \RuntimeException('Meli no confirmó el cambio de estado. Actualizá el panel antes de reintentar.');
         }
         return ['ok' => true, 'message' => $target === 'active' ? 'Publicación reactivada.' : 'Publicación pausada.'];
+    }
+
+    private function requireVisibleProduct(int $productId): void
+    {
+        $query = $this->pdo->prepare('SELECT active FROM products WHERE id=? AND deleted_at IS NULL');
+        $query->execute([$productId]);
+        if ((int) $query->fetchColumn() !== 1) throw new \RuntimeException('El producto está oculto. Mostralo antes de publicar o reactivar en MeLi.');
+    }
+
+    public function setProductsVisibility(array $productIds, bool $active): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $productIds), static fn ($id) => $id > 0)));
+        if (!$ids) throw new \RuntimeException('Seleccioná al menos un producto.');
+        $paused = 0;
+        if (!$active) {
+            foreach ($this->pdo->query("SELECT value FROM settings WHERE key GLOB 'meli_listing_[0-9]*'") as $row) {
+                $record = json_decode($row['value'], true);
+                if (in_array((int) ($record['product_id'] ?? 0), $ids, true) && ($record['state'] ?? '') === 'pending') throw new \RuntimeException('Hay una publicación pendiente de confirmar en MeLi. Revisala antes de ocultar el producto.');
+            }
+            try {
+                foreach ($this->listingLinks() as $itemId => $link) {
+                    if (!in_array((int) $link['product_id'], $ids, true)) continue;
+                    [$item] = $this->ownedItem($itemId);
+                    if ($item['status'] === 'active') { $this->changeListingStatus($itemId, 'paused'); $paused++; }
+                }
+            } catch (\Throwable $error) {
+                throw new \RuntimeException('No se ocultaron los productos: no pudimos confirmar todas las pausas en MeLi. ' . $error->getMessage(), 0, $error);
+            }
+        }
+        (new ProductService($this->pdo))->setVisibility($ids, $active);
+        return ['ok' => true, 'active' => $active, 'meli_paused' => $paused];
     }
 
     public function deleteListing(string $itemId): array
@@ -276,6 +311,7 @@ final class MercadoLibreService
 
     public function publicationVariants(int $productId): array
     {
+        $this->requireVisibleProduct($productId);
         $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
         $q->execute(['meli_product_' . $productId]);
         $draft = MercadoLibreDefaults::apply($this->pdo, MercadoLibreProductDraft::normalize(json_decode((string) $q->fetchColumn(), true)));
@@ -485,6 +521,7 @@ final class MercadoLibreService
 
     public function preparePublication(int $productId, int $variantId = 0): array
     {
+        $this->requireVisibleProduct($productId);
         $query = $this->pdo->prepare('SELECT value FROM settings WHERE key = :key');
         $query->execute(['key' => 'meli_product_' . $productId]);
         $draft = MercadoLibreDefaults::apply($this->pdo, MercadoLibreProductDraft::normalize(json_decode((string) $query->fetchColumn(), true)));

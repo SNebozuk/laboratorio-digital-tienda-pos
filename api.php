@@ -517,11 +517,15 @@ try {
                 || $visibilityValue === '1'
                 || strtolower((string) $visibilityValue) === 'true'
                 || strtolower((string) $visibilityValue) === 'on';
-            $app['products']->setVisibility(
-                is_array($input['product_ids'] ?? null) ? $input['product_ids'] : [],
-                $isVisible
-            );
-            Http::json(['ok' => true, 'active' => $isVisible]);
+            require_once $app['root'] . '/app/MercadoLibreService.php';
+            $visibilityLock = fopen($app['config']['storage_path'] . '/meli-oauth.lock', 'c');
+            if (!$visibilityLock || !flock($visibilityLock, LOCK_EX | LOCK_NB)) throw new RuntimeException('Hay una operación de MeLi en curso. Intentá nuevamente en unos segundos.');
+            try {
+                $visibilityResult = (new \LaboratorioDigital\MercadoLibreService($app['pdo'], $app['config']))->setProductsVisibility(
+                    is_array($input['product_ids'] ?? null) ? $input['product_ids'] : [], $isVisible
+                );
+            } finally { flock($visibilityLock, LOCK_UN); fclose($visibilityLock); }
+            Http::json($visibilityResult);
 
         case 'products_price_adjust':
             $user = $app['auth']->requireAdmin();

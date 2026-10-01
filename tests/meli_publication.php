@@ -47,6 +47,7 @@ function curl_exec(object $handle): string|false {
     if (preg_match('~^/items/(MLA\d+)$~', $path, $matches)) {
         $id = $matches[1];
         if ($method === 'PUT') {
+            if (($body['status'] ?? '') === 'paused' && ($GLOBALS['pause_failure'] ?? '') === $id) return json_encode($GLOBALS['items'][$id]);
             if (!empty($body['deleted'])) $GLOBALS['items'][$id]['sub_status'] = ['deleted'];
             if (isset($body['status'])) $GLOBALS['items'][$id]['status'] = $body['status'];
         }
@@ -91,6 +92,17 @@ check(MercadoLibreProductDraft::publicationStates($db)[1]['state'] === 'publishe
 $service->publicationError(1, 'Example failure');
 check(MercadoLibreProductDraft::publicationStates($db)[1]['state'] === 'failed', 'Errors survive reload and turn red');
 $service->finishPublication(1);
+$GLOBALS['pause_failure'] = 'MLA101';
+rejects(fn () => $service->setProductsVisibility([1], false), 'A failed pause must prevent hiding');
+check((int) $db->query('SELECT active FROM products WHERE id=1')->fetchColumn() === 1, 'Product stays visible until every listing is paused');
+$GLOBALS['pause_failure'] = '';
+$hidden = $service->setProductsVisibility([1], false);
+check($hidden['meli_paused'] === 1 && count(array_filter($GLOBALS['items'], static fn ($item) => $item['status'] === 'active')) === 0, 'Hide pauses remaining active sizes; retry skips already paused sizes');
+rejects(fn () => $service->publicationVariants(1), 'Hidden products cannot start publication');
+rejects(fn () => $service->preparePublication(1, 1), 'Hidden products cannot prepare publication');
+rejects(fn () => $service->changeListingStatus($first['item_id'], 'active'), 'Hidden listings cannot be reactivated');
+$service->setProductsVisibility([1], true);
+check(count(array_filter($GLOBALS['items'], static fn ($item) => $item['status'] === 'active')) === 0, 'Showing product does not automatically reactivate listings');
 $service->deleteListing($first['item_id']);
 check(!isset(MercadoLibreProductDraft::publicationStates($db)[1]), 'Delete all linked sizes and reset gray');
 check(count(array_filter($GLOBALS['items'], static fn ($item) => in_array('deleted', $item['sub_status'], true))) === 2, 'MeLi deletion confirmed for every size');
