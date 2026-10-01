@@ -213,7 +213,7 @@ final class MercadoLibreService
             $tokens['access_token'], $prepared['payload'], true);
         if ($code !== 200) throw new \RuntimeException('No se pudieron validar los atributos condicionales.');
         [$code, $validation] = $this->request('/items/validate', $tokens['access_token'], $prepared['payload'], true);
-        return ['ok' => true, 'valid' => $code === 200 || $code === 204, 'validation' => $validation,
+        return ['ok' => true, 'valid' => $this->publicationValidationPassed($code, $validation), 'validation' => $validation,
             'conditional_required' => $conditional['required_attributes'] ?? [],
             'package_confirmed' => $prepared['draft']['package_confirmed'], 'price_cents' => $prepared['pricing']['price_cents']];
     }
@@ -224,7 +224,7 @@ final class MercadoLibreService
         if (!$prepared['draft']['package_confirmed']) throw new \RuntimeException('Confirmá las medidas y el peso reales del paquete antes de publicar.');
         $tokens = $this->loadTokens();
         [$code, $validation] = $this->request('/items/validate', $tokens['access_token'], $prepared['payload'], true);
-        if (!in_array($code, [200, 204], true)) {
+        if (!$this->publicationValidationPassed($code, $validation)) {
             $errors = array_map(static fn ($cause) => (string) ($cause['message'] ?? $cause['code'] ?? 'Dato pendiente'),
                 array_filter($validation['cause'] ?? [], static fn ($cause) => ($cause['type'] ?? 'error') === 'error'));
             if (!$errors) $errors = array_map(static fn ($cause) => (string) ($cause['message'] ?? $cause['code'] ?? ''), $validation['cause'] ?? []);
@@ -264,6 +264,16 @@ final class MercadoLibreService
             }
         }
         return ['ok' => true, 'item_id' => $item['id'], 'permalink' => $record['permalink'], 'description_saved' => $descriptionSaved];
+    }
+
+    private function publicationValidationPassed(int $code, array $validation): bool
+    {
+        if (in_array($code, [200, 204], true)) return true;
+        if ($code !== 400 || empty($validation['cause'])) return false;
+        foreach ($validation['cause'] as $cause) {
+            if (($cause['type'] ?? '') !== 'warning') return false;
+        }
+        return true;
     }
 
     private function requireConfiguration(): void
