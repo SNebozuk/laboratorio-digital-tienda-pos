@@ -152,16 +152,18 @@
     previous.addEventListener('click', () => { if (!busy) { offset = Math.max(0, offset - 20); check(true); } });
     next.addEventListener('click', () => { if (!busy) { offset += 20; check(true); } });
     const post = payload => request({method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({csrf_token: app.csrf_token, ...payload})});
-    async function publish(productId) {
+    async function publish(productId, onProgress = () => {}) {
         if (busy) throw new Error('MeLi está realizando otra operación. Intentá nuevamente en unos segundos.');
         busy = true;
         verify.disabled = true;
+        const report = (text, active = true) => { progress(text, active); onProgress(`Mercado Libre: ${text}`, active); };
         try {
             const base = {product_id: productId};
+            report('consultando ficha y talles disponibles…');
             const {variants} = await post({...base, action: 'publication_variants'});
             // Validate every size before creating the first listing.
             for (const variant of variants) {
-                progress(`validando ${variant.name}…`, true);
+                report(`validando ${variant.name} y calculando comisiones…`);
                 const result = await post({...base, variant_id: variant.id, action: 'validate_publication'});
                 if (!result.valid) {
                     const errors = (result.validation?.cause || []).filter(cause => cause.type !== 'warning').map(cause => cause.message || cause.code);
@@ -169,15 +171,17 @@
                 }
             }
             for (const variant of variants) {
-                progress(`publicando ${variant.name}…`, true);
+                report(`publicando ${variant.name}…`);
                 await post({...base, variant_id: variant.id, action: 'publish_product'});
             }
+            report('confirmando las publicaciones…');
             const result = await post({...base, action: 'finish_publication'});
             offset = 0;
+            report('actualizando la tabla MeLi…');
             try { await loadProducts(); } catch { /* Publication remains confirmed if the list cannot refresh. */ }
-            progress(result.message);
+            report(result.message, false);
             return result;
-        } catch (error) { progress(error.message); throw error; }
+        } catch (error) { report(error.message, false); throw error; }
         finally { busy = false; verify.disabled = false; }
     }
     window.MeliWorkspace = { activate: () => check(true), publish };

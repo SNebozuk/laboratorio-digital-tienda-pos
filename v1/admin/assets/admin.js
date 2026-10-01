@@ -1761,6 +1761,53 @@
             </div>` : '<p class="empty-copy">No encontramos productos con esos filtros.</p>'}`;
     }
 
+    function showMeliPublicationFocus(productId) {
+        const product = state.products.find(item => Number(item.id) === productId);
+        const dialog = document.createElement('dialog');
+        dialog.className = 'meli-publication-focus';
+        dialog.setAttribute('aria-label', `Publicación en Mercado Libre: ${product?.name || 'Producto'}`);
+        dialog.innerHTML = `<section class="meli-publication-focus-card"><header><h2>PUBLICAR EN MERCADO LIBRE</h2><button type="button" class="icon-action-button" aria-label="Cerrar resultado de publicación" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="meli-publication-focus-table product-list-table" role="table" aria-label="Producto elegido para MeLi"></div></section><footer class="meli-progress-footer meli-publication-focus-footer is-active" role="status" aria-live="polite" aria-atomic="true"><span class="meli-publication-focus-message">Mercado Libre: preparando la publicación…</span><span class="meli-progress-dots" aria-hidden="true"><i></i><i></i><i></i></span></footer>`;
+        const table = dialog.querySelector('[role="table"]');
+        const close = dialog.querySelector('button');
+        let running = true;
+        const refresh = () => {
+            table.replaceChildren();
+            const head = elements.productList.querySelector('.product-list-head');
+            if (head) table.append(head.cloneNode(true));
+            let row = elements.productList.querySelector(`[data-publish-meli="${productId}"]`)?.closest('.product-list-row');
+            while (row) {
+                const copy = row.cloneNode(true);
+                copy.querySelectorAll('button, input, select, textarea').forEach(control => { control.disabled = true; control.removeAttribute('aria-busy'); });
+                copy.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+                table.append(copy);
+                row = row.nextElementSibling?.classList.contains('product-variant-inline-row') ? row.nextElementSibling : null;
+            }
+        };
+        refresh();
+        dialog.addEventListener('cancel', event => { if (running) event.preventDefault(); });
+        close.addEventListener('click', () => dialog.close());
+        dialog.addEventListener('close', () => {
+            dialog.remove();
+            elements.productList.querySelector(`[data-publish-meli="${productId}"]`)?.focus();
+        });
+        document.body.append(dialog);
+        dialog.showModal();
+        return {
+            progress(message, active = true) {
+                dialog.querySelector('.meli-publication-focus-message').textContent = message;
+                dialog.querySelector('footer').classList.toggle('is-active', active);
+            },
+            finish(failed) {
+                running = false;
+                refresh();
+                dialog.querySelector('footer').classList.remove('is-active');
+                dialog.querySelector('footer').classList.add(failed ? 'is-error' : 'is-success');
+                close.disabled = false;
+                close.focus();
+            }
+        };
+    }
+
     function variantFormRow(variant = {}, single = false) {
         return `
             <div class="variant-form-row ${single ? 'single-variant-row' : ''}" data-variant-row data-variant-id="${Number(variant.id || 0)}" data-variant-stock-original="${Number(variant.stock_on_hand || 0)}">
@@ -6773,13 +6820,20 @@
         const publishMeli = event.target.closest('[data-publish-meli]');
         if (publishMeli) {
             if (publishMeli.disabled) return;
+            const productId = Number(publishMeli.dataset.publishMeli);
+            const focus = showMeliPublicationFocus(productId);
+            let failed = false;
             publishMeli.disabled = true;
             publishMeli.setAttribute('aria-busy', 'true');
             try {
-                const result = await window.MeliWorkspace.publish(Number(publishMeli.dataset.publishMeli));
+                const result = await window.MeliWorkspace.publish(productId, focus.progress);
                 toast(result.message);
-            } catch (error) { toast(error.message); }
-            finally { await loadProducts(); }
+            } catch (error) { failed = true; focus.progress(error.message, false); toast(error.message); }
+            finally {
+                try { await loadProducts(); }
+                catch { /* Keep the publication result visible if the local list cannot refresh. */ }
+                focus.finish(failed);
+            }
             return;
         }
         const productVisibility = event.target.closest('[data-product-visibility]');
