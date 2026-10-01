@@ -149,17 +149,17 @@ final class MercadoLibreService
         if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta para consultar las publicaciones.');
         $tokens = $this->loadTokens();
         $offset = max(0, min(980, $offset));
-        [$code, $search] = $this->request('/users/' . $status['user_id'] . '/items/search?limit=20&offset=' . $offset, $tokens['access_token']);
+        [$code, $search] = $this->request('/users/' . $status['user_id'] . '/items/search?limit=20&orders=start_time_desc&offset=' . $offset, $tokens['access_token']);
         if ($code !== 200) throw new \RuntimeException('No se pudieron consultar los productos publicados.');
         $items = [];
         if (!empty($search['results'])) {
             $ids = array_filter($search['results'], static fn ($id) => is_string($id) && preg_match('/^MLA\d+$/D', $id));
             [$code, $details] = $this->request('/items?ids=' . implode(',', $ids)
-                . '&attributes=id,title,family_name,price,currency_id,available_quantity,sold_quantity,status,permalink,listing_type_id,last_updated', $tokens['access_token']);
+                . '&attributes=id,title,family_name,price,currency_id,available_quantity,sold_quantity,status,sub_status,permalink,listing_type_id,last_updated', $tokens['access_token']);
             if ($code !== 200) throw new \RuntimeException('No se pudo actualizar la información de las publicaciones.');
             foreach ($details as $detail) {
                 if (($detail['code'] ?? 0) !== 200) throw new \RuntimeException('Una publicación no pudo consultarse. Volvé a actualizar.');
-                $items[] = $detail['body'];
+                if (!in_array('deleted', $detail['body']['sub_status'] ?? [], true)) $items[] = $detail['body'];
             }
         }
         $links = $this->listingLinks();
@@ -202,6 +202,109 @@ final class MercadoLibreService
             if ($code !== 200 || ($updated['status'] ?? '') !== $target) throw new \RuntimeException('Meli no confirmó el cambio de estado. Actualizá el panel antes de reintentar.');
         }
         return ['ok' => true, 'message' => $target === 'active' ? 'Publicación reactivada.' : 'Publicación pausada.'];
+    }
+
+    public function deleteListing(string $itemId): array
+    {
+        [$item, $token] = $this->ownedItem($itemId);
+        $links = $this->listingLinks();
+        $productId = (int) ($links[$itemId]['product_id'] ?? 0);
+        $targets = $productId ? array_filter($links, static fn ($link) => (int) $link['product_id'] === $productId) : [$itemId => null];
+        try {
+            foreach ($targets as $id => $link) {
+                [$current, $accessToken] = $id === $itemId ? [$item, $token] : $this->ownedItem($id);
+                if (!in_array('deleted', $current['sub_status'] ?? [], true)) {
+                    if ($current['status'] !== 'closed' && !in_array('forbidden', $current['sub_status'] ?? [], true)) {
+                        [$code, $closed] = $this->request('/items/' . $id, $accessToken, ['status' => 'closed'], true, 'PUT');
+                        if ($code !== 200 || ($closed['status'] ?? '') !== 'closed') throw new \RuntimeException('MeLi no confirmó el cierre. La vinculación se conserva para reintentar.');
+                    }
+                    [$code, $deleted] = $this->request('/items/' . $id, $accessToken, ['deleted' => true], true, 'PUT');
+                    if ($code !== 200 || !in_array('deleted', $deleted['sub_status'] ?? [], true)) throw new \RuntimeException('MeLi no confirmó la eliminación. Esperá unos segundos y reintentá; la vinculación se conserva.');
+                }
+                if ($link) $this->pdo->prepare('DELETE FROM settings WHERE key=?')->execute(['meli_listing_' . $link['variant_id']]);
+                $this->pdo->prepare('DELETE FROM settings WHERE key=?')->execute(['meli_price_quote_' . $id]);
+            }
+        } catch (\Throwable $error) {
+            if ($productId) $this->publicationError($productId, $error->getMessage());
+            throw $error;
+        }
+        if ($productId) {
+            // Failed attempts are safe to discard; uncertain creations must remain blocked.
+            foreach ($this->pdo->query("SELECT key,value FROM settings WHERE key GLOB 'meli_listing_[0-9]*'") as $row) {
+                $record = json_decode($row['value'], true);
+                if ((int) ($record['product_id'] ?? 0) === $productId && ($record['state'] ?? '') === 'failed') {
+                    $this->pdo->prepare('DELETE FROM settings WHERE key=?')->execute([$row['key']]);
+                }
+            }
+            $this->pdo->prepare('DELETE FROM settings WHERE key=?')->execute(['meli_publication_error_' . $productId]);
+        }
+        return ['ok' => true, 'message' => 'Publicación eliminada de MeLi.', 'product_id' => $productId];
+    }
+
+    public function publicationVariants(int $productId): array
+    {
+        $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
+        $q->execute(['meli_product_' . $productId]);
+        $draft = MercadoLibreProductDraft::normalize(json_decode((string) $q->fetchColumn(), true));
+        if (!$draft) throw new \RuntimeException('Completá y guardá la ficha de Mercado Libre del producto.');
+        $q = $this->pdo->prepare('SELECT v.id,v.name FROM product_variants v JOIN products p ON p.id=v.product_id WHERE p.id=? AND p.active=1 AND p.deleted_at IS NULL AND v.active=1 AND v.stock_on_hand>0 ORDER BY v.id');
+        $q->execute([$productId]);
+        $variants = array_values(array_filter($q->fetchAll(), static fn ($v) => $draft['publish_all_variants'] || (int) $v['id'] === $draft['variant_id']));
+        if (!$variants) throw new \RuntimeException('El producto no tiene variantes activas con stock para publicar.');
+        $states = MercadoLibreProductDraft::publicationStates($this->pdo)[$productId] ?? [];
+        $published = array_column($states['items'] ?? [], 'variant_id');
+        foreach ($this->pdo->query("SELECT value FROM settings WHERE key GLOB 'meli_listing_[0-9]*'") as $row) {
+            $record = json_decode($row['value'], true);
+            if ((int) ($record['product_id'] ?? 0) === $productId && ($record['state'] ?? '') === 'pending') {
+                throw new \RuntimeException('Hay un envío pendiente de confirmar. Revisá MeLi antes de volver a publicar; no se crearán duplicados.');
+            }
+        }
+        return ['ok' => true, 'variants' => array_values(array_filter($variants, static fn ($v) => !in_array((int) $v['id'], $published, true)))];
+    }
+
+    public function publicationError(int $productId, string $message): void
+    {
+        $q = $this->pdo->prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP');
+        $q->execute(['meli_publication_error_' . $productId, json_encode(['product_id' => $productId, 'state' => 'failed', 'message' => $message], JSON_THROW_ON_ERROR)]);
+    }
+
+    public function sizeChart(string $chartId): array
+    {
+        if (!ctype_digit($chartId)) throw new \RuntimeException('Ingresá el ID numérico de la guía de MeLi.');
+        $status = $this->status();
+        if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta de Mercado Libre.');
+        $tokens = $this->loadTokens();
+        [$code, $chart] = $this->request('/catalog/charts/' . $chartId, $tokens['access_token']);
+        if ($code !== 200 || ($chart['site_id'] ?? '') !== 'MLA' || !in_array($chart['domain_id'] ?? '', ['T_SHIRTS', 'MLA-T_SHIRTS'], true)
+            || ($chart['type'] ?? '') !== 'SPECIFIC' || (int) ($chart['seller_id'] ?? 0) !== $status['user_id']) {
+            throw new \RuntimeException('La guía debe ser una guía personalizada de remeras de la cuenta conectada.');
+        }
+        return ['ok' => true, 'chart' => $chart];
+    }
+
+    public function finishPublication(int $productId): array
+    {
+        if ($this->publicationVariants($productId)['variants']) throw new \RuntimeException('Todavía hay talles sin publicar.');
+        $states = MercadoLibreProductDraft::publicationStates($this->pdo)[$productId] ?? [];
+        if (empty($states['items'])) throw new \RuntimeException('No hay una publicación confirmada.');
+        foreach ($states['items'] as $record) {
+            if (($record['description_saved'] ?? true) !== false) continue;
+            $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
+            $q->execute(['meli_product_' . $productId]);
+            $draft = json_decode((string) $q->fetchColumn(), true);
+            $status = $this->status();
+            if (!$status['connected']) throw new \RuntimeException('Conectá MeLi para completar la descripción pendiente.');
+            $tokens = $this->loadTokens();
+            $path = '/items/' . $record['item_id'] . '/description';
+            [$existingCode, $existing] = $this->request($path, $tokens['access_token']);
+            if ($existingCode === 200 && ($existing['plain_text'] ?? '') === $draft['description']) $code = 200;
+            else [$code] = $this->request($path, $tokens['access_token'], ['plain_text' => $draft['description']], true, $existingCode === 404 ? 'POST' : 'PUT');
+            if (!in_array($code, [200, 201], true)) throw new \RuntimeException('La publicación existe, pero MeLi no confirmó su descripción. Reintentá para completarla sin duplicar.');
+            $record['description_saved'] = true;
+            $this->pdo->prepare('UPDATE settings SET value=?,updated_at=CURRENT_TIMESTAMP WHERE key=?')->execute([json_encode($record, JSON_THROW_ON_ERROR), 'meli_listing_' . $record['variant_id']]);
+        }
+        $this->pdo->prepare('DELETE FROM settings WHERE key=?')->execute(['meli_publication_error_' . $productId]);
+        return ['ok' => true, 'message' => 'Producto publicado en MeLi.'];
     }
 
     private function linkedPrice(string $itemId, array $item, string $token): array
@@ -286,19 +389,36 @@ final class MercadoLibreService
             });
     }
 
-    public function preparePublication(int $productId): array
+    public function preparePublication(int $productId, int $variantId = 0): array
     {
         $query = $this->pdo->prepare('SELECT value FROM settings WHERE key = :key');
         $query->execute(['key' => 'meli_product_' . $productId]);
         $draft = MercadoLibreProductDraft::normalize(json_decode((string) $query->fetchColumn(), true));
         if (!$draft || !$draft['pricing']) throw new \RuntimeException('Guardá la ficha y calculá el precio antes de publicar.');
-        $query = $this->pdo->prepare('SELECT v.id,v.sku,v.price_cents,v.stock_on_hand FROM product_variants v JOIN products p ON p.id=v.product_id WHERE p.id=:product AND v.id=:variant AND p.active=1 AND p.deleted_at IS NULL AND v.active=1');
+        if ($variantId && !$draft['publish_all_variants'] && $variantId !== $draft['variant_id']) throw new \RuntimeException('La variante no está seleccionada en la ficha.');
+        if ($variantId) $draft['variant_id'] = $variantId;
+        $query = $this->pdo->prepare('SELECT v.id,v.name,v.sku,v.barcode,v.price_cents,v.stock_on_hand,p.name AS product_name FROM product_variants v JOIN products p ON p.id=v.product_id WHERE p.id=:product AND v.id=:variant AND p.active=1 AND p.deleted_at IS NULL AND v.active=1');
         $query->execute(['product' => $productId, 'variant' => $draft['variant_id']]);
         $variant = $query->fetch();
         if (!$variant || (int) $variant['stock_on_hand'] < 1) throw new \RuntimeException('La variante no está activa o no tiene stock.');
+        if (!$draft['package_confirmed']) throw new \RuntimeException('Confirmá las medidas y el peso del paquete en la ficha.');
+        foreach (['SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT'] as $id) {
+            if (empty($draft['attributes'][$id])) throw new \RuntimeException('Completá las cuatro medidas del paquete: largo, ancho, alto y peso.');
+        }
+        if (!$draft['family_name'] || !$draft['pictures']) throw new \RuntimeException('Completá el título y las fotos de Mercado Libre.');
+        if (preg_match('/remera/i', $variant['product_name'])) $draft['attributes']['BRAND'] = 'Generic';
+        if ($draft['category_id'] === 'MLA109042') {
+            $draft['attributes']['SIZE'] = preg_replace('/^talle\s*/i', '', trim($variant['name']));
+            $row = $draft['size_grid_rows'][$variant['id']] ?? '';
+            if (!$row || empty($draft['attributes']['SIZE_GRID_ID'])) throw new \RuntimeException('Vinculá la guía de talles de MeLi y su fila para ' . $variant['name'] . '.');
+            $draft['attributes']['SIZE_GRID_ROW_ID'] = $row;
+        }
+        $draft['attributes']['SELLER_SKU'] = str_starts_with((string) $variant['sku'], '__AUTO__') ? '' : (string) $variant['sku'];
+        $draft['attributes']['GTIN'] = (string) ($variant['barcode'] ?? '');
         $draft['pricing']['base_price_cents'] = (int) $variant['price_cents'];
         $pricing = $this->calculateProductPrice($draft)['pricing'];
         $requirements = $this->productRequirements($draft['category_id']);
+        if ($draft['publish_all_variants'] && !$requirements['user_product_seller']) throw new \RuntimeException('La cuenta debe habilitar precio por variación para publicar todos los talles con sus precios propios.');
         $convert = static function (array $values, array $definitions): array {
             $attributes = [];
             foreach ($definitions as $definition) {
@@ -320,6 +440,9 @@ final class MercadoLibreService
             'attributes' => $convert($draft['attributes'], $requirements['attributes']),
             'sale_terms' => $convert($draft['sale_terms'], $requirements['sale_terms']),
             'shipping' => ['mode' => $draft['shipping_mode'], 'local_pick_up' => $draft['local_pick_up'], 'free_shipping' => $draft['free_shipping']]];
+        foreach (['SIZE_GRID_ID', 'SIZE_GRID_ROW_ID'] as $id) {
+            if (!empty($draft['attributes'][$id]) && !in_array($id, array_column($payload['attributes'], 'id'), true)) $payload['attributes'][] = ['id' => $id, 'value_name' => $draft['attributes'][$id]];
+        }
         $payload[$requirements['user_product_seller'] ? 'family_name' : 'title'] = $draft['family_name'];
         if ($draft['catalog_product_id'] !== '') {
             $payload['catalog_product_id'] = $draft['catalog_product_id'];
@@ -328,22 +451,26 @@ final class MercadoLibreService
         return ['payload' => $payload, 'draft' => $draft, 'pricing' => $pricing, 'variant_id' => (int) $variant['id']];
     }
 
-    public function validatePublication(int $productId): array
+    public function validatePublication(int $productId, int $variantId = 0): array
     {
-        $prepared = $this->preparePublication($productId);
+        $prepared = $this->preparePublication($productId, $variantId);
         $tokens = $this->loadTokens();
         [$code, $conditional] = $this->request('/categories/' . $prepared['payload']['category_id'] . '/attributes/conditional',
             $tokens['access_token'], $prepared['payload'], true);
         if ($code !== 200) throw new \RuntimeException('No se pudieron validar los atributos condicionales.');
         [$code, $validation] = $this->request('/items/validate', $tokens['access_token'], $prepared['payload'], true);
+        if (!$this->publicationValidationPassed($code, $validation)) {
+            $errors = array_map(static fn ($cause) => (string) ($cause['message'] ?? $cause['code'] ?? 'Dato pendiente'), array_filter($validation['cause'] ?? [], static fn ($cause) => ($cause['type'] ?? 'error') !== 'warning'));
+            $this->publicationError($productId, implode(' · ', $errors) ?: 'MeLi rechazó la ficha.');
+        }
         return ['ok' => true, 'valid' => $this->publicationValidationPassed($code, $validation), 'validation' => $validation,
             'conditional_required' => $conditional['required_attributes'] ?? [],
             'package_confirmed' => $prepared['draft']['package_confirmed'], 'price_cents' => $prepared['pricing']['price_cents']];
     }
 
-    public function publishProduct(int $productId): array
+    public function publishProduct(int $productId, int $variantId = 0): array
     {
-        $prepared = $this->preparePublication($productId);
+        $prepared = $this->preparePublication($productId, $variantId);
         if (!$prepared['draft']['package_confirmed']) throw new \RuntimeException('Confirmá las medidas y el peso reales del paquete antes de publicar.');
         $tokens = $this->loadTokens();
         [$code, $validation] = $this->request('/items/validate', $tokens['access_token'], $prepared['payload'], true);
@@ -386,6 +513,8 @@ final class MercadoLibreService
                 $descriptionSaved = false;
             }
         }
+        $record['description_saved'] = $descriptionSaved;
+        $query->execute(['key' => $key, 'value' => json_encode($record, JSON_THROW_ON_ERROR)]);
         return ['ok' => true, 'item_id' => $item['id'], 'permalink' => $record['permalink'], 'description_saved' => $descriptionSaved];
     }
 

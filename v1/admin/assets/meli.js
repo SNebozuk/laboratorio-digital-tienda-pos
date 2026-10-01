@@ -21,6 +21,7 @@
         stock: '<path d="m3 7 9-4 9 4-9 4Z M3 7v10l9 4 9-4V7M12 11v10"/>',
         apply: '<path d="m5 12 4 4L19 6"/>',
         cancel: '<path d="m6 6 12 12M18 6 6 18"/>',
+        trash: '<path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/>',
         external: '<path d="M14 3h7v7M21 3l-11 11M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/>'
     };
     const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name]}</svg>`;
@@ -60,7 +61,7 @@
             const statusAction = ['active', 'paused'].includes(item.status) ? actionButton('listing_status', item.status === 'active' ? 'Pausar' : 'Reactivar', item.status === 'active' ? 'pause' : 'play', `data-status="${item.status === 'active' ? 'paused' : 'active'}"`) : '';
             const quote = quotes.get(item.id);
             const pricing = quote ? `<div class="meli-price-review" role="status"><span>Nuevo precio: ${escape(money(quote.pricing.price_cents))} · Comisiones: ${escape(money(quote.pricing.sale_fee_cents + quote.pricing.listing_fee_cents))} · Neto estimado: ${escape(money(quote.pricing.net_cents))}</span>${actionButton('apply_listing_price', 'Aplicar precio', 'apply')}${actionButton('cancel_quote', 'Cancelar', 'cancel')}</div>` : '';
-            return `<tr data-item-id="${escape(item.id)}"><td>${escape(item.title || item.family_name)}<small>${escape(item.id)} · ${escape(({gold_special: 'Clásica', gold_pro: 'Premium', free: 'Gratuita'})[item.listing_type_id] || item.listing_type_id)}</small></td><td>${escape(Number(item.price).toLocaleString('es-AR', {style: 'currency', currency: item.currency_id || 'ARS'}))}</td><td>${Number(item.available_quantity)}</td><td>${Number(item.sold_quantity)}</td><td>${escape(states[item.status] || item.status)}</td><td>${href ? `<a class="icon-action-button" href="${escape(href)}" target="_blank" rel="noopener noreferrer" title="Ver en MeLi" aria-label="Ver en MeLi">${icon('external')}</a>` : '—'}</td><td><div class="meli-listing-actions">${statusAction}${item.linked ? actionButton('preview_listing_price', 'Recalcular precio', 'price') + actionButton('sync_listing_stock', 'Sincronizar stock', 'stock') : '<small>Precio y stock: sin producto vinculado.</small>'}${pricing}</div></td></tr>`;
+            return `<tr data-item-id="${escape(item.id)}"><td>${escape(item.title || item.family_name)}<small>${escape(item.id)} · ${escape(({gold_special: 'Clásica', gold_pro: 'Premium', free: 'Gratuita'})[item.listing_type_id] || item.listing_type_id)}</small></td><td>${escape(Number(item.price).toLocaleString('es-AR', {style: 'currency', currency: item.currency_id || 'ARS'}))}</td><td>${Number(item.available_quantity)}</td><td>${Number(item.sold_quantity)}</td><td>${escape(states[item.status] || item.status)}</td><td>${href ? `<a class="icon-action-button" href="${escape(href)}" target="_blank" rel="noopener noreferrer" title="Ver en MeLi" aria-label="Ver en MeLi">${icon('external')}</a>` : '—'}</td><td><div class="meli-listing-actions">${statusAction}${item.linked ? actionButton('preview_listing_price', 'Recalcular precio', 'price') + actionButton('sync_listing_stock', 'Sincronizar stock', 'stock') : '<small>Precio y stock: sin producto vinculado.</small>'}${actionButton('delete_listing', 'Eliminar publicación', 'trash')}${pricing}</div></td></tr>`;
         }).join('')}</tbody></table></div>` : '<p>Todavía no hay productos publicados en esta cuenta.</p>';
         previous.hidden = data.offset <= 0;
         next.hidden = data.offset + data.products.length >= data.total || data.offset >= 980;
@@ -73,8 +74,9 @@
         const row = button.closest('[data-item-id]');
         const itemId = row.dataset.itemId;
         const action = button.dataset.action;
+        if (action === 'delete_listing' && !window.confirm('¿Eliminar esta publicación de Mercado Libre? Si está vinculada a un producto, se eliminarán también las publicaciones de sus otros talles.')) return;
         if (action === 'cancel_quote') { quotes.delete(itemId); row.querySelector('.meli-price-review')?.remove(); return; }
-        const labels = {listing_status: button.dataset.status === 'active' ? 'reactivando publicación…' : 'pausando publicación…', preview_listing_price: 'consultando comisiones y recalculando precio…', apply_listing_price: 'aplicando el precio revisado…', sync_listing_stock: 'reconciliando el stock de la tienda y Meli…'};
+        const labels = {delete_listing: 'eliminando publicación y talles vinculados…', listing_status: button.dataset.status === 'active' ? 'reactivando publicación…' : 'pausando publicación…', preview_listing_price: 'consultando comisiones y recalculando precio…', apply_listing_price: 'aplicando el precio revisado…', sync_listing_stock: 'reconciliando el stock de la tienda y Meli…'};
         busy = true;
         verify.disabled = true;
         products.querySelectorAll('button').forEach(control => { control.disabled = true; });
@@ -86,9 +88,14 @@
             })});
             if (action === 'preview_listing_price') quotes.set(itemId, data);
             else quotes.delete(itemId);
+            if (action === 'delete_listing') window.dispatchEvent(new CustomEvent('meli-publication-changed'));
             await loadProducts();
             progress(data.message || 'Precio calculado. Revisá el importe antes de aplicarlo.');
         } catch (error) {
+            if (action === 'delete_listing') {
+                window.dispatchEvent(new CustomEvent('meli-publication-changed'));
+                try { await loadProducts(); } catch {}
+            }
             progress(error.message || 'No se pudo completar la operación.');
         } finally {
             busy = false;
@@ -144,7 +151,36 @@
     verify.addEventListener('click', () => check(true));
     previous.addEventListener('click', () => { if (!busy) { offset = Math.max(0, offset - 20); check(true); } });
     next.addEventListener('click', () => { if (!busy) { offset += 20; check(true); } });
-    window.MeliWorkspace = { activate: () => check(true) };
+    const post = payload => request({method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({csrf_token: app.csrf_token, ...payload})});
+    async function publish(productId) {
+        if (busy) throw new Error('MeLi está realizando otra operación. Intentá nuevamente en unos segundos.');
+        busy = true;
+        verify.disabled = true;
+        try {
+            const base = {product_id: productId};
+            const {variants} = await post({...base, action: 'publication_variants'});
+            // Validate every size before creating the first listing.
+            for (const variant of variants) {
+                progress(`validando ${variant.name}…`, true);
+                const result = await post({...base, variant_id: variant.id, action: 'validate_publication'});
+                if (!result.valid) {
+                    const errors = (result.validation?.cause || []).filter(cause => cause.type !== 'warning').map(cause => cause.message || cause.code);
+                    throw new Error(`${variant.name}: ${errors.join(' · ') || 'MeLi rechazó la ficha.'}`);
+                }
+            }
+            for (const variant of variants) {
+                progress(`publicando ${variant.name}…`, true);
+                await post({...base, variant_id: variant.id, action: 'publish_product'});
+            }
+            const result = await post({...base, action: 'finish_publication'});
+            offset = 0;
+            try { await loadProducts(); } catch { /* Publication remains confirmed if the list cannot refresh. */ }
+            progress(result.message);
+            return result;
+        } catch (error) { progress(error.message); throw error; }
+        finally { busy = false; verify.disabled = false; }
+    }
+    window.MeliWorkspace = { activate: () => check(true), publish };
     check();
     window.setInterval(() => {
         if (!document.hidden && panel.classList.contains('active')) check();

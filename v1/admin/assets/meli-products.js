@@ -13,18 +13,34 @@
         ['VALUE_ADDED_TAX', 'IVA'], ['IMPORT_DUTY', 'Impuesto interno'], ['EMPTY_GTIN_REASON', 'Motivo de GTIN vacío'],
     ].map(([id, name, required]) => ({ id, name, tags: { required: !!required } }));
     const visibleHidden = new Set(seedAttributes.map(a => a.id));
+    const shirtAttributes = [
+        ['BRAND', 'Marca'], ['MODEL', 'Modelo'], ['GENDER', 'Género'], ['CLOTHING_TYPE', 'Tipo de prenda'],
+        ['MAIN_MATERIAL', 'Material principal'], ['COLOR', 'Color'], ['MAIN_COLOR', 'Color principal'],
+        ['SLEEVE_TYPE', 'Tipo de manga'], ['NECKLINE', 'Cuello'], ['FABRIC_DESIGN', 'Diseño de tela'],
+        ['SALE_FORMAT', 'Formato de venta'], ['UNITS_PER_PACK', 'Unidades'], ['SIZE_GRID_ID', 'ID de guía de talles en MeLi'],
+        ['EMPTY_GTIN_REASON', 'Motivo de código universal vacío'],
+        ...seedAttributes.filter(a => a.id.startsWith('SELLER_PACKAGE_')).map(a => [a.id, a.name])
+    ].map(([id, name]) => ({id, name, tags: {}}));
+    shirtAttributes.forEach(a => visibleHidden.add(a.id));
 
     function preset(product) {
         const variant = product?.variants?.[0];
+        const shirt = /remera/i.test(product?.name || '');
         const isTest = /art[-‑\s]?jet/i.test(product?.name || '') && /\b200\s*g\b/i.test(product?.name || '')
             && /\ba4\b/i.test(product?.name || '') && /\b20\s*hojas\b/i.test(product?.name || '');
         return {
-            category_id: isTest ? 'MLA416632' : '', family_name: isTest ? 'Papel fotográfico brillante Art-Jet A4 200g 20 hojas' : product?.name || '',
+            category_id: shirt ? 'MLA109042' : isTest ? 'MLA416632' : '', family_name: isTest ? 'Papel fotográfico brillante Art-Jet A4 200g 20 hojas' : product?.name || '',
             description: product?.description || '', variant_id: Number(variant?.id || 0),
             condition: 'new', listing_type_id: isTest ? 'gold_special' : '', shipping_mode: isTest ? 'not_specified' : '', logistic_type: isTest ? 'not_specified' : '', catalog_product_id: isTest ? 'MLA28818853' : '',
             local_pick_up: false, free_shipping: false, package_confirmed: false,
+            publish_all_variants: shirt, size_grid_rows: {},
             pictures: product?.image_path ? [new URL(product.image_path, window.location.origin).href] : [],
-            attributes: isTest ? { BRAND: 'Art-Jet', PAPER_SIZE: 'A4', PAPER_TYPE: 'Fotográfico', COLOR: 'Blanco',
+            attributes: shirt ? {BRAND: 'Generic', MODEL: product?.name || '', CLOTHING_TYPE: 'Remera',
+                ...(/unisex/i.test(product?.name || '') ? {GENDER: 'Sin género'} : {}),
+                ...(/algod[oó]n/i.test(product?.name || '') ? {MAIN_MATERIAL: 'Algodón'} : {}),
+                ...(/negro|negra/i.test(product?.name || '') ? {COLOR: 'Negro', MAIN_COLOR: 'Negro'} : {}),
+                SALE_FORMAT: 'Unidad', UNITS_PER_PACK: '1', SELLER_PACKAGE_LENGTH: '30 cm',
+                SELLER_PACKAGE_WIDTH: '25 cm', SELLER_PACKAGE_HEIGHT: '3 cm', SELLER_PACKAGE_WEIGHT: '250 g'} : isTest ? { BRAND: 'Art-Jet', PAPER_SIZE: 'A4', PAPER_TYPE: 'Fotográfico', COLOR: 'Blanco',
                 MAIN_COLOR: 'Blanco', SHEETS_NUMBER: '20', GRAMMAGE: '200 g', SALE_FORMAT: 'Unidad', UNITS_PER_PACK: '1',
                 FINISH: 'Brillante', MODEL: 'A4 200 g 20 hojas', GTIN: variant?.barcode || '', SELLER_SKU: variant?.sku || '',
                 LENGTH: '29.7 cm', WIDTH: '21 cm', WEIGHT: '249.48 g', SELLER_PACKAGE_LENGTH: '32 cm',
@@ -49,8 +65,9 @@
     }
     function renderAttributes(editor, attributes, terms) {
         editor.attributes = attributes;
-        const primary = attributes.filter(a => !a.tags?.hidden || visibleHidden.has(a.id) || a.tags?.required || a.tags?.conditional_required);
-        const optional = attributes.filter(a => !primary.includes(a));
+        const editable = editor.root.querySelector('[data-meli-size-chart]') ? attributes.filter(a => !['SIZE_GRID_ID', 'SIZE_GRID_ROW_ID'].includes(a.id)) : attributes;
+        const primary = editable.filter(a => !a.tags?.hidden || visibleHidden.has(a.id) || a.tags?.required || a.tags?.conditional_required);
+        const optional = editable.filter(a => !primary.includes(a));
         editor.root.querySelector('[data-meli-technical]').innerHTML = `<div class="meli-product-grid">${primary.map(a => attributeField(a, editor.draft.attributes, 'attribute')).join('')}</div>
             ${optional.length ? `<details><summary>Otros atributos de la categoría</summary><div class="meli-product-grid">${optional.map(a => attributeField(a, editor.draft.attributes, 'attribute')).join('')}</div></details>` : ''}
             <details><summary>Garantía, facturación y condiciones de venta</summary><div class="meli-product-grid">${terms.map(a => attributeField(a, editor.draft.sale_terms, 'term')).join('')}</div></details>`;
@@ -61,6 +78,10 @@
             draft[el.dataset.meliField] = el.type === 'checkbox' ? el.checked : el.value.trim();
         });
         draft.variant_id = Number(draft.variant_id || 0);
+        draft.size_grid_rows = {};
+        editor.root.querySelectorAll('[data-meli-size-row]').forEach(input => {
+            if (input.value.trim()) draft.size_grid_rows[input.dataset.meliSizeRow] = input.value.trim();
+        });
         ['attribute', 'term'].forEach(group => editor.root.querySelectorAll(`[data-meli-${group}]`).forEach(el => {
             draft[group === 'attribute' ? 'attributes' : 'sale_terms'][el.dataset[group === 'attribute' ? 'meliAttribute' : 'meliTerm']] = el.value.trim();
         }));
@@ -140,14 +161,20 @@
         if (!draft.listing_type_id) missing.push('Tipo de publicación');
         if (!draft.shipping_mode) missing.push('Modalidad de envío');
         if (!draft.pictures.length) missing.push('Foto');
+        if (editor.root.querySelector('[data-meli-size-chart]')) {
+            if (!draft.attributes.SIZE_GRID_ID) missing.push('Guía de talles en MeLi');
+            editor.root.querySelectorAll('[data-meli-size-row]').forEach(input => {
+                if (!input.value.trim()) missing.push(`Fila MeLi de ${input.closest('label').firstChild.textContent.trim()}`);
+            });
+        }
         if (!draft.package_confirmed) missing.push('Medir y confirmar el paquete');
-        if (!draft.pricing?.price_cents) missing.push('Calcular precio Meli con comisiones');
+        if (!draft.pricing?.billable_weight) missing.push('Peso facturable');
         const variant = editor.form.querySelector(`[data-variant-row][data-variant-id="${draft.variant_id}"]`) || editor.form.querySelector('[data-variant-row]');
         if (!variant || Number(variant.querySelector('.variant-price').value) <= 0) missing.push('Precio');
         if (!variant || Number(variant.querySelector('.variant-stock').value) <= 0) missing.push('Stock');
         editor.root.querySelector('[data-meli-review]').textContent = missing.length
             ? `Pendiente: ${missing.join(', ')}. Los campos condicionales dependen de la validación de Mercado Libre.`
-            : 'Ficha completada para revisión. Falta validar las condiciones y el catálogo con Mercado Libre antes de publicar.';
+            : 'Ficha preparada. Guardá los cambios y presioná el botón MeLi en Productos: validará cada talle y calculará las comisiones vigentes antes de publicar.';
     }
     function calculatePaperWeight(editor) {
         collect(editor);
@@ -226,10 +253,61 @@
         select.innerHTML = '<option value="">Elegir</option>' + options.map(type => `<option value="${esc(type.type)}">${esc(({not_specified: 'A convenir', custom: 'Envío propio', drop_off: 'Despacho en sucursal', cross_docking: 'Colecta', fulfillment: 'Full', self_service: 'Flex'})[type.type] || type.type)}</option>`).join('');
         select.value = options.some(type => type.type === previous) ? previous : options.length === 1 ? options[0].type : '';
     }
+    const sizeKey = value => String(value || '').trim().replace(/^talle\s*/i, '').toLocaleLowerCase('es');
+    async function incorporateSizes(editor, product) {
+        const app = JSON.parse(document.getElementById('admin-app-data').textContent);
+        const url = new URL(app.api_url, window.location.href);
+        url.searchParams.set('action', 'size_guide');
+        const response = await fetch(url, {credentials: 'same-origin', cache: 'no-store'});
+        const data = await response.json();
+        if (!response.ok || !data.size_guide) throw new Error(data.message || 'No se pudo consultar la tabla de talles.');
+        const groups = [...new Set(data.size_guide.rows.map(row => row.group))];
+        const select = editor.root.querySelector('[data-meli-size-group]');
+        const previous = select.value;
+        select.innerHTML = '<option value="">Elegir tabla</option>' + groups.map(group => `<option value="${esc(group)}">${esc(group)}</option>`).join('');
+        select.value = groups.includes(previous) ? previous : groups.length === 1 ? groups[0] : '';
+        if (!select.value) throw new Error('Elegí el grupo de la tabla de talles que corresponde a esta remera y volvé a incorporar las medidas.');
+        const rows = (product.variants || []).map(v => {
+            const matching = data.size_guide.rows.filter(row => row.group === select.value && sizeKey(row.size) === sizeKey(v.name));
+            if (matching.length !== 1 || !matching[0].width || !matching[0].length) throw new Error(`Faltan medidas inequívocas para ${v.name} en ${select.value}.`);
+            return matching[0];
+        });
+        const description = editor.root.querySelector('[data-meli-field="description"]');
+        const base = description.value.split('\n\nGUÍA DE TALLES — ANCHO × LARGO')[0];
+        description.value = `${base}\n\nGUÍA DE TALLES — ANCHO × LARGO\n${rows.map(row => `Talle ${sizeKey(row.size)}: ${row.width} × ${row.length}`).join('\n')}\n${data.size_guide.intro || ''}`;
+        review(editor);
+        editor.progress.textContent = 'Medidas incorporadas desde la tabla elegida. Guardá la ficha para conservarlas.';
+    }
+    async function linkSizeChart(editor, product) {
+        const draft = collect(editor);
+        const app = JSON.parse(document.getElementById('admin-app-data').textContent);
+        const response = await fetch(new URL('meli.php', window.location.href), {method: 'POST', credentials: 'same-origin', cache: 'no-store',
+            headers: {'Content-Type': 'application/json'}, body: JSON.stringify({csrf_token: app.csrf_token, action: 'size_chart', chart_id: draft.attributes.SIZE_GRID_ID || ''})});
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudo consultar la guía.');
+        const main = data.chart.main_attribute_id || 'SIZE';
+        const assignments = (product.variants || []).map(variant => {
+            const rows = data.chart.rows.filter(row => row.attributes.some(a => a.id === main && a.values?.some(value => sizeKey(value.name) === sizeKey(variant.name))));
+            if (rows.length !== 1) throw new Error(`La guía no tiene una única fila correspondiente a ${variant.name}. No se asignan equivalencias automáticamente.`);
+            return [variant.id, rows[0].id];
+        });
+        assignments.forEach(([id, row]) => { editor.root.querySelector(`[data-meli-size-row="${id}"]`).value = row; });
+        review(editor);
+        editor.progress.textContent = 'Guía vinculada por talle. Revisá sus medidas y guardá la ficha.';
+    }
     function mount(form, product) {
         if (!form) return;
         const draft = product?.meli ? structuredClone(product.meli) : preset(product);
+        const shirt = /remera/i.test(product?.name || '');
         draft.attributes ||= {};
+        if (shirt) {
+            draft.attributes.BRAND = 'Generic';
+            draft.publish_all_variants ??= true;
+            const defaults = preset(product).attributes;
+            for (const id of ['SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']) {
+                if (!draft.attributes[id]) { draft.attributes[id] = defaults[id]; draft.package_confirmed = false; }
+            }
+        }
         draft.sale_terms ||= {};
         draft.logistic_type ||= ['custom', 'not_specified'].includes(draft.shipping_mode) ? draft.shipping_mode : '';
         const pricing = draft.pricing || {};
@@ -250,8 +328,16 @@
             ${select('shipping_mode', 'Modalidad de envío', draft.shipping_mode, draft.shipping_mode ? [[draft.shipping_mode, draft.shipping_mode]] : [])}
             ${select('logistic_type', 'Logística para calcular comisiones', draft.logistic_type, draft.logistic_type ? [[draft.logistic_type, draft.logistic_type]] : [])}</div>
             <button class="primary-button fit-button" type="button" data-meli-load>CONSULTAR REQUISITOS</button>
+            <label class="meli-product-checks"><input type="checkbox" data-meli-field="publish_all_variants" ${draft.publish_all_variants ? 'checked' : ''}> Publicar todas las variantes activas con stock, cada una con su precio y SKU</label>
+            ${shirt ? `<h3>TALLES DE LA REMERA</h3><p>Los talles sin stock no se publican. No se convierten los talles numéricos a S, M o L.</p>
+            <button class="primary-button fit-button" type="button" data-meli-size-description>INCORPORAR MEDIDAS DE TABLA DE TALLES</button>
+            <label>Tabla de medidas de esta remera<select data-meli-size-group><option value="">Elegir tabla</option></select></label>
+            <label>ID de guía personalizada de MeLi<input data-meli-attribute="SIZE_GRID_ID" value="${esc(draft.attributes.SIZE_GRID_ID || '')}" inputmode="numeric"></label>
+            <p>Usá una guía personalizada de remeras creada en tu cuenta de MeLi con estas mismas medidas. Ingresá su ID en la ficha técnica y cargá sus filas.</p>
+            <button class="primary-button fit-button" type="button" data-meli-size-chart>VINCULAR GUÍA DE MELI POR TALLE</button>
+            <div class="meli-size-rows">${(product?.variants || []).map(v => `<label>${esc(v.name)} · ID de fila MeLi<input data-meli-size-row="${Number(v.id)}" value="${esc(draft.size_grid_rows?.[v.id] || '')}" placeholder="123456:1"></label>`).join('')}</div>` : ''}
             <p data-meli-category-name></p>
-            <p>Moneda: ARS · Compra inmediata. El stock se toma de la variante seleccionada. Su precio es el neto objetivo que querés conservar al vender en Meli.</p>
+            <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>
             <h3>PRECIO MELI · COMISIONES Y GASTOS</h3>
             <div class="meli-product-grid">${costField('packaging', 'Embalaje por unidad · $', (pricing.packaging_cents || 0) / 100)}
             ${costField('shipping', 'Envío a tu cargo por unidad · $', (pricing.shipping_cents || 0) / 100)}
@@ -267,7 +353,7 @@
             <label>Descripción en texto plano<textarea data-meli-field="description" rows="4">${esc(draft.description)}</textarea></label>
             <label>Fotos · una URL HTTPS por línea<textarea data-meli-pictures rows="3">${esc((draft.pictures || []).join('\n'))}</textarea></label>
             <h3>FICHA TÉCNICA Y PAQUETE</h3><div data-meli-technical></div>
-            <button class="primary-button fit-button" type="button" data-meli-calculate>CALCULAR PESO NETO DEL PAPEL</button>
+            ${shirt ? '<p>Peso y paquete orientativos para una remera de espesor medio: 250 g y 30 × 25 × 3 cm. Revisalos antes de publicar; la tabla de talles mide la prenda extendida.</p>' : '<button class="primary-button fit-button" type="button" data-meli-calculate>CALCULAR PESO NETO DEL PAPEL</button>'}
             ${draft.category_id === 'MLA416632' && draft.attributes.SHEETS_NUMBER === '20' && draft.attributes.PAPER_SIZE === 'A4' && draft.attributes.GRAMMAGE === '200 g' ? `<p>Para A4 de 200 g/m² × 20 hojas: 0,21 × 0,297 × 200 × 20 = <strong>249,48 g de papel</strong>. Las hojas miden 21 × 29,7 cm. Un paquete contiene 20 hojas; no son 20 paquetes.</p>
             <p>Propuesta de envío para el producto de prueba: <strong>32 × 23 × 1 cm y 280 g</strong>, con 30,52 g de margen para embalaje. Son estimaciones; el espesor y el peso final requieren medición.</p>` : '<p>Ingresá las medidas y el peso del paquete completo, incluyendo el embalaje.</p>'}
             <label class="meli-product-checks"><input type="checkbox" data-meli-field="package_confirmed" ${draft.package_confirmed ? 'checked' : ''}> Medí el paquete completo y confirmé las medidas y el peso cargados</label>
@@ -277,7 +363,7 @@
         const editor = { form, root, draft, sequence: 0, loadedCategory: draft.category_id, attributes: [],
             footer: root.querySelector('footer'), progress: root.querySelector('[data-meli-progress]') };
         editors.set(form, editor);
-        renderAttributes(editor, draft.category_id === 'MLA416632' ? seedAttributes : [], []);
+        renderAttributes(editor, shirt ? shirtAttributes : draft.category_id === 'MLA416632' ? seedAttributes : [], []);
         root.addEventListener('input', event => {
             if (event.target.matches('[data-meli-attribute^="SELLER_PACKAGE_"], [data-meli-attribute="LENGTH"], [data-meli-attribute="WIDTH"], [data-meli-attribute="GRAMMAGE"], [data-meli-attribute="SHEETS_NUMBER"]')) {
                 root.querySelector('[data-meli-field="package_confirmed"]').checked = false;
@@ -292,8 +378,17 @@
             if (event.target.matches('.variant-price')) review(editor);
         });
         root.querySelector('[data-meli-load]').addEventListener('click', () => requirements(editor));
-        root.querySelector('[data-meli-calculate]').addEventListener('click', () => calculatePaperWeight(editor));
+        root.querySelector('[data-meli-calculate]')?.addEventListener('click', () => calculatePaperWeight(editor));
         root.querySelector('[data-meli-price-calculate]').addEventListener('click', () => calculatePrice(editor));
+        for (const [selector, operation] of [['[data-meli-size-description]', incorporateSizes], ['[data-meli-size-chart]', linkSizeChart]]) {
+            root.querySelector(selector)?.addEventListener('click', async event => {
+                const button = event.currentTarget;
+                button.disabled = true;
+                try { await operation(editor, product); }
+                catch (error) { editor.progress.textContent = error.message; }
+                finally { button.disabled = false; }
+            });
+        }
         review(editor);
         if (draft.category_id) requirements(editor);
     }

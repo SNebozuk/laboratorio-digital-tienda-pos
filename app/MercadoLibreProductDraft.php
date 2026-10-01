@@ -30,6 +30,16 @@ final class MercadoLibreProductDraft
             throw new ValidationException('Condición o modalidad de envío inválida.');
         }
         $result['variant_id'] = max(0, (int) ($input['variant_id'] ?? 0));
+        $result['publish_all_variants'] = ($input['publish_all_variants'] ?? false) === true;
+        $result['size_grid_rows'] = [];
+        $gridRows = $input['size_grid_rows'] ?? [];
+        if (!is_array($gridRows) || count($gridRows) > 150) throw new ValidationException('Las filas de la guía de talles no son válidas.');
+        foreach ($gridRows as $variantId => $rowId) {
+            if (!ctype_digit((string) $variantId) || !is_string($rowId) || !preg_match('/^\d+:\d+$/D', $rowId)) {
+                throw new ValidationException('La fila de la guía de talles de Mercado Libre no es válida.');
+            }
+            $result['size_grid_rows'][(int) $variantId] = $rowId;
+        }
         foreach (['local_pick_up', 'free_shipping', 'package_confirmed'] as $key) {
             $result[$key] = ($input[$key] ?? false) === true;
         }
@@ -91,5 +101,23 @@ final class MercadoLibreProductDraft
             if (is_array($draft)) $drafts[(int) substr($row['key'], 13)] = $draft;
         }
         return $drafts;
+    }
+
+    public static function publicationStates(PDO $pdo): array
+    {
+        $states = [];
+        foreach ($pdo->query("SELECT key,value FROM settings WHERE key GLOB 'meli_listing_[0-9]*' OR key GLOB 'meli_publication_error_[0-9]*'") as $row) {
+            $record = json_decode($row['value'], true);
+            $id = (int) ($record['product_id'] ?? 0);
+            if (!$id) continue;
+            $states[$id] ??= ['state' => 'unpublished', 'items' => [], 'message' => ''];
+            if (($record['state'] ?? '') === 'published') $states[$id]['items'][] = $record;
+            if (in_array($record['state'] ?? '', ['pending', 'failed'], true)) {
+                $states[$id]['message'] = $record['message'] ?? 'Hay un envío pendiente de verificar en MeLi.';
+            }
+        }
+        foreach ($states as &$state) $state['state'] = $state['message'] !== '' ? 'failed' : ($state['items'] ? 'published' : 'unpublished');
+        unset($state);
+        return $states;
     }
 }

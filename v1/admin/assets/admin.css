@@ -4521,3 +4521,11 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .meli-listing-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; white-space: nowrap; }
 #view-meli .meli-listing-action { flex: 0 0 32px; width: 32px; height: 32px; min-height: 32px; padding: 0; background: #2563eb; color: #fff; border: 1px solid #2563eb; border-radius: 10px; }
 .meli-price-review { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-color, #334155); border-radius: 10px; white-space: nowrap; }
+
+.product-publication-actions { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.product-publication-actions .product-visibility { flex: 0 0 auto; }
+.product-meli-button { flex: 0 0 32px; border: 1px solid #64748b; border-radius: 10px; background: #64748b; color: #fff; }
+.product-meli-button.is-published { background: #ffe600; border-color: #d4bb00; color: #1e293b; }
+.product-meli-button.is-failed { background: #dc2626; border-color: #b91c1c; color: #fff; }
+.product-meli-button[aria-busy="true"] { opacity: .6; cursor: wait; }
+.meli-size-rows { display: grid; gap: 8px; }

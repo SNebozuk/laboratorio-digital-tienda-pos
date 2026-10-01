@@ -742,6 +742,7 @@ final class ProductService
     {
         $products = [];
         $meliDrafts = $admin ? MercadoLibreProductDraft::all($this->pdo) : [];
+        $meliStates = $admin ? MercadoLibreProductDraft::publicationStates($this->pdo) : [];
         foreach ($rows as $row) {
             $productId = (int) $row['product_id'];
             if (!isset($products[$productId])) {
@@ -759,6 +760,7 @@ final class ProductService
                     'variants' => [],
                 ];
                 if ($admin) $products[$productId]['meli'] = $meliDrafts[$productId] ?? null;
+                if ($admin) $products[$productId]['meli_publication'] = $meliStates[$productId] ?? ['state' => 'unpublished', 'items' => [], 'message' => ''];
             }
 
             $variant = [

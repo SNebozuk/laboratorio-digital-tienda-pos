@@ -1,0 +1,94 @@
+<?php
+declare(strict_types=1);
+
+// In-memory transport: these tests never contact or publish to Mercado Libre.
+namespace LaboratorioDigital;
+
+require dirname(__DIR__) . '/app/Database.php';
+require dirname(__DIR__) . '/app/Http.php';
+require dirname(__DIR__) . '/app/MercadoLibreService.php';
+
+function check(bool $condition, string $message): void { if (!$condition) throw new \RuntimeException($message); }
+function rejects(callable $fn, string $message): void {
+    try { $fn(); } catch (\RuntimeException $error) { return; }
+    throw new \RuntimeException($message);
+}
+function curl_init(string $url): object { return (object) ['url' => $url, 'options' => [], 'code' => 200]; }
+function curl_setopt_array(object $handle, array $options): bool { $handle->options += $options; return true; }
+function curl_setopt(object $handle, int $option, mixed $value): bool { $handle->options[$option] = $value; return true; }
+function curl_getinfo(object $handle, int $option): int { return $handle->code; }
+function curl_close(object $handle): void {}
+function curl_exec(object $handle): string|false {
+    $path = parse_url($handle->url, PHP_URL_PATH);
+    $body = json_decode($handle->options[CURLOPT_POSTFIELDS] ?? 'null', true);
+    $method = $handle->options[CURLOPT_CUSTOMREQUEST] ?? 'GET';
+    $GLOBALS['calls'][] = [$path, $method, $body];
+    if ($path === '/users/me' || $path === '/users/123') return json_encode(['id' => 123, 'tags' => ['user_product_seller']]);
+    if (str_ends_with($path, '/shipping_preferences')) return json_encode(['modes' => ['me2'], 'logistics' => [['mode' => 'me2', 'types' => [['type' => 'drop_off', 'status' => 'active']]]]]);
+    if (str_ends_with($path, '/available_listing_types')) return json_encode([['id' => 'gold_special']]);
+    if ($path === '/sites/MLA/listing_prices') return json_encode(['currency_id' => 'ARS', 'listing_type_id' => 'gold_special', 'sale_fee_amount' => 0, 'listing_fee_amount' => 0]);
+    if ($path === '/categories/MLA109042/attributes') return json_encode(array_map(static fn ($id) => ['id' => $id], ['BRAND', 'SIZE', 'COLOR', 'GENDER', 'SELLER_SKU', 'GTIN', 'SIZE_GRID_ID', 'SIZE_GRID_ROW_ID', 'SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']));
+    if ($path === '/categories/MLA109042/sale_terms') return '[]';
+    if ($path === '/items/validate' || str_ends_with($path, '/attributes/conditional')) return '{}';
+    if ($path === '/items') {
+        if (!empty($GLOBALS['timeout'])) return false;
+        $handle->code = 201;
+        $id = 'MLA' . (100 + count($GLOBALS['items']));
+        $GLOBALS['items'][$id] = $body + ['id' => $id, 'seller_id' => 123, 'status' => 'active', 'sub_status' => []];
+        return json_encode($GLOBALS['items'][$id]);
+    }
+    if (preg_match('~^/items/(MLA\d+)$~', $path, $matches)) {
+        $id = $matches[1];
+        if ($method === 'PUT') {
+            if (!empty($body['deleted'])) $GLOBALS['items'][$id]['sub_status'] = ['deleted'];
+            if (isset($body['status'])) $GLOBALS['items'][$id]['status'] = $body['status'];
+        }
+        return json_encode($GLOBALS['items'][$id]);
+    }
+    if (str_ends_with($path, '/description')) { $handle->code = 201; return '{}'; }
+    return '{}';
+}
+
+$db = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+$db->exec(file_get_contents(dirname(__DIR__) . '/database/schema.sql'));
+$db->exec("INSERT INTO products(id,name) VALUES(1,'Remera negra algodón unisex')");
+$db->exec("INSERT INTO product_variants(id,product_id,name,sku,price_cents,stock_on_hand,active) VALUES
+    (1,1,'Talle 1','__AUTO__1',750000,13,1), (2,1,'Talle 2','__AUTO__2',750000,0,1),
+    (3,1,'Talle 3','SKU3',950000,16,1), (4,1,'Talle 4','SKU4',750000,10,0)");
+$draft = ['category_id' => 'MLA109042', 'family_name' => 'Remera negra algodón unisex', 'variant_id' => 1,
+    'publish_all_variants' => true, 'condition' => 'new', 'listing_type_id' => 'gold_special', 'shipping_mode' => 'me2', 'logistic_type' => 'drop_off',
+    'pictures' => ['https://example.com/remera.jpg'], 'package_confirmed' => true,
+    'attributes' => ['BRAND' => 'Inventada', 'COLOR' => 'Negro', 'SIZE_GRID_ID' => '123', 'SELLER_PACKAGE_LENGTH' => '30 cm',
+        'SELLER_PACKAGE_WIDTH' => '25 cm', 'SELLER_PACKAGE_HEIGHT' => '3 cm', 'SELLER_PACKAGE_WEIGHT' => '250 g'],
+    'size_grid_rows' => [1 => '123:1', 3 => '123:3'],
+    'pricing' => ['base_price_cents' => 750000, 'billable_weight' => 250]];
+MercadoLibreProductDraft::save($db, 1, MercadoLibreProductDraft::normalize($draft));
+$service = new MercadoLibreService($db, ['meli_client_id' => 'test', 'meli_client_secret' => 'fake-test-secret', 'meli_redirect_uri' => 'https://example.com/meli.php']);
+(new \ReflectionMethod($service, 'saveTokens'))->invoke($service, ['access_token' => 'fake-test-token', 'refresh_token' => 'fake', 'expires_at' => time() + 3600]);
+$GLOBALS['calls'] = [];
+$GLOBALS['items'] = [];
+check(array_column($service->publicationVariants(1)['variants'], 'id') === [1, 3], 'Only active sizes with stock');
+$prepared = $service->preparePublication(1, 3);
+$attrs = array_column($prepared['payload']['attributes'], 'value_name', 'id');
+check($prepared['payload']['price'] === 9500 && $prepared['payload']['available_quantity'] === 16, 'Each size keeps its own price and stock');
+check($attrs['SIZE'] === '3' && $attrs['SIZE_GRID_ROW_ID'] === '123:3', 'Correct size and chart row');
+check($attrs['BRAND'] === 'Generic' && $attrs['SELLER_SKU'] === 'SKU3', 'No invented shirt brand; real variant SKU');
+rejects(fn () => $service->preparePublication(1, 2), 'Cannot publish zero stock');
+rejects(fn () => $service->preparePublication(1, 4), 'Cannot publish inactive sizes');
+$first = $service->publishProduct(1, 1);
+check(array_column($service->publicationVariants(1)['variants'], 'id') === [3], 'Retries skip already published sizes');
+rejects(fn () => $service->publishProduct(1, 1), 'Cannot create duplicate listing');
+$service->publishProduct(1, 3);
+$service->finishPublication(1);
+check(MercadoLibreProductDraft::publicationStates($db)[1]['state'] === 'published', 'Successful product is yellow');
+$service->publicationError(1, 'Example failure');
+check(MercadoLibreProductDraft::publicationStates($db)[1]['state'] === 'failed', 'Errors survive reload and turn red');
+$service->finishPublication(1);
+$service->deleteListing($first['item_id']);
+check(!isset(MercadoLibreProductDraft::publicationStates($db)[1]), 'Delete all linked sizes and reset gray');
+check(count(array_filter($GLOBALS['items'], static fn ($item) => in_array('deleted', $item['sub_status'], true))) === 2, 'MeLi deletion confirmed for every size');
+$GLOBALS['timeout'] = true;
+rejects(fn () => $service->publishProduct(1, 1), 'Uncertain creation must fail');
+rejects(fn () => $service->publicationVariants(1), 'Uncertain creation prevents retry duplicates');
+rejects(fn () => MercadoLibreProductDraft::normalize(array_replace($draft, ['size_grid_rows' => 'invalid'])), 'Invalid rows');
+echo "MeLi publication tests passed\n";
