@@ -19,7 +19,7 @@ final class MercadoLibreShirtChart
             $size = self::size($variant['name']);
             $matches = array_values(array_filter($guide, static fn ($r) => $r['group'] === $group && self::size($r['size']) === $size));
             if (count($matches) !== 1) throw new \RuntimeException('Falta una medida inequívoca para el talle ' . $size . '.');
-            $row = ['size' => $size];
+            $row = ['size' => $size, 'variant_id' => $variant['id']];
             foreach (['width', 'length'] as $dimension) {
                 if (!preg_match('/^(\d+(?:[.,]\d+)?)\s*(?:cm)?$/iD', trim($matches[0][$dimension]), $m)) throw new \RuntimeException('La medida de ' . $dimension . ' del talle ' . $size . ' debe estar en cm.');
                 $value = (float) str_replace(',', '.', $m[1]);
@@ -31,7 +31,7 @@ final class MercadoLibreShirtChart
         return $rows;
     }
 
-    public static function payload(array $rows, array $template, array $filters): array
+    public static function payload(array $rows, array $template, array $filters, array $equivalences = []): array
     {
         $definitions = [];
         $visit = static function (array $node) use (&$visit, &$definitions): void {
@@ -54,7 +54,8 @@ final class MercadoLibreShirtChart
                 if ($tag('grid_filter') || in_array($id, ['SIZE', 'GARMENT_CHEST_WIDTH_FROM', 'GARMENT_LENGTH_FROM', 'BRAND', 'GENDER'], true)) continue;
                 if (!$tag('required')) continue;
                 if ($definition['value_type'] === 'list') {
-                    $options = array_values(array_filter($definition['values'] ?? [], static fn ($v) => self::size($v['name']) === $row['size']));
+                    $equivalent = $id === 'FILTRABLE_SIZE' ? ($equivalences[$row['variant_id']] ?? $row['size']) : $row['size'];
+                    $options = array_values(array_filter($definition['values'] ?? [], static fn ($v) => self::size($v['name']) === $equivalent));
                     if (count($options) !== 1) throw new \RuntimeException('MeLi requiere ' . ($definition['name'] ?? $id) . ' para el talle ' . $row['size'] . '. Valores admitidos: ' . implode(', ', array_column($definition['values'] ?? [], 'name')) . '. No se inventa una equivalencia.');
                     $attrs[] = ['id' => $id, 'values' => [['id' => $options[0]['id'], 'name' => $options[0]['name']]]];
                 } elseif (!$tag('BODY_MEASURE') && !$tag('body_measure')) {

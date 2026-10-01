@@ -79,6 +79,10 @@
         });
         draft.variant_id = Number(draft.variant_id || 0);
         draft.size_grid_rows = {};
+        draft.size_equivalences = {};
+        editor.root.querySelectorAll('[data-meli-size-equivalence]').forEach(input => {
+            if (input.value) draft.size_equivalences[input.dataset.meliSizeEquivalence] = input.value;
+        });
         editor.root.querySelectorAll('[data-meli-size-row]').forEach(input => {
             if (input.value.trim()) draft.size_grid_rows[input.dataset.meliSizeRow] = input.value.trim();
         });
@@ -303,12 +307,7 @@
             headers: {'Content-Type': 'application/json'}, body: JSON.stringify({csrf_token: app.csrf_token,
                 action: 'create_shirt_size_chart', product_id: product.id, group})});
         const data = await response.json();
-        if (!response.ok || !data.ok) {
-            if (data.chart_requirements) {
-                editor.root.querySelector('[data-meli-chart-requirements]').textContent = JSON.stringify(data.chart_requirements, null, 2);
-            }
-            throw new Error(data.message || 'No se pudo crear la guía de talles.');
-        }
+        if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudo crear la guía de talles.');
         editor.root.querySelector('[data-meli-attribute="SIZE_GRID_ID"]').value = data.chart.id;
         for (const [id, row] of Object.entries(data.size_grid_rows || {})) editor.root.querySelector(`[data-meli-size-row="${id}"]`).value = row;
         if (!data.size_grid_rows) await linkSizeChart(editor, product);
@@ -374,7 +373,8 @@
             <button class="primary-button fit-button" type="button" data-meli-size-chart>VINCULAR GUÍA DE MELI POR TALLE</button>
             <button class="primary-button fit-button" type="button" data-meli-size-create>CREAR GUÍA EN MELI CON ESTA TABLA</button>
             <p>Guardá primero la ficha. La guía utiliza las medidas existentes y conserva los talles numéricos.</p>
-            <details><summary>Requisitos de la guía devueltos por MeLi</summary><pre data-meli-chart-requirements></pre></details>
+            <p>Elegí las equivalencias estándar reales de cada talle. Tus talles numéricos se mantienen en la publicación.</p>
+            <div class="meli-size-rows">${(product?.variants || []).map(v => `<label>${esc(v.name)} · Equivalencia MeLi<select data-meli-size-equivalence="${Number(v.id)}"><option value="">Elegir</option>${['3XS','2XS','XS','S','M','L','XL','2XL','3XL','4XL','5XL','6XL','7XL','8XL','9XL','10XL'].map(size => `<option value="${size}" ${draft.size_equivalences?.[v.id] === size ? 'selected' : ''}>${size}</option>`).join('')}</select></label>`).join('')}</div>
             <div class="meli-size-rows">${(product?.variants || []).map(v => `<label>${esc(v.name)} · ID de fila MeLi<input data-meli-size-row="${Number(v.id)}" value="${esc(draft.size_grid_rows?.[v.id] || '')}" placeholder="123456:1"></label>`).join('')}</div>` : ''}
             <p data-meli-category-name></p>
             <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>

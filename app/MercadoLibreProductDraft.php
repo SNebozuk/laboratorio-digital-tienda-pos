@@ -32,6 +32,13 @@ final class MercadoLibreProductDraft
         $result['variant_id'] = max(0, (int) ($input['variant_id'] ?? 0));
         $result['publish_all_variants'] = ($input['publish_all_variants'] ?? false) === true;
         $result['size_grid_rows'] = [];
+        $result['size_equivalences'] = [];
+        $equivalences = $input['size_equivalences'] ?? [];
+        if (!is_array($equivalences) || count($equivalences) > 150) throw new ValidationException('Las equivalencias de talles no son válidas.');
+        foreach ($equivalences as $variantId => $size) {
+            if (!ctype_digit((string) $variantId) || !is_string($size) || !preg_match('/^(?:[23]XS|XS|S|M|L|XL|(?:[2-9]|10)XL)$/D', $size)) throw new ValidationException('Equivalencia de talle inválida.');
+            $result['size_equivalences'][(int) $variantId] = $size;
+        }
         $gridRows = $input['size_grid_rows'] ?? [];
         if (!is_array($gridRows) || count($gridRows) > 150) throw new ValidationException('Las filas de la guía de talles no son válidas.');
         foreach ($gridRows as $variantId => $rowId) {

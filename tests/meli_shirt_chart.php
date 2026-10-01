@@ -26,4 +26,7 @@ check(Chart::assignments($variants, $chart) === [12 => '321:2', 13 => '321:4']);
 $template['groups'][0]['attributes'][3]['values'] = [['id' => '999', 'name' => 'M']];
 try { Chart::payload($rows, $template, []); throw new LogicException('Se inventó equivalencia'); }
 catch (RuntimeException $e) { check(str_contains($e->getMessage(), 'No se inventa')); }
+$payload = Chart::payload($rows, $template, [], [12 => 'M', 13 => 'M']);
+check($payload['rows'][0]['attributes'][0]['values'][0]['name'] === '1');
+check($payload['rows'][0]['attributes'][3]['values'][0]['id'] === '999');
 echo "Guía de remeras: medidas, filas y equivalencias verificadas.\n";
