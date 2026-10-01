@@ -40,7 +40,7 @@ final class MercadoLibreProductDraft
             }
             $result['size_grid_rows'][(int) $variantId] = $rowId;
         }
-        foreach (['local_pick_up', 'free_shipping', 'package_confirmed'] as $key) {
+        foreach (['local_pick_up', 'free_shipping', 'package_confirmed', 'package_estimated'] as $key) {
             $result[$key] = ($input[$key] ?? false) === true;
         }
         foreach (['attributes', 'sale_terms'] as $key) {

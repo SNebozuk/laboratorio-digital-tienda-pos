@@ -282,6 +282,53 @@ final class MercadoLibreService
         return ['ok' => true, 'chart' => $chart];
     }
 
+    public function createShirtSizeChart(int $productId, string $group): array
+    {
+        require_once __DIR__ . '/SettingsService.php';
+        require_once __DIR__ . '/MercadoLibreShirtChart.php';
+        $draft = MercadoLibreProductDraft::all($this->pdo)[$productId] ?? null;
+        if (!$draft || ($draft['category_id'] ?? '') !== 'MLA109042' || ($draft['attributes']['GENDER'] ?? '') !== 'Sin género') throw new \RuntimeException('Guardá primero la ficha de la remera unisex con género Sin género.');
+        if (!empty($draft['attributes']['SIZE_GRID_ID'])) return $this->sizeChart($draft['attributes']['SIZE_GRID_ID']);
+        $q = $this->pdo->prepare('SELECT id,name FROM product_variants WHERE product_id=? AND active=1 ORDER BY id');
+        $q->execute([$productId]);
+        $variants = $q->fetchAll();
+        $guide = (new SettingsService($this->pdo))->sizeGuide();
+        $rows = MercadoLibreShirtChart::measurements($variants, $guide['rows'], $group);
+        $status = $this->status();
+        if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta de Mercado Libre.');
+        $token = $this->loadTokens()['access_token'];
+        $filters = [['id' => 'BRAND', 'values' => [['name' => 'Generic']]], ['id' => 'GENDER', 'values' => [['name' => 'Sin género']]]];
+        [$code, $template] = $this->request('/domains/MLA-T_SHIRTS/technical_specs?section=grids', $token, ['attributes' => $filters], true);
+        if ($code !== 200) throw new \RuntimeException('MeLi no entregó la estructura de la guía: ' . ($template['message'] ?? 'reintentá la consulta.'));
+        $payload = MercadoLibreShirtChart::payload($rows, $template, $filters);
+        $key = 'meli_shirt_chart_' . hash('sha256', json_encode([$status['user_id'], $payload]));
+        $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
+        $q->execute([$key]);
+        $saved = json_decode((string) $q->fetchColumn(), true);
+        if (($saved['state'] ?? '') === 'pending') throw new \RuntimeException('Hay una creación de guía pendiente de verificar en MeLi. No se repite para evitar duplicados.');
+        if (!empty($saved['id'])) {
+            $chart = $this->sizeChart((string) $saved['id'])['chart'];
+        } else {
+            $save = $this->pdo->prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP');
+            $save->execute([$key, json_encode(['state' => 'pending'])]);
+            [$code, $chart] = $this->request('/catalog/charts', $token, $payload, true);
+            if ($code !== 201 || empty($chart['id'])) {
+                if ($code >= 400 && $code < 500) {
+                    $this->pdo->prepare('DELETE FROM settings WHERE key=?')->execute([$key]);
+                    $errors = array_column($chart['errors'] ?? [], 'message');
+                    throw new \RuntimeException('MeLi rechazó la guía: ' . (implode(' · ', $errors) ?: ($chart['message'] ?? 'datos pendientes.')));
+                }
+                throw new \RuntimeException('MeLi no confirmó la creación de la guía. Verificá la cuenta antes de reintentar.');
+            }
+            $save->execute([$key, json_encode(['state' => 'created', 'id' => $chart['id']])]);
+        }
+        $assignments = MercadoLibreShirtChart::assignments($variants, $chart);
+        $draft['attributes']['SIZE_GRID_ID'] = (string) $chart['id'];
+        $draft['size_grid_rows'] = $assignments;
+        MercadoLibreProductDraft::save($this->pdo, $productId, MercadoLibreProductDraft::normalize($draft));
+        return ['ok' => true, 'chart' => $chart, 'size_grid_rows' => $assignments];
+    }
+
     public function finishPublication(int $productId): array
     {
         if ($this->publicationVariants($productId)['variants']) throw new \RuntimeException('Todavía hay talles sin publicar.');
@@ -401,7 +448,7 @@ final class MercadoLibreService
         $query->execute(['product' => $productId, 'variant' => $draft['variant_id']]);
         $variant = $query->fetch();
         if (!$variant || (int) $variant['stock_on_hand'] < 1) throw new \RuntimeException('La variante no está activa o no tiene stock.');
-        if (!$draft['package_confirmed']) throw new \RuntimeException('Confirmá las medidas y el peso del paquete en la ficha.');
+        if (!$draft['package_confirmed'] && !($draft['category_id'] === 'MLA109042' && $draft['package_estimated'])) throw new \RuntimeException('Confirmá el paquete o aceptá los valores estimados en la ficha de la remera.');
         foreach (['SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT'] as $id) {
             if (empty($draft['attributes'][$id])) throw new \RuntimeException('Completá las cuatro medidas del paquete: largo, ancho, alto y peso.');
         }
@@ -471,7 +518,6 @@ final class MercadoLibreService
     public function publishProduct(int $productId, int $variantId = 0): array
     {
         $prepared = $this->preparePublication($productId, $variantId);
-        if (!$prepared['draft']['package_confirmed']) throw new \RuntimeException('Confirmá las medidas y el peso reales del paquete antes de publicar.');
         $tokens = $this->loadTokens();
         [$code, $validation] = $this->request('/items/validate', $tokens['access_token'], $prepared['payload'], true);
         if (!$this->publicationValidationPassed($code, $validation)) {

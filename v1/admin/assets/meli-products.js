@@ -167,7 +167,7 @@
                 if (!input.value.trim()) missing.push(`Fila MeLi de ${input.closest('label').firstChild.textContent.trim()}`);
             });
         }
-        if (!draft.package_confirmed) missing.push('Medir y confirmar el paquete');
+        if (!draft.package_confirmed && !(draft.category_id === 'MLA109042' && draft.package_estimated)) missing.push('Confirmar el paquete o aceptar sus valores estimados');
         if (!draft.pricing?.billable_weight) missing.push('Peso facturable');
         const variant = editor.form.querySelector(`[data-variant-row][data-variant-id="${draft.variant_id}"]`) || editor.form.querySelector('[data-variant-row]');
         if (!variant || Number(variant.querySelector('.variant-price').value) <= 0) missing.push('Precio');
@@ -295,6 +295,38 @@
         review(editor);
         editor.progress.textContent = 'Guía vinculada por talle. Revisá sus medidas y guardá la ficha.';
     }
+    async function createSizeChart(editor, product) {
+        const group = editor.root.querySelector('[data-meli-size-group]').value;
+        const app = JSON.parse(document.getElementById('admin-app-data').textContent);
+        editor.progress.textContent = 'MeLi: creando la guía con las medidas de la tabla elegida…';
+        const response = await fetch(new URL('meli.php', window.location.href), {method: 'POST', credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json'}, body: JSON.stringify({csrf_token: app.csrf_token,
+                action: 'create_shirt_size_chart', product_id: product.id, group})});
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudo crear la guía de talles.');
+        editor.root.querySelector('[data-meli-attribute="SIZE_GRID_ID"]').value = data.chart.id;
+        for (const [id, row] of Object.entries(data.size_grid_rows || {})) editor.root.querySelector(`[data-meli-size-row="${id}"]`).value = row;
+        if (!data.size_grid_rows) await linkSizeChart(editor, product);
+        review(editor);
+        editor.progress.textContent = 'Guía creada y guardada en MeLi. Guardá los cambios de la ficha y validá los talles.';
+    }
+    async function validateSizes(editor, product) {
+        const app = JSON.parse(document.getElementById('admin-app-data').textContent);
+        const variants = (product.variants || []).filter(v => v.active && Number(v.stock_on_hand) > 0);
+        if (!variants.length) throw new Error('No hay talles activos con stock.');
+        for (const variant of variants) {
+            editor.progress.textContent = `MeLi: validando ${variant.name} sin publicar…`;
+            const response = await fetch(new URL('meli.php', window.location.href), {method: 'POST', credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json'}, body: JSON.stringify({csrf_token: app.csrf_token,
+                    action: 'validate_publication', product_id: product.id, variant_id: variant.id})});
+            const data = await response.json();
+            if (!response.ok || !data.ok || !data.valid) {
+                const errors = (data.validation?.cause || []).filter(c => c.type !== 'warning').map(c => c.message || c.code).join(' · ');
+                throw new Error(`${variant.name}: ${data.message || errors || 'MeLi no aprobó la ficha.'}`);
+            }
+        }
+        editor.progress.textContent = `MeLi aprobó los ${variants.length} talles con stock. Podés publicar desde el botón de Productos.`;
+    }
     function mount(form, product) {
         if (!form) return;
         const draft = product?.meli ? structuredClone(product.meli) : preset(product);
@@ -335,6 +367,8 @@
             <label>ID de guía personalizada de MeLi<input data-meli-attribute="SIZE_GRID_ID" value="${esc(draft.attributes.SIZE_GRID_ID || '')}" inputmode="numeric"></label>
             <p>Usá una guía personalizada de remeras creada en tu cuenta de MeLi con estas mismas medidas. Ingresá su ID en la ficha técnica y cargá sus filas.</p>
             <button class="primary-button fit-button" type="button" data-meli-size-chart>VINCULAR GUÍA DE MELI POR TALLE</button>
+            <button class="primary-button fit-button" type="button" data-meli-size-create>CREAR GUÍA EN MELI CON ESTA TABLA</button>
+            <p>Guardá primero la ficha. La guía utiliza las medidas existentes y conserva los talles numéricos.</p>
             <div class="meli-size-rows">${(product?.variants || []).map(v => `<label>${esc(v.name)} · ID de fila MeLi<input data-meli-size-row="${Number(v.id)}" value="${esc(draft.size_grid_rows?.[v.id] || '')}" placeholder="123456:1"></label>`).join('')}</div>` : ''}
             <p data-meli-category-name></p>
             <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>
@@ -357,6 +391,8 @@
             ${draft.category_id === 'MLA416632' && draft.attributes.SHEETS_NUMBER === '20' && draft.attributes.PAPER_SIZE === 'A4' && draft.attributes.GRAMMAGE === '200 g' ? `<p>Para A4 de 200 g/m² × 20 hojas: 0,21 × 0,297 × 200 × 20 = <strong>249,48 g de papel</strong>. Las hojas miden 21 × 29,7 cm. Un paquete contiene 20 hojas; no son 20 paquetes.</p>
             <p>Propuesta de envío para el producto de prueba: <strong>32 × 23 × 1 cm y 280 g</strong>, con 30,52 g de margen para embalaje. Son estimaciones; el espesor y el peso final requieren medición.</p>` : '<p>Ingresá las medidas y el peso del paquete completo, incluyendo el embalaje.</p>'}
             <label class="meli-product-checks"><input type="checkbox" data-meli-field="package_confirmed" ${draft.package_confirmed ? 'checked' : ''}> Medí el paquete completo y confirmé las medidas y el peso cargados</label>
+            ${shirt ? `<label class="meli-product-checks"><input type="checkbox" data-meli-field="package_estimated" ${draft.package_estimated ? 'checked' : ''}> Usar para publicar los valores estimados del paquete; todavía no fueron medidos</label>
+            <button class="primary-button fit-button" type="button" data-meli-size-validate>VALIDAR TALLES EN MELI SIN PUBLICAR</button><p>Guardá los cambios antes de validar. Se comprueba cada talle activo con stock.</p>` : ''}
             <p data-meli-review role="status"></p>
             <footer class="meli-progress-footer" role="status" aria-live="polite"><span data-meli-progress>Mercado Libre: borrador sin publicar.</span><span class="meli-progress-dots" aria-hidden="true"><i></i><i></i><i></i></span></footer>`;
         form.querySelector('.product-save-actions').before(root);
@@ -367,6 +403,8 @@
         root.addEventListener('input', event => {
             if (event.target.matches('[data-meli-attribute^="SELLER_PACKAGE_"], [data-meli-attribute="LENGTH"], [data-meli-attribute="WIDTH"], [data-meli-attribute="GRAMMAGE"], [data-meli-attribute="SHEETS_NUMBER"]')) {
                 root.querySelector('[data-meli-field="package_confirmed"]').checked = false;
+                const estimated = root.querySelector('[data-meli-field="package_estimated"]');
+                if (estimated) estimated.checked = false;
             }
             review(editor);
         });
@@ -380,7 +418,7 @@
         root.querySelector('[data-meli-load]').addEventListener('click', () => requirements(editor));
         root.querySelector('[data-meli-calculate]')?.addEventListener('click', () => calculatePaperWeight(editor));
         root.querySelector('[data-meli-price-calculate]').addEventListener('click', () => calculatePrice(editor));
-        for (const [selector, operation] of [['[data-meli-size-description]', incorporateSizes], ['[data-meli-size-chart]', linkSizeChart]]) {
+        for (const [selector, operation] of [['[data-meli-size-description]', incorporateSizes], ['[data-meli-size-chart]', linkSizeChart], ['[data-meli-size-create]', createSizeChart], ['[data-meli-size-validate]', validateSizes]]) {
             root.querySelector(selector)?.addEventListener('click', async event => {
                 const button = event.currentTarget;
                 button.disabled = true;

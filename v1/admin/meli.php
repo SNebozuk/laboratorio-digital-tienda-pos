@@ -29,6 +29,7 @@ try {
             'listing_status' => $service->changeListingStatus((string) ($input['item_id'] ?? ''), (string) ($input['status'] ?? '')),
             'delete_listing' => $service->deleteListing((string) ($input['item_id'] ?? '')),
             'size_chart' => $service->sizeChart((string) ($input['chart_id'] ?? '')),
+            'create_shirt_size_chart' => $service->createShirtSizeChart((int) ($input['product_id'] ?? 0), (string) ($input['group'] ?? '')),
             'preview_listing_price' => $service->previewListingPrice((string) ($input['item_id'] ?? '')),
             'apply_listing_price' => $service->applyListingPrice((string) ($input['item_id'] ?? ''), (string) ($input['quote_token'] ?? '')),
             'sync_listing_stock' => $service->synchronizeListingStock((string) ($input['item_id'] ?? ''), (int) $app['auth']->user()['id']),
