@@ -1,0 +1,49 @@
+<?php
+declare(strict_types=1);
+
+use LaboratorioDigital\Http;
+use LaboratorioDigital\MercadoLibreService;
+
+$app = require dirname(__DIR__, 2) . '/app/container.php';
+require_once $app['root'] . '/app/MercadoLibreService.php';
+Http::noCache();
+header('Referrer-Policy: no-referrer');
+$callback = isset($_GET['code']) || isset($_GET['error']) || isset($_GET['state']);
+$lock = null;
+try {
+    $app['auth']->requireAdmin();
+    $service = new MercadoLibreService($app['pdo'], $app['config']);
+    // Refresh tokens are single-use: serialize verification and authorization.
+    $lock = fopen($app['config']['storage_path'] . '/meli-oauth.lock', 'c');
+    if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
+        throw new RuntimeException('Hay una verificación en curso. Intentá nuevamente en unos segundos.');
+    }
+    if ($callback) {
+        $service->callback($_GET);
+        $_SESSION['meli_result'] = 'Autorización recibida. Verificá la conexión.';
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        Http::requireCsrf(Http::input());
+        $result = ['authorization_url' => $service->authorizationUrl()];
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        $result = $service->status();
+        $result['redirect_uri'] = $app['config']['meli_redirect_uri'];
+        $result['authorization_result'] = $_SESSION['meli_result'] ?? '';
+        unset($_SESSION['meli_result']);
+    } else {
+        Http::json(['connected' => false, 'message' => 'Método no permitido.'], 405);
+    }
+} catch (LaboratorioDigital\AuthorizationException $error) {
+    Http::json(['connected' => false, 'message' => $error->getMessage()], 403);
+} catch (Throwable $error) {
+    $message = $error instanceof RuntimeException && !($error instanceof PDOException)
+        ? $error->getMessage() : 'No se pudo comprobar la conexión. Intentá nuevamente.';
+    if ($callback) $_SESSION['meli_result'] = $message;
+    else $result = ['connected' => false, 'configured' => isset($service) && $service->configured(), 'message' => $message];
+} finally {
+    if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
+}
+if ($callback) {
+    header('Location: index.php?view=meli', true, 303);
+    exit;
+}
+Http::json($result);

@@ -53,6 +53,10 @@ final class Config
         );
 
         return [
+            'meli_client_id' => self::string($local, 'meli_client_id', getenv('APP_MELI_CLIENT_ID') ?: ''),
+            'meli_client_secret' => self::string($local, 'meli_client_secret', getenv('APP_MELI_CLIENT_SECRET') ?: ''),
+            'meli_redirect_uri' => self::string($local, 'meli_redirect_uri', getenv('APP_MELI_REDIRECT_URI') ?: ''),
+            'meli_pkce' => self::string($local, 'meli_pkce', getenv('APP_MELI_PKCE') ?: '0'),
             'environment' => self::string(
                 $local,
                 'environment',

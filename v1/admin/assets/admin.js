@@ -463,7 +463,7 @@
     const pendingViewLoads = new Map();
 
     function showView(view, highlightNavigation = true, updateHistory = true) {
-        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'whatsapp-api', 'customers', 'users', 'settings', 'email', 'maintenance']);
+        const availableViews = new Set(['orders', 'deliveries', 'pos', 'ai-search', 'ai-criteria', 'statistics', 'products', 'supplier-order', 'tutorials', 'categories', 'size-guide', 'contact', 'design', 'quote', 'whatsapp', 'whatsapp-api', 'meli', 'customers', 'users', 'settings', 'email', 'maintenance']);
         if (!availableViews.has(view) || !document.getElementById(`view-${view}`)) {
             view = 'orders';
         }
@@ -482,6 +482,7 @@
         });
         document.querySelector('.admin-shell')?.classList.toggle('admin-design-mode', view === 'design');
         if (view === 'whatsapp-api') window.WhatsAppWorkspace?.activate();
+        if (view === 'meli') window.MeliWorkspace?.activate();
         if (elements.mobileDashboard) {
             elements.mobileDashboard.hidden = true;
             elements.mobileDashboardToggle?.setAttribute('aria-expanded', 'false');

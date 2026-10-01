@@ -4143,6 +4143,24 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     cursor:pointer;
 }
 .admin-menu-icon { display:block; width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.meli-nav-button { position:relative; }
+.meli-connection-dot { display:inline-block; width:10px; height:10px; flex:0 0 10px; border-radius:50%; background:#dc2626; border:1px solid #fff; }
+.meli-connection-dot.is-connected { background:#16a34a; }
+.meli-nav-button .meli-connection-dot { position:absolute; right:0; bottom:0; }
+.meli-status, .meli-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+#view-meli code { overflow-wrap:anywhere; }
+#view-meli li { margin-bottom:12px; }
+.meli-progress-footer { display:flex; align-items:center; padding:12px 0; color:#65788d; font:11px/1.35 system-ui,-apple-system,Segoe UI,sans-serif; }
+#meli-progress-text { overflow-wrap:anywhere; }
+.meli-progress-footer.is-active #meli-progress-text { background:linear-gradient(105deg,#26384c 35%,#50657b 50%,#26384c 65%); background-size:250% 100%; background-clip:text; -webkit-background-clip:text; color:transparent; animation:meli-progress-shimmer 3s linear infinite; }
+.meli-progress-dots { display:none; flex:none; gap:3px; margin-left:5px; }
+.meli-progress-footer.is-active .meli-progress-dots { display:inline-flex; }
+.meli-progress-dots i { width:3px; height:3px; border-radius:50%; background:currentColor; animation:meli-progress-dot 1.2s ease-in-out infinite; }
+.meli-progress-dots i:nth-child(2) { animation-delay:.2s; }
+.meli-progress-dots i:nth-child(3) { animation-delay:.4s; }
+@keyframes meli-progress-shimmer { to { background-position-x:-250%; } }
+@keyframes meli-progress-dot { 0%,60%,100% { opacity:.3; transform:translateY(0); } 30% { opacity:1; transform:translateY(-3px); } }
+@media(prefers-reduced-motion:reduce) { .meli-progress-footer.is-active #meli-progress-text { animation:none; background:none; color:#26384c; } .meli-progress-dots i { animation:none; opacity:1; } }
 .admin-icon-sidebar .admin-nav { display:grid; width:32px; gap:12px; margin-top:0; }
 .admin-icon-sidebar .admin-nav-sales,
 .admin-icon-sidebar .admin-nav-products { display:contents; }

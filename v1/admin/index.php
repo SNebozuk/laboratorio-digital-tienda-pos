@@ -87,6 +87,7 @@ header('Referrer-Policy: same-origin');
                     <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="pos" aria-label="Punto de Venta (F3)" title="Punto de Venta · F3"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"></rect><path d="M9 21h6M12 18v3"></path></svg></button>
                     <?php if ($user['role'] === 'admin'): ?><button class="icon-button admin-nav-button admin-nav-icon-button" type="button" data-view="whatsapp-api" aria-label="WhatsApp API" title="WhatsApp API"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 21l1.9-5.2A8.5 8.5 0 1 1 21 11.5Z"></path><path d="M8.4 7.8c-.5.4-.6 1.1-.3 1.9 1 2.8 3.1 4.9 5.9 5.8.8.3 1.5.2 1.9-.4l.6-1-2.2-1.2-.9.8a7.5 7.5 0 0 1-3.6-3.6l.8-.9-1.2-2.1Z"></path></svg></button><?php endif ?>
                     <div class="admin-nav-products">
+                        <?php if ($user['role'] === 'admin'): ?><button class="icon-button admin-nav-button admin-nav-icon-button meli-nav-button" type="button" data-view="meli" aria-label="Mercado Libre" title="Mercado Libre"><img class="admin-menu-icon" src="<?= $escape($adminAssetPath) ?>/meli.svg" alt=""><span class="meli-connection-dot" data-meli-indicator role="img" aria-label="Sin conexión verificada"></span></button><?php endif ?>
                         <button class="admin-nav-button admin-nav-icon-button" type="button" data-view="products" aria-label="Productos (F4)" title="Productos · F4"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 7l3 4 2-1v10h8V10l2 1 3-4-4-3-5 3z"></path></svg></button>
                         <?php if ($user['role'] === 'admin'): ?><button class="admin-nav-button admin-nav-icon-button" type="button" data-view="customers" aria-label="Clientes" title="Clientes"><svg class="admin-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.6-4 3-6 7-6s6.4 2 7 6"></path></svg></button><?php endif ?>
                     </div>
@@ -160,6 +161,7 @@ header('Referrer-Policy: same-origin');
                             <button type="button" data-view="quote">Cotizador</button>
                             <button type="button" data-view="email">E-mail</button>
                             <button type="button" data-view="whatsapp-api">WhatsApp API</button>
+                            <button type="button" data-view="meli">Mercado Libre</button>
                             <button type="button" data-view="whatsapp">WhatsApp</button>
                             <button type="button" data-view="customers">Clientes</button>
                             <button type="button" data-view="users">Usuarios</button>
@@ -571,6 +573,26 @@ header('Referrer-Policy: same-origin');
                         <div id="customer-list" class="user-list"></div>
                     </section>
 
+                    <section class="admin-view" id="view-meli">
+                        <div class="view-heading"><div><p class="eyebrow">INTEGRACIÓN</p><h1>MERCADO LIBRE</h1></div></div>
+                        <div class="settings-card">
+                            <p class="meli-status"><span class="meli-connection-dot" data-meli-indicator role="img" aria-label="Sin conexión verificada"></span><strong id="meli-status-message" role="status">Sin conexión verificada.</strong></p>
+                            <p id="meli-account"></p>
+                            <p id="meli-authorization-result" role="status"></p>
+                            <div class="meli-actions"><button class="primary-button fit-button" id="meli-connect" type="button" disabled>CONECTAR CUENTA</button><button class="primary-button fit-button" id="meli-verify" type="button">VERIFICAR CONEXIÓN</button></div>
+                        </div>
+                        <div class="settings-card">
+                            <h2>PRIMERA CONEXIÓN</h2>
+                            <ol>
+                                <li>Creá una aplicación en <a href="https://developers.mercadolibre.com.ar/" target="_blank" rel="noopener noreferrer">Mercado Libre Developers</a> con tu cuenta de vendedor.</li>
+                                <li>Registrá esta URL de retorno exacta: <code id="meli-redirect-uri">https://www.laboratoriodigital.com.ar<?= $escape($storePath) ?>/admin/meli.php</code>.</li>
+                                <li>Configurá en el servidor <code>meli_client_id</code>, <code>meli_client_secret</code> y <code>meli_redirect_uri</code> en el archivo privado de configuración. También se admiten las variables <code>APP_MELI_CLIENT_ID</code>, <code>APP_MELI_CLIENT_SECRET</code> y <code>APP_MELI_REDIRECT_URI</code>. Si activás PKCE en la aplicación, configurá <code>meli_pkce</code> como <code>1</code>.</li>
+                                <li>Presioná CONECTAR CUENTA y aceptá la autorización en Mercado Libre.</li>
+                            </ol>
+                            <p>El círculo verde confirma una consulta exitosa a tu cuenta. El rojo indica que no hay acceso verificado. Esta etapa conecta la cuenta; todavía no publica productos ni importa ventas.</p>
+                        </div>
+                        <footer class="meli-progress-footer" id="meli-progress-footer" role="status" aria-live="polite" aria-atomic="true"><span id="meli-progress-text">Mercado Libre: esperando verificación.</span><span class="meli-progress-dots" aria-hidden="true"><i></i><i></i><i></i></span></footer>
+                    </section>
                     <section class="admin-view" id="view-settings">
                         <div class="view-heading">
                             <div>
@@ -751,5 +773,6 @@ header('Referrer-Policy: same-origin');
     <script src="<?= $escape($storeAssetPath) ?>/search-normalizer.js?v=<?= $escape($assetVersion(dirname(__DIR__) . '/assets/search-normalizer.js')) ?>" defer></script>
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($adminJsVersion) ?>" defer></script>
     <script src="<?= $escape($adminAssetPath) ?>/whatsapp-workspace.js?v=<?= $escape($assetVersion(__DIR__ . '/assets/whatsapp-workspace.js')) ?>" defer></script>
+    <?php if ($user && $user['role'] === 'admin'): ?><script src="<?= $escape($adminAssetPath) ?>/meli.js?v=<?= $escape($assetVersion(__DIR__ . '/assets/meli.js')) ?>" defer></script><?php endif ?>
 </body>
 </html>
