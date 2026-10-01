@@ -300,7 +300,8 @@ final class MercadoLibreService
         $filters = [['id' => 'BRAND', 'values' => [['name' => 'Generic']]], ['id' => 'GENDER', 'values' => [['name' => 'Sin género']]]];
         [$code, $template] = $this->request('/domains/MLA-T_SHIRTS/technical_specs?section=grids', $token, ['attributes' => $filters], true);
         if ($code !== 200) throw new \RuntimeException('MeLi no entregó la estructura de la guía: ' . ($template['message'] ?? 'reintentá la consulta.'));
-        $payload = MercadoLibreShirtChart::payload($rows, $template, $filters);
+        try { $payload = MercadoLibreShirtChart::payload($rows, $template, $filters); }
+        catch (\RuntimeException $error) { return ['ok' => false, 'message' => $error->getMessage(), 'chart_requirements' => $template]; }
         $key = 'meli_shirt_chart_' . hash('sha256', json_encode([$status['user_id'], $payload]));
         $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
         $q->execute([$key]);

@@ -303,7 +303,12 @@
             headers: {'Content-Type': 'application/json'}, body: JSON.stringify({csrf_token: app.csrf_token,
                 action: 'create_shirt_size_chart', product_id: product.id, group})});
         const data = await response.json();
-        if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudo crear la guía de talles.');
+        if (!response.ok || !data.ok) {
+            if (data.chart_requirements) {
+                editor.root.querySelector('[data-meli-chart-requirements]').textContent = JSON.stringify(data.chart_requirements, null, 2);
+            }
+            throw new Error(data.message || 'No se pudo crear la guía de talles.');
+        }
         editor.root.querySelector('[data-meli-attribute="SIZE_GRID_ID"]').value = data.chart.id;
         for (const [id, row] of Object.entries(data.size_grid_rows || {})) editor.root.querySelector(`[data-meli-size-row="${id}"]`).value = row;
         if (!data.size_grid_rows) await linkSizeChart(editor, product);
@@ -369,6 +374,7 @@
             <button class="primary-button fit-button" type="button" data-meli-size-chart>VINCULAR GUÍA DE MELI POR TALLE</button>
             <button class="primary-button fit-button" type="button" data-meli-size-create>CREAR GUÍA EN MELI CON ESTA TABLA</button>
             <p>Guardá primero la ficha. La guía utiliza las medidas existentes y conserva los talles numéricos.</p>
+            <details><summary>Requisitos de la guía devueltos por MeLi</summary><pre data-meli-chart-requirements></pre></details>
             <div class="meli-size-rows">${(product?.variants || []).map(v => `<label>${esc(v.name)} · ID de fila MeLi<input data-meli-size-row="${Number(v.id)}" value="${esc(draft.size_grid_rows?.[v.id] || '')}" placeholder="123456:1"></label>`).join('')}</div>` : ''}
             <p data-meli-category-name></p>
             <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>
