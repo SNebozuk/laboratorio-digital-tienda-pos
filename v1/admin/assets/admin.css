@@ -4514,20 +4514,20 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .meli-product-checks input[type="checkbox"] { width: auto; margin: 0; }
 .meli-product-editor .meli-progress-footer { margin-top: 16px; }
 
-.meli-publication-focus { position:fixed; inset:0; width:100%; max-width:none; height:100dvh; max-height:none; margin:0; padding:24px 24px calc(30dvh + 24px); border:0; box-sizing:border-box; background:transparent; overflow:auto; }
+.meli-publication-focus { position:fixed; inset:0; width:100%; max-width:none; height:100dvh; max-height:none; margin:0; padding:24px; border:0; box-sizing:border-box; background:transparent; overflow:auto; }
 .meli-publication-focus::backdrop { background:rgba(18,26,38,.65); backdrop-filter:blur(4px); }
-.meli-publication-focus-card { width:min(1080px,100%); box-sizing:border-box; margin:8vh auto 0; padding:20px; border:1px solid #d2dce8; border-radius:14px; background:#e8eef5; color:#26384c; box-shadow:0 16px 48px rgba(0,0,0,.25); }
-.meli-publication-focus-card header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.meli-publication-focus-card { display:flex; flex-direction:column; width:min(1080px,100%); max-height:calc(92dvh - 48px); box-sizing:border-box; margin:8vh auto 0; padding:20px; border:1px solid #d2dce8; border-radius:14px; background:#e8eef5; color:#26384c; box-shadow:0 16px 48px rgba(0,0,0,.25); }
+.meli-publication-focus-card header { display:flex; flex:none; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
 .meli-publication-focus-card h2 { margin:0; font-size:16px; font-weight:600; }
-.meli-publication-focus-table { overflow-x:auto; }
+.meli-publication-focus-table { min-height:0; overflow:auto; }
 .meli-publication-focus-table :disabled { opacity:1; cursor:default; }
-.meli-publication-focus-footer { position:fixed; inset:auto 0 0; min-height:64px; max-height:30dvh; overflow:auto; box-sizing:border-box; padding:20px 24px; border-top:1px solid #d2dce8; background:#e8eef5; }
+.meli-publication-focus-footer { flex:none; margin-top:16px; padding:16px 0 0; border-top:1px solid #d2dce8; font-size:13px; line-height:1.45; }
 .meli-publication-focus-message { overflow-wrap:anywhere; }
 .meli-publication-focus-footer.is-active .meli-publication-focus-message { background:linear-gradient(105deg,#26384c 35%,#50657b 50%,#26384c 65%); background-size:250% 100%; background-clip:text; -webkit-background-clip:text; color:transparent; animation:meli-progress-shimmer 3s linear infinite; }
 :root[data-darkreader-scheme="dark"] .meli-publication-focus-footer.is-active .meli-publication-focus-message { color-scheme:dark; background-image:linear-gradient(105deg,CanvasText 35%,GrayText 50%,CanvasText 65%); }
 .meli-publication-focus-footer.is-success { color:#278d67; }
 .meli-publication-focus-footer.is-error { color:#ce5262; }
-@media(max-width:700px) { .meli-publication-focus { padding:12px 12px calc(30dvh + 12px); } .meli-publication-focus-card { margin-top:3vh; padding:12px; } .meli-publication-focus-footer { padding:16px 12px; } }
+@media(max-width:700px) { .meli-publication-focus { padding:12px; } .meli-publication-focus-card { max-height:calc(97dvh - 24px); margin-top:3vh; padding:12px; } }
 @media(prefers-reduced-motion:reduce) { .meli-publication-focus-footer.is-active .meli-publication-focus-message { animation:none; background:none; color:#26384c; } }
 @media(prefers-reduced-motion:reduce) { :root[data-darkreader-scheme="dark"] .meli-publication-focus-footer.is-active .meli-publication-focus-message { background:none; color:#d4deeb; } }
 #product-form .meli-product-editor .primary-button {
