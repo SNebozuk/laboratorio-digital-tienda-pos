@@ -6,6 +6,8 @@ namespace LaboratorioDigital;
 use PDO;
 use PDOException;
 
+require_once __DIR__ . '/MercadoLibreProductDraft.php';
+
 final class ProductService
 {
     public function __construct(private readonly PDO $pdo)
@@ -206,6 +208,7 @@ final class ProductService
                     }
                 }
 
+                MercadoLibreProductDraft::save($pdo, $productId, $payload['meli']);
                 return $productId;
             }
         );
@@ -244,6 +247,7 @@ final class ProductService
                 if ($updateProduct->rowCount() !== 1) {
                     throw new ValidationException('El producto no existe.');
                 }
+                MercadoLibreProductDraft::save($pdo, $productId, $payload['meli']);
 
                 $existingQuery = $pdo->prepare(
                     'SELECT id, stock_on_hand, stock_reserved
@@ -718,6 +722,7 @@ final class ProductService
     private function groupProducts(array $rows, bool $admin): array
     {
         $products = [];
+        $meliDrafts = $admin ? MercadoLibreProductDraft::all($this->pdo) : [];
         foreach ($rows as $row) {
             $productId = (int) $row['product_id'];
             if (!isset($products[$productId])) {
@@ -734,6 +739,7 @@ final class ProductService
                     'active' => $admin ? (bool) $row['product_active'] : true,
                     'variants' => [],
                 ];
+                if ($admin) $products[$productId]['meli'] = $meliDrafts[$productId] ?? null;
             }
 
             $variant = [
@@ -876,6 +882,7 @@ final class ProductService
             'image_path' => $imagePath ?: null,
             'active' => !isset($data['active']) || (bool) $data['active'],
             'variants' => $validatedVariants,
+            'meli' => MercadoLibreProductDraft::normalize($data['meli'] ?? null),
         ];
     }
 

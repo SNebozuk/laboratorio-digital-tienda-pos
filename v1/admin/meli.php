@@ -22,13 +22,25 @@ try {
         $service->callback($_GET);
         $_SESSION['meli_result'] = 'Autorización recibida. Verificá la conexión.';
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        Http::requireCsrf(Http::input());
-        $result = ['authorization_url' => $service->authorizationUrl()];
+        $input = Http::input();
+        Http::requireCsrf($input);
+        $result = match ($input['action'] ?? '') {
+            'calculate_price' => $service->calculateProductPrice($input),
+            'validate_publication' => $service->validatePublication((int) ($input['product_id'] ?? 0)),
+            'publish_product' => $service->publishProduct((int) ($input['product_id'] ?? 0)),
+            default => ['authorization_url' => $service->authorizationUrl()],
+        };
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $result = $service->status();
-        $result['redirect_uri'] = $app['config']['meli_redirect_uri'];
-        $result['authorization_result'] = $_SESSION['meli_result'] ?? '';
-        unset($_SESSION['meli_result']);
+        if (($_GET['action'] ?? '') === 'product_requirements') {
+            $result = $service->productRequirements((string) ($_GET['category_id'] ?? ''));
+        } elseif (($_GET['action'] ?? '') === 'published_products') {
+            $result = $service->publishedProducts((int) ($_GET['offset'] ?? 0));
+        } else {
+            $result = $service->status();
+            $result['redirect_uri'] = $app['config']['meli_redirect_uri'];
+            $result['authorization_result'] = $_SESSION['meli_result'] ?? '';
+            unset($_SESSION['meli_result']);
+        }
     } else {
         Http::json(['connected' => false, 'message' => 'Método no permitido.'], 405);
     }

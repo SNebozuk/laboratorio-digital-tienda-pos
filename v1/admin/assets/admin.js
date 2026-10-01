@@ -1849,6 +1849,7 @@
                 <div class="product-save-actions"><button class="primary-button fit-button" type="submit">GUARDAR CAMBIOS</button></div>
             </form>
         `);
+        window.MeliProductEditor?.mount(document.getElementById('product-form'), product);
     }
 
     function readProductForm(form) {
@@ -1873,6 +1874,7 @@
             image_path: formData.get('image_path'),
             active: formData.get('active') === '1',
             variants,
+            ...(window.MeliProductEditor ? { meli: window.MeliProductEditor.read(form) } : {}),
         };
     }
 

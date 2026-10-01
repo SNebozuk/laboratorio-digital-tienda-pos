@@ -576,21 +576,11 @@ header('Referrer-Policy: same-origin');
                     <section class="admin-view" id="view-meli">
                         <div class="view-heading"><div><p class="eyebrow">INTEGRACIÓN</p><h1>MERCADO LIBRE</h1></div></div>
                         <div class="settings-card">
-                            <p class="meli-status"><span class="meli-connection-dot" data-meli-indicator role="img" aria-label="Sin conexión verificada"></span><strong id="meli-status-message" role="status">Sin conexión verificada.</strong></p>
-                            <p id="meli-account"></p>
                             <p id="meli-authorization-result" role="status"></p>
-                            <div class="meli-actions"><button class="primary-button fit-button" id="meli-connect" type="button" disabled>CONECTAR CUENTA</button><button class="primary-button fit-button" id="meli-verify" type="button">VERIFICAR CONEXIÓN</button></div>
+                            <div class="meli-actions"><button class="primary-button fit-button" id="meli-connect" type="button" disabled>CONECTAR CUENTA</button><button class="primary-button fit-button" id="meli-verify" type="button">ACTUALIZAR PRODUCTOS</button></div>
                         </div>
-                        <div class="settings-card">
-                            <h2>PRIMERA CONEXIÓN</h2>
-                            <ol>
-                                <li>Creá una aplicación en <a href="https://developers.mercadolibre.com.ar/" target="_blank" rel="noopener noreferrer">Mercado Libre Developers</a> con tu cuenta de vendedor.</li>
-                                <li>Registrá esta URL de retorno exacta: <code id="meli-redirect-uri">https://www.laboratoriodigital.com.ar<?= $escape($storePath) ?>/admin/meli.php</code>.</li>
-                                <li>Configurá en el servidor <code>meli_client_id</code>, <code>meli_client_secret</code> y <code>meli_redirect_uri</code> en el archivo privado de configuración. También se admiten las variables <code>APP_MELI_CLIENT_ID</code>, <code>APP_MELI_CLIENT_SECRET</code> y <code>APP_MELI_REDIRECT_URI</code>. Si activás PKCE en la aplicación, configurá <code>meli_pkce</code> como <code>1</code>.</li>
-                                <li>Presioná CONECTAR CUENTA y aceptá la autorización en Mercado Libre.</li>
-                            </ol>
-                            <p>El círculo verde confirma una consulta exitosa a tu cuenta. El rojo indica que no hay acceso verificado. Esta etapa conecta la cuenta; todavía no publica productos ni importa ventas.</p>
-                        </div>
+                        <div id="meli-products" aria-live="polite"></div>
+                        <div class="button-row"><button type="button" id="meli-products-previous" hidden>ANTERIORES</button><button type="button" id="meli-products-next" hidden>SIGUIENTES</button></div>
                         <footer class="meli-progress-footer" id="meli-progress-footer" role="status" aria-live="polite" aria-atomic="true"><span id="meli-progress-text">Mercado Libre: esperando verificación.</span><span class="meli-progress-dots" aria-hidden="true"><i></i><i></i><i></i></span></footer>
                     </section>
                     <section class="admin-view" id="view-settings">
@@ -774,5 +764,6 @@ header('Referrer-Policy: same-origin');
     <script src="<?= $escape($adminAssetPath) ?>/admin.js?v=<?= $escape($adminJsVersion) ?>" defer></script>
     <script src="<?= $escape($adminAssetPath) ?>/whatsapp-workspace.js?v=<?= $escape($assetVersion(__DIR__ . '/assets/whatsapp-workspace.js')) ?>" defer></script>
     <?php if ($user && $user['role'] === 'admin'): ?><script src="<?= $escape($adminAssetPath) ?>/meli.js?v=<?= $escape($assetVersion(__DIR__ . '/assets/meli.js')) ?>" defer></script><?php endif ?>
+    <?php if ($user && $user['role'] === 'admin'): ?><script src="<?= $escape($adminAssetPath) ?>/meli-products.js?v=<?= $escape($assetVersion(__DIR__ . '/assets/meli-products.js')) ?>" defer></script><?php endif ?>
 </body>
 </html>

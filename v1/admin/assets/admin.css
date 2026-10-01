@@ -4146,7 +4146,13 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .meli-nav-button { position:relative; }
 .meli-connection-dot { display:inline-block; width:10px; height:10px; flex:0 0 10px; border-radius:50%; background:#dc2626; border:1px solid #fff; }
 .meli-connection-dot.is-connected { background:#16a34a; }
-.meli-nav-button .meli-connection-dot { position:absolute; right:0; bottom:0; }
+.meli-nav-button .meli-connection-dot { position:absolute; right:-5px; top:50%; transform:translateY(-50%); }
+.meli-products-table-wrap { overflow-x:auto; }
+.meli-products-table { width:100%; border-collapse:collapse; }
+.meli-products-table th, .meli-products-table td { padding:12px; text-align:left; border-bottom:1px solid var(--line, #334155); }
+.meli-products-table td:first-child { min-width:230px; }
+.meli-products-table small { display:block; margin-top:5px; }
+#view-meli [hidden] { display:none !important; }
 .meli-status, .meli-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 #view-meli code { overflow-wrap:anywhere; }
 #view-meli li { margin-bottom:12px; }
@@ -4494,3 +4500,21 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     color: var(--accent);
 }
 .admin-panel-loading[hidden] { display: none; }
+.meli-product-editor {
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid var(--border, #334155);
+    border-radius: 10px;
+}
+.meli-product-editor > summary { cursor: pointer; font-weight: 700; }
+.meli-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 14px 0; }
+.meli-product-grid label { min-width: 0; }
+.meli-product-checks { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 14px 0; }
+.meli-product-checks label { display: flex; align-items: center; gap: 8px; }
+.meli-product-checks input[type="checkbox"] { width: auto; margin: 0; }
+.meli-product-editor .meli-progress-footer { margin-top: 16px; }
+#product-form .meli-product-editor .primary-button {
+    height: 46px; padding: 0 18px; border: 1px solid #1769e0; border-radius: 10px;
+    background: #1769e0; color: #fff; font-weight: 700;
+}
+@media (max-width: 640px) { .meli-product-grid { grid-template-columns: 1fr; } }
