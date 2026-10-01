@@ -31,12 +31,12 @@ Para cada pedido seguir este orden:
 2. Trabajar únicamente sobre lo solicitado y leer solo los archivos relacionados.
 3. Hacer el cambio mínimo necesario, sin refactors ni mejoras no pedidas.
 4. Validar únicamente los archivos modificados con las comprobaciones relevantes.
-5. Si la tarea terminó y la validación fue correcta, revisar solo sus archivos y ofrecer al usuario «Subir (commit + push)» o la posibilidad de pedir más cambios. Esperar su aprobación explícita antes de crear el commit y ejecutar `git push` al remoto y rama actualmente configurados.
+5. Si la tarea terminó y la validación fue correcta, revisar todos sus archivos, crear el commit y ejecutar `git push` automáticamente al remoto y rama actualmente configurados, sin pedir otra aprobación.
 6. No hacer commit ni push si la tarea quedó incompleta, hubo un error de validación importante o el usuario pidió explícitamente no hacerlo.
 7. No cambiar de rama ni de remoto salvo pedido explícito.
 8. Responder muy brevemente indicando qué se modificó, si validó, si se hizo commit y si se hizo push.
 
-Regla permanente: **hacer únicamente lo indicado por el usuario; cambio terminado + validación correcta = presentar el resultado y esperar aprobación para commit + push**.
+Regla permanente: **hacer únicamente lo indicado por el usuario; tarea terminada + validación correcta = subir todos los cambios de esa tarea (commit + push) automáticamente y presentar el resultado**.
 
 Antes del commit, incluir exclusivamente los archivos de la tarea actual. El árbol de trabajo puede contener cambios ajenos del usuario y deben preservarse sin incorporarlos, modificarlos ni descartarlos.
 
@@ -154,6 +154,6 @@ Para otros tipos de archivo, ejecutar solo la comprobación directamente relevan
 
 1. Revisar el diff de los archivos de la tarea; no incluir archivos ajenos.
 2. Confirmar las validaciones mínimas relevantes.
-3. Si el cambio está completo y validado, ofrecer «Subir (commit + push)» o pedir más cambios; solo con aprobación explícita hacer commit y ejecutar `git push` sin fijar manualmente otra rama o remoto.
+3. Si el cambio está completo y validado, hacer commit de todos los archivos de la tarea y ejecutar `git push` automáticamente, sin pedir otra aprobación ni fijar manualmente otra rama o remoto.
 4. No hacer push en los casos de excepción definidos en el flujo permanente.
 5. Cuando el push active el workflow **Desplegar en DonWeb**, verificar su resultado si las herramientas disponibles lo permiten. Un reintento FTPS puede ser necesario ante un timeout de red.

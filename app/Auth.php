@@ -153,6 +153,7 @@ final class Auth
         );
         $query->execute(['token_hash' => hash('sha256', $token)]);
         $session = $query->fetch();
+        $query->closeCursor();
         if (!$session) {
             $this->forgetPersistentSession();
             return 0;
@@ -161,9 +162,17 @@ final class Auth
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $session['user_id'];
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        $this->pdo->prepare(
-            'UPDATE persistent_sessions SET last_used_at = CURRENT_TIMESTAMP WHERE id = :id'
-        )->execute(['id' => $session['id']]);
+        try {
+            $this->pdo->prepare(
+                'UPDATE persistent_sessions SET last_used_at = CURRENT_TIMESTAMP WHERE id = :id'
+            )->execute(['id' => $session['id']]);
+        } catch (PDOException $exception) {
+            // La sesión ya fue validada. Una contención de SQLite al registrar
+            // el último uso no debe impedir el ingreso al administrador.
+            if (!in_array((int) ($exception->errorInfo[1] ?? 0), [5, 6], true)) {
+                throw $exception;
+            }
+        }
 
         return (int) $session['user_id'];
     }
