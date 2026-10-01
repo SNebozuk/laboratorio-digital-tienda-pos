@@ -500,8 +500,7 @@
             loader.id = 'admin-panel-loading';
             loader.className = 'admin-panel-loading';
             loader.setAttribute('role', 'status');
-            loader.setAttribute('aria-label', 'Cargando panel');
-            loader.innerHTML = '<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>';
+            loader.textContent = 'Ingresando a Laboratorio Digital';
             main.appendChild(loader);
         }
         const loads = [];

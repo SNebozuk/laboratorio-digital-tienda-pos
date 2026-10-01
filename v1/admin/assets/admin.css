@@ -4494,19 +4494,3 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     color: var(--accent);
 }
 .admin-panel-loading[hidden] { display: none; }
-.admin-panel-loading span {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: currentColor;
-    animation: admin-panel-dot 1s ease-in-out infinite;
-}
-.admin-panel-loading span:nth-child(2) { animation-delay: .15s; }
-.admin-panel-loading span:nth-child(3) { animation-delay: .3s; }
-@keyframes admin-panel-dot {
-    0%, 80%, 100% { opacity: .3; transform: translateY(0); }
-    40% { opacity: 1; transform: translateY(-6px); }
-}
-@media (prefers-reduced-motion: reduce) {
-    .admin-panel-loading span { animation: none; }
-}

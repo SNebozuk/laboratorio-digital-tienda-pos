@@ -39,7 +39,7 @@ header('Referrer-Policy: same-origin');
     <script src="<?= $escape($storeAssetPath) ?>/page-loading.js?v=<?= substr(hash_file('sha256', dirname(__DIR__) . '/assets/page-loading.js') ?: '1', 0, 12) ?>"></script>
 </head>
 <body class="admin-body pos-page-body<?= $embedded ? ' pos-embedded' : '' ?>">
-    <div id="page-loading" role="status" aria-label="Cargando sitio"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></div>
+    <div id="page-loading" role="status">Ingresando a Laboratorio Digital</div>
     <main class="pos-page">
         <header class="pos-page-header">
             <div class="pos-page-brand"><strong>LABORATORIO DIGITAL</strong><span>PUNTO DE VENTA</span></div>
