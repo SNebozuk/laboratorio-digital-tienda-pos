@@ -14,6 +14,17 @@
     let offset = 0;
     const quotes = new Map();
     const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const icons = {
+        pause: '<path d="M8 5v14M16 5v14"/>',
+        play: '<path d="m8 5 11 7-11 7Z"/>',
+        price: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M14 11h2M8 15h2M14 15h2M8 18h2M14 18h2"/>',
+        stock: '<path d="m3 7 9-4 9 4-9 4Z M3 7v10l9 4 9-4V7M12 11v10"/>',
+        apply: '<path d="m5 12 4 4L19 6"/>',
+        cancel: '<path d="m6 6 12 12M18 6 6 18"/>',
+        external: '<path d="M14 3h7v7M21 3l-11 11M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/>'
+    };
+    const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name]}</svg>`;
+    const actionButton = (action, label, name, attributes = '') => `<button type="button" class="icon-action-button meli-listing-action" data-action="${action}" title="${label}" aria-label="${label}" ${attributes}>${icon(name)}</button>`;
     let busy = false;
     function progress(text, active = false) {
         progressText.textContent = `Mercado Libre: ${text}`;
@@ -46,10 +57,10 @@
         products.innerHTML = data.products.length ? `<p>${Number(data.total)} publicaciones · ${Number(data.offset) + 1}–${Number(data.offset) + data.products.length}</p><div class="meli-products-table-wrap"><table class="meli-products-table"><thead><tr><th>Producto</th><th>Precio Meli</th><th>Stock Meli</th><th>Vendidos</th><th>Estado</th><th>Publicación</th><th>Acciones</th></tr></thead><tbody>${data.products.map(item => {
             let href = '';
             try { const link = new URL(item.permalink); if (['https:', 'http:'].includes(link.protocol) && (link.hostname === 'mercadolibre.com.ar' || link.hostname.endsWith('.mercadolibre.com.ar'))) href = link.href.replace(/^http:/, 'https:'); } catch {}
-            const statusAction = ['active', 'paused'].includes(item.status) ? `<button type="button" class="primary-button meli-listing-action" data-action="listing_status" data-status="${item.status === 'active' ? 'paused' : 'active'}">${item.status === 'active' ? 'PAUSAR' : 'REACTIVAR'}</button>` : '';
+            const statusAction = ['active', 'paused'].includes(item.status) ? actionButton('listing_status', item.status === 'active' ? 'Pausar' : 'Reactivar', item.status === 'active' ? 'pause' : 'play', `data-status="${item.status === 'active' ? 'paused' : 'active'}"`) : '';
             const quote = quotes.get(item.id);
-            const pricing = quote ? `<div class="meli-price-review" role="status">Nuevo precio: ${escape(money(quote.pricing.price_cents))}<br>Comisiones: ${escape(money(quote.pricing.sale_fee_cents + quote.pricing.listing_fee_cents))}<br>Neto estimado: ${escape(money(quote.pricing.net_cents))}<button type="button" class="primary-button meli-listing-action" data-action="apply_listing_price">APLICAR PRECIO</button><button type="button" class="meli-cancel-quote" data-action="cancel_quote">CANCELAR</button></div>` : '';
-            return `<tr data-item-id="${escape(item.id)}"><td>${escape(item.title || item.family_name)}<small>${escape(item.id)} · ${escape(({gold_special: 'Clásica', gold_pro: 'Premium', free: 'Gratuita'})[item.listing_type_id] || item.listing_type_id)}</small></td><td>${escape(Number(item.price).toLocaleString('es-AR', {style: 'currency', currency: item.currency_id || 'ARS'}))}</td><td>${Number(item.available_quantity)}</td><td>${Number(item.sold_quantity)}</td><td>${escape(states[item.status] || item.status)}</td><td>${href ? `<a href="${escape(href)}" target="_blank" rel="noopener noreferrer">VER EN MELI</a>` : '—'}</td><td><div class="meli-listing-actions">${statusAction}${item.linked ? '<button type="button" class="primary-button meli-listing-action" data-action="preview_listing_price">RECALCULAR PRECIO</button><button type="button" class="primary-button meli-listing-action" data-action="sync_listing_stock">SINCRONIZAR STOCK</button>' : '<small>Precio y stock: sin producto vinculado.</small>'}${pricing}</div></td></tr>`;
+            const pricing = quote ? `<div class="meli-price-review" role="status"><span>Nuevo precio: ${escape(money(quote.pricing.price_cents))} · Comisiones: ${escape(money(quote.pricing.sale_fee_cents + quote.pricing.listing_fee_cents))} · Neto estimado: ${escape(money(quote.pricing.net_cents))}</span>${actionButton('apply_listing_price', 'Aplicar precio', 'apply')}${actionButton('cancel_quote', 'Cancelar', 'cancel')}</div>` : '';
+            return `<tr data-item-id="${escape(item.id)}"><td>${escape(item.title || item.family_name)}<small>${escape(item.id)} · ${escape(({gold_special: 'Clásica', gold_pro: 'Premium', free: 'Gratuita'})[item.listing_type_id] || item.listing_type_id)}</small></td><td>${escape(Number(item.price).toLocaleString('es-AR', {style: 'currency', currency: item.currency_id || 'ARS'}))}</td><td>${Number(item.available_quantity)}</td><td>${Number(item.sold_quantity)}</td><td>${escape(states[item.status] || item.status)}</td><td>${href ? `<a class="icon-action-button" href="${escape(href)}" target="_blank" rel="noopener noreferrer" title="Ver en MeLi" aria-label="Ver en MeLi">${icon('external')}</a>` : '—'}</td><td><div class="meli-listing-actions">${statusAction}${item.linked ? actionButton('preview_listing_price', 'Recalcular precio', 'price') + actionButton('sync_listing_stock', 'Sincronizar stock', 'stock') : '<small>Precio y stock: sin producto vinculado.</small>'}${pricing}</div></td></tr>`;
         }).join('')}</tbody></table></div>` : '<p>Todavía no hay productos publicados en esta cuenta.</p>';
         previous.hidden = data.offset <= 0;
         next.hidden = data.offset + data.products.length >= data.total || data.offset >= 980;

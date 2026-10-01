@@ -4518,8 +4518,6 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
     background: #1769e0; color: #fff; font-weight: 700;
 }
 @media (max-width: 640px) { .meli-product-grid { grid-template-columns: 1fr; } }
-.meli-listing-actions { display: flex; flex-direction: column; gap: 8px; min-width: 185px; }
-#view-meli .meli-listing-action { background: #2563eb; color: #fff; border: 1px solid #2563eb; border-radius: 10px; min-height: 46px; padding: 8px 12px; }
-.meli-price-review { padding: 10px; border: 1px solid var(--border-color, #334155); border-radius: 10px; line-height: 1.7; }
-.meli-price-review button { display: block; width: 100%; margin-top: 8px; }
-#view-meli .meli-cancel-quote { background: none; border: 0; padding: 0; color: inherit; }
+.meli-listing-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; white-space: nowrap; }
+#view-meli .meli-listing-action { flex: 0 0 32px; width: 32px; height: 32px; min-height: 32px; padding: 0; background: #2563eb; color: #fff; border: 1px solid #2563eb; border-radius: 10px; }
+.meli-price-review { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-color, #334155); border-radius: 10px; white-space: nowrap; }
