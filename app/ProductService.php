@@ -450,6 +450,25 @@ final class ProductService
         );
     }
 
+    public function applyMercadoLibreStockChange(int $variantId, int $delta, int $actorId, string $itemId, callable $checkpoint): int
+    {
+        return Database::immediate($this->pdo, function (PDO $pdo) use ($variantId, $delta, $actorId, $itemId, $checkpoint): int {
+            $query = $pdo->prepare('SELECT v.stock_on_hand,v.stock_specified FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=? AND v.active=1 AND p.active=1 AND p.deleted_at IS NULL');
+            $query->execute([$variantId]);
+            $variant = $query->fetch();
+            if (!$variant || !$variant['stock_specified']) throw new \RuntimeException('La variante debe estar activa y tener stock definido.');
+            $quantity = (int) $variant['stock_on_hand'] + $delta;
+            if ($quantity < 0) throw new \RuntimeException('Los cambios de ambos canales superan el stock disponible. Revisá las ventas antes de sincronizar.');
+            if ($delta !== 0) {
+                $update = $pdo->prepare('UPDATE product_variants SET stock_on_hand=?,updated_at=CURRENT_TIMESTAMP WHERE id=?');
+                $update->execute([$quantity, $variantId]);
+                $this->recordStockMovement($pdo, $variantId, $delta, 0, 'meli_sync', $itemId, $actorId);
+            }
+            $checkpoint($pdo, $quantity);
+            return $quantity;
+        });
+    }
+
     /** @param list<int> $productIds */
     public function setVisibility(array $productIds, bool $active): void
     {

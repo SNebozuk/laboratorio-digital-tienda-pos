@@ -12,6 +12,7 @@
     const previous = document.getElementById('meli-products-previous');
     const next = document.getElementById('meli-products-next');
     let offset = 0;
+    const quotes = new Map();
     const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     let busy = false;
     function progress(text, active = false) {
@@ -42,15 +43,48 @@
         const data = await response.json();
         if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudieron consultar los productos publicados.');
         const states = {active: 'Activo', paused: 'Pausado', closed: 'Finalizado', under_review: 'En revisión', inactive: 'Inactivo', payment_required: 'Pago pendiente'};
-        products.innerHTML = data.products.length ? `<p>${Number(data.total)} publicaciones · ${Number(data.offset) + 1}–${Number(data.offset) + data.products.length}</p><div class="meli-products-table-wrap"><table class="meli-products-table"><thead><tr><th>Producto</th><th>Precio Meli</th><th>Stock Meli</th><th>Vendidos</th><th>Estado</th><th>Publicación</th></tr></thead><tbody>${data.products.map(item => {
+        products.innerHTML = data.products.length ? `<p>${Number(data.total)} publicaciones · ${Number(data.offset) + 1}–${Number(data.offset) + data.products.length}</p><div class="meli-products-table-wrap"><table class="meli-products-table"><thead><tr><th>Producto</th><th>Precio Meli</th><th>Stock Meli</th><th>Vendidos</th><th>Estado</th><th>Publicación</th><th>Acciones</th></tr></thead><tbody>${data.products.map(item => {
             let href = '';
             try { const link = new URL(item.permalink); if (['https:', 'http:'].includes(link.protocol) && (link.hostname === 'mercadolibre.com.ar' || link.hostname.endsWith('.mercadolibre.com.ar'))) href = link.href.replace(/^http:/, 'https:'); } catch {}
-            return `<tr><td>${escape(item.title || item.family_name)}<small>${escape(item.id)} · ${escape(({gold_special: 'Clásica', gold_pro: 'Premium', free: 'Gratuita'})[item.listing_type_id] || item.listing_type_id)}</small></td><td>${escape(Number(item.price).toLocaleString('es-AR', {style: 'currency', currency: item.currency_id || 'ARS'}))}</td><td>${Number(item.available_quantity)}</td><td>${Number(item.sold_quantity)}</td><td>${escape(states[item.status] || item.status)}</td><td>${href ? `<a href="${escape(href)}" target="_blank" rel="noopener noreferrer">VER EN MELI</a>` : '—'}</td></tr>`;
+            const statusAction = ['active', 'paused'].includes(item.status) ? `<button type="button" class="primary-button meli-listing-action" data-action="listing_status" data-status="${item.status === 'active' ? 'paused' : 'active'}">${item.status === 'active' ? 'PAUSAR' : 'REACTIVAR'}</button>` : '';
+            const quote = quotes.get(item.id);
+            const pricing = quote ? `<div class="meli-price-review" role="status">Nuevo precio: ${escape(money(quote.pricing.price_cents))}<br>Comisiones: ${escape(money(quote.pricing.sale_fee_cents + quote.pricing.listing_fee_cents))}<br>Neto estimado: ${escape(money(quote.pricing.net_cents))}<button type="button" class="primary-button meli-listing-action" data-action="apply_listing_price">APLICAR PRECIO</button><button type="button" class="meli-cancel-quote" data-action="cancel_quote">CANCELAR</button></div>` : '';
+            return `<tr data-item-id="${escape(item.id)}"><td>${escape(item.title || item.family_name)}<small>${escape(item.id)} · ${escape(({gold_special: 'Clásica', gold_pro: 'Premium', free: 'Gratuita'})[item.listing_type_id] || item.listing_type_id)}</small></td><td>${escape(Number(item.price).toLocaleString('es-AR', {style: 'currency', currency: item.currency_id || 'ARS'}))}</td><td>${Number(item.available_quantity)}</td><td>${Number(item.sold_quantity)}</td><td>${escape(states[item.status] || item.status)}</td><td>${href ? `<a href="${escape(href)}" target="_blank" rel="noopener noreferrer">VER EN MELI</a>` : '—'}</td><td><div class="meli-listing-actions">${statusAction}${item.linked ? '<button type="button" class="primary-button meli-listing-action" data-action="preview_listing_price">RECALCULAR PRECIO</button><button type="button" class="primary-button meli-listing-action" data-action="sync_listing_stock">SINCRONIZAR STOCK</button>' : '<small>Precio y stock: sin producto vinculado.</small>'}${pricing}</div></td></tr>`;
         }).join('')}</tbody></table></div>` : '<p>Todavía no hay productos publicados en esta cuenta.</p>';
         previous.hidden = data.offset <= 0;
         next.hidden = data.offset + data.products.length >= data.total || data.offset >= 980;
         progress('productos actualizados.');
     }
+    const money = cents => (Number(cents) / 100).toLocaleString('es-AR', {style: 'currency', currency: 'ARS'});
+    products.addEventListener('click', async event => {
+        const button = event.target.closest('button[data-action]');
+        if (!button || busy) return;
+        const row = button.closest('[data-item-id]');
+        const itemId = row.dataset.itemId;
+        const action = button.dataset.action;
+        if (action === 'cancel_quote') { quotes.delete(itemId); row.querySelector('.meli-price-review')?.remove(); return; }
+        const labels = {listing_status: button.dataset.status === 'active' ? 'reactivando publicación…' : 'pausando publicación…', preview_listing_price: 'consultando comisiones y recalculando precio…', apply_listing_price: 'aplicando el precio revisado…', sync_listing_stock: 'reconciliando el stock de la tienda y Meli…'};
+        busy = true;
+        verify.disabled = true;
+        products.querySelectorAll('button').forEach(control => { control.disabled = true; });
+        progress(labels[action], true);
+        try {
+            const data = await request({method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({
+                csrf_token: app.csrf_token, action, item_id: itemId, status: button.dataset.status,
+                quote_token: quotes.get(itemId)?.quote_token
+            })});
+            if (action === 'preview_listing_price') quotes.set(itemId, data);
+            else quotes.delete(itemId);
+            await loadProducts();
+            progress(data.message || 'Precio calculado. Revisá el importe antes de aplicarlo.');
+        } catch (error) {
+            progress(error.message || 'No se pudo completar la operación.');
+        } finally {
+            busy = false;
+            verify.disabled = false;
+            products.querySelectorAll('button').forEach(control => { control.disabled = false; });
+        }
+    });
     async function check(showProducts = panel.classList.contains('active')) {
         if (busy) return;
         busy = true;

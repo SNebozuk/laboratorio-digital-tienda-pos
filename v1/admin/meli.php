@@ -25,6 +25,10 @@ try {
         $input = Http::input();
         Http::requireCsrf($input);
         $result = match ($input['action'] ?? '') {
+            'listing_status' => $service->changeListingStatus((string) ($input['item_id'] ?? ''), (string) ($input['status'] ?? '')),
+            'preview_listing_price' => $service->previewListingPrice((string) ($input['item_id'] ?? '')),
+            'apply_listing_price' => $service->applyListingPrice((string) ($input['item_id'] ?? ''), (string) ($input['quote_token'] ?? '')),
+            'sync_listing_stock' => $service->synchronizeListingStock((string) ($input['item_id'] ?? ''), (int) $app['auth']->user()['id']),
             'calculate_price' => $service->calculateProductPrice($input),
             'validate_publication' => $service->validatePublication((int) ($input['product_id'] ?? 0)),
             'publish_product' => $service->publishProduct((int) ($input['product_id'] ?? 0)),

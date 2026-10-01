@@ -7,6 +7,8 @@ use PDO;
 
 require_once __DIR__ . '/MercadoLibrePriceCalculator.php';
 require_once __DIR__ . '/MercadoLibreProductDraft.php';
+require_once __DIR__ . '/ProductService.php';
+require_once __DIR__ . '/MercadoLibreStockSync.php';
 
 final class MercadoLibreService
 {
@@ -160,7 +162,128 @@ final class MercadoLibreService
                 $items[] = $detail['body'];
             }
         }
+        $links = $this->listingLinks();
+        foreach ($items as &$item) $item['linked'] = isset($links[$item['id']]);
+        unset($item);
         return ['ok' => true, 'products' => $items, 'offset' => $offset, 'total' => (int) ($search['paging']['total'] ?? 0)];
+    }
+
+    private function listingLinks(): array
+    {
+        $links = [];
+        foreach ($this->pdo->query("SELECT value FROM settings WHERE key LIKE 'meli_listing_%'") as $row) {
+            $record = json_decode($row['value'], true);
+            if (($record['state'] ?? '') === 'published' && !empty($record['item_id'])) $links[$record['item_id']] = $record;
+        }
+        return $links;
+    }
+
+    private function ownedItem(string $itemId): array
+    {
+        if (!preg_match('/^MLA\d+$/D', $itemId)) throw new \RuntimeException('Publicación inválida.');
+        $status = $this->status();
+        if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta para operar.');
+        $tokens = $this->loadTokens();
+        [$code, $item] = $this->request('/items/' . $itemId, $tokens['access_token']);
+        if ($code !== 200 || (int) ($item['seller_id'] ?? 0) !== $status['user_id']) {
+            throw new \RuntimeException('La publicación no pertenece a la cuenta conectada o no está disponible.');
+        }
+        return [$item, $tokens['access_token']];
+    }
+
+    public function changeListingStatus(string $itemId, string $target): array
+    {
+        if (!in_array($target, ['active', 'paused'], true)) throw new \RuntimeException('Estado inválido.');
+        [$item, $token] = $this->ownedItem($itemId);
+        if (!in_array($item['status'], ['active', 'paused'], true)) throw new \RuntimeException('El estado actual no permite pausar o reactivar.');
+        if ($target === 'active' && (int) $item['available_quantity'] < 1) throw new \RuntimeException('La publicación necesita stock para reactivarse.');
+        if ($item['status'] !== $target) {
+            [$code, $updated] = $this->request('/items/' . $itemId, $token, ['status' => $target], true, 'PUT');
+            if ($code !== 200 || ($updated['status'] ?? '') !== $target) throw new \RuntimeException('Meli no confirmó el cambio de estado. Actualizá el panel antes de reintentar.');
+        }
+        return ['ok' => true, 'message' => $target === 'active' ? 'Publicación reactivada.' : 'Publicación pausada.'];
+    }
+
+    private function linkedPrice(string $itemId, array $item, string $token): array
+    {
+        $link = $this->listingLinks()[$itemId] ?? null;
+        if (!$link) throw new \RuntimeException('Esta publicación no está vinculada con un producto de la tienda.');
+        [$code, $automation] = $this->request('/pricing-automation/items/' . $itemId . '/automation', $token);
+        if ($code !== 404 && ($code !== 200 || strtoupper((string) ($automation['status'] ?? '')) === 'ACTIVE')) {
+            throw new \RuntimeException('No se puede editar el precio mientras Meli tenga una automatización activa o no confirme su estado.');
+        }
+        $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
+        $q->execute(['meli_product_' . $link['product_id']]);
+        $draft = MercadoLibreProductDraft::normalize(json_decode((string) $q->fetchColumn(), true));
+        $q = $this->pdo->prepare('SELECT v.price_cents FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=? AND v.product_id=? AND v.active=1 AND p.active=1 AND p.deleted_at IS NULL');
+        $q->execute([$link['variant_id'], $link['product_id']]);
+        $base = $q->fetchColumn();
+        if ($base === false || !$draft || !$draft['pricing']) throw new \RuntimeException('Completá los gastos y el precio del producto vinculado.');
+        if (!empty($item['shipping']['free_shipping']) && $draft['pricing']['shipping_cents'] <= 0) {
+            throw new \RuntimeException('Completá el envío a tu cargo en la ficha antes de recalcular este precio.');
+        }
+        $fingerprint = hash('sha256', json_encode([$base, $draft, $item['listing_type_id'], $item['shipping'], $item['catalog_product_id'] ?? '']));
+        $draft['pricing']['base_price_cents'] = (int) $base;
+        $draft['category_id'] = $item['category_id'];
+        $draft['catalog_product_id'] = $item['catalog_product_id'] ?? '';
+        $draft['listing_type_id'] = $item['listing_type_id'];
+        $draft['shipping_mode'] = $item['shipping']['mode'];
+        $draft['logistic_type'] = $item['shipping']['logistic_type'];
+        return ['link' => $link, 'draft' => $draft, 'fingerprint' => $fingerprint,
+            'pricing' => $this->calculateProductPrice($draft)['pricing']];
+    }
+
+    public function previewListingPrice(string $itemId): array
+    {
+        [$item, $token] = $this->ownedItem($itemId);
+        $quote = $this->linkedPrice($itemId, $item, $token);
+        $quoteToken = bin2hex(random_bytes(16));
+        $q = $this->pdo->prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP');
+        $q->execute(['meli_price_quote_' . $itemId, json_encode(['token' => $quoteToken, 'expires' => time() + 300,
+            'fingerprint' => $quote['fingerprint'], 'price_cents' => $quote['pricing']['price_cents']], JSON_THROW_ON_ERROR)]);
+        return ['ok' => true, 'quote_token' => $quoteToken, 'pricing' => $quote['pricing'], 'current_price' => $item['price']];
+    }
+
+    public function applyListingPrice(string $itemId, string $quoteToken): array
+    {
+        [$item, $token] = $this->ownedItem($itemId);
+        $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
+        $q->execute(['meli_price_quote_' . $itemId]);
+        $saved = json_decode((string) $q->fetchColumn(), true);
+        if (!$saved || $saved['expires'] < time() || !hash_equals($saved['token'], $quoteToken)) throw new \RuntimeException('El cálculo venció. Volvé a recalcular.');
+        $quote = $this->linkedPrice($itemId, $item, $token);
+        if ($quote['fingerprint'] !== $saved['fingerprint'] || $quote['pricing']['price_cents'] !== $saved['price_cents']) {
+            throw new \RuntimeException('Cambió el precio de la tienda, los gastos o las comisiones. Volvé a recalcular y revisar.');
+        }
+        [$code, $updated] = $this->request('/items/' . $itemId, $token, ['price' => $saved['price_cents'] / 100], true, 'PUT');
+        if ($code !== 200 || (int) round(($updated['price'] ?? 0) * 100) !== $saved['price_cents']) throw new \RuntimeException('Meli no confirmó el precio. Actualizá el panel antes de reintentar.');
+        $quote['draft']['pricing'] = $quote['pricing'];
+        MercadoLibreProductDraft::save($this->pdo, (int) $quote['link']['product_id'], $quote['draft']);
+        $this->pdo->prepare('DELETE FROM settings WHERE key=?')->execute(['meli_price_quote_' . $itemId]);
+        return ['ok' => true, 'message' => 'Precio actualizado con las comisiones vigentes.'];
+    }
+
+    public function synchronizeListingStock(string $itemId, int $actorId): array
+    {
+        [$item, $token] = $this->ownedItem($itemId);
+        $link = $this->listingLinks()[$itemId] ?? null;
+        if (!$link || empty($item['user_product_id']) || !empty($item['variations'])) throw new \RuntimeException('La publicación no tiene una variante vinculada compatible con esta sincronización.');
+        $path = '/user-products/' . rawurlencode($item['user_product_id']) . '/stock';
+        $sync = new MercadoLibreStockSync($this->pdo, new ProductService($this->pdo));
+        return $sync->synchronize((int) $link['variant_id'], $itemId, $actorId,
+            function () use ($path, $token): array {
+                [$code, $stock, $headers] = $this->request($path, $token);
+                $locations = $stock['locations'] ?? [];
+                if ($code !== 200 || count($locations) !== 1 || $locations[0]['type'] !== 'selling_address'
+                    || !ctype_digit((string) ($headers['x-version'] ?? '')) || !is_int($locations[0]['quantity'] ?? null)) {
+                    throw new \RuntimeException('El stock requiere un único depósito del vendedor y una versión confirmada por Meli.');
+                }
+                return ['quantity' => $locations[0]['quantity'], 'version' => $headers['x-version']];
+            },
+            function (int $quantity, string $version) use ($path, $token): int {
+                [$code] = $this->request($path . '/type/selling_address', $token, ['quantity' => $quantity], true, 'PUT', ['x-version: ' . $version]);
+                return $code;
+            });
     }
 
     public function preparePublication(int $productId): array
@@ -305,24 +428,29 @@ final class MercadoLibreService
         return $tokens;
     }
 
-    private function request(string $path, string $token, ?array $body = null, bool $json = false): array
+    private function request(string $path, string $token, ?array $body = null, bool $json = false, string $method = 'POST', array $extraHeaders = []): array
     {
         $this->requireConfiguration();
         $handle = curl_init('https://api.mercadolibre.com' . $path);
         $headers = ['Accept: application/json'];
         if ($token !== '') $headers[] = 'Authorization: Bearer ' . $token;
         if ($body !== null) $headers[] = $json ? 'Content-Type: application/json' : 'Content-Type: application/x-www-form-urlencoded';
+        $responseHeaders = [];
         curl_setopt_array($handle, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT => 15, CURLOPT_HTTPHEADER => $headers, CURLOPT_FOLLOWLOCATION => false]);
+            CURLOPT_TIMEOUT => 15, CURLOPT_HTTPHEADER => array_merge($headers, $extraHeaders), CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_HEADERFUNCTION => static function ($curl, string $line) use (&$responseHeaders): int {
+                if (str_contains($line, ':')) { [$name, $value] = explode(':', $line, 2); $responseHeaders[strtolower(trim($name))] = trim($value); }
+                return strlen($line);
+            }]);
         if ($body !== null) {
-            curl_setopt($handle, CURLOPT_POST, true);
+            curl_setopt($handle, CURLOPT_CUSTOMREQUEST, $method);
             curl_setopt($handle, CURLOPT_POSTFIELDS, $json ? json_encode($body, JSON_THROW_ON_ERROR) : http_build_query($body));
         }
         $raw = curl_exec($handle);
         $code = (int) curl_getinfo($handle, CURLINFO_HTTP_CODE);
         curl_close($handle);
         if ($raw === false) throw new \RuntimeException('No se pudo comunicar con Mercado Libre. Intentá verificar nuevamente.');
-        return [$code, json_decode($raw, true) ?: []];
+        return [$code, json_decode($raw, true) ?: [], $responseHeaders];
     }
 
     private function encryptionKey(): string
