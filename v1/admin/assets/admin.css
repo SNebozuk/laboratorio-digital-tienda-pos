@@ -4524,8 +4524,8 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 
 .product-publication-actions { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .product-publication-actions .product-visibility { flex: 0 0 auto; }
-.product-meli-button { flex: 0 0 32px; border: 1px solid #64748b; border-radius: 10px; background: #64748b; color: #fff; }
-.product-meli-button.is-published { background: #ffe600; border-color: #d4bb00; color: #1e293b; }
-.product-meli-button.is-failed { background: #dc2626; border-color: #b91c1c; color: #fff; }
+.admin-body .product-meli-button { flex: 0 0 32px; min-height: 32px !important; padding: 0 !important; border: 1px solid #64748b !important; border-radius: 10px !important; background: #64748b !important; color: #fff !important; }
+.admin-body .product-meli-button.is-published { background: #ffe600 !important; border-color: #d4bb00 !important; color: #1e293b !important; }
+.admin-body .product-meli-button.is-failed { background: #dc2626 !important; border-color: #b91c1c !important; color: #fff !important; }
 .product-meli-button[aria-busy="true"] { opacity: .6; cursor: wait; }
 .meli-size-rows { display: grid; gap: 8px; }
