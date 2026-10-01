@@ -4,6 +4,8 @@ declare(strict_types=1);
 $app = require dirname(__DIR__, 2) . '/app/container.php';
 \LaboratorioDigital\Http::noCache();
 $user = $app['auth']->user();
+require_once $app['root'] . '/app/MercadoLibreDefaults.php';
+$meliDefaults = $user && $user['role'] === 'admin' ? \LaboratorioDigital\MercadoLibreDefaults::read($app['pdo']) : null;
 $setupRequired = (int) $app['pdo']->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0;
 $storePath = '/' . trim((string) ($app['config']['public_store_path'] ?? '/v1'), '/');
 $storePath = $storePath === '/' ? '' : $storePath;
@@ -574,7 +576,7 @@ header('Referrer-Policy: same-origin');
                     </section>
 
                     <section class="admin-view" id="view-meli">
-                        <div class="view-heading"><div><p class="eyebrow">INTEGRACIÓN</p><h1>MERCADO LIBRE</h1></div></div>
+                        <div class="view-heading"><div><p class="eyebrow">INTEGRACIÓN</p><h1>MERCADO LIBRE</h1></div><button class="icon-action-button" id="meli-settings" type="button" title="Opciones generales de MeLi" aria-label="Opciones generales de MeLi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3-.6 2.4-2 .9L4.2 5.6 2 9.4l1.8 1.7v1.8L2 14.6l2.2 3.8 2.2-.7 2 .9L9 21h6l.6-2.4 2-.9 2.2.7 2.2-3.8-1.8-1.7v-1.8L22 9.4l-2.2-3.8-2.2.7-2-.9L15 3Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
                         <div class="settings-card">
                             <p id="meli-authorization-result" role="status"></p>
                             <div class="meli-actions"><button class="primary-button fit-button" id="meli-connect" type="button" disabled>CONECTAR CUENTA</button><button class="primary-button fit-button" id="meli-verify" type="button">ACTUALIZAR PRODUCTOS</button></div>
@@ -754,6 +756,7 @@ header('Referrer-Policy: same-origin');
         json_encode([
             'api_url' => $apiUrl,
             'csrf_token' => $app['csrf_token'],
+            'meli_defaults' => $meliDefaults,
             'user' => $user,
             'setup_required' => $setupRequired,
             'size_guide_url' => $sizeGuideUrl,

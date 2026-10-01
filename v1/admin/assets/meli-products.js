@@ -72,6 +72,11 @@
             ${optional.length ? `<details><summary>Otros atributos de la categoría</summary><div class="meli-product-grid">${optional.map(a => attributeField(a, editor.draft.attributes, 'attribute')).join('')}</div></details>` : ''}
             <details><summary>Garantía, facturación y condiciones de venta</summary><div class="meli-product-grid">${terms.map(a => attributeField(a, editor.draft.sale_terms, 'term')).join('')}</div></details>`;
     }
+    function applyDefaults(draft) {
+        const defaults = window.MeliWorkspace?.defaults();
+        if (!defaults?.configured) return;
+        for (const key of ['condition', 'listing_type_id', 'shipping_mode', 'logistic_type', 'local_pick_up', 'free_shipping', 'publish_all_variants', 'installments', 'financing_max_percent']) draft[key] = defaults[key];
+    }
     function collect(editor) {
         const draft = editor.draft;
         editor.root.querySelectorAll('[data-meli-field]').forEach(el => {
@@ -90,6 +95,7 @@
             draft[group === 'attribute' ? 'attributes' : 'sale_terms'][el.dataset[group === 'attribute' ? 'meliAttribute' : 'meliTerm']] = el.value.trim();
         }));
         draft.pictures = editor.root.querySelector('[data-meli-pictures]').value.split('\n').map(s => s.trim()).filter(Boolean);
+        applyDefaults(draft);
         updatePricing(editor);
         return draft;
     }
@@ -99,16 +105,19 @@
         editor.root.querySelectorAll('[data-meli-cost]').forEach(input => {
             costs[input.dataset.meliCost] = Number(input.value.replace(',', '.'));
         });
+        const defaults = window.MeliWorkspace?.defaults();
+        const common = defaults?.configured ? defaults : editor.draft.pricing || {};
         return { base_price_cents: Math.round(Number(variant?.querySelector('.variant-price').value || 0) * 100),
-            packaging_cents: Math.round(costs.packaging * 100), shipping_cents: Math.round(costs.shipping * 100),
-            other_fixed_cents: Math.round(costs.other_fixed * 100), other_percentage: costs.other_percentage,
-            billable_weight: costs.billable_weight, rounding_pesos: costs.rounding_pesos };
+            packaging_cents: common.packaging_cents || 0, shipping_cents: common.shipping_cents || 0,
+            other_fixed_cents: common.other_fixed_cents || 0, other_percentage: common.other_percentage || 0,
+            billable_weight: costs.billable_weight, rounding_pesos: common.rounding_pesos || 100 };
     }
     function priceContext(editor, inputs) {
         const draft = editor.draft;
         return JSON.stringify({ ...inputs, category_id: draft.category_id, catalog_product_id: draft.catalog_product_id,
             listing_type_id: draft.listing_type_id, shipping_mode: draft.shipping_mode, logistic_type: draft.logistic_type,
-            free_shipping: draft.free_shipping, variant_id: draft.variant_id, package_confirmed: draft.package_confirmed,
+            free_shipping: draft.free_shipping, installments: draft.installments, financing_max_percent: draft.financing_max_percent,
+            variant_id: draft.variant_id, package_confirmed: draft.package_confirmed,
             package: ['SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT'].map(id => draft.attributes[id] || '') });
     }
     const money = cents => (cents / 100).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 });
@@ -233,6 +242,7 @@
             renderAttributes(editor, data.attributes, data.sale_terms);
             const setOptions = (name, options) => {
                 const el = editor.root.querySelector(`[data-meli-field="${name}"]`);
+                if (!el) return;
                 el.innerHTML = '<option value="">Elegir</option>' + options.map(([id, text]) => `<option value="${esc(id)}">${esc(text)}</option>`).join('');
                 el.value = editor.draft[name];
             };
@@ -250,6 +260,7 @@
         }
     }
     function updateLogistics(editor) {
+        if (!editor.root.querySelector('[data-meli-field="shipping_mode"]')) return;
         const mode = editor.root.querySelector('[data-meli-field="shipping_mode"]').value;
         const options = (editor.logistics || []).filter(option => option.mode === mode).flatMap(option => option.types || []).filter(type => type.status === 'active');
         const select = editor.root.querySelector('[data-meli-field="logistic_type"]');
@@ -334,6 +345,7 @@
     function mount(form, product) {
         if (!form) return;
         const draft = product?.meli ? structuredClone(product.meli) : preset(product);
+        applyDefaults(draft);
         const shirt = /remera/i.test(product?.name || '');
         draft.attributes ||= {};
         if (shirt) {
@@ -358,13 +370,9 @@
             <div class="meli-product-grid">${field('category_id', 'Categoría de Mercado Libre', draft.category_id, 'placeholder="MLA…"')}
             ${field('catalog_product_id', 'Producto del catálogo · opcional', draft.catalog_product_id, 'placeholder="MLA…"')}
             ${field('family_name', 'Nombre de familia / título de publicación', draft.family_name, 'maxlength="120"')}
-            ${select('variant_id', 'Variante · usa su precio, stock, SKU y código', draft.variant_id, (product?.variants || []).map(v => [v.id, v.name]))}
-            ${select('condition', 'Condición', draft.condition, [['new', 'Nuevo'], ['used', 'Usado'], ['not_specified', 'Sin especificar']])}
-            ${select('listing_type_id', 'Tipo de publicación', draft.listing_type_id, draft.listing_type_id ? [[draft.listing_type_id, draft.listing_type_id]] : [])}
-            ${select('shipping_mode', 'Modalidad de envío', draft.shipping_mode, draft.shipping_mode ? [[draft.shipping_mode, draft.shipping_mode]] : [])}
-            ${select('logistic_type', 'Logística para calcular comisiones', draft.logistic_type, draft.logistic_type ? [[draft.logistic_type, draft.logistic_type]] : [])}</div>
+            ${select('variant_id', 'Variante · usa su precio, stock, SKU y código', draft.variant_id, (product?.variants || []).map(v => [v.id, v.name]))}</div>
+            <p>Condición, publicación, envío, cuotas y cálculo del precio se configuran para todos los productos desde el engranaje de la sección MeLi.</p>
             <button class="primary-button fit-button" type="button" data-meli-load>CONSULTAR REQUISITOS</button>
-            <label class="meli-product-checks"><input type="checkbox" data-meli-field="publish_all_variants" ${draft.publish_all_variants ? 'checked' : ''}> Publicar todas las variantes activas con stock, cada una con su precio y SKU</label>
             ${shirt ? `<h3>TALLES DE LA REMERA</h3><p>Los talles sin stock no se publican. No se convierten los talles numéricos a S, M o L.</p>
             <button class="primary-button fit-button" type="button" data-meli-size-description>INCORPORAR MEDIDAS DE TABLA DE TALLES</button>
             <label>Tabla de medidas de esta remera<select data-meli-size-group><option value="">Elegir tabla</option></select></label>
@@ -379,17 +387,10 @@
             <p data-meli-category-name></p>
             <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>
             <h3>PRECIO MELI · COMISIONES Y GASTOS</h3>
-            <div class="meli-product-grid">${costField('packaging', 'Embalaje por unidad · $', (pricing.packaging_cents || 0) / 100)}
-            ${costField('shipping', 'Envío a tu cargo por unidad · $', (pricing.shipping_cents || 0) / 100)}
-            ${costField('other_fixed', 'Otros gastos por unidad · $', (pricing.other_fixed_cents || 0) / 100)}
-            ${costField('other_percentage', 'Otros gastos sobre la venta · %', pricing.other_percentage || 0)}
-            ${costField('billable_weight', 'Peso facturable para Meli · gramos', pricing.billable_weight || packageGrams || '', '1')}
-            <label>Redondear precio hacia arriba<select data-meli-cost="rounding_pesos">${[1,10,100].map(value => `<option value="${value}" ${Number(pricing.rounding_pesos || 100) === value ? 'selected' : ''}>Cada $${value}</option>`).join('')}</select></label></div>
-            <p>El cargo fijo de Meli ya está incluido en su comisión total. Los gastos adicionales se cargan por separado; el envío ingresado no se cotiza automáticamente. Confirmá el peso facturable según tu logística.</p>
+            <div class="meli-product-grid">${costField('billable_weight', 'Peso facturable para Meli · gramos', pricing.billable_weight || packageGrams || '', '1')}</div>
+            <p>La fórmula usa el precio de cada variante, las comisiones vigentes y los gastos generales del engranaje. El envío ingresado allí es un gasto estimado, no una cotización automática. Confirmá el peso facturable de este producto.</p>
             <button class="primary-button fit-button" type="button" data-meli-price-calculate>CALCULAR PRECIO CON COMISIONES</button>
             <p data-meli-price-summary role="status"></p>
-            <div class="meli-product-checks"><label><input type="checkbox" data-meli-field="local_pick_up" ${draft.local_pick_up ? 'checked' : ''}> Retiro en persona</label>
-            <label><input type="checkbox" data-meli-field="free_shipping" ${draft.free_shipping ? 'checked' : ''}> Envío gratis a cargo del vendedor</label></div>
             <label>Descripción en texto plano<textarea data-meli-field="description" rows="4">${esc(draft.description)}</textarea></label>
             <label>Fotos · una URL HTTPS por línea<textarea data-meli-pictures rows="3">${esc((draft.pictures || []).join('\n'))}</textarea></label>
             <h3>FICHA TÉCNICA Y PAQUETE</h3><div data-meli-technical></div>

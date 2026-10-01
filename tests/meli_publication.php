@@ -26,7 +26,14 @@ function curl_exec(object $handle): string|false {
     if ($path === '/users/me' || $path === '/users/123') return json_encode(['id' => 123, 'tags' => ['user_product_seller']]);
     if (str_ends_with($path, '/shipping_preferences')) return json_encode(['modes' => ['me2'], 'logistics' => [['mode' => 'me2', 'types' => [['type' => 'drop_off', 'status' => 'active']]]]]);
     if (str_ends_with($path, '/available_listing_types')) return json_encode([['id' => 'gold_special']]);
-    if ($path === '/sites/MLA/listing_prices') return json_encode(['currency_id' => 'ARS', 'listing_type_id' => 'gold_special', 'sale_fee_amount' => 0, 'listing_fee_amount' => 0]);
+    if ($path === '/special_installments/campaigns') return json_encode([['channel' => 'marketplace', 'available_campaigns' => [['listing_type_id' => 'gold_special', 'available_campaigns' => [['campaign_id' => 'pcj-co-funded']]]]]]);
+    if ($path === '/sites/MLA/listing_prices') {
+        parse_str(parse_url($handle->url, PHP_URL_QUERY), $params);
+        $rate = isset($params['tags']) ? ($GLOBALS['financing_rate'] ?? 5) : 0;
+        return json_encode(['currency_id' => 'ARS', 'listing_type_id' => 'gold_special',
+            'sale_fee_amount' => (float) $params['price'] * $rate / 100, 'listing_fee_amount' => 0,
+            'sale_fee_details' => ['financing_add_on_fee' => $rate]]);
+    }
     if ($path === '/categories/MLA109042/attributes') return json_encode(array_map(static fn ($id) => ['id' => $id], ['BRAND', 'SIZE', 'COLOR', 'GENDER', 'SELLER_SKU', 'GTIN', 'SIZE_GRID_ID', 'SIZE_GRID_ROW_ID', 'SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']));
     if ($path === '/categories/MLA109042/sale_terms') return '[]';
     if ($path === '/items/validate' || str_ends_with($path, '/attributes/conditional')) return '{}';
@@ -87,6 +94,21 @@ $service->finishPublication(1);
 $service->deleteListing($first['item_id']);
 check(!isset(MercadoLibreProductDraft::publicationStates($db)[1]), 'Delete all linked sizes and reset gray');
 check(count(array_filter($GLOBALS['items'], static fn ($item) => in_array('deleted', $item['sub_status'], true))) === 2, 'MeLi deletion confirmed for every size');
+$defaults = MercadoLibreDefaults::seed();
+$defaults['logistic_type'] = 'drop_off';
+$defaults['packaging_cents'] = 20000;
+$service->saveDefaults($defaults);
+rejects(fn () => $service->saveDefaults(array_replace($defaults, ['financing_max_percent' => 6])), 'Cannot absorb more than authorized');
+rejects(fn () => $service->saveDefaults(array_replace($defaults, ['listing_type_id' => 'gold_pro'])), 'Campaign requires correct listing type');
+$prepared = $service->preparePublication(1, 3);
+check($prepared['payload']['price'] === 9700, 'Global costs apply to each size without adding installment cost to price');
+check($prepared['pricing']['financing_fee_cents'] === 48500 && $prepared['pricing']['net_cents'] === 901500, 'Financing is absorbed in net');
+check($prepared['payload']['tags'] === ['pcj-co-funded'], 'New listings include installment campaign');
+check($prepared['draft']['pricing']['billable_weight'] === 250.0 && $prepared['draft']['size_grid_rows'][3] === '123:3', 'Global defaults preserve product weight and sizes');
+$GLOBALS['financing_rate'] = 6;
+rejects(fn () => $service->preparePublication(1, 1), 'Stop before publishing when campaign cost exceeds cap');
+check(count($GLOBALS['items']) === 2, 'Settings and price validation create no real or mock listings');
+$GLOBALS['financing_rate'] = 5;
 $GLOBALS['timeout'] = true;
 rejects(fn () => $service->publishProduct(1, 1), 'Uncertain creation must fail');
 rejects(fn () => $service->publicationVariants(1), 'Uncertain creation prevents retry duplicates');

@@ -3,6 +3,47 @@
     const panel = document.getElementById('view-meli');
     if (!panel) return;
     const app = JSON.parse(document.getElementById('admin-app-data').textContent);
+    let defaults = app.meli_defaults;
+    async function openSettings() {
+        const url = new URL(endpoint);
+        url.searchParams.set('action', 'defaults');
+        try {
+            const response = await fetch(url, {credentials: 'same-origin', cache: 'no-store'});
+            const data = await response.json();
+            if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudieron cargar las opciones.');
+            defaults = data.defaults;
+        } catch (error) { progress(error.message); return; }
+        const dialog = document.createElement('dialog');
+        dialog.className = 'meli-settings-dialog';
+        dialog.setAttribute('aria-label', 'Opciones generales de MeLi');
+        const select = (key, label, options) => `<label>${label}<select name="${key}">${options.map(([value, text]) => `<option value="${value}" ${String(defaults[key]) === String(value) ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
+        const cost = (key, label, cents = true) => `<label>${label}<input name="${key}" type="number" min="0" ${cents ? 'max="10000000"' : 'max="99.99"'} step="0.01" value="${(defaults[key] || 0) / (cents ? 100 : 1)}" required></label>`;
+        const check = (key, text) => `<label class="meli-settings-check"><input type="checkbox" name="${key}" ${defaults[key] ? 'checked' : ''}>${text}</label>`;
+        dialog.innerHTML = `<header><h2>OPCIONES GENERALES DE MELI</h2><button class="icon-action-button" type="button" aria-label="Cerrar opciones MeLi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><p>Se usan en todas las próximas publicaciones. Las publicaciones existentes conservan sus opciones.</p><form><div class="meli-product-grid">${select('condition', 'Condición', [['new','Nuevo'],['used','Usado'],['not_specified','Sin especificar']])}${select('listing_type_id', 'Tipo de publicación', [['gold_special','Clásica'],['gold_pro','Premium'],['free','Gratuita']])}${select('shipping_mode', 'Modalidad de envío', [['me2','Mercado Envíos'],['me1','Mercado Envíos 1'],['custom','Envío propio'],['not_specified','A convenir']])}<label>Logística<input name="logistic_type" value="${escape(defaults.logistic_type)}" required maxlength="40" pattern="[a-z_]{1,40}" list="meli-default-logistics"><datalist id="meli-default-logistics"><option value="xd_drop_off">Despacho en punto MeLi</option><option value="drop_off">Despacho en sucursal</option><option value="cross_docking">Colecta</option><option value="fulfillment">Full</option><option value="self_service">Flex</option><option value="custom">Envío propio</option><option value="not_specified">A convenir</option></datalist></label>${select('rounding_pesos', 'Redondear precio hacia arriba', [[1,'Cada $1'],[10,'Cada $10'],[100,'Cada $100']])}<label>Máximo adicional de cuotas a absorber · %<input name="financing_max_percent" type="number" min="0.01" max="5" step="0.01" value="${defaults.financing_max_percent}" required></label></div><h3>CÁLCULO DEL PRECIO</h3><p>Se conserva el precio base de cada variante como neto objetivo, sumando los gastos siguientes y las comisiones vigentes de MeLi. Las cuotas se descuentan de ese neto, hasta el límite autorizado.</p><div class="meli-product-grid">${cost('packaging_cents','Embalaje por unidad · $')}${cost('shipping_cents','Envío a tu cargo por unidad · $')}${cost('other_fixed_cents','Otros gastos por unidad · $')}${cost('other_percentage','Otros gastos sobre la venta · %',false)}</div><p>Estos gastos se aplican por igual a todos los productos. El peso y las medidas se conservan en cada ficha; las comisiones se consultan al publicar.</p>${check('local_pick_up','Permitir retiro en persona')}${check('free_shipping','Envío gratis a cargo del vendedor')}${check('publish_all_variants','Publicar todas las variantes activas con stock')}${check('installments','Ofrecer 3 a 12 cuotas con interés bajo')}<p>Las cuotas se absorben sin aumentar el precio calculado. Se verifica el costo vigente de MeLi antes de publicar; si supera el límite o la categoría no admite la modalidad, se detiene la publicación.</p><p role="status" data-settings-result></p><button class="primary-button" type="submit">GUARDAR OPCIONES</button></form>`;
+        const close = dialog.querySelector('header button');
+        close.addEventListener('click', () => dialog.close());
+        dialog.addEventListener('close', () => dialog.remove());
+        dialog.querySelector('form').addEventListener('submit', async event => {
+            event.preventDefault();
+            const form = event.target;
+            const button = form.querySelector('[type="submit"]');
+            const values = {};
+            form.querySelectorAll('[name]').forEach(el => { values[el.name] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.name === 'rounding_pesos' ? Number(el.value) : el.value; if (el.name.endsWith('_cents')) values[el.name] = Math.round(Number(el.value) * 100); });
+            button.disabled = true;
+            close.disabled = true;
+            const blockCancel = event => event.preventDefault();
+            dialog.addEventListener('cancel', blockCancel);
+            try {
+                const data = await post({action: 'save_defaults', defaults: values});
+                defaults = data.defaults;
+                form.querySelector('[data-settings-result]').textContent = data.message;
+                window.dispatchEvent(new CustomEvent('meli-defaults-changed'));
+            } catch (error) { form.querySelector('[data-settings-result]').textContent = error.message; }
+            finally { button.disabled = false; close.disabled = false; dialog.removeEventListener('cancel', blockCancel); }
+        });
+        document.body.append(dialog);
+        dialog.showModal();
+    }
     const endpoint = new URL('meli.php', window.location.href);
     const connect = document.getElementById('meli-connect');
     const verify = document.getElementById('meli-verify');
@@ -184,7 +225,8 @@
         } catch (error) { report(error.message, false); throw error; }
         finally { busy = false; verify.disabled = false; }
     }
-    window.MeliWorkspace = { activate: () => check(true), publish };
+    document.getElementById('meli-settings').addEventListener('click', openSettings);
+    window.MeliWorkspace = { activate: () => check(true), publish, defaults: () => defaults };
     check();
     window.setInterval(() => {
         if (!document.hidden && panel.classList.contains('active')) check();

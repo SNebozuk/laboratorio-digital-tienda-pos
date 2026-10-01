@@ -26,6 +26,7 @@ try {
         Http::requireCsrf($input);
         $authorizedAction = true;
         $result = match ($input['action'] ?? '') {
+            'save_defaults' => $service->saveDefaults($input['defaults'] ?? []),
             'listing_status' => $service->changeListingStatus((string) ($input['item_id'] ?? ''), (string) ($input['status'] ?? '')),
             'delete_listing' => $service->deleteListing((string) ($input['item_id'] ?? '')),
             'size_chart' => $service->sizeChart((string) ($input['chart_id'] ?? '')),
@@ -44,7 +45,9 @@ try {
             $service->publicationError((int) $input['product_id'], 'Publicación de talles en curso o incompleta. Reintentá para completar los talles pendientes.');
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if (($_GET['action'] ?? '') === 'product_requirements') {
+        if (($_GET['action'] ?? '') === 'defaults') {
+            $result = $service->defaults();
+        } elseif (($_GET['action'] ?? '') === 'product_requirements') {
             $result = $service->productRequirements((string) ($_GET['category_id'] ?? ''));
         } elseif (($_GET['action'] ?? '') === 'published_products') {
             $result = $service->publishedProducts((int) ($_GET['offset'] ?? 0));

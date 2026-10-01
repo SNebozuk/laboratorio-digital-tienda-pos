@@ -9,6 +9,7 @@ require_once __DIR__ . '/MercadoLibrePriceCalculator.php';
 require_once __DIR__ . '/MercadoLibreProductDraft.php';
 require_once __DIR__ . '/ProductService.php';
 require_once __DIR__ . '/MercadoLibreStockSync.php';
+require_once __DIR__ . '/MercadoLibreDefaults.php';
 
 final class MercadoLibreService
 {
@@ -102,8 +103,14 @@ final class MercadoLibreService
             'user_product_seller' => in_array('user_product_seller', $account['tags'] ?? [], true)];
     }
 
-    public function calculateProductPrice(array $input): array
+    public function defaults(): array { return ['ok' => true, 'defaults' => MercadoLibreDefaults::read($this->pdo)]; }
+
+    public function saveDefaults(array $input): array { return ['ok' => true, 'defaults' => MercadoLibreDefaults::save($this->pdo, $input), 'message' => 'Opciones generales de MeLi guardadas.']; }
+
+    public function calculateProductPrice(array $input, bool $useDefaults = true): array
     {
+        if ($useDefaults) $input = MercadoLibreDefaults::apply($this->pdo, $input);
+        $financing = !empty($input['installments']);
         $pricing = MercadoLibrePriceCalculator::inputs($input['pricing'] ?? null);
         $category = (string) ($input['category_id'] ?? '');
         $catalog = (string) ($input['catalog_product_id'] ?? '');
@@ -125,10 +132,21 @@ final class MercadoLibreService
             }
         }
         if ($shippingCode !== 200 || !$allowed) throw new \RuntimeException('La modalidad logística no está habilitada para la cuenta.');
-        $result = MercadoLibrePriceCalculator::calculate($pricing, function (int $price) use ($category, $catalog, $type, $mode, $logistic, $pricing, $tokens): array {
+        if ($financing) {
+            if ($type !== 'gold_special') throw new \RuntimeException('Las cuotas de 3 a 12 requieren publicación Clásica.');
+            [$campaignCode, $campaigns] = $this->request('/special_installments/campaigns?category_id=' . $category . '&listing_type_id=gold_special&channel=marketplace', $tokens['access_token']);
+            $enabled = false;
+            foreach ($campaigns as $channel) foreach ($channel['available_campaigns'] ?? [] as $option) foreach ($option['available_campaigns'] ?? [] as $campaign) {
+                if (($option['listing_type_id'] ?? '') === 'gold_special' && ($campaign['campaign_id'] ?? '') === 'pcj-co-funded') $enabled = true;
+            }
+            if ($campaignCode !== 200 || !$enabled) throw new \RuntimeException('Las cuotas generales no están habilitadas para esta categoría/cuenta.');
+        }
+        $quote = function (int $price, bool $withFinancing = false) use ($category, $catalog, $type, $mode, $logistic, $pricing, $tokens, $status, $financing): array {
             $params = ['price' => number_format($price / 100, 2, '.', ''), 'currency_id' => 'ARS',
                 'listing_type_id' => $type, 'shipping_mode' => $mode, 'logistic_type' => $logistic,
                 'billable_weight' => $pricing['billable_weight']];
+            if ($financing) $params['seller_id'] = $status['user_id'];
+            if ($withFinancing) $params['tags'] = 'pcj-co-funded';
             $params[$catalog !== '' ? 'catalog_product_id' : 'category_id'] = $catalog !== '' ? $catalog : $category;
             [$code, $fees] = $this->request('/sites/MLA/listing_prices?' . http_build_query($params), $tokens['access_token']);
             if ($code !== 200) throw new \RuntimeException('No se pudieron consultar las comisiones. Reintentá el cálculo.');
@@ -139,7 +157,22 @@ final class MercadoLibreService
                 throw new \RuntimeException('Mercado Libre no confirmó los cargos de esta publicación.');
             }
             return $fees;
-        });
+        };
+        $result = MercadoLibrePriceCalculator::calculate($pricing, $quote);
+        if ($financing) {
+            $fees = $quote($result['price_cents'], true);
+            $rate = $fees['sale_fee_details']['financing_add_on_fee'] ?? null;
+            $fee = $fees['sale_fee_amount'] ?? null;
+            $limit = (float) ($input['financing_max_percent'] ?? 5);
+            if (!is_numeric($rate) || !is_finite((float) $rate) || (float) $rate <= 0 || (float) $rate > $limit || !is_numeric($fee) || !is_finite((float) $fee)) throw new \RuntimeException('MeLi no confirmó cuotas dentro del porcentaje máximo a absorber.');
+            $extra = (int) round((float) $fee * 100) - $result['sale_fee_cents'];
+            if ($extra < 0 || $extra > (int) ceil($result['price_cents'] * $limit / 100) + 1) throw new \RuntimeException('El costo adicional de cuotas supera el límite configurado.');
+            $result['sale_fee_cents'] += $extra;
+            $result['net_cents'] -= $extra;
+            if ($result['net_cents'] < 0) throw new \RuntimeException('Los gastos y las cuotas dejan un neto negativo. Revisá los valores generales.');
+            $result['financing_fee_cents'] = $extra;
+            $result['financing_percent'] = (float) $rate;
+        }
         return ['ok' => true, 'pricing' => $result];
     }
 
@@ -245,7 +278,7 @@ final class MercadoLibreService
     {
         $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
         $q->execute(['meli_product_' . $productId]);
-        $draft = MercadoLibreProductDraft::normalize(json_decode((string) $q->fetchColumn(), true));
+        $draft = MercadoLibreDefaults::apply($this->pdo, MercadoLibreProductDraft::normalize(json_decode((string) $q->fetchColumn(), true)));
         if (!$draft) throw new \RuntimeException('Completá y guardá la ficha de Mercado Libre del producto.');
         $q = $this->pdo->prepare('SELECT v.id,v.name FROM product_variants v JOIN products p ON p.id=v.product_id WHERE p.id=? AND p.active=1 AND p.deleted_at IS NULL AND v.active=1 AND v.stock_on_hand>0 ORDER BY v.id');
         $q->execute([$productId]);
@@ -391,8 +424,10 @@ final class MercadoLibreService
         $draft['listing_type_id'] = $item['listing_type_id'];
         $draft['shipping_mode'] = $item['shipping']['mode'];
         $draft['logistic_type'] = $item['shipping']['logistic_type'];
+        $draft['installments'] = in_array('pcj-co-funded', $item['tags'] ?? [], true);
+        $draft['financing_max_percent'] = MercadoLibreDefaults::read($this->pdo)['financing_max_percent'];
         return ['link' => $link, 'draft' => $draft, 'fingerprint' => $fingerprint,
-            'pricing' => $this->calculateProductPrice($draft)['pricing']];
+            'pricing' => $this->calculateProductPrice($draft, false)['pricing']];
     }
 
     public function previewListingPrice(string $itemId): array
@@ -452,7 +487,7 @@ final class MercadoLibreService
     {
         $query = $this->pdo->prepare('SELECT value FROM settings WHERE key = :key');
         $query->execute(['key' => 'meli_product_' . $productId]);
-        $draft = MercadoLibreProductDraft::normalize(json_decode((string) $query->fetchColumn(), true));
+        $draft = MercadoLibreDefaults::apply($this->pdo, MercadoLibreProductDraft::normalize(json_decode((string) $query->fetchColumn(), true)));
         if (!$draft || !$draft['pricing']) throw new \RuntimeException('Guardá la ficha y calculá el precio antes de publicar.');
         if ($variantId && !$draft['publish_all_variants'] && $variantId !== $draft['variant_id']) throw new \RuntimeException('La variante no está seleccionada en la ficha.');
         if ($variantId) $draft['variant_id'] = $variantId;
@@ -503,6 +538,7 @@ final class MercadoLibreService
             if (!empty($draft['attributes'][$id]) && !in_array($id, array_column($payload['attributes'], 'id'), true)) $payload['attributes'][] = ['id' => $id, 'value_name' => $draft['attributes'][$id]];
         }
         $payload[$requirements['user_product_seller'] ? 'family_name' : 'title'] = $draft['family_name'];
+        if (!empty($draft['installments'])) $payload['tags'] = ['pcj-co-funded'];
         if ($draft['catalog_product_id'] !== '') {
             $payload['catalog_product_id'] = $draft['catalog_product_id'];
             $payload['catalog_listing'] = true;
