@@ -297,8 +297,20 @@ final class MercadoLibreService
         $status = $this->status();
         if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta de Mercado Libre.');
         $token = $this->loadTokens()['access_token'];
-        $filters = [['id' => 'BRAND', 'values' => [['name' => 'Generic']]], ['id' => 'GENDER', 'values' => [['name' => 'Sin género']]]];
-        [$code, $template] = $this->request('/domains/MLA-T_SHIRTS/technical_specs?section=grids', $token, ['attributes' => $filters], true);
+        [$code, $attributes] = $this->request('/categories/MLA109042/attributes', $token);
+        if ($code !== 200) throw new \RuntimeException('No se pudieron consultar marca y género de la guía.');
+        $filters = [];
+        $templateFilters = [];
+        foreach (['BRAND' => 'Generic', 'GENDER' => 'Sin género'] as $id => $name) {
+            $value = ['name' => $name];
+            foreach ($attributes as $attribute) {
+                if ($attribute['id'] !== $id) continue;
+                foreach ($attribute['values'] ?? [] as $option) if ($option['name'] === $name) $value['id'] = $option['id'];
+            }
+            $filters[] = ['id' => $id, 'values' => [$value]];
+            $templateFilters[] = ['id' => $id, 'value_name' => $name, 'value_id' => $value['id'] ?? null, 'values' => [$value]];
+        }
+        [$code, $template] = $this->request('/domains/MLA-T_SHIRTS/technical_specs?section=grids', $token, ['attributes' => $templateFilters], true);
         if ($code !== 200) throw new \RuntimeException('MeLi no entregó la estructura de la guía: ' . ($template['message'] ?? 'reintentá la consulta.'));
         try { $payload = MercadoLibreShirtChart::payload($rows, $template, $filters); }
         catch (\RuntimeException $error) { return ['ok' => false, 'message' => $error->getMessage(), 'chart_requirements' => $template]; }
