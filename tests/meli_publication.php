@@ -34,8 +34,8 @@ function curl_exec(object $handle): string|false {
             'sale_fee_amount' => (float) $params['price'] * $rate / 100, 'listing_fee_amount' => 0,
             'sale_fee_details' => ['financing_add_on_fee' => $rate]]);
     }
-    if (in_array($path, ['/categories/MLA109042/attributes', '/categories/MLA109085/attributes'], true)) return json_encode(array_map(static fn ($id) => ['id' => $id], ['BRAND', 'SIZE', 'COLOR', 'GENDER', 'SELLER_SKU', 'GTIN', 'SIZE_GRID_ID', 'SIZE_GRID_ROW_ID', 'SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']));
-    if (in_array($path, ['/categories/MLA109042/sale_terms', '/categories/MLA109085/sale_terms'], true)) return '[]';
+    if (preg_match('~^/categories/(MLA109042|MLA109085|MLA416632|MLA454114|MLA393902)/attributes$~', $path)) return json_encode(array_map(static fn ($id) => ['id' => $id], ['BRAND', 'SIZE', 'COLOR', 'GENDER', 'SELLER_SKU', 'GTIN', 'EMPTY_GTIN_REASON', 'SIZE_GRID_ID', 'SIZE_GRID_ROW_ID', 'SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']));
+    if (str_ends_with($path, '/sale_terms')) return '[]';
     if ($path === '/items/validate' || str_ends_with($path, '/attributes/conditional')) return '{}';
     if ($path === '/items') {
         if (!empty($GLOBALS['timeout'])) return false;
@@ -140,4 +140,48 @@ check(!$preparedBuzo['draft']['package_confirmed'] && $preparedBuzo['draft']['pa
 $buzo['size_grid_rows'] = [];
 MercadoLibreProductDraft::save($db, 2, MercadoLibreProductDraft::normalize($buzo));
 rejects(fn () => $service->preparePublication(2, 5), 'Buzo cannot publish without its own chart row');
+$db->exec("INSERT INTO products(id,name) VALUES(3,'Papel tricapa A4'); INSERT INTO product_variants(id,product_id,name,sku,barcode,price_cents,stock_on_hand,active) VALUES(6,3,'Única','S101','sublisti721450716029',950000,4,1)");
+$paper = array_replace($draft, ['family_name' => 'Papel tricapa A4', 'variant_id' => 6, 'package_confirmed' => false, 'package_estimated' => true]);
+$paper['attributes']['EMPTY_GTIN_REASON'] = 'Otra razón';
+foreach (['MLA416632', 'MLA454114', 'MLA393902'] as $category) {
+    $paper['category_id'] = $category;
+    MercadoLibreProductDraft::save($db, 3, MercadoLibreProductDraft::normalize($paper));
+    $preparedPaper = $service->preparePublication(3, 6);
+    $attrsPaper = array_column($preparedPaper['payload']['attributes'], 'value_name', 'id');
+    check(!isset($attrsPaper['GTIN']) && $attrsPaper['EMPTY_GTIN_REASON'] === 'Otra razón', 'Malformed barcode is not sent as GTIN; explicit reason preserved');
+    check(!$preparedPaper['draft']['package_confirmed'] && $preparedPaper['draft']['package_estimated'], 'Paper package estimate is not marked measured');
+}
+unset($paper['attributes']['EMPTY_GTIN_REASON']);
+MercadoLibreProductDraft::save($db, 3, MercadoLibreProductDraft::normalize($paper));
+rejects(fn () => $service->preparePublication(3, 6), 'Invalid barcode needs an explicit reason before publication');
+check($db->query('SELECT barcode FROM product_variants WHERE id=6')->fetchColumn() === 'sublisti721450716029', 'Local barcode is preserved');
+$paper['attributes']['GTIN'] = '721450696000';
+MercadoLibreProductDraft::save($db, 3, MercadoLibreProductDraft::normalize($paper));
+$attrsPaper = array_column($service->preparePublication(3, 6)['payload']['attributes'], 'value_name', 'id');
+check($attrsPaper['GTIN'] === '721450696000', 'Verified draft GTIN is used for a single variant with malformed local barcode');
+$db->exec("UPDATE product_variants SET barcode=NULL WHERE id=6");
+$attrsPaper = array_column($service->preparePublication(3, 6)['payload']['attributes'], 'value_name', 'id');
+check($attrsPaper['GTIN'] === '721450696000', 'Verified draft GTIN is retained when local barcode is empty');
+$db->exec("UPDATE product_variants SET barcode='721450716388' WHERE id=6");
+$attrsPaper = array_column($service->preparePublication(3, 6)['payload']['attributes'], 'value_name', 'id');
+check($attrsPaper['GTIN'] === '721450696000', 'Explicit paper draft GTIN can correct the publication without changing local barcode');
+$service->publicationError(3, 'Previous validation failed');
+check($service->validatePublication(3, 6)['valid'], 'Corrected paper draft validates without publication');
+check($db->query("SELECT COUNT(*) FROM settings WHERE key='meli_publication_error_3'")->fetchColumn() == 0, 'Successful validation clears stale product error');
+check(count($GLOBALS['items']) === 2, 'Paper draft validation creates no listings');
+$db->exec("UPDATE product_variants SET barcode=NULL WHERE id=6; INSERT INTO product_variants(id,product_id,name,sku,price_cents,stock_on_hand,active) VALUES(7,3,'Otro paquete','S102',950000,4,1)");
+$attrsPaper = array_column($service->preparePublication(3, 7)['payload']['attributes'], 'value_name', 'id');
+check(!isset($attrsPaper['GTIN']), 'Product draft GTIN cannot leak into a different variant');
+$paper['attributes']['SHEETS_NUMBER'] = '1';
+MercadoLibreProductDraft::save($db, 3, MercadoLibreProductDraft::normalize($paper));
+$db->exec("UPDATE product_variants SET barcode='721450696000' WHERE id=6");
+$callCount = count($GLOBALS['calls']);
+rejects(fn () => $service->publishProduct(3, 6), 'A single sheet cannot be published even when its barcode is present');
+check(count($GLOBALS['calls']) === $callCount, 'Single sheet is blocked before any API call');
+$paper['attributes']['SHEETS_NUMBER'] = '2';
+MercadoLibreProductDraft::save($db, 3, MercadoLibreProductDraft::normalize($paper));
+$db->exec("UPDATE products SET name='Tatufan Art-Jet - 1 Hoja' WHERE id=3");
+rejects(fn () => $service->preparePublication(3, 6), 'Tatufan one-kit presentation stays excluded even though it contains two sheets');
+$db->exec("UPDATE products SET name='Filmilo paquete A4' WHERE id=3;UPDATE product_variants SET name='1 Hoja' WHERE id=6");
+rejects(fn () => $service->preparePublication(3, 6), 'Single-sheet variant name also prevents publication');
 echo "MeLi publication tests passed\n";

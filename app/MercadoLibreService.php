@@ -627,8 +627,13 @@ final class MercadoLibreService
         $query = $this->pdo->prepare('SELECT v.id,v.name,v.sku,v.barcode,v.price_cents,v.stock_on_hand,p.name AS product_name FROM product_variants v JOIN products p ON p.id=v.product_id WHERE p.id=:product AND v.id=:variant AND p.active=1 AND p.deleted_at IS NULL AND v.active=1');
         $query->execute(['product' => $productId, 'variant' => $draft['variant_id']]);
         $variant = $query->fetch();
+        if ($variant && in_array($draft['category_id'], ['MLA416632', 'MLA454114', 'MLA393902'], true)
+            && (preg_match('/\b1\s*hojas?\b/iu', $variant['product_name'] . ' ' . $variant['name'])
+                || (float) ($draft['attributes']['SHEETS_NUMBER'] ?? 0) === 1.0)) {
+            throw new \RuntimeException('Las presentaciones de una hoja están excluidas de la publicación en MeLi.');
+        }
         if (!$variant || (int) $variant['stock_on_hand'] < 1) throw new \RuntimeException('La variante no está activa o no tiene stock.');
-        if (!$draft['package_confirmed'] && !(in_array($draft['category_id'], ['MLA109042', 'MLA109085'], true) && $draft['package_estimated'])) throw new \RuntimeException('Confirmá el paquete o aceptá los valores estimados en la ficha de la prenda.');
+        if (!$draft['package_confirmed'] && !(in_array($draft['category_id'], ['MLA109042', 'MLA109085', 'MLA416632', 'MLA454114', 'MLA393902'], true) && $draft['package_estimated'])) throw new \RuntimeException('Confirmá el paquete o aceptá los valores estimados en la ficha de la prenda.');
         foreach (['SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT'] as $id) {
             if (empty($draft['attributes'][$id])) throw new \RuntimeException('Completá las cuatro medidas del paquete: largo, ancho, alto y peso.');
         }
@@ -641,7 +646,18 @@ final class MercadoLibreService
             $draft['attributes']['SIZE_GRID_ROW_ID'] = $row;
         }
         $draft['attributes']['SELLER_SKU'] = str_starts_with((string) $variant['sku'], '__AUTO__') ? '' : (string) $variant['sku'];
+        $draftGtin = (string) ($draft['attributes']['GTIN'] ?? '');
         $draft['attributes']['GTIN'] = (string) ($variant['barcode'] ?? '');
+        if (in_array($draft['category_id'], ['MLA416632', 'MLA454114', 'MLA393902'], true)) {
+            $query = $this->pdo->prepare('SELECT COUNT(*) FROM product_variants WHERE product_id=?');
+            $query->execute([$productId]);
+            if ((int) $query->fetchColumn() === 1 && preg_match('/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/D', $draftGtin)) {
+                $draft['attributes']['GTIN'] = $draftGtin;
+            } elseif (!preg_match('/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/D', $draft['attributes']['GTIN'])) {
+                if ($draft['attributes']['GTIN'] !== '' && empty($draft['attributes']['EMPTY_GTIN_REASON'])) throw new \RuntimeException('El código de barras no es un GTIN válido. Completá el GTIN real o el motivo de GTIN vacío en la ficha.');
+                $draft['attributes']['GTIN'] = '';
+            }
+        }
         $draft['pricing']['base_price_cents'] = (int) $variant['price_cents'];
         $pricing = $this->calculateProductPrice($draft)['pricing'];
         $requirements = $this->productRequirements($draft['category_id']);
@@ -690,6 +706,8 @@ final class MercadoLibreService
         if (!$this->publicationValidationPassed($code, $validation)) {
             $errors = array_map(static fn ($cause) => (string) ($cause['message'] ?? $cause['code'] ?? 'Dato pendiente'), array_filter($validation['cause'] ?? [], static fn ($cause) => ($cause['type'] ?? 'error') !== 'warning'));
             $this->publicationError($productId, implode(' · ', $errors) ?: 'MeLi rechazó la ficha.');
+        } else {
+            $this->pdo->prepare('DELETE FROM settings WHERE key=?')->execute(['meli_publication_error_' . $productId]);
         }
         return ['ok' => true, 'valid' => $this->publicationValidationPassed($code, $validation), 'validation' => $validation,
             'conditional_required' => $conditional['required_attributes'] ?? [],

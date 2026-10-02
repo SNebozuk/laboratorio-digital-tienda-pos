@@ -121,7 +121,7 @@
         editor.draft.pricing = inputs.base_price_cents > 0 && inputs.billable_weight > 0 ? { ...inputs, ...(valid ? old : {}), context_key: valid ? key : '' } : null;
         const summary = editor.root.querySelector('[data-meli-price-summary]');
         const pricing = editor.draft.pricing;
-        summary.textContent = valid ? `Precio Meli: ${money(pricing.price_cents)} · cargos por vender: ${money(pricing.sale_fee_cents)} (incluye cargo fijo ${money(pricing.fixed_fee_cents)}) · cargo por publicar: ${money(pricing.listing_fee_cents)} · otros porcentajes: ${money(pricing.other_percentage_cents)} · gastos fijos ingresados: ${money(inputs.packaging_cents + inputs.shipping_cents + inputs.other_fixed_cents)} · neto estimado: ${money(pricing.net_cents)} · objetivo: ${money(inputs.base_price_cents)}. Consulta: ${new Date(pricing.queried_at).toLocaleString('es-AR', { timeZone: 'America/Buenos_Aires' })}.${editor.draft.package_confirmed ? '' : ' El peso del paquete está pendiente de confirmar.'}`
+        summary.textContent = valid ? `Precio Meli: ${money(pricing.price_cents)} · cargos por vender: ${money(pricing.sale_fee_cents)} (incluye cargo fijo ${money(pricing.fixed_fee_cents)}) · cargo por publicar: ${money(pricing.listing_fee_cents)} · otros porcentajes: ${money(pricing.other_percentage_cents)} · gastos fijos ingresados: ${money(inputs.packaging_cents + inputs.shipping_cents + inputs.other_fixed_cents)} · neto estimado: ${money(pricing.net_cents)} · objetivo: ${money(inputs.base_price_cents)}. Consulta: ${new Date(pricing.queried_at).toLocaleString('es-AR', { timeZone: 'America/Buenos_Aires' })}.${editor.draft.package_confirmed ? '' : editor.draft.package_estimated ? ' El peso del paquete es estimado y está habilitado para publicar.' : ' El peso del paquete está pendiente de confirmar.'}`
             : `Neto a conservar: ${money(inputs.base_price_cents)}. Consultá las comisiones para calcular el precio de Meli. Los gastos no cargados no están incluidos.`;
     }
     async function calculatePrice(editor) {
@@ -172,7 +172,7 @@
                 if (!input.value.trim()) missing.push(`Fila MeLi de ${input.closest('label').firstChild.textContent.trim()}`);
             });
         }
-        if (!draft.package_confirmed && !(['MLA109042', 'MLA109085'].includes(draft.category_id) && draft.package_estimated)) missing.push('Confirmar el paquete o aceptar sus valores estimados');
+        if (!draft.package_confirmed && !(['MLA109042', 'MLA109085', 'MLA416632', 'MLA454114', 'MLA393902'].includes(draft.category_id) && draft.package_estimated)) missing.push('Confirmar el paquete o aceptar sus valores estimados');
         if (!draft.pricing?.billable_weight) missing.push('Peso facturable');
         const variant = editor.form.querySelector(`[data-variant-row][data-variant-id="${draft.variant_id}"]`) || editor.form.querySelector('[data-variant-row]');
         if (!variant || Number(variant.querySelector('.variant-price').value) <= 0) missing.push('Precio');
@@ -341,6 +341,7 @@
         applyDefaults(draft);
         const shirt = /remera/i.test(product?.name || '');
         const garment = shirt || draft.category_id === 'MLA109085';
+        const estimatedPackage = garment || ['MLA416632', 'MLA454114', 'MLA393902'].includes(draft.category_id);
         draft.attributes ||= {};
         if (shirt) {
             draft.attributes.BRAND = 'Generic';
@@ -385,8 +386,8 @@
             ${draft.category_id === 'MLA416632' && draft.attributes.SHEETS_NUMBER === '20' && draft.attributes.PAPER_SIZE === 'A4' && draft.attributes.GRAMMAGE === '200 g' ? `<p>Para A4 de 200 g/m² × 20 hojas: 0,21 × 0,297 × 200 × 20 = <strong>249,48 g de papel</strong>. Las hojas miden 21 × 29,7 cm. Un paquete contiene 20 hojas; no son 20 paquetes.</p>
             <p>Propuesta de envío para el producto de prueba: <strong>32 × 23 × 1 cm y 280 g</strong>, con 30,52 g de margen para embalaje. Son estimaciones; el espesor y el peso final requieren medición.</p>` : '<p>Ingresá las medidas y el peso del paquete completo, incluyendo el embalaje.</p>'}
             <label class="meli-product-checks"><input type="checkbox" data-meli-field="package_confirmed" ${draft.package_confirmed ? 'checked' : ''}> Medí el paquete completo y confirmé las medidas y el peso cargados</label>
-            ${garment ? `<label class="meli-product-checks"><input type="checkbox" data-meli-field="package_estimated" ${draft.package_estimated ? 'checked' : ''}> Usar para publicar los valores estimados del paquete; todavía no fueron medidos</label>
-            <button class="primary-button fit-button" type="button" data-meli-size-validate>VALIDAR TALLES EN MELI SIN PUBLICAR</button><p>Guardá los cambios antes de validar. Se comprueba cada talle activo con stock.</p>` : ''}
+            ${estimatedPackage ? `<label class="meli-product-checks"><input type="checkbox" data-meli-field="package_estimated" ${draft.package_estimated ? 'checked' : ''}> Usar para publicar los valores estimados del paquete; todavía no fueron medidos</label>
+            <button class="primary-button fit-button" type="button" data-meli-size-validate>${garment ? 'VALIDAR TALLES' : 'VALIDAR FICHA'} EN MELI SIN PUBLICAR</button><p>Guardá los cambios antes de validar. Se comprueba cada ${garment ? 'talle' : 'variante'} activo con stock.</p>` : ''}
             <p data-meli-category-name></p>
             <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>
             <h3>6. PRECIO MELI · COMISIONES Y GASTOS</h3>
@@ -442,15 +443,23 @@
             if (!['SIZE', 'SIZE_GRID_ROW_ID', 'SELLER_SKU', 'GTIN'].includes(id) && !draft.attributes?.[id]?.trim()) missing.push(label);
         }
         for (const attribute of packageAttributes) if (!draft.attributes?.[attribute.id]?.trim()) missing.push(attribute.name);
-        if (!draft.package_confirmed && !(['MLA109042', 'MLA109085'].includes(draft.category_id) && draft.package_estimated)) missing.push('Confirmación del paquete');
+        if (!draft.package_confirmed && !(['MLA109042', 'MLA109085', 'MLA416632', 'MLA454114', 'MLA393902'].includes(draft.category_id) && draft.package_estimated)) missing.push('Confirmación del paquete');
         if (!draft.pricing?.billable_weight) missing.push('Peso facturable');
         const defaults = window.MeliWorkspace?.defaults();
         if (!(defaults?.configured ? defaults.listing_type_id : draft.listing_type_id)) missing.push('Tipo de publicación');
         if (!(defaults?.configured ? defaults.shipping_mode : draft.shipping_mode)) missing.push('Modalidad de envío');
         const all = defaults?.configured ? defaults.publish_all_variants : draft.publish_all_variants;
         const variants = (product.variants || []).filter(variant => all || Number(variant.id) === Number(draft.variant_id));
+        if (['MLA416632', 'MLA454114', 'MLA393902'].includes(draft.category_id)
+            && (/\b1\s*hojas?\b/i.test(product.name || '') || variants.some(variant => /\b1\s*hojas?\b/i.test(variant.name || ''))
+                || Number(draft.attributes?.SHEETS_NUMBER) === 1)) return ['Presentación de una hoja excluida de MeLi'];
         if (!variants.length) missing.push('Variante');
         if (variants.some(variant => !(Number(variant.price_cents) > 0))) missing.push('Precio de las variantes');
+        if (draft.required_attributes?.GTIN) {
+            const validGtin = value => /^(?:\d{8}|\d{12}|\d{13}|\d{14})$/.test(value || '');
+            const singleDraftGtin = product.variants?.length === 1 && validGtin(draft.attributes?.GTIN);
+            if (!singleDraftGtin && variants.some(variant => !validGtin(variant.barcode))) missing.push(draft.required_attributes.GTIN);
+        }
         if (['MLA109042', 'MLA109085'].includes(draft.category_id)) {
             if (!draft.attributes?.SIZE_GRID_ID) missing.push('Guía de talles');
             if (variants.some(variant => !draft.size_grid_rows?.[variant.id])) missing.push('Filas de la guía de talles');
