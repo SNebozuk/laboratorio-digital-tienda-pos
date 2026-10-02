@@ -50,7 +50,7 @@ final class MercadoLibreProductDraft
         foreach (['local_pick_up', 'free_shipping', 'package_confirmed', 'package_estimated'] as $key) {
             $result[$key] = ($input[$key] ?? false) === true;
         }
-        foreach (['attributes', 'sale_terms'] as $key) {
+        foreach (['attributes', 'sale_terms', 'required_attributes'] as $key) {
             $values = $input[$key] ?? [];
             if (!is_array($values) || count($values) > 150) throw new ValidationException('Ficha técnica demasiado extensa.');
             $result[$key] = [];

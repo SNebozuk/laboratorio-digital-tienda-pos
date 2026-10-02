@@ -10,7 +10,7 @@ final class MercadoLibreStockSync
 {
     public function __construct(private readonly PDO $pdo, private readonly ProductService $products) {}
 
-    public function synchronize(int $variantId, string $itemId, int $actorId, callable $read, callable $write): array
+    public function synchronize(int $variantId, string $itemId, int $actorId, callable $read, callable $write, bool $manualChange = false): array
     {
         $remote = $read();
         $key = 'meli_stock_' . $variantId;
@@ -24,8 +24,8 @@ final class MercadoLibreStockSync
         }
         $delta = $state ? $remote['quantity'] - $state['remote_quantity'] : 0;
         $target = $this->products->applyMercadoLibreStockChange($variantId, $delta, $actorId, $itemId,
-            function (PDO $pdo, int $quantity) use ($state, $remote, $key, $itemId): void {
-                if (!$state && $quantity !== $remote['quantity']) {
+            function (PDO $pdo, int $quantity) use ($state, $remote, $key, $itemId, $manualChange): void {
+                if (!$state && !$manualChange && $quantity !== $remote['quantity']) {
                     throw new \RuntimeException('El stock inicial difiere entre tienda y Meli. Igualá los valores antes de iniciar la sincronización.');
                 }
                 $this->save($key, ['item_id' => $itemId, 'remote_quantity' => $remote['quantity'],

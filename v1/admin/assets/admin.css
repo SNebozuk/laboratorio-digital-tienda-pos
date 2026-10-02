@@ -4553,4 +4553,5 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .admin-body .product-meli-button.is-published { background: #ffe600 !important; border-color: #d4bb00 !important; color: #1e293b !important; }
 .admin-body .product-meli-button.is-failed { background: #dc2626 !important; border-color: #b91c1c !important; color: #fff !important; }
 .product-meli-button[aria-busy="true"] { opacity: .6; cursor: wait; }
+.admin-body .product-meli-warning { flex:0 0 32px; color:#d97706; border-color:#d97706; }
 .meli-size-rows { display: grid; gap: 8px; }

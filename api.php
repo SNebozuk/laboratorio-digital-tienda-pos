@@ -504,7 +504,13 @@ try {
                 is_array($input['product'] ?? null) ? $input['product'] : [],
                 (int) $user['id']
             );
-            Http::json(['ok' => true]);
+            $manualVariantIds = [];
+            foreach ($input['product']['variants'] ?? [] as $variant) {
+                if (($variant['reset_stock_reservations'] ?? false) === true && !empty($variant['id'])) $manualVariantIds[] = (int) $variant['id'];
+            }
+            require_once $app['root'] . '/app/MercadoLibreService.php';
+            $stockSync = (new \LaboratorioDigital\MercadoLibreService($app['pdo'], $app['config']))->synchronizeManualStocks($manualVariantIds, (int) $user['id']);
+            Http::json(['ok' => true, 'meli_stock_sync' => $stockSync]);
 
         case 'product_visibility':
             $app['auth']->requireAdmin();
@@ -563,7 +569,12 @@ try {
                 is_array($input['changes'] ?? null) ? $input['changes'] : [],
                 (int) $user['id']
             );
-            Http::json(['ok' => true]);
+            $stockSync = ['synced' => [], 'warning' => ''];
+            if (($input['changes']['reset_stock_reservations'] ?? false) === true) {
+                require_once $app['root'] . '/app/MercadoLibreService.php';
+                $stockSync = (new \LaboratorioDigital\MercadoLibreService($app['pdo'], $app['config']))->synchronizeManualStocks([(int) $input['variant_id']], (int) $user['id']);
+            }
+            Http::json(['ok' => true, 'meli_stock_sync' => $stockSync]);
 
         case 'variant_barcode_assign':
             $user = $app['auth']->requireUser();

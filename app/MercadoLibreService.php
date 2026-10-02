@@ -496,7 +496,26 @@ final class MercadoLibreService
         return ['ok' => true, 'message' => 'Precio actualizado con las comisiones vigentes.'];
     }
 
-    public function synchronizeListingStock(string $itemId, int $actorId): array
+    public function synchronizeManualStocks(array $variantIds, int $actorId): array
+    {
+        $links = array_filter($this->listingLinks(), static fn ($link) => in_array((int) $link['variant_id'], $variantIds, true));
+        if (!$links) return ['synced' => [], 'warning' => ''];
+        $lock = fopen($this->config['storage_path'] . '/meli-oauth.lock', 'c');
+        if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
+            if ($lock) fclose($lock);
+            return ['synced' => [], 'warning' => 'Stock local guardado. MeLi está ocupado; sincronizá el stock desde su tabla.'];
+        }
+        $synced = []; $errors = [];
+        try {
+            foreach ($links as $itemId => $link) {
+                try { $synced[(int) $link['variant_id']] = $this->synchronizeListingStock($itemId, $actorId, true)['stock']; }
+                catch (\Throwable $error) { $errors[] = $itemId . ': ' . $error->getMessage(); }
+            }
+        } finally { flock($lock, LOCK_UN); fclose($lock); }
+        return ['synced' => $synced, 'warning' => $errors ? 'Stock local guardado. No se confirmó el stock en MeLi: ' . implode(' · ', $errors) : ''];
+    }
+
+    public function synchronizeListingStock(string $itemId, int $actorId, bool $manualChange = false): array
     {
         [$item, $token] = $this->ownedItem($itemId);
         $link = $this->listingLinks()[$itemId] ?? null;
@@ -516,7 +535,7 @@ final class MercadoLibreService
             function (int $quantity, string $version) use ($path, $token): int {
                 [$code] = $this->request($path . '/type/selling_address', $token, ['quantity' => $quantity], true, 'PUT', ['x-version: ' . $version]);
                 return $code;
-            });
+            }, $manualChange);
     }
 
     public function preparePublication(int $productId, int $variantId = 0): array

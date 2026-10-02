@@ -230,6 +230,7 @@
             if (category !== editor.draft.category_id) return;
             if (editor.loadedCategory && editor.loadedCategory !== category) editor.draft.attributes = {};
             editor.loadedCategory = category;
+            editor.draft.required_attributes = Object.fromEntries(data.attributes.filter(attribute => attribute.tags?.required).map(attribute => [attribute.id, attribute.name]));
             editor.root.querySelector('[data-meli-category-name]').textContent = data.category.path_from_root.map(c => c.name).join(' / ');
             renderAttributes(editor, data.attributes, data.sale_terms);
             const setOptions = (name, options) => {
@@ -429,7 +430,33 @@
         review(editor);
         if (draft.category_id) requirements(editor);
     }
-    window.MeliProductEditor = { mount, read(form) {
+    function pending(product) {
+        const draft = product.meli;
+        if (!draft) return ['Ficha de publicación sin guardar'];
+        const missing = [];
+        if (!draft.category_id) missing.push('Categoría');
+        if (!draft.family_name?.trim()) missing.push('Título');
+        if (!draft.pictures?.length) missing.push('Fotos');
+        for (const [id, label] of Object.entries(draft.required_attributes || {})) {
+            if (!['SIZE', 'SIZE_GRID_ROW_ID', 'SELLER_SKU', 'GTIN'].includes(id) && !draft.attributes?.[id]?.trim()) missing.push(label);
+        }
+        for (const attribute of packageAttributes) if (!draft.attributes?.[attribute.id]?.trim()) missing.push(attribute.name);
+        if (!draft.package_confirmed && !(draft.category_id === 'MLA109042' && draft.package_estimated)) missing.push('Confirmación del paquete');
+        if (!draft.pricing?.billable_weight) missing.push('Peso facturable');
+        const defaults = window.MeliWorkspace?.defaults();
+        if (!(defaults?.configured ? defaults.listing_type_id : draft.listing_type_id)) missing.push('Tipo de publicación');
+        if (!(defaults?.configured ? defaults.shipping_mode : draft.shipping_mode)) missing.push('Modalidad de envío');
+        const all = defaults?.configured ? defaults.publish_all_variants : draft.publish_all_variants;
+        const variants = (product.variants || []).filter(variant => all || Number(variant.id) === Number(draft.variant_id));
+        if (!variants.length) missing.push('Variante');
+        if (variants.some(variant => !(Number(variant.price_cents) > 0))) missing.push('Precio de las variantes');
+        if (draft.category_id === 'MLA109042') {
+            if (!draft.attributes?.SIZE_GRID_ID) missing.push('Guía de talles');
+            if (variants.some(variant => !draft.size_grid_rows?.[variant.id])) missing.push('Filas de la guía de talles');
+        }
+        return missing;
+    }
+    window.MeliProductEditor = { mount, pending, read(form) {
         const editor = editors.get(form);
         if (!editor) return null;
         const draft = collect(editor);

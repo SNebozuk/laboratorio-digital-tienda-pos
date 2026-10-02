@@ -33,7 +33,7 @@ try {
             'create_shirt_size_chart' => $service->createShirtSizeChart((int) ($input['product_id'] ?? 0), (string) ($input['group'] ?? '')),
             'preview_listing_price' => $service->previewListingPrice((string) ($input['item_id'] ?? '')),
             'apply_listing_price' => $service->applyListingPrice((string) ($input['item_id'] ?? ''), (string) ($input['quote_token'] ?? '')),
-            'sync_listing_stock' => $service->synchronizeListingStock((string) ($input['item_id'] ?? ''), (int) $app['auth']->user()['id']),
+            'sync_listing_stock' => $service->synchronizeListingStock((string) ($input['item_id'] ?? ''), (int) $app['auth']->user()['id'], true),
             'calculate_price' => $service->calculateProductPrice($input),
             'publication_variants' => $service->publicationVariants((int) ($input['product_id'] ?? 0)),
             'finish_publication' => $service->finishPublication((int) ($input['product_id'] ?? 0)),
