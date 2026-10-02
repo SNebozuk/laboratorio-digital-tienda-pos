@@ -109,6 +109,8 @@ Secciones vigentes:
 
 ## Productos y stock
 
+- Para trabajar con productos y fichas MeLi desde Codex, preferir el conector MCP `laboratorio-digital-admin` a la automatización de Chrome. Ver `docs/admin-connector.md`. Si las herramientas todavía no están cargadas en el chat, usar `tools/admin-mcp.py --call` con JSON por stdin. Consultar la revisión actual antes de guardar fichas; publicar únicamente por pedido explícito del usuario.
+
 - Producto y variante pueden tener foto, precio, stock, SKU y código de barras propios. SKU y código de barras son opcionales; cuando existen son únicos.
 - `stock_on_hand` es la disponibilidad real mostrada y utilizada para vender. Todas las validaciones y descuentos críticos se realizan en transacciones SQLite.
 - La creación de pedido web y la venta de PDV descuentan stock de forma atómica. Cancelar una venta permite restaurarlo según la acción elegida.

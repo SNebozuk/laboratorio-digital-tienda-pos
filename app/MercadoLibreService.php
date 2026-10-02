@@ -79,6 +79,17 @@ final class MercadoLibreService
             'nickname' => (string) ($account['nickname'] ?? ''), 'user_id' => (int) $account['id']];
     }
 
+    public function discoverCategories(string $query): array
+    {
+        $query = trim($query);
+        if ($query === '' || mb_strlen($query) > 120) throw new \RuntimeException('Ingresá una descripción de hasta 120 caracteres.');
+        $status = $this->status();
+        if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta de Mercado Libre.');
+        [$code, $categories] = $this->request('/sites/MLA/domain_discovery/search?limit=3&q=' . rawurlencode($query), $this->loadTokens()['access_token']);
+        if ($code !== 200) throw new \RuntimeException('MeLi no confirmó la búsqueda de categorías.');
+        return ['ok' => true, 'categories' => $categories];
+    }
+
     public function productRequirements(string $categoryId): array
     {
         if (!preg_match('/^MLA\d+$/D', $categoryId)) throw new \RuntimeException('Ingresá una categoría MLA válida.');
