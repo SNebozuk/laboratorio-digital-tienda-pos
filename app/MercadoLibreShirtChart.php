@@ -31,7 +31,7 @@ final class MercadoLibreShirtChart
         return $rows;
     }
 
-    public static function payload(array $rows, array $template, array $filters, array $equivalences = []): array
+    public static function payload(array $rows, array $template, array $filters, array $equivalences = [], string $domain = 'T_SHIRTS', string $name = 'Remeras unisex sin marca'): array
     {
         $definitions = [];
         $visit = static function (array $node) use (&$visit, &$definitions): void {
@@ -64,7 +64,7 @@ final class MercadoLibreShirtChart
             }
             $chartRows[] = ['attributes' => $attrs];
         }
-        return ['names' => ['MLA' => 'Remeras unisex sin marca'], 'domain_id' => 'T_SHIRTS', 'site_id' => 'MLA',
+        return ['names' => ['MLA' => $name], 'domain_id' => $domain, 'site_id' => 'MLA',
             'measure_type' => 'CLOTHING_MEASURE', 'main_attribute' => ['attributes' => [['site_id' => 'MLA', 'id' => 'SIZE']]],
             'attributes' => $filters, 'rows' => $chartRows];
     }

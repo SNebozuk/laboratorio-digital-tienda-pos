@@ -29,4 +29,7 @@ catch (RuntimeException $e) { check(str_contains($e->getMessage(), 'No se invent
 $payload = Chart::payload($rows, $template, [], [12 => 'M', 13 => 'M']);
 check($payload['rows'][0]['attributes'][0]['values'][0]['name'] === '1');
 check($payload['rows'][0]['attributes'][3]['values'][0]['id'] === '999');
+$buzo = Chart::payload($rows, $template, [], [12 => 'M', 13 => 'M'], 'SWEATSHIRTS_AND_HOODIES', 'Buzos cuello redondo');
+check($buzo['domain_id'] === 'SWEATSHIRTS_AND_HOODIES' && $buzo['names']['MLA'] === 'Buzos cuello redondo');
+check($buzo['rows'][1]['attributes'][0]['values'][0]['name'] === '3');
 echo "Guía de remeras: medidas, filas y equivalencias verificadas.\n";

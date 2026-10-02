@@ -33,6 +33,7 @@ Para cada pedido seguir este orden:
 4. Validar únicamente los archivos modificados con las comprobaciones relevantes.
 5. Si la tarea terminó y la validación fue correcta, revisar todos sus archivos, crear el commit y ejecutar `git push` automáticamente al remoto y rama actualmente configurados, sin pedir otra aprobación.
 6. No hacer commit ni push si la tarea quedó incompleta, hubo un error de validación importante o el usuario pidió explícitamente no hacerlo.
+   No publicar nada que tenga tareas pendientes: resolverlas y validar el resultado antes de publicar o dar la tarea por terminada. Ante dudas de investigación o razonamiento, consultar al chat conector de ChatGPT; no usar su respuesta para inventar datos propios del negocio.
 7. No cambiar de rama ni de remoto salvo pedido explícito.
 8. Responder muy brevemente indicando qué se modificó, si validó, si se hizo commit y si se hizo push.
 

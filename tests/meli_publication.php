@@ -34,8 +34,8 @@ function curl_exec(object $handle): string|false {
             'sale_fee_amount' => (float) $params['price'] * $rate / 100, 'listing_fee_amount' => 0,
             'sale_fee_details' => ['financing_add_on_fee' => $rate]]);
     }
-    if ($path === '/categories/MLA109042/attributes') return json_encode(array_map(static fn ($id) => ['id' => $id], ['BRAND', 'SIZE', 'COLOR', 'GENDER', 'SELLER_SKU', 'GTIN', 'SIZE_GRID_ID', 'SIZE_GRID_ROW_ID', 'SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']));
-    if ($path === '/categories/MLA109042/sale_terms') return '[]';
+    if (in_array($path, ['/categories/MLA109042/attributes', '/categories/MLA109085/attributes'], true)) return json_encode(array_map(static fn ($id) => ['id' => $id], ['BRAND', 'SIZE', 'COLOR', 'GENDER', 'SELLER_SKU', 'GTIN', 'SIZE_GRID_ID', 'SIZE_GRID_ROW_ID', 'SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']));
+    if (in_array($path, ['/categories/MLA109042/sale_terms', '/categories/MLA109085/sale_terms'], true)) return '[]';
     if ($path === '/items/validate' || str_ends_with($path, '/attributes/conditional')) return '{}';
     if ($path === '/items') {
         if (!empty($GLOBALS['timeout'])) return false;
@@ -127,4 +127,17 @@ $GLOBALS['timeout'] = true;
 rejects(fn () => $service->publishProduct(1, 1), 'Uncertain creation must fail');
 rejects(fn () => $service->publicationVariants(1), 'Uncertain creation prevents retry duplicates');
 rejects(fn () => MercadoLibreProductDraft::normalize(array_replace($draft, ['size_grid_rows' => 'invalid'])), 'Invalid rows');
+$db->exec("INSERT INTO products(id,name) VALUES(2,'Buzo cuello redondo negro'); INSERT INTO product_variants(id,product_id,name,sku,price_cents,stock_on_hand,active) VALUES(5,2,'Talle 3','__AUTO__5',1490000,2,1)");
+$buzo = array_replace($draft, ['category_id' => 'MLA109085', 'family_name' => 'Buzo cuello redondo negro', 'variant_id' => 5,
+    'package_confirmed' => false, 'package_estimated' => true, 'size_grid_rows' => [5 => '456:3']]);
+$buzo['attributes']['BRAND'] = 'Generic';
+$buzo['attributes']['SIZE_GRID_ID'] = '456';
+MercadoLibreProductDraft::save($db, 2, MercadoLibreProductDraft::normalize($buzo));
+$preparedBuzo = $service->preparePublication(2, 5);
+$attrsBuzo = array_column($preparedBuzo['payload']['attributes'], 'value_name', 'id');
+check($attrsBuzo['SIZE'] === '3' && $attrsBuzo['SIZE_GRID_ROW_ID'] === '456:3', 'Buzo uses its own numeric size and chart row');
+check(!$preparedBuzo['draft']['package_confirmed'] && $preparedBuzo['draft']['package_estimated'], 'Buzo keeps package estimates explicit');
+$buzo['size_grid_rows'] = [];
+MercadoLibreProductDraft::save($db, 2, MercadoLibreProductDraft::normalize($buzo));
+rejects(fn () => $service->preparePublication(2, 5), 'Buzo cannot publish without its own chart row');
 echo "MeLi publication tests passed\n";

@@ -356,9 +356,9 @@ final class MercadoLibreService
         if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta de Mercado Libre.');
         $tokens = $this->loadTokens();
         [$code, $chart] = $this->request('/catalog/charts/' . $chartId, $tokens['access_token']);
-        if ($code !== 200 || ($chart['site_id'] ?? '') !== 'MLA' || !in_array($chart['domain_id'] ?? '', ['T_SHIRTS', 'MLA-T_SHIRTS'], true)
+        if ($code !== 200 || ($chart['site_id'] ?? '') !== 'MLA' || !in_array($chart['domain_id'] ?? '', ['T_SHIRTS', 'MLA-T_SHIRTS', 'SWEATSHIRTS_AND_HOODIES', 'MLA-SWEATSHIRTS_AND_HOODIES'], true)
             || ($chart['type'] ?? '') !== 'SPECIFIC' || (int) ($chart['seller_id'] ?? 0) !== $status['user_id']) {
-            throw new \RuntimeException('La guía debe ser una guía personalizada de remeras de la cuenta conectada.');
+            throw new \RuntimeException('La guía debe ser una guía personalizada de remeras o buzos de la cuenta conectada.');
         }
         return ['ok' => true, 'chart' => $chart];
     }
@@ -368,9 +368,11 @@ final class MercadoLibreService
         require_once __DIR__ . '/SettingsService.php';
         require_once __DIR__ . '/MercadoLibreShirtChart.php';
         $draft = MercadoLibreProductDraft::all($this->pdo)[$productId] ?? null;
-        if (!$draft || ($draft['category_id'] ?? '') !== 'MLA109042' || ($draft['attributes']['GENDER'] ?? '') !== 'Sin género') throw new \RuntimeException('Guardá primero la ficha de la remera unisex con género Sin género.');
+        if (!$draft || !in_array($draft['category_id'] ?? '', ['MLA109042', 'MLA109085'], true) || ($draft['attributes']['GENDER'] ?? '') !== 'Sin género') throw new \RuntimeException('Guardá primero la ficha de la prenda unisex con género Sin género.');
+        $hoodie = $draft['category_id'] === 'MLA109085';
+        $domain = $hoodie ? 'SWEATSHIRTS_AND_HOODIES' : 'T_SHIRTS';
         if (!empty($draft['attributes']['SIZE_GRID_ID'])) return $this->sizeChart($draft['attributes']['SIZE_GRID_ID']);
-        $q = $this->pdo->prepare('SELECT id,name FROM product_variants WHERE product_id=? AND active=1 ORDER BY id');
+        $q = $this->pdo->prepare('SELECT id,name FROM product_variants WHERE product_id=?' . ($hoodie ? '' : ' AND active=1') . ' ORDER BY id');
         $q->execute([$productId]);
         $variants = $q->fetchAll();
         $guide = (new SettingsService($this->pdo))->sizeGuide();
@@ -378,7 +380,7 @@ final class MercadoLibreService
         $status = $this->status();
         if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta de Mercado Libre.');
         $token = $this->loadTokens()['access_token'];
-        [$code, $attributes] = $this->request('/categories/MLA109042/attributes', $token);
+        [$code, $attributes] = $this->request('/categories/' . $draft['category_id'] . '/attributes', $token);
         if ($code !== 200) throw new \RuntimeException('No se pudieron consultar marca y género de la guía.');
         $filters = [];
         $templateFilters = [];
@@ -391,9 +393,10 @@ final class MercadoLibreService
             $filters[] = ['id' => $id, 'values' => [$value]];
             $templateFilters[] = ['id' => $id, 'value_name' => $name, 'value_id' => $value['id'] ?? null, 'values' => [$value]];
         }
-        [$code, $template] = $this->request('/domains/MLA-T_SHIRTS/technical_specs?section=grids', $token, ['attributes' => $templateFilters], true);
+        [$code, $template] = $this->request('/domains/MLA-' . $domain . '/technical_specs?section=grids', $token, ['attributes' => $templateFilters], true);
         if ($code !== 200) throw new \RuntimeException('MeLi no entregó la estructura de la guía: ' . ($template['message'] ?? 'reintentá la consulta.'));
-        $payload = MercadoLibreShirtChart::payload($rows, $template, $filters, $draft['size_equivalences'] ?? []);
+        $payload = MercadoLibreShirtChart::payload($rows, $template, $filters, $draft['size_equivalences'] ?? [], $domain,
+            $hoodie ? (str_contains(mb_strtolower($group), 'canguro') ? 'Buzos canguro unisex sin marca' : 'Buzos cuello redondo unisex sin marca') : 'Remeras unisex sin marca');
         $key = 'meli_shirt_chart_' . hash('sha256', json_encode([$status['user_id'], $payload]));
         $q = $this->pdo->prepare('SELECT value FROM settings WHERE key=?');
         $q->execute([$key]);
@@ -625,13 +628,13 @@ final class MercadoLibreService
         $query->execute(['product' => $productId, 'variant' => $draft['variant_id']]);
         $variant = $query->fetch();
         if (!$variant || (int) $variant['stock_on_hand'] < 1) throw new \RuntimeException('La variante no está activa o no tiene stock.');
-        if (!$draft['package_confirmed'] && !($draft['category_id'] === 'MLA109042' && $draft['package_estimated'])) throw new \RuntimeException('Confirmá el paquete o aceptá los valores estimados en la ficha de la remera.');
+        if (!$draft['package_confirmed'] && !(in_array($draft['category_id'], ['MLA109042', 'MLA109085'], true) && $draft['package_estimated'])) throw new \RuntimeException('Confirmá el paquete o aceptá los valores estimados en la ficha de la prenda.');
         foreach (['SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT'] as $id) {
             if (empty($draft['attributes'][$id])) throw new \RuntimeException('Completá las cuatro medidas del paquete: largo, ancho, alto y peso.');
         }
         if (!$draft['family_name'] || !$draft['pictures']) throw new \RuntimeException('Completá el título y las fotos de Mercado Libre.');
         if (preg_match('/remera/i', $variant['product_name'])) $draft['attributes']['BRAND'] = 'Generic';
-        if ($draft['category_id'] === 'MLA109042') {
+        if (in_array($draft['category_id'], ['MLA109042', 'MLA109085'], true)) {
             $draft['attributes']['SIZE'] = preg_replace('/^talle\s*/i', '', trim($variant['name']));
             $row = $draft['size_grid_rows'][$variant['id']] ?? '';
             if (!$row || empty($draft['attributes']['SIZE_GRID_ID'])) throw new \RuntimeException('Vinculá la guía de talles de MeLi y su fila para ' . $variant['name'] . '.');
