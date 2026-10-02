@@ -10,6 +10,7 @@ require_once __DIR__ . '/MercadoLibreProductDraft.php';
 require_once __DIR__ . '/ProductService.php';
 require_once __DIR__ . '/MercadoLibreStockSync.php';
 require_once __DIR__ . '/MercadoLibreDefaults.php';
+require_once __DIR__ . '/MercadoLibreNotifications.php';
 
 final class MercadoLibreService
 {
@@ -496,6 +497,68 @@ final class MercadoLibreService
         return ['ok' => true, 'message' => 'Precio actualizado con las comisiones vigentes.'];
     }
 
+    public function receiveNotification(array $event, bool $onlyIfMissing = false): void
+    {
+        $tokens = $this->loadTokens();
+        if (!$tokens || !is_scalar($event['application_id'] ?? null) || !is_scalar($event['user_id'] ?? null)
+            || (string) ($event['application_id'] ?? '') !== (string) $this->config['meli_client_id']
+            || (int) ($event['user_id'] ?? 0) < 1 || (int) $event['user_id'] !== (int) ($tokens['user_id'] ?? 0)) {
+            throw new \InvalidArgumentException('La notificación no corresponde a la cuenta conectada.');
+        }
+        $patterns = ['orders_v2' => '~^/orders/[0-9]+$~D', 'items' => '~^/items/MLA[0-9]+$~D',
+            'stock-location' => '~^/user-products/[A-Za-z0-9_-]+/stock$~D',
+            'stock-locations' => '~^/user-products/[A-Za-z0-9_-]+/stock$~D'];
+        $topic = $event['topic'] ?? '';
+        $resource = $event['resource'] ?? '';
+        if (!is_string($topic) || !isset($patterns[$topic]) || !is_string($resource)
+            || strlen($resource) > 150 || !preg_match($patterns[$topic], $resource)) {
+            throw new \InvalidArgumentException('Recurso de notificación inválido.');
+        }
+        (new MercadoLibreNotifications($this->pdo, $this->config['storage_path']))->enqueue([
+            'topic' => $topic, 'resource' => $resource, 'user_id' => (int) $event['user_id']], $onlyIfMissing);
+    }
+
+    public function processNotifications(bool $checkLinkedStock = false): array
+    {
+        if ($checkLinkedStock && $this->configured()) {
+            $tokens = $this->loadTokens();
+            if (!empty($tokens['user_id'])) {
+                foreach ($this->listingLinks() as $id => $link) {
+                    $this->receiveNotification(['application_id' => $this->config['meli_client_id'],
+                        'user_id' => $tokens['user_id'], 'topic' => 'items', 'resource' => '/items/' . $id], true);
+                }
+            }
+        }
+        return (new MercadoLibreNotifications($this->pdo, $this->config['storage_path']))->process(function (array $event): void {
+            $status = $this->status();
+            if (!$status['connected'] || $status['user_id'] !== $event['user_id']) throw new \RuntimeException('La cuenta de la notificación no está conectada.');
+            $token = $this->loadTokens()['access_token'];
+            $links = $this->listingLinks();
+            $items = [];
+            if ($event['topic'] === 'orders_v2') {
+                [$code, $order] = $this->request($event['resource'], $token);
+                if ($code !== 200 || (int) ($order['seller']['id'] ?? 0) !== $status['user_id']) throw new \RuntimeException('MeLi no confirmó la venta de la cuenta conectada.');
+                foreach ($order['order_items'] ?? [] as $line) {
+                    $id = $line['item']['id'] ?? '';
+                    if (isset($links[$id])) $items[$id] = true;
+                }
+            } elseif ($event['topic'] === 'items') {
+                $id = substr($event['resource'], strlen('/items/'));
+                if (isset($links[$id])) $items[$id] = true;
+            } else {
+                $userProduct = explode('/', $event['resource'])[2];
+                foreach ($links as $id => $link) {
+                    [$item] = $this->ownedItem($id);
+                    if (($item['user_product_id'] ?? '') === $userProduct) $items[$id] = true;
+                }
+            }
+            if (!$items) return;
+            $actorId = $this->pdo->query("SELECT id FROM users WHERE role='admin' ORDER BY id LIMIT 1")->fetchColumn();
+            if ($actorId === false) throw new \RuntimeException('Falta un administrador para registrar los movimientos de stock.');
+            foreach (array_keys($items) as $id) $this->synchronizeListingStock($id, (int) $actorId);
+        });
+    }
+
     public function synchronizeManualStocks(array $variantIds, int $actorId): array
     {
         $links = array_filter($this->listingLinks(), static fn ($link) => in_array((int) $link['variant_id'], $variantIds, true));
@@ -651,6 +714,10 @@ final class MercadoLibreService
         $record['state'] = 'published';
         $record['item_id'] = $item['id'];
         $record['permalink'] = $item['permalink'] ?? '';
+        // Start from the submitted quantity, even if the first sale precedes its notification.
+        $this->pdo->prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP')
+            ->execute(['meli_stock_' . $prepared['variant_id'], json_encode(['item_id' => $item['id'],
+                'remote_quantity' => $prepared['payload']['available_quantity'], 'pending' => false], JSON_THROW_ON_ERROR)]);
         $query = $this->pdo->prepare('UPDATE settings SET value=:value,updated_at=CURRENT_TIMESTAMP WHERE key=:key');
         $query->execute(['key' => $key, 'value' => json_encode($record, JSON_THROW_ON_ERROR)]);
         $descriptionSaved = true;

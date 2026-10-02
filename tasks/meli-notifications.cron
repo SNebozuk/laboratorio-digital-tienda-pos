@@ -1,0 +1,3 @@
+# Retry stock notifications even when the administration is closed.
+SHELL=/bin/sh
+* * * * * www-data /usr/bin/php /srv/laboratorio-digital/tasks/meli-notifications.php 2>&1 | /usr/bin/logger -t laboratorio-meli

@@ -84,6 +84,8 @@ check($attrs['BRAND'] === 'Generic' && $attrs['SELLER_SKU'] === 'SKU3', 'No inve
 rejects(fn () => $service->preparePublication(1, 2), 'Cannot publish zero stock');
 rejects(fn () => $service->preparePublication(1, 4), 'Cannot publish inactive sizes');
 $first = $service->publishProduct(1, 1);
+$baseline = json_decode((string) $db->query("SELECT value FROM settings WHERE key='meli_stock_1'")->fetchColumn(), true);
+check($baseline['remote_quantity'] === 13 && $baseline['item_id'] === $first['item_id'], 'Publication establishes stock baseline before its first sale');
 check(array_column($service->publicationVariants(1)['variants'], 'id') === [3], 'Retries skip already published sizes');
 rejects(fn () => $service->publishProduct(1, 1), 'Cannot create duplicate listing');
 $service->publishProduct(1, 3);
