@@ -5,6 +5,7 @@
     const app = JSON.parse(document.getElementById('admin-app-data').textContent);
     let defaults = app.meli_defaults;
     async function openSettings() {
+        if (busy || bulkBusy) return;
         const url = new URL(endpoint);
         url.searchParams.set('action', 'defaults');
         try {
@@ -68,6 +69,8 @@
     const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name]}</svg>`;
     const actionButton = (action, label, name, attributes = '') => `<button type="button" class="icon-action-button meli-listing-action" data-action="${action}" title="${label}" aria-label="${label}" ${attributes}>${icon(name)}</button>`;
     let busy = false;
+    let bulkBusy = false;
+    const publishAll = document.getElementById('meli-publish-all');
     function progress(text, active = false) {
         progressText.textContent = `Mercado Libre: ${text}`;
         footer.classList.toggle('is-active', active);
@@ -111,7 +114,7 @@
     const money = cents => (Number(cents) / 100).toLocaleString('es-AR', {style: 'currency', currency: 'ARS'});
     products.addEventListener('click', async event => {
         const button = event.target.closest('button[data-action]');
-        if (!button || busy) return;
+        if (!button || busy || bulkBusy) return;
         const row = button.closest('[data-item-id]');
         const itemId = row.dataset.itemId;
         const action = button.dataset.action;
@@ -145,7 +148,7 @@
         }
     });
     async function check(showProducts = panel.classList.contains('active')) {
-        if (busy) return;
+        if (busy || bulkBusy) return;
         busy = true;
         verify.disabled = true;
         connect.disabled = true;
@@ -168,7 +171,7 @@
         }
     }
     connect.addEventListener('click', async () => {
-        if (busy) return;
+        if (busy || bulkBusy) return;
         busy = true;
         connect.disabled = true;
         verify.disabled = true;
@@ -190,11 +193,11 @@
         }
     });
     verify.addEventListener('click', () => check(true));
-    previous.addEventListener('click', () => { if (!busy) { offset = Math.max(0, offset - 20); check(true); } });
-    next.addEventListener('click', () => { if (!busy) { offset += 20; check(true); } });
+    previous.addEventListener('click', () => { if (!busy && !bulkBusy) { offset = Math.max(0, offset - 20); check(true); } });
+    next.addEventListener('click', () => { if (!busy && !bulkBusy) { offset += 20; check(true); } });
     const post = payload => request({method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({csrf_token: app.csrf_token, ...payload})});
-    async function publish(productId, onProgress = () => {}) {
-        if (busy) throw new Error('MeLi está realizando otra operación. Intentá nuevamente en unos segundos.');
+    async function publish(productId, onProgress = () => {}, fromBulk = false) {
+        if (busy || (bulkBusy && !fromBulk)) throw new Error('MeLi está realizando otra operación. Intentá nuevamente en unos segundos.');
         busy = true;
         verify.disabled = true;
         const report = (text, active = true) => { progress(text, active); onProgress(`Mercado Libre: ${text}`, active); };
@@ -223,8 +226,55 @@
             report(result.message, false);
             return result;
         } catch (error) { report(error.message, false); throw error; }
-        finally { busy = false; verify.disabled = false; }
+        finally { busy = false; verify.disabled = bulkBusy; }
     }
+    function readyForBulk(product) {
+        const visible = [true, 1, '1'].includes(product.active);
+        const state = product.meli_publication?.state || 'unpublished';
+        return visible && state === 'unpublished' && !product.meli_publication?.items?.length
+            && window.MeliProductEditor && window.MeliProductEditor.pending(product).length === 0
+            && product.variants?.some(variant => [true, 1, '1'].includes(variant.active) && Number(variant.stock_on_hand) > 0);
+    }
+    publishAll.addEventListener('click', async () => {
+        if (busy || bulkBusy) return;
+        bulkBusy = true;
+        publishAll.disabled = true;
+        publishAll.setAttribute('aria-busy', 'true');
+        document.getElementById('meli-settings').disabled = true;
+        verify.disabled = true;
+        let completed = 0;
+        let failed = 0;
+        try {
+            progress('buscando productos completos pendientes de publicación…', true);
+            const url = new URL(app.api_url, window.location.href);
+            url.searchParams.set('action', 'admin_products');
+            const response = await fetch(url, {credentials: 'same-origin', cache: 'no-store'});
+            const data = await response.json();
+            if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudieron consultar los productos.');
+            const queue = data.products.filter(readyForBulk);
+            if (!queue.length) { progress('no hay productos completos con icono gris y stock para publicar.'); return; }
+            for (const [index, product] of queue.entries()) {
+                publishAll.textContent = `PUBLICANDO ${index + 1}/${queue.length}`;
+                try {
+                    await publish(product.id, (text, active) => {
+                        progress(`${index + 1}/${queue.length} · ${product.name} · ${text.replace(/^Mercado Libre: /, '')}`, active);
+                    }, true);
+                    completed++;
+                } catch { failed++; }
+                // Refresh local icons after success or partial failure; never retry a creation.
+                window.dispatchEvent(new CustomEvent('meli-publication-changed'));
+            }
+            progress(`publicación finalizada: ${completed} productos publicados, ${failed} con error.`);
+        } catch (error) { progress(error.message); }
+        finally {
+            bulkBusy = false;
+            publishAll.disabled = false;
+            publishAll.removeAttribute('aria-busy');
+            publishAll.textContent = 'PUBLICAR TODO';
+            document.getElementById('meli-settings').disabled = false;
+            verify.disabled = false;
+        }
+    });
     document.getElementById('meli-settings').addEventListener('click', openSettings);
     window.MeliWorkspace = { activate: () => check(true), publish, defaults: () => defaults };
     check();

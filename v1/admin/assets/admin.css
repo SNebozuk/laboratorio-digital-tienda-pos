@@ -4555,3 +4555,8 @@ html { overflow-y: scroll; scrollbar-gutter: stable; }
 .product-meli-button[aria-busy="true"] { opacity: .6; cursor: wait; }
 .admin-body .product-meli-warning { flex:0 0 32px; color:#d97706; border-color:#d97706; }
 .meli-size-rows { display: grid; gap: 8px; }
+
+.meli-heading-actions { display:flex; align-items:center; justify-content:flex-end; gap:12px; }
+.admin-body .meli-publish-all { height:46px; min-height:46px; padding:0 18px; border:1px solid #d4bb00; border-radius:10px; background:#ffe600; color:#1e293b; font-weight:700; }
+.admin-body .meli-publish-all:hover { background:#f5dc00; }
+.admin-body .meli-publish-all:disabled { opacity:.6; cursor:wait; }
