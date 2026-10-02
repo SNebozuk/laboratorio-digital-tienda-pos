@@ -23,29 +23,18 @@
     ].map(([id, name]) => ({id, name, tags: {}}));
     shirtAttributes.forEach(a => visibleHidden.add(a.id));
 
+    const commonAttributes = ['BRAND', 'MODEL', 'COLOR', 'SALE_FORMAT', 'UNITS_PER_PACK', 'GTIN', 'EMPTY_GTIN_REASON']
+        .map(id => ({...seedAttributes.find(attribute => attribute.id === id), tags: {}}));
+    const packageAttributes = seedAttributes.filter(attribute => attribute.id.startsWith('SELLER_PACKAGE_'));
     function preset(product) {
-        const variant = product?.variants?.[0];
-        const shirt = /remera/i.test(product?.name || '');
-        const isTest = /art[-‑\s]?jet/i.test(product?.name || '') && /\b200\s*g\b/i.test(product?.name || '')
-            && /\ba4\b/i.test(product?.name || '') && /\b20\s*hojas\b/i.test(product?.name || '');
         return {
-            category_id: shirt ? 'MLA109042' : isTest ? 'MLA416632' : '', family_name: isTest ? 'Papel fotográfico brillante Art-Jet A4 200g 20 hojas' : product?.name || '',
-            description: product?.description || '', variant_id: Number(variant?.id || 0),
-            condition: 'new', listing_type_id: isTest ? 'gold_special' : '', shipping_mode: isTest ? 'not_specified' : '', logistic_type: isTest ? 'not_specified' : '', catalog_product_id: isTest ? 'MLA28818853' : '',
+            category_id: '', catalog_product_id: '', family_name: product?.name || '',
+            description: product?.description || '', variant_id: Number(product?.variants?.[0]?.id || 0),
+            condition: '', listing_type_id: '', shipping_mode: '', logistic_type: '',
             local_pick_up: false, free_shipping: false, package_confirmed: false,
-            publish_all_variants: shirt, size_grid_rows: {},
+            publish_all_variants: true, size_grid_rows: {}, size_equivalences: {},
             pictures: product?.image_path ? [new URL(product.image_path, window.location.origin).href] : [],
-            attributes: shirt ? {BRAND: 'Generic', MODEL: product?.name || '', CLOTHING_TYPE: 'Remera',
-                ...(/unisex/i.test(product?.name || '') ? {GENDER: 'Sin género'} : {}),
-                ...(/algod[oó]n/i.test(product?.name || '') ? {MAIN_MATERIAL: 'Algodón'} : {}),
-                ...(/negro|negra/i.test(product?.name || '') ? {COLOR: 'Negro', MAIN_COLOR: 'Negro'} : {}),
-                SALE_FORMAT: 'Unidad', UNITS_PER_PACK: '1', SELLER_PACKAGE_LENGTH: '30 cm',
-                SELLER_PACKAGE_WIDTH: '25 cm', SELLER_PACKAGE_HEIGHT: '3 cm', SELLER_PACKAGE_WEIGHT: '250 g'} : isTest ? { BRAND: 'Art-Jet', PAPER_SIZE: 'A4', PAPER_TYPE: 'Fotográfico', COLOR: 'Blanco',
-                MAIN_COLOR: 'Blanco', SHEETS_NUMBER: '20', GRAMMAGE: '200 g', SALE_FORMAT: 'Unidad', UNITS_PER_PACK: '1',
-                FINISH: 'Brillante', MODEL: 'A4 200 g 20 hojas', GTIN: variant?.barcode || '', SELLER_SKU: variant?.sku || '',
-                LENGTH: '29.7 cm', WIDTH: '21 cm', WEIGHT: '249.48 g', SELLER_PACKAGE_LENGTH: '32 cm',
-                SELLER_PACKAGE_WIDTH: '23 cm', SELLER_PACKAGE_HEIGHT: '1 cm', SELLER_PACKAGE_WEIGHT: '280 g' } : {},
-            sale_terms: isTest ? { INVOICE: 'Factura C' } : {},
+            attributes: {}, sale_terms: {}, pricing: null,
         };
     }
     function field(name, label, value, extra = '') {
@@ -64,13 +53,16 @@
             ${attribute.hint ? `<small>${esc(attribute.hint)}</small>` : ''}</label>`;
     }
     function renderAttributes(editor, attributes, terms) {
+        attributes = [...commonAttributes.filter(base => !attributes.some(attribute => attribute.id === base.id)), ...attributes];
+        const packages = packageAttributes.map(base => attributes.find(attribute => attribute.id === base.id) || base);
+        editor.root.querySelector('[data-meli-package]').innerHTML = packages.map(attribute => attributeField(attribute, editor.draft.attributes, 'attribute')).join('');
         editor.attributes = attributes;
-        const editable = editor.root.querySelector('[data-meli-size-chart]') ? attributes.filter(a => !['SIZE_GRID_ID', 'SIZE_GRID_ROW_ID'].includes(a.id)) : attributes;
+        const editable = attributes.filter(a => !a.id.startsWith('SELLER_PACKAGE_') && (!editor.root.querySelector('[data-meli-size-chart]') || !['SIZE_GRID_ID', 'SIZE_GRID_ROW_ID'].includes(a.id)));
         const primary = editable.filter(a => !a.tags?.hidden || visibleHidden.has(a.id) || a.tags?.required || a.tags?.conditional_required);
         const optional = editable.filter(a => !primary.includes(a));
         editor.root.querySelector('[data-meli-technical]').innerHTML = `<div class="meli-product-grid">${primary.map(a => attributeField(a, editor.draft.attributes, 'attribute')).join('')}</div>
             ${optional.length ? `<details><summary>Otros atributos de la categoría</summary><div class="meli-product-grid">${optional.map(a => attributeField(a, editor.draft.attributes, 'attribute')).join('')}</div></details>` : ''}
-            <details><summary>Garantía, facturación y condiciones de venta</summary><div class="meli-product-grid">${terms.map(a => attributeField(a, editor.draft.sale_terms, 'term')).join('')}</div></details>`;
+            <details><summary>Garantía, facturación y condiciones de venta</summary><div class="meli-product-grid">${terms.length ? terms.map(a => attributeField(a, editor.draft.sale_terms, 'term')).join('') : '<p>Las condiciones disponibles se incorporan al consultar la categoría de MeLi.</p>'}</div></details>`;
     }
     function applyDefaults(draft) {
         const defaults = window.MeliWorkspace?.defaults();
@@ -126,7 +118,7 @@
         const key = priceContext(editor, inputs);
         const old = editor.draft.pricing;
         const valid = old?.context_key === key && old?.price_cents > 0;
-        editor.draft.pricing = inputs.base_price_cents > 0 ? { ...inputs, ...(valid ? old : {}), context_key: valid ? key : '' } : null;
+        editor.draft.pricing = inputs.base_price_cents > 0 && inputs.billable_weight > 0 ? { ...inputs, ...(valid ? old : {}), context_key: valid ? key : '' } : null;
         const summary = editor.root.querySelector('[data-meli-price-summary]');
         const pricing = editor.draft.pricing;
         summary.textContent = valid ? `Precio Meli: ${money(pricing.price_cents)} · cargos por vender: ${money(pricing.sale_fee_cents)} (incluye cargo fijo ${money(pricing.fixed_fee_cents)}) · cargo por publicar: ${money(pricing.listing_fee_cents)} · otros porcentajes: ${money(pricing.other_percentage_cents)} · gastos fijos ingresados: ${money(inputs.packaging_cents + inputs.shipping_cents + inputs.other_fixed_cents)} · neto estimado: ${money(pricing.net_cents)} · objetivo: ${money(inputs.base_price_cents)}. Consulta: ${new Date(pricing.queried_at).toLocaleString('es-AR', { timeZone: 'America/Buenos_Aires' })}.${editor.draft.package_confirmed ? '' : ' El peso del paquete está pendiente de confirmar.'}`
@@ -351,10 +343,6 @@
         if (shirt) {
             draft.attributes.BRAND = 'Generic';
             draft.publish_all_variants ??= true;
-            const defaults = preset(product).attributes;
-            for (const id of ['SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']) {
-                if (!draft.attributes[id]) { draft.attributes[id] = defaults[id]; draft.package_confirmed = false; }
-            }
         }
         draft.sale_terms ||= {};
         draft.logistic_type ||= ['custom', 'not_specified'].includes(draft.shipping_mode) ? draft.shipping_mode : '';
@@ -364,13 +352,15 @@
         const packageGrams = Number(packageWeight[0]) * (packageWeight[1] === 'kg' ? 1000 : 1);
         const root = document.createElement('details');
         root.className = 'meli-product-editor';
-        root.open = !!draft.category_id;
+        root.open = true;
         root.innerHTML = `<summary>MERCADO LIBRE · FICHA DE PUBLICACIÓN</summary>
-            <p>Guardá esta ficha con GUARDAR CAMBIOS. No se publica ni se modifica el precio o stock en Mercado Libre.</p>
+            <p>Estructura general disponible para todos los productos. Podés guardar un borrador con campos pendientes; completalos y validalos antes de publicar. Guardar esta ficha no publica en MeLi.</p>
+            <h3>1. IDENTIFICACIÓN</h3>
             <div class="meli-product-grid">${field('category_id', 'Categoría de Mercado Libre', draft.category_id, 'placeholder="MLA…"')}
             ${field('catalog_product_id', 'Producto del catálogo · opcional', draft.catalog_product_id, 'placeholder="MLA…"')}
-            ${field('family_name', 'Nombre de familia / título de publicación', draft.family_name, 'maxlength="120"')}
-            ${select('variant_id', 'Variante · usa su precio, stock, SKU y código', draft.variant_id, (product?.variants || []).map(v => [v.id, v.name]))}</div>
+            ${field('family_name', 'Nombre de familia / título de publicación', draft.family_name, 'maxlength="120"')}</div>
+            <h3>2. VARIANTES</h3><p>Se usan las variantes del producto con su precio, stock, SKU y código de barras. La selección de todas las variantes se define en el engranaje de MeLi.</p>
+            <div class="meli-product-grid">${select('variant_id', 'Variante · usa su precio, stock, SKU y código', draft.variant_id, (product?.variants || []).map(v => [v.id, v.name]))}</div>
             <p>Condición, publicación, envío, cuotas y cálculo del precio se configuran para todos los productos desde el engranaje de la sección MeLi.</p>
             <button class="primary-button fit-button" type="button" data-meli-load>CONSULTAR REQUISITOS</button>
             ${shirt ? `<h3>TALLES DE LA REMERA</h3><p>Los talles sin stock no se publican. No se convierten los talles numéricos a S, M o L.</p>
@@ -384,23 +374,25 @@
             <p>Elegí las equivalencias estándar reales de cada talle. Tus talles numéricos se mantienen en la publicación.</p>
             <div class="meli-size-rows">${(product?.variants || []).map(v => `<label>${esc(v.name)} · Equivalencia MeLi<select data-meli-size-equivalence="${Number(v.id)}"><option value="">Elegir</option>${['3XS','2XS','XS','S','M','L','XL','2XL','3XL','4XL','5XL','6XL','7XL','8XL','9XL','10XL'].map(size => `<option value="${size}" ${draft.size_equivalences?.[v.id] === size ? 'selected' : ''}>${size}</option>`).join('')}</select></label>`).join('')}</div>
             <div class="meli-size-rows">${(product?.variants || []).map(v => `<label>${esc(v.name)} · ID de fila MeLi<input data-meli-size-row="${Number(v.id)}" value="${esc(draft.size_grid_rows?.[v.id] || '')}" placeholder="123456:1"></label>`).join('')}</div>` : ''}
-            <p data-meli-category-name></p>
-            <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>
-            <h3>PRECIO MELI · COMISIONES Y GASTOS</h3>
-            <div class="meli-product-grid">${costField('billable_weight', 'Peso facturable para Meli · gramos', pricing.billable_weight || packageGrams || '', '1')}</div>
-            <p>La fórmula usa el precio de cada variante, las comisiones vigentes y los gastos generales del engranaje. El envío ingresado allí es un gasto estimado, no una cotización automática. Confirmá el peso facturable de este producto.</p>
-            <button class="primary-button fit-button" type="button" data-meli-price-calculate>CALCULAR PRECIO CON COMISIONES</button>
-            <p data-meli-price-summary role="status"></p>
+            <h3>3. DESCRIPCIÓN Y FOTOS</h3>
             <label>Descripción en texto plano<textarea data-meli-field="description" rows="4">${esc(draft.description)}</textarea></label>
             <label>Fotos · una URL HTTPS por línea<textarea data-meli-pictures rows="3">${esc((draft.pictures || []).join('\n'))}</textarea></label>
-            <h3>FICHA TÉCNICA Y PAQUETE</h3><div data-meli-technical></div>
-            ${shirt ? '<p>Peso y paquete orientativos para una remera de espesor medio: 250 g y 30 × 25 × 3 cm. Revisalos antes de publicar; la tabla de talles mide la prenda extendida.</p>' : '<button class="primary-button fit-button" type="button" data-meli-calculate>CALCULAR PESO NETO DEL PAPEL</button>'}
+            <h3>4. CARACTERÍSTICAS</h3><p>Los campos específicos y obligatorios se adaptan a la categoría elegida al consultar requisitos.</p><div data-meli-technical></div>
+            <h3>5. PAQUETE PARA ENVÍO</h3><div class="meli-product-grid" data-meli-package></div>
+            ${shirt ? '<p>La tabla de talles corresponde a la prenda extendida; el paquete debe incluir el embalaje.</p>' : draft.category_id === 'MLA416632' ? '<button class="primary-button fit-button" type="button" data-meli-calculate>CALCULAR PESO NETO DEL PAPEL</button>' : ''}
             ${draft.category_id === 'MLA416632' && draft.attributes.SHEETS_NUMBER === '20' && draft.attributes.PAPER_SIZE === 'A4' && draft.attributes.GRAMMAGE === '200 g' ? `<p>Para A4 de 200 g/m² × 20 hojas: 0,21 × 0,297 × 200 × 20 = <strong>249,48 g de papel</strong>. Las hojas miden 21 × 29,7 cm. Un paquete contiene 20 hojas; no son 20 paquetes.</p>
             <p>Propuesta de envío para el producto de prueba: <strong>32 × 23 × 1 cm y 280 g</strong>, con 30,52 g de margen para embalaje. Son estimaciones; el espesor y el peso final requieren medición.</p>` : '<p>Ingresá las medidas y el peso del paquete completo, incluyendo el embalaje.</p>'}
             <label class="meli-product-checks"><input type="checkbox" data-meli-field="package_confirmed" ${draft.package_confirmed ? 'checked' : ''}> Medí el paquete completo y confirmé las medidas y el peso cargados</label>
             ${shirt ? `<label class="meli-product-checks"><input type="checkbox" data-meli-field="package_estimated" ${draft.package_estimated ? 'checked' : ''}> Usar para publicar los valores estimados del paquete; todavía no fueron medidos</label>
             <button class="primary-button fit-button" type="button" data-meli-size-validate>VALIDAR TALLES EN MELI SIN PUBLICAR</button><p>Guardá los cambios antes de validar. Se comprueba cada talle activo con stock.</p>` : ''}
-            <p data-meli-review role="status"></p>
+            <p data-meli-category-name></p>
+            <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>
+            <h3>6. PRECIO MELI · COMISIONES Y GASTOS</h3>
+            <div class="meli-product-grid">${costField('billable_weight', 'Peso facturable para Meli · gramos', pricing.billable_weight || packageGrams || '', '1')}</div>
+            <p>La fórmula usa el precio de cada variante, las comisiones vigentes y los gastos generales del engranaje. El envío ingresado allí es un gasto estimado, no una cotización automática. Confirmá el peso facturable de este producto.</p>
+            <button class="primary-button fit-button" type="button" data-meli-price-calculate>CALCULAR PRECIO CON COMISIONES</button>
+            <p data-meli-price-summary role="status"></p>
+            <h3>7. REVISIÓN DE PUBLICACIÓN</h3><p data-meli-review role="status"></p>
             <footer class="meli-progress-footer" role="status" aria-live="polite"><span data-meli-progress>Mercado Libre: borrador sin publicar.</span><span class="meli-progress-dots" aria-hidden="true"><i></i><i></i><i></i></span></footer>`;
         form.querySelector('.product-save-actions').before(root);
         const editor = { form, root, draft, sequence: 0, loadedCategory: draft.category_id, attributes: [],
@@ -441,6 +433,6 @@
         const editor = editors.get(form);
         if (!editor) return null;
         const draft = collect(editor);
-        return draft.category_id ? draft : null;
+        return draft;
     } };
 })();
