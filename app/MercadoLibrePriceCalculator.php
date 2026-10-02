@@ -30,14 +30,15 @@ final class MercadoLibrePriceCalculator
     }
 
     /** Requotes the final price so fee thresholds cannot leave the seller short. */
-    public static function calculate(array $input, callable $quote): array
+    public static function calculate(array $input, callable $quote, int $minimumPriceCents = 0): array
     {
         $input = self::inputs($input);
         $target = $input['base_price_cents'];
         $fixed = $input['packaging_cents'] + $input['shipping_cents'] + $input['other_fixed_cents'];
         $otherRate = $input['other_percentage'] / 100;
         $step = $input['rounding_pesos'] * 100;
-        $price = (int) (ceil(($target + $fixed) / (1 - $otherRate) / $step) * $step);
+        if ($minimumPriceCents < 0 || $minimumPriceCents > 1000000000) throw new \RuntimeException('El precio mínimo de la categoría no es válido.');
+        $price = (int) (ceil(max($minimumPriceCents, ($target + $fixed) / (1 - $otherRate)) / $step) * $step);
         for ($attempt = 0; $attempt < 12; $attempt++) {
             if ($price > 1000000000) throw new \RuntimeException('El precio calculado supera el límite permitido.');
             $fees = $quote($price);

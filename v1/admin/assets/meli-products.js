@@ -172,7 +172,7 @@
                 if (!input.value.trim()) missing.push(`Fila MeLi de ${input.closest('label').firstChild.textContent.trim()}`);
             });
         }
-        if (!draft.package_confirmed && !(['MLA109042', 'MLA109085', 'MLA416632', 'MLA454114', 'MLA393902'].includes(draft.category_id) && draft.package_estimated)) missing.push('Confirmar el paquete o aceptar sus valores estimados');
+        if (!draft.package_confirmed && !draft.package_estimated) missing.push('Confirmar el paquete o aceptar sus valores estimados');
         if (!draft.pricing?.billable_weight) missing.push('Peso facturable');
         const variant = editor.form.querySelector(`[data-variant-row][data-variant-id="${draft.variant_id}"]`) || editor.form.querySelector('[data-variant-row]');
         if (!variant || Number(variant.querySelector('.variant-price').value) <= 0) missing.push('Precio');
@@ -339,9 +339,8 @@
         if (!form) return;
         const draft = product?.meli ? structuredClone(product.meli) : preset(product);
         applyDefaults(draft);
-        const shirt = /remera/i.test(product?.name || '');
-        const garment = shirt || draft.category_id === 'MLA109085';
-        const estimatedPackage = garment || ['MLA416632', 'MLA454114', 'MLA393902'].includes(draft.category_id);
+        const shirt = /^\s*remeras?\b/i.test(product?.name || '');
+        const garment = shirt || ['MLA109085', 'MLA109096'].includes(draft.category_id);
         draft.attributes ||= {};
         if (shirt) {
             draft.attributes.BRAND = 'Generic';
@@ -372,7 +371,7 @@
             <label>ID de guía personalizada de MeLi<input data-meli-attribute="SIZE_GRID_ID" value="${esc(draft.attributes.SIZE_GRID_ID || '')}" inputmode="numeric"></label>
             <p>Usá una guía personalizada de esta prenda creada en tu cuenta de MeLi con estas mismas medidas. Ingresá su ID en la ficha técnica y cargá sus filas.</p>
             <button class="primary-button fit-button" type="button" data-meli-size-chart>VINCULAR GUÍA DE MELI POR TALLE</button>
-            <button class="primary-button fit-button" type="button" data-meli-size-create>CREAR GUÍA EN MELI CON ESTA TABLA</button>
+            ${draft.category_id !== 'MLA109096' ? '<button class="primary-button fit-button" type="button" data-meli-size-create>CREAR GUÍA EN MELI CON ESTA TABLA</button>' : ''}
             <p>Guardá primero la ficha. La guía utiliza las medidas existentes y conserva los talles numéricos.</p>
             <p>Elegí las equivalencias estándar reales de cada talle. Tus talles numéricos se mantienen en la publicación.</p>
             <div class="meli-size-rows">${(product?.variants || []).map(v => `<label>${esc(v.name)} · Equivalencia MeLi<select data-meli-size-equivalence="${Number(v.id)}"><option value="">Elegir</option>${['3XS','2XS','XS','S','M','L','XL','2XL','3XL','4XL','5XL','6XL','7XL','8XL','9XL','10XL'].map(size => `<option value="${size}" ${draft.size_equivalences?.[v.id] === size ? 'selected' : ''}>${size}</option>`).join('')}</select></label>`).join('')}</div>
@@ -386,8 +385,8 @@
             ${draft.category_id === 'MLA416632' && draft.attributes.SHEETS_NUMBER === '20' && draft.attributes.PAPER_SIZE === 'A4' && draft.attributes.GRAMMAGE === '200 g' ? `<p>Para A4 de 200 g/m² × 20 hojas: 0,21 × 0,297 × 200 × 20 = <strong>249,48 g de papel</strong>. Las hojas miden 21 × 29,7 cm. Un paquete contiene 20 hojas; no son 20 paquetes.</p>
             <p>Propuesta de envío para el producto de prueba: <strong>32 × 23 × 1 cm y 280 g</strong>, con 30,52 g de margen para embalaje. Son estimaciones; el espesor y el peso final requieren medición.</p>` : '<p>Ingresá las medidas y el peso del paquete completo, incluyendo el embalaje.</p>'}
             <label class="meli-product-checks"><input type="checkbox" data-meli-field="package_confirmed" ${draft.package_confirmed ? 'checked' : ''}> Medí el paquete completo y confirmé las medidas y el peso cargados</label>
-            ${estimatedPackage ? `<label class="meli-product-checks"><input type="checkbox" data-meli-field="package_estimated" ${draft.package_estimated ? 'checked' : ''}> Usar para publicar los valores estimados del paquete; todavía no fueron medidos</label>
-            <button class="primary-button fit-button" type="button" data-meli-size-validate>${garment ? 'VALIDAR TALLES' : 'VALIDAR FICHA'} EN MELI SIN PUBLICAR</button><p>Guardá los cambios antes de validar. Se comprueba cada ${garment ? 'talle' : 'variante'} activo con stock.</p>` : ''}
+            <label class="meli-product-checks"><input type="checkbox" data-meli-field="package_estimated" ${draft.package_estimated ? 'checked' : ''}> Usar para publicar los valores estimados del paquete; todavía no fueron medidos</label>
+            <button class="primary-button fit-button" type="button" data-meli-size-validate>${garment ? 'VALIDAR TALLES' : 'VALIDAR FICHA'} EN MELI SIN PUBLICAR</button><p>Guardá los cambios antes de validar. Se comprueba cada ${garment ? 'talle' : 'variante'} activo con stock.</p>
             <p data-meli-category-name></p>
             <p>Moneda: ARS · Compra inmediata. Cada variante usa su stock y su precio como neto objetivo. El botón MeLi calcula las comisiones vigentes automáticamente al publicar.</p>
             <h3>6. PRECIO MELI · COMISIONES Y GASTOS</h3>
@@ -443,7 +442,7 @@
             if (!['SIZE', 'SIZE_GRID_ROW_ID', 'SELLER_SKU', 'GTIN'].includes(id) && !draft.attributes?.[id]?.trim()) missing.push(label);
         }
         for (const attribute of packageAttributes) if (!draft.attributes?.[attribute.id]?.trim()) missing.push(attribute.name);
-        if (!draft.package_confirmed && !(['MLA109042', 'MLA109085', 'MLA416632', 'MLA454114', 'MLA393902'].includes(draft.category_id) && draft.package_estimated)) missing.push('Confirmación del paquete');
+        if (!draft.package_confirmed && !draft.package_estimated) missing.push('Confirmación del paquete');
         if (!draft.pricing?.billable_weight) missing.push('Peso facturable');
         const defaults = window.MeliWorkspace?.defaults();
         if (!(defaults?.configured ? defaults.listing_type_id : draft.listing_type_id)) missing.push('Tipo de publicación');
@@ -460,7 +459,7 @@
             const singleDraftGtin = product.variants?.length === 1 && validGtin(draft.attributes?.GTIN);
             if (!singleDraftGtin && variants.some(variant => !validGtin(variant.barcode))) missing.push(draft.required_attributes.GTIN);
         }
-        if (['MLA109042', 'MLA109085'].includes(draft.category_id)) {
+        if (['MLA109042', 'MLA109085', 'MLA109096'].includes(draft.category_id)) {
             if (!draft.attributes?.SIZE_GRID_ID) missing.push('Guía de talles');
             if (variants.some(variant => !draft.size_grid_rows?.[variant.id])) missing.push('Filas de la guía de talles');
         }

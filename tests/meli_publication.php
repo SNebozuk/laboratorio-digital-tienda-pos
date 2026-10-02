@@ -34,9 +34,10 @@ function curl_exec(object $handle): string|false {
             'sale_fee_amount' => (float) $params['price'] * $rate / 100, 'listing_fee_amount' => 0,
             'sale_fee_details' => ['financing_add_on_fee' => $rate]]);
     }
-    if (preg_match('~^/categories/(MLA109042|MLA109085|MLA416632|MLA454114|MLA393902)/attributes$~', $path)) return json_encode(array_map(static fn ($id) => ['id' => $id], ['BRAND', 'SIZE', 'COLOR', 'GENDER', 'SELLER_SKU', 'GTIN', 'EMPTY_GTIN_REASON', 'SIZE_GRID_ID', 'SIZE_GRID_ROW_ID', 'SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']));
+    if (preg_match('~^/categories/(MLA109042|MLA109085|MLA416632|MLA454114|MLA393902|MLA3561|MLA10209|MLA109096)/attributes$~', $path)) return json_encode(array_map(static fn ($id) => ['id' => $id], ['BRAND', 'SIZE', 'COLOR', 'GENDER', 'SELLER_SKU', 'GTIN', 'EMPTY_GTIN_REASON', 'SIZE_GRID_ID', 'SIZE_GRID_ROW_ID', 'SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT']));
     if (str_ends_with($path, '/sale_terms')) return '[]';
     if ($path === '/items/validate' || str_ends_with($path, '/attributes/conditional')) return '{}';
+    if (preg_match('~^/categories/MLA\d+$~', $path)) return json_encode(['settings' => ['minimum_price' => $GLOBALS['minimum_price'] ?? 0]]);
     if ($path === '/items') {
         if (!empty($GLOBALS['timeout'])) return false;
         $handle->code = 201;
@@ -184,4 +185,42 @@ $db->exec("UPDATE products SET name='Tatufan Art-Jet - 1 Hoja' WHERE id=3");
 rejects(fn () => $service->preparePublication(3, 6), 'Tatufan one-kit presentation stays excluded even though it contains two sheets');
 $db->exec("UPDATE products SET name='Filmilo paquete A4' WHERE id=3;UPDATE product_variants SET name='1 Hoja' WHERE id=6");
 rejects(fn () => $service->preparePublication(3, 6), 'Single-sheet variant name also prevents publication');
+$db->exec("INSERT INTO products(id,name) VALUES(4,'Tinta Art-Jet Profesional'); INSERT INTO product_variants(id,product_id,name,sku,price_cents,stock_on_hand,active) VALUES(8,4,'Única','__AUTO__8',800000,2,1)");
+$ink = array_replace($draft, ['category_id' => 'MLA3561', 'family_name' => 'Tinta Art-Jet Profesional', 'variant_id' => 8,
+    'package_confirmed' => false, 'package_estimated' => true, 'size_grid_rows' => []]);
+$ink['attributes'] = ['BRAND' => 'Art-Jet', 'GTIN' => '721450695638', 'SELLER_PACKAGE_LENGTH' => '16 cm',
+    'SELLER_PACKAGE_WIDTH' => '8 cm', 'SELLER_PACKAGE_HEIGHT' => '8 cm', 'SELLER_PACKAGE_WEIGHT' => '250 g'];
+MercadoLibreProductDraft::save($db, 4, MercadoLibreProductDraft::normalize($ink));
+$preparedInk = $service->preparePublication(4, 8);
+check(!$preparedInk['draft']['package_confirmed'] && $preparedInk['draft']['package_estimated'], 'Other product categories explicitly accept estimated packages');
+check(array_column($preparedInk['payload']['attributes'], 'value_name', 'id')['GTIN'] === '721450695638', 'Verified draft GTIN works outside paper categories');
+$ink['package_estimated'] = false;
+MercadoLibreProductDraft::save($db, 4, MercadoLibreProductDraft::normalize($ink));
+rejects(fn () => $service->preparePublication(4, 8), 'Other categories still require measured or explicitly accepted estimated packages');
+$db->exec("INSERT INTO products(id,name) VALUES(5,'Body bebé'); INSERT INTO product_variants(id,product_id,name,sku,price_cents,stock_on_hand,active) VALUES(9,5,'Talle 3','__AUTO__9',400000,2,1),(10,5,'Talle 5','__AUTO__10',400000,3,1)");
+$body = array_replace($draft, ['category_id' => 'MLA10209', 'family_name' => 'Body bebé', 'variant_id' => 9, 'size_grid_rows' => []]);
+$body['attributes'] = ['BRAND' => 'Generic', 'SIZE' => '3', 'SELLER_PACKAGE_LENGTH' => '30 cm',
+    'SELLER_PACKAGE_WIDTH' => '25 cm', 'SELLER_PACKAGE_HEIGHT' => '3 cm', 'SELLER_PACKAGE_WEIGHT' => '250 g'];
+MercadoLibreProductDraft::save($db, 5, MercadoLibreProductDraft::normalize($body));
+check(array_column($service->preparePublication(5, 10)['payload']['attributes'], 'value_name', 'id')['SIZE'] === '5', 'Other garment categories use each actual variant size without guessing ages');
+$GLOBALS['minimum_price'] = 1000;
+$db->exec("INSERT INTO products(id,name) VALUES(6,'Argollas metálicas'); INSERT INTO product_variants(id,product_id,name,sku,price_cents,stock_on_hand,active) VALUES(11,6,'Única','__AUTO__11',30000,2,1)");
+$smallItem = array_replace($ink, ['variant_id' => 11, 'package_estimated' => true, 'pricing' => ['base_price_cents' => 30000, 'billable_weight' => 250]]);
+MercadoLibreProductDraft::save($db, 6, MercadoLibreProductDraft::normalize($smallItem));
+$preparedSmall = $service->preparePublication(6, 11);
+check($preparedSmall['payload']['price'] === 1000 && $preparedSmall['pricing']['base_price_cents'] === 30000, 'MeLi price respects category minimum while retaining the local net target');
+check($db->query('SELECT price_cents FROM product_variants WHERE id=11')->fetchColumn() == 30000, 'Category minimum never changes the store price');
+$db->exec("UPDATE products SET name='Kit de reglas para estampar remeras Atelier' WHERE id=6");
+$smallItem['attributes']['BRAND'] = 'Atelier';
+MercadoLibreProductDraft::save($db, 6, MercadoLibreProductDraft::normalize($smallItem));
+check(array_column($service->preparePublication(6, 11)['payload']['attributes'], 'value_name', 'id')['BRAND'] === 'Atelier', 'Accessories mentioning shirts retain their actual brand');
+$jacket = array_replace($body, ['category_id' => 'MLA109096', 'family_name' => 'Campera friza', 'size_grid_rows' => [9 => '789:3', 10 => '789:5']]);
+$jacket['attributes']['SIZE_GRID_ID'] = '789';
+MercadoLibreProductDraft::save($db, 5, MercadoLibreProductDraft::normalize($jacket));
+$jacketAttrs = array_column($service->preparePublication(5, 10)['payload']['attributes'], 'value_name', 'id');
+check($jacketAttrs['SIZE'] === '5' && $jacketAttrs['SIZE_GRID_ROW_ID'] === '789:5', 'Each jacket variant uses its own numeric size and chart row');
+unset($jacket['size_grid_rows'][10]);
+MercadoLibreProductDraft::save($db, 5, MercadoLibreProductDraft::normalize($jacket));
+rejects(fn () => $service->preparePublication(5, 10), 'A jacket size without its chart row is blocked before publication');
+check(count($GLOBALS['items']) === 2, 'Completing other categories creates no listings');
 echo "MeLi publication tests passed\n";

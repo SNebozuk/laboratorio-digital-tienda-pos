@@ -136,6 +136,11 @@ final class MercadoLibreService
         $status = $this->status();
         if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta para consultar las comisiones.');
         $tokens = $this->loadTokens();
+        [$categoryCode, $categoryInfo] = $this->request('/categories/' . $category, $tokens['access_token']);
+        $minimumPrice = $categoryInfo['settings']['minimum_price'] ?? 0;
+        if ($categoryCode !== 200 || !is_numeric($minimumPrice) || !is_finite((float) $minimumPrice) || (float) $minimumPrice < 0) {
+            throw new \RuntimeException('No se pudo confirmar el precio mínimo de la categoría.');
+        }
         [$shippingCode, $shipping] = $this->request('/users/' . $status['user_id'] . '/shipping_preferences', $tokens['access_token']);
         $allowed = false;
         foreach ($shipping['logistics'] ?? [] as $option) {
@@ -170,7 +175,7 @@ final class MercadoLibreService
             }
             return $fees;
         };
-        $result = MercadoLibrePriceCalculator::calculate($pricing, $quote);
+        $result = MercadoLibrePriceCalculator::calculate($pricing, $quote, (int) ceil((float) $minimumPrice * 100));
         if ($financing) {
             $fees = $quote($result['price_cents'], true);
             $rate = $fees['sale_fee_details']['financing_add_on_fee'] ?? null;
@@ -356,9 +361,9 @@ final class MercadoLibreService
         if (!$status['connected']) throw new \RuntimeException('Conectá la cuenta de Mercado Libre.');
         $tokens = $this->loadTokens();
         [$code, $chart] = $this->request('/catalog/charts/' . $chartId, $tokens['access_token']);
-        if ($code !== 200 || ($chart['site_id'] ?? '') !== 'MLA' || !in_array($chart['domain_id'] ?? '', ['T_SHIRTS', 'MLA-T_SHIRTS', 'SWEATSHIRTS_AND_HOODIES', 'MLA-SWEATSHIRTS_AND_HOODIES'], true)
+        if ($code !== 200 || ($chart['site_id'] ?? '') !== 'MLA' || !in_array($chart['domain_id'] ?? '', ['T_SHIRTS', 'MLA-T_SHIRTS', 'SWEATSHIRTS_AND_HOODIES', 'MLA-SWEATSHIRTS_AND_HOODIES', 'JACKETS_AND_COATS', 'MLA-JACKETS_AND_COATS'], true)
             || ($chart['type'] ?? '') !== 'SPECIFIC' || (int) ($chart['seller_id'] ?? 0) !== $status['user_id']) {
-            throw new \RuntimeException('La guía debe ser una guía personalizada de remeras o buzos de la cuenta conectada.');
+            throw new \RuntimeException('La guía debe ser una guía personalizada de remeras, buzos o camperas de la cuenta conectada.');
         }
         return ['ok' => true, 'chart' => $chart];
     }
@@ -633,13 +638,14 @@ final class MercadoLibreService
             throw new \RuntimeException('Las presentaciones de una hoja están excluidas de la publicación en MeLi.');
         }
         if (!$variant || (int) $variant['stock_on_hand'] < 1) throw new \RuntimeException('La variante no está activa o no tiene stock.');
-        if (!$draft['package_confirmed'] && !(in_array($draft['category_id'], ['MLA109042', 'MLA109085', 'MLA416632', 'MLA454114', 'MLA393902'], true) && $draft['package_estimated'])) throw new \RuntimeException('Confirmá el paquete o aceptá los valores estimados en la ficha de la prenda.');
+        if (!$draft['package_confirmed'] && !$draft['package_estimated']) throw new \RuntimeException('Confirmá el paquete o aceptá los valores estimados en la ficha del producto.');
         foreach (['SELLER_PACKAGE_LENGTH', 'SELLER_PACKAGE_WIDTH', 'SELLER_PACKAGE_HEIGHT', 'SELLER_PACKAGE_WEIGHT'] as $id) {
             if (empty($draft['attributes'][$id])) throw new \RuntimeException('Completá las cuatro medidas del paquete: largo, ancho, alto y peso.');
         }
         if (!$draft['family_name'] || !$draft['pictures']) throw new \RuntimeException('Completá el título y las fotos de Mercado Libre.');
-        if (preg_match('/remera/i', $variant['product_name'])) $draft['attributes']['BRAND'] = 'Generic';
-        if (in_array($draft['category_id'], ['MLA109042', 'MLA109085'], true)) {
+        if (preg_match('/^\s*remeras?\b/i', $variant['product_name'])) $draft['attributes']['BRAND'] = 'Generic';
+        if (preg_match('/^talle\s+(.+)$/iu', trim($variant['name']), $size)) $draft['attributes']['SIZE'] = $size[1];
+        if (in_array($draft['category_id'], ['MLA109042', 'MLA109085', 'MLA109096'], true)) {
             $draft['attributes']['SIZE'] = preg_replace('/^talle\s*/i', '', trim($variant['name']));
             $row = $draft['size_grid_rows'][$variant['id']] ?? '';
             if (!$row || empty($draft['attributes']['SIZE_GRID_ID'])) throw new \RuntimeException('Vinculá la guía de talles de MeLi y su fila para ' . $variant['name'] . '.');
@@ -648,15 +654,13 @@ final class MercadoLibreService
         $draft['attributes']['SELLER_SKU'] = str_starts_with((string) $variant['sku'], '__AUTO__') ? '' : (string) $variant['sku'];
         $draftGtin = (string) ($draft['attributes']['GTIN'] ?? '');
         $draft['attributes']['GTIN'] = (string) ($variant['barcode'] ?? '');
-        if (in_array($draft['category_id'], ['MLA416632', 'MLA454114', 'MLA393902'], true)) {
-            $query = $this->pdo->prepare('SELECT COUNT(*) FROM product_variants WHERE product_id=?');
-            $query->execute([$productId]);
-            if ((int) $query->fetchColumn() === 1 && preg_match('/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/D', $draftGtin)) {
-                $draft['attributes']['GTIN'] = $draftGtin;
-            } elseif (!preg_match('/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/D', $draft['attributes']['GTIN'])) {
-                if ($draft['attributes']['GTIN'] !== '' && empty($draft['attributes']['EMPTY_GTIN_REASON'])) throw new \RuntimeException('El código de barras no es un GTIN válido. Completá el GTIN real o el motivo de GTIN vacío en la ficha.');
-                $draft['attributes']['GTIN'] = '';
-            }
+        $query = $this->pdo->prepare('SELECT COUNT(*) FROM product_variants WHERE product_id=?');
+        $query->execute([$productId]);
+        if ((int) $query->fetchColumn() === 1 && preg_match('/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/D', $draftGtin)) {
+            $draft['attributes']['GTIN'] = $draftGtin;
+        } elseif (!preg_match('/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/D', $draft['attributes']['GTIN'])) {
+            if ($draft['attributes']['GTIN'] !== '' && empty($draft['attributes']['EMPTY_GTIN_REASON'])) throw new \RuntimeException('El código de barras no es un GTIN válido. Completá el GTIN real o el motivo de GTIN vacío en la ficha.');
+            $draft['attributes']['GTIN'] = '';
         }
         $draft['pricing']['base_price_cents'] = (int) $variant['price_cents'];
         $pricing = $this->calculateProductPrice($draft)['pricing'];
