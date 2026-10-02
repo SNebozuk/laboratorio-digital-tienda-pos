@@ -26,7 +26,16 @@ async function main() {
     let maximum = 0;
     let refreshes = 0;
     let catalogReads = 0;
+    const focused = [];
+    let focusOpens = 0;
+    let focusFinished = null;
+    let focusMessage = '';
     const window = {location: {href: 'https://example.test/v1/admin/index.php'}, setInterval() {},
+        MeliPublicationFocus: {open(id, product) {
+            focusOpens++; assert.equal(id, product.id);
+            return {show(p) { focused.push(p.id); }, progress(text) { focusMessage = text; },
+                finish(failed) { focusFinished = failed; }};
+        }},
         MeliProductEditor: {pending: p => p.incomplete ? ['Campo pendiente'] : []},
         dispatchEvent() { refreshes++; }};
     const context = {window, URL, CustomEvent: class {},
@@ -39,6 +48,8 @@ async function main() {
             if (target.pathname.endsWith('api.php')) { catalogReads++; data = {ok: true, products: catalog}; }
             else if (options.method === 'POST') {
                 const body = JSON.parse(options.body); calls.push(body);
+                assert.equal(focused.at(-1), body.product_id, 'Current product is visible before its requests');
+                assert.equal(focusFinished, null, 'Focus remains open until the whole queue finishes');
                 if (body.action === 'publication_variants') data = {ok: true, variants: body.product_id === 1 ? [{id: 101, name: 'Talle 1'}, {id: 102, name: 'Talle 2'}] : [{id: body.product_id * 100, name: 'Única'}]};
                 else if (body.action === 'validate_publication') data = {ok: true, valid: body.product_id !== 7, validation: {cause: [{type: 'error', message: 'Dato inválido'}]}};
                 else data = {ok: true, message: 'Publicado'};
@@ -62,6 +73,10 @@ async function main() {
     assert.equal(calls.some(c => c.product_id === 7 && c.action === 'publish_product'), false);
     assert.equal(calls.filter(c => c.product_id === 8 && c.action === 'publish_product').length, 1);
     assert.equal(refreshes, 3);
+    assert.equal(focusOpens, 1, 'Reuse one focus dialog for the entire queue');
+    assert.deepEqual(focused, [1, 7, 8]);
+    assert.equal(focusFinished, true);
+    assert.match(focusMessage, /2 productos publicados, 1 con error/);
     assert.match(element('meli-progress-text').textContent, /2 productos publicados, 1 con error/);
     assert.equal(button.disabled, false);
     assert.equal(button.textContent, 'PUBLICAR TODO');

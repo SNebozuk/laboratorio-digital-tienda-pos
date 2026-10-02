@@ -244,6 +244,8 @@
         verify.disabled = true;
         let completed = 0;
         let failed = 0;
+        let focus = null;
+        let batchFailed = false;
         try {
             progress('buscando productos completos pendientes de publicación…', true);
             const url = new URL(app.api_url, window.location.href);
@@ -253,20 +255,27 @@
             if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudieron consultar los productos.');
             const queue = data.products.filter(readyForBulk);
             if (!queue.length) { progress('no hay productos completos con icono gris y stock para publicar.'); return; }
+            focus = window.MeliPublicationFocus.open(Number(queue[0].id), queue[0]);
             for (const [index, product] of queue.entries()) {
+                focus.show(product);
                 publishAll.textContent = `PUBLICANDO ${index + 1}/${queue.length}`;
                 try {
                     await publish(product.id, (text, active) => {
-                        progress(`${index + 1}/${queue.length} · ${product.name} · ${text.replace(/^Mercado Libre: /, '')}`, active);
+                        const message = `${index + 1}/${queue.length} · ${product.name} · ${text.replace(/^Mercado Libre: /, '')}`;
+                        progress(message, active);
+                        focus.progress(`Mercado Libre: ${message}`, active);
                     }, true);
                     completed++;
                 } catch { failed++; }
                 // Refresh local icons after success or partial failure; never retry a creation.
                 window.dispatchEvent(new CustomEvent('meli-publication-changed'));
             }
-            progress(`publicación finalizada: ${completed} productos publicados, ${failed} con error.`);
-        } catch (error) { progress(error.message); }
+            const summary = `publicación finalizada: ${completed} productos publicados, ${failed} con error.`;
+            progress(summary);
+            focus.progress(`Mercado Libre: ${summary}`, false);
+        } catch (error) { batchFailed = true; progress(error.message); focus?.progress(error.message, false); }
         finally {
+            focus?.finish(batchFailed || failed > 0);
             bulkBusy = false;
             publishAll.disabled = false;
             publishAll.removeAttribute('aria-busy');

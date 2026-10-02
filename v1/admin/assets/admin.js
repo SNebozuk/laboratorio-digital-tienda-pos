@@ -1764,8 +1764,8 @@
             </div>` : '<p class="empty-copy">No encontramos productos con esos filtros.</p>'}`;
     }
 
-    function showMeliPublicationFocus(productId) {
-        const product = state.products.find(item => Number(item.id) === productId);
+    function showMeliPublicationFocus(productId, suppliedProduct = null) {
+        let product = suppliedProduct || state.products.find(item => Number(item.id) === productId);
         const dialog = document.createElement('dialog');
         dialog.className = 'meli-publication-focus';
         dialog.setAttribute('aria-label', `Publicación en Mercado Libre: ${product?.name || 'Producto'}`);
@@ -1778,6 +1778,10 @@
             const head = elements.productList.querySelector('.product-list-head');
             if (head) table.append(head.cloneNode(true));
             let row = elements.productList.querySelector(`[data-publish-meli="${productId}"]`)?.closest('.product-list-row');
+            if (!row && product) {
+                if (!head) table.innerHTML = '<div class="product-list-head" role="row"><span></span><span>Producto y variantes</span><span>Stock</span><span>Precio</span><span>Estado</span><span></span></div>';
+                table.insertAdjacentHTML('beforeend', `<div class="product-list-row" role="row"><span></span><span class="product-table-name">${adminProductImage(product)}<span><strong>${escapeHtml(product.name)}</strong></span></span><span></span><span></span><span></span><span></span></div>${(product.variants || []).map(variant => `<div class="product-variant-inline-row" role="row"><span></span><span class="product-inline-variant-name"><strong>${escapeHtml(variantDisplayName(product, variant) || 'Variante única')}</strong></span><span>${Number(variant.stock_on_hand) || 0}</span><span>${money(variant.price_cents)}</span><span></span><span></span></div>`).join('')}`);
+            }
             while (row) {
                 const copy = row.cloneNode(true);
                 copy.querySelectorAll('button, input, select, textarea').forEach(control => { control.disabled = true; control.removeAttribute('aria-busy'); });
@@ -1796,6 +1800,13 @@
         document.body.append(dialog);
         dialog.showModal();
         return {
+            show(currentProduct) {
+                product = currentProduct;
+                productId = Number(currentProduct.id);
+                dialog.setAttribute('aria-label', `Publicación en Mercado Libre: ${currentProduct.name}`);
+                dialog.querySelector('footer').classList.remove('is-error', 'is-success');
+                refresh();
+            },
             progress(message, active = true) {
                 dialog.querySelector('.meli-publication-focus-message').textContent = message;
                 dialog.querySelector('footer').classList.toggle('is-active', active);
@@ -1810,6 +1821,8 @@
             }
         };
     }
+
+    window.MeliPublicationFocus = {open: showMeliPublicationFocus};
 
     function variantFormRow(variant = {}, single = false) {
         return `
