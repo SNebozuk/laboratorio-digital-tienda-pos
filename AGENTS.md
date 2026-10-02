@@ -109,7 +109,7 @@ Secciones vigentes:
 
 ## Productos y stock
 
-- Para trabajar con productos y fichas MeLi desde Codex, preferir el conector MCP `laboratorio-digital-admin` a la automatización de Chrome. Ver `docs/admin-connector.md`. Si las herramientas todavía no están cargadas en el chat, usar `tools/admin-mcp.py --call` con JSON por stdin. Consultar la revisión actual antes de guardar fichas; publicar únicamente por pedido explícito del usuario.
+- Cuando se requiera información o edición de productos y fichas MeLi, usar como canal habitual el conector MCP `laboratorio-digital-admin`. Ver `docs/admin-connector.md`. Si las herramientas todavía no están cargadas en el chat, usar el mismo canal mediante `tools/admin-mcp.py --call` con JSON por stdin. Recurrir al navegador únicamente cuando la operación necesaria no esté disponible en el conector. Consultar la revisión actual antes de guardar fichas; publicar únicamente por pedido explícito del usuario.
 
 - Producto y variante pueden tener foto, precio, stock, SKU y código de barras propios. SKU y código de barras son opcionales; cuando existen son únicos.
 - `stock_on_hand` es la disponibilidad real mostrada y utilizada para vender. Todas las validaciones y descuentos críticos se realizan en transacciones SQLite.
