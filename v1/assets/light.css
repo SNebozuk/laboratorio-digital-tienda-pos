@@ -184,7 +184,10 @@ body { background:#fff !important; }
 .footer-contact-button span,.creator-credit span { display:block; color:#7652b8; font-size:11px; font-weight:850; letter-spacing:.1em; }
 .footer-contact-button small { display:block; margin-top:4px; color:#685d76; font-size:13px; }
 .footer-contact-button:hover span,.footer-contact-button:focus-visible span { text-decoration:underline; text-underline-offset:4px; }
-.creator-credit { position:absolute; left:50%; margin:0; transform:translateX(-50%); text-align:center; color:#7652b8; font-size:11px; font-weight:850; letter-spacing:.1em; }
+.creator-credit { position:absolute; left:50%; display:flex; align-items:center; justify-content:center; gap:6px; margin:0; transform:translateX(-50%); text-align:center; color:#7652b8; font-size:11px; font-weight:850; letter-spacing:.1em; white-space:nowrap; }
+.creator-credit .creator-credit-logo { position:relative; width:92px; height:26px; overflow:hidden; flex-shrink:0; }
+.creator-credit-logo img { position:absolute; left:50%; top:50%; width:134px; height:auto; max-width:none; transform:translate(-50%,-50%); }
+.creator-credit:hover,.creator-credit:focus-visible { text-decoration:underline; text-underline-offset:4px; }
 .store-contact-modal { display:grid; gap:16px; }
 .store-contact-modal h2 { margin:0; color:#2a1d3c; }
 .contact-modal-lead { margin:0; color:#685d76; }

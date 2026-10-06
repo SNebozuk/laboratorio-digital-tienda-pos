@@ -319,7 +319,10 @@ header('Referrer-Policy: same-origin');
             <span>CONTACTO</span>
             <small>Horario, WhatsApp y ubicación</small>
         </button>
-        <p class="creator-credit">Sitio creado por Laboratorio Digital</p>
+        <a class="creator-credit" href="http://www.tienditas.com.ar">
+            Sitio creado por
+            <span class="creator-credit-logo"><img src="<?= $escape($assetPath) ?>/tienditas-logo.png" alt="tienditas" width="1760" height="800"></span>
+        </a>
     </footer>
 
     <a
